@@ -27,9 +27,8 @@
  * @file 
  * @brief Bootstrap code
  *
- * Taken from Kalisto with only minor changes Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Taken from Kalisto with only minor changes. Includes address.h instead of 
+ * shared.h.
  */
 /*
  * Kalisto
@@ -79,12 +78,7 @@
 .set noat
 .set noreorder
 
-/*
-#include "shared.h"
-#include "asm.h"
-asm is not needed and shared is needed for ENTRY_POINT and KSEG0 shift macros
-I may as well declare them here
-*/
+#include "address.h"
 
 .ent __start
 
@@ -101,12 +95,8 @@ __start:
 	 * instead.
 	 *
 	 */
-#define KERNEL_ENTRY_POINT_IN_KSEG0 0x80000400
 
-	la $ra, KERNEL_ENTRY_POINT_IN_KSEG0
-	/* ADDR_IN_KSEG0 (KERNEL_ENTRY_POINT) Kalisto version 
-	   requires macros defined in shared.h
-	*/
+	la $ra, ADDR_TO_KSEG0 (KERNEL_ENTRY_POINT) 
 	j $ra
 	nop
 	
