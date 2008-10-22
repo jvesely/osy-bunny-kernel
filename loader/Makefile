@@ -27,11 +27,12 @@ COL_END = \033[0m
 BIN_DIR = bin
 OBJ_DIR = obj
 SRC_DIR = src
-INC_DIR = ../include
+COMMON_DIR = ../common
 
 ### Files ###
 
-VPATH = $(shell find .. -type d | grep src)
+VPATH = $(shell find src -type d )
+VPATH += ../common
 
 LOADER_BIN = loader.bin
 LOADER_RAW = loader.raw
@@ -48,13 +49,13 @@ $(BIN_DIR)/$(LOADER_BIN): $(BIN_DIR)/$(LOADER_RAW)
 	@echo -e "$(COL_WHITE)Creating loader.bin image... $(COL_GREEN)$@$(COL_END) <--$(COL_YELLOW) $^$(COL_END)"
 	@$(OBJCOPY) -O binary  $< $@
 
-$(BIN_DIR)/$(LOADER_RAW): $(INC_DIR)/$(LDS_FILE) $(OBJ_DIR)/$(OBJ)
+$(BIN_DIR)/$(LOADER_RAW): $(COMMON_DIR)/$(LDS_FILE) $(OBJ_DIR)/$(OBJ)
 	@echo -e "$(COL_WHITE)Linking kernel RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJ_DIR)/$(OBJ)$(COL_END)"
-	@$(LD) $(LD_FLAGS) -T $(INC_DIR)/$(LDS_FILE) -Map $(BIN_DIR)/$(LOADER_MAP) -o $@ $(OBJ_DIR)/$(OBJ)
+	@$(LD) $(LD_FLAGS) -T $(COMMON_DIR)/$(LDS_FILE) -Map $(BIN_DIR)/$(LOADER_MAP) -o $@ $(OBJ_DIR)/$(OBJ)
 
 $(OBJ_DIR)/%.o : %.S 
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_BLACK)$< $(COL_END)"
-	@$(CC) $(ASFLAGS) -I $(INC_DIR) -c -o $@ $^
+	@$(CC) $(ASFLAGS) -I $(COMMON_DIR) -c -o $@ $^
 
 
 
