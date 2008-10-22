@@ -70,6 +70,7 @@ void Kernel::run()
 	while (m_clock.time() == start) ;
 	const uint32_t from = reg_read_count();
 	while (m_clock.time() - (start + 1)<1 ) { //1 ms
+		printf("\b.");
 		to = reg_read_count();
 	}
 	/* I would use constants here but they would not be used
