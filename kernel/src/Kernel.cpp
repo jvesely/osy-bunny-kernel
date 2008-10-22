@@ -63,25 +63,24 @@ void Kernel::run()
 	        cpu_type >> CPU_IMPLEMENTATION_SHIFT, 
 	        (cpu_type >> CPU_REVISION_SHIFT) & CPU_REVISION_MASK,
 				  cpu_type & CPU_REVISION_MASK );
-	printf("Time is: %d,%d\n", m_clock.time(), m_clock.usec());
 
-	const uint32_t usec = m_clock.usec();
-	const unative_t startCount = Processor::reg_read_count();
-	for (int i = 0; i < 200000; ++i){
-	asm volatile ( 
-		"divu $t0, $t1\n"
-	);
+	uint32_t to = 0;
+	const uint32_t start = m_clock.time();
+	printf("Detecting freq....");
+	while (m_clock.time() == start) ;
+	const uint32_t from = reg_read_count();
+	while (m_clock.time() - (start + 1)<1 ) { //1 ms
+		to = reg_read_count();
 	}
-	const uint32_t dt = (m_clock.usec() - usec);
-	const uint32_t di = (reg_read_count() - startCount);
-	printf("Used time %u usec for %u instructions.\n", dt, di);
-	printf("Freq: %u\n",(di*1000)/(dt) );
+	/* I would use constants here but they would not be used
+	 * in any other part of the program and still it's celar wht this does.
+	 * (counts Mhz :) )
+	 */
+	printf("%d.%d MHz\n", (to - from)/ 1000000, ((to- from)/1000) % 1000 );
 
 	m_physicalMemorySize = getPhysicalMemorySize();
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
 
-	assert(1>2);
-	dprintf("Trying %d, %i, %u, %x, %p\n", -5, -5, -5, 0xDEADBEEF, 0xDEADBEEF);
 }
 /*---------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){
