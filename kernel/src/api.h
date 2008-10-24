@@ -92,11 +92,11 @@ native_t getc_try();
  */
 ssize_t gets(char * str, const size_t len);
 
-/*
+
 void * malloc(const size_t size);
 
 void free (const void * ptr);
-*/
+
 
 /*! assert and ASSERT are the same thing. */
 #define assert ASSERT
@@ -109,7 +109,7 @@ void free (const void * ptr);
 #ifndef NDEBUG
 #	define ASSERT(test) \
 	if (! (test) ) { \
-		panic("ASSERTION FAILED: \""#test"\" in %s on line %d\n", __FILE__, __LINE__); \
+		panic("ASSERTION FAILED: \"%s\" in %s on line %d\n", (char*)#test, __FILE__, __LINE__); \
 	}
 #else
 #	define ASSERT(x)
@@ -125,7 +125,8 @@ void free (const void * ptr);
  */
 #ifndef NDEBUG
 #	define dprintk(ARGS...) \
-	printf("Function %s on line %d: ", __PRETTY_FUNCTION__, __LINE__);printf(ARGS);
+	printf("Function %s on line %d: \n\t", __PRETTY_FUNCTION__, __LINE__);\
+	printf(ARGS);
 #else
 #	define dprintk(ARGS...)
 #endif
@@ -135,7 +136,9 @@ void free (const void * ptr);
  * and stops simulation, after that it block the kernel.
  */
 #define panic(ARGS...) \
-	printf("Kernel panic: "ARGS); 
+	kpanic(ARGS); // still needs tu dump those registers
+
+void kpanic(const char* format, ... );
 /*	Kernel::instance().stop(); \ */
 //	Kernel::instance().block();
 

@@ -36,6 +36,7 @@
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
+#include "mem/Allocator.h"
 
 /*! symbol speciefied in linker script */
 extern uint32_t _kernel_end;
@@ -60,22 +61,30 @@ public:
 	void run();
 
 	/*! returns currentConsole */
-	inline const Console& currentConsole(){ return m_console; };
+	inline const Console& console() const { return m_console; };
 
 	/*! getter for physicalMemorySize */
-	inline size_t physicalMemorySize(){ return m_physicalMemorySize; };
+	inline size_t physicalMemorySize() const { return m_physicalMemorySize; };
 
 	/*! just a msim wrapper */
-	inline void stop() { Processor::msim_stop(); };
+	inline void stop() const { Processor::msim_stop(); };
 
 	/*! another msim wrapper */
-	inline void regDump() { Processor::msim_reg_dump(); };
+	inline void regDump() const { Processor::msim_reg_dump(); };
 
 	/*! block processor by falling in infinite loog */
-	inline void block() { while(true) ;; };
+	inline void block() const { while(true) ;; };
+
+	/*! kernel heap alloc */
+	void* malloc(size_t size) const;
+
+	/*! kernel heap free */
+	void free(void* address) const;
 
 private:
 	
+	Allocator m_alloc;
+
 	/*! console device */
 	Console m_console;
 
