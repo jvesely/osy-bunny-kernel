@@ -37,4 +37,3 @@ unsigned int hash ( int key, int rng ) {
 	return ((key % rng)+rng) % rng;
 }
 
-
