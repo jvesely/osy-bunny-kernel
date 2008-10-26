@@ -69,7 +69,7 @@ void Kernel::run()
 	printf("Detecting freq....");
 	while (m_clock.time() == start) ;
 	const uint32_t from = reg_read_count();
-	while (m_clock.time() - (start + 1)<1 ) { //1 ms
+	while (m_clock.time() - (start + 1) < 1) { //1 ms
 		printf("\b.");
 		to = reg_read_count();
 	}
@@ -95,6 +95,7 @@ void Kernel::run()
 	(*foobar) = 0xAAAAAAAA;
 	dprintf("Got address %p\n", foobar);
 	
+	m_alloc.freeMemory(foobar);
 	m_alloc.freeMemory(foo);
 
 	

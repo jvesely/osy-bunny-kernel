@@ -66,7 +66,7 @@ void Allocator::createBlock(
 	// test aligment
 	assert((start & ~(ALIGMENT - 1)) == start);
 	assert((size & ~(ALIGMENT - 1)) == size );
-	dprintf("Creating block of size %u\n", size);
+	dprintf("Creating block of size %u : %s\n", size, free?"free":"used");
 	
 	// setup
 	BlockHeader* header = (BlockHeader *)start;
@@ -142,19 +142,24 @@ void Allocator::freeMemory(void* address) const
 	BlockHeader* my_header = (BlockHeader*)((uintptr_t)address - sizeof(BlockHeader));
 	BlockHeader* from_header = my_header;
 	size_t size =  my_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);
+	
+	dprintf("Freeing block of size %u, real size:%u\n", my_header->size, size);
+
 	if ((uintptr_t)my_header > m_start)	{
 		// check previous block
-		BlockFooter* prev_footer = (BlockFooter*)(my_header - sizeof(BlockFooter));
-		BlockHeader* prev_header = (BlockHeader*)(prev_footer - prev_footer->size - sizeof(BlockHeader));
+		BlockFooter* prev_footer = (BlockFooter*)((uintptr_t)my_header - sizeof(BlockFooter));
+		BlockHeader* prev_header = (BlockHeader*)((uintptr_t)prev_footer - prev_footer->size - sizeof(BlockHeader));
 		if (prev_header->free){
 			from_header = prev_header;
 			size += prev_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);
 		}
 	}
+	// next header
 	BlockHeader * next_header = (BlockHeader*)((uintptr_t)my_header 
 	      + my_header->size + sizeof(BlockHeader) + sizeof(BlockFooter) );
 	if ( ((uintptr_t)next_header < m_end) && next_header->free){
 		// add next block
+		dprintf("Adding next header of size %u\n", next_header->size );
 		size += next_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);
 	}
 	createBlock((uintptr_t)from_header, size, true);
