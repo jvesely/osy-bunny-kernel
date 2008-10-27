@@ -59,14 +59,13 @@ void Scheduler::switchThread()
 	if (m_activeThreadList.size() == 0) { //no thread to switch to
 		return;
 	}
-	dprintf("Rotating threadlist with %u items\n", m_activeThreadList.size());
+	//dprintf("Rotating threadlist with %u items\n", m_activeThreadList.size());
 
 	void* DUMMYSTACK = (void*)0xF00;
-	void* old_stack = (void*)(m_currentThread?m_currentThread->stackTop():DUMMYSTACK);
+	void** old_stack = (void**)(m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
 	m_currentThread = *m_activeThreadList.rotate();
-	void* new_stack = m_currentThread->stackTop();
-	dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
-	Processor::msim_stop();
-	Processor::switch_cpu_context(&old_stack, &new_stack);
+	void** new_stack = m_currentThread->stackTop();
+	//dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
+	Processor::switch_cpu_context(old_stack, new_stack);
 	//enable interupts
 }

@@ -39,7 +39,6 @@
 
 void Thread::run()
 {
-	Processor::msim_stop();
 	m_runFunc(m_runData);
 	dprintf("Thread has ended\n");
 

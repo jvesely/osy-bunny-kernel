@@ -127,7 +127,7 @@ public:
 
 	inline void setId(thread_t id) { m_id = id; };
 
-	inline void*& stackTop() { return m_stackTop; };
+	inline void** stackTop() { return &m_stackTop; };
 
 protected:
 	/* that's my stack */

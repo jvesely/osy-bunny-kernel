@@ -156,14 +156,12 @@ void Kernel::free(void * address) const
 /*----------------------------------------------------------------------------*/
 void test(void* param)
 {
-	Processor::msim_stop();
 	int num = 0;
 	if (param)
 		num = *(int*)param;
 	while(true) {
 		printf("Running test...%u\n", num);
 		thread_yield();
-		printf("foo");
 	}
 }
 
