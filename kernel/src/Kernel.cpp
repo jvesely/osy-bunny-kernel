@@ -92,9 +92,14 @@ void Kernel::run()
 	thread_t mainThread;
 	thread_create(&mainThread, test, &num, 0);
 
-	int num2 = 1;
+	int num1 = 1;
 	thread_t secondThread;
-	thread_create(&secondThread, test, &num2, 0);
+	thread_create(&secondThread, test, &num1, 0);
+	
+	int num2 = 2;
+	thread_t thirdThread;
+	thread_create(&thirdThread, test, &num2, 0);
+	
 	m_scheduler->switchThread();
 
 }
