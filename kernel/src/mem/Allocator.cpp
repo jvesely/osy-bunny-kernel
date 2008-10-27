@@ -137,10 +137,13 @@ void* Allocator::getMemory(const size_t size) const
  */
 void Allocator::freeMemory(void* address) const
 {
-	if (!address) return;
+	if ( ((uintptr_t)address <= m_start) 
+		|| ((uintptr_t)address > m_end) ) return; // not my heap
 
 	BlockHeader* my_header = (BlockHeader*)((uintptr_t)address - sizeof(BlockHeader));
 	BlockHeader* from_header = my_header;
+	assert(checkBlock((uintptr_t)my_header));
+	if (my_header->free) return; //already freed??
 	size_t size =  my_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);
 	
 	dprintf("Freeing block of size %u, real size:%u\n", my_header->size, size);

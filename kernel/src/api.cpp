@@ -203,3 +203,68 @@ void free(void* ptr)
 {
 	Kernel::instance().free(ptr);
 }
+
+int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
+  void* data, const unsigned int flags)
+{
+	if (!Kernel::instance().pool().reserve()) return ENOMEM;
+	
+	Thread* thread = new Thread(thread_start, data);
+	if (!thread) return ENOMEM;
+
+	uint32_t ret = thread->setup();
+	if (ret != EOK) {
+		delete thread;
+		return ret;
+	}
+	*thread_ptr = Kernel::instance().addThread(thread);
+	return EOK;
+}
+
+thread_t thread_get_current()
+{
+	return 0;
+}
+
+int thread_join(thread_t thr)
+{
+	return 0;
+}
+
+int thread_join_timeout(thread_t thr, const unsigned int usec)
+{
+	return 0;
+}
+
+int thread_detach(thread_t thr)
+{
+	return 0;
+}
+
+void thread_sleep(const unsigned int sec)
+{
+}
+
+void thread_usleep(const unsigned int usec)
+{
+}
+
+void thread_yield()
+{
+	Kernel::instance().yield();
+}
+
+void thread_suspend()
+{
+}
+
+int thread_wakeup(thread_t thr)
+{
+	return 0;
+}
+
+int thread_kill(thread_t thr)
+{
+	return 0;
+}
+

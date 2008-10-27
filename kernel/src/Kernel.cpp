@@ -54,6 +54,7 @@ Kernel::Kernel() :
  * First greeting and memory size check, processor speed check,
  * some testing stuff.
  */
+extern "C" void test(void*);
 void Kernel::run()
 {
 	using namespace Processor;
@@ -85,21 +86,16 @@ void Kernel::run()
 	// setup allocator
 	m_alloc.setup((uintptr_t)&_kernel_end, 0x10000);
 
-	//test allocator
-	int * foo = (int*)m_alloc.getMemory(sizeof(int));
-	dprintf("Got address %p\n", foo);
-	(*foo) = 5;
-//	msim_stop();
-	
-	int* foobar = (int*)m_alloc.getMemory(20*sizeof(int));
-	(*foobar) = 0xAAAAAAAA;
-	dprintf("Got address %p\n", foobar);
-	
-	m_alloc.freeMemory(foobar);
-	m_alloc.freeMemory(foo);
+	m_scheduler = new Scheduler();
+	assert(m_scheduler);
+	int num = 0;
+	thread_t mainThread;
+	thread_create(&mainThread, test, &num, 0);
 
-	
-	//m_alloc.freeMemory(foobar);
+	int num2 = 1;
+	thread_t secondThread;
+	thread_create(&secondThread, test, &num2, 0);
+	m_scheduler->switchThread();
 
 }
 /*----------------------------------------------------------------------------*/
@@ -121,10 +117,12 @@ size_t Kernel::getPhysicalMemorySize(){
 
 	while(true) {
 		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M);
-	//	printf("Mapped %x to %x range = %d kB.\n", front, point, (range* sizeof(uint32_t)/1024));
+		printf( "Mapped %x to %x range = %d kB.\n", front, point, 
+			(range * sizeof(uint32_t)/1024) );
+		
 		(*front) = MAGIC; //write
 		(*back) = MAGIC; //write
-		//printf("Proof read %x:%x %x:%x\n", front, *front, back, *back);
+		printf("Proof read %x:%x %x:%x\n", front, *front, back, *back);
 		if ( (*front != MAGIC) || (*back != MAGIC) ) break; //check
 		size += range * sizeof(uint32_t);
 		point += range; //add
@@ -150,6 +148,22 @@ void* Kernel::malloc(const size_t size) const
 void Kernel::free(void * address) const
 {
 	//disable interupts
+//	ipl_t status = save_
 	m_alloc.freeMemory(address);
 	//restoare interupts
 }
+
+/*----------------------------------------------------------------------------*/
+void test(void* param)
+{
+	Processor::msim_stop();
+	int num = 0;
+	if (param)
+		num = *(int*)param;
+	while(true) {
+		printf("Running test...%u\n", num);
+		thread_yield();
+		printf("foo");
+	}
+}
+

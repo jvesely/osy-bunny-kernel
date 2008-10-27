@@ -33,12 +33,6 @@
 
 #include "types.h"
 
-
-#define NULL 0
-#define false 0
-#define true (!false)
-
-
 /*! putc outputs one character.
  * @param c character to be printed
  * @return number of printed chars (0 or 1)
@@ -139,13 +133,33 @@ void free (const void * ptr);
 	kpanic(ARGS); // still needs tu dump those registers
 
 void kpanic(const char* format, ... );
-/*	Kernel::instance().stop(); \ */
-//	Kernel::instance().block();
 
 /*! reg_dump macro.
  * Dumps processor registers, now uses msim special instruction,
  * should be changed later
  */
-#define reg_dump()\
-	Kernel::instance().regDump();
-	
+#define reg_dump()
+
+
+int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
+	void* data, const unsigned int flags);
+
+thread_t thread_get_current();
+
+int thread_join(thread_t thr);
+
+int thread_join_timeout(thread_t thr, const unsigned int usec);
+
+int thread_detach(thread_t thr);
+
+void thread_sleep(const unsigned int sec);
+
+void thread_usleep(const unsigned int usec);
+
+void thread_yield();
+
+void thread_suspend();
+
+int thread_wakeup(thread_t thr);
+
+int thread_kill(thread_t thr);

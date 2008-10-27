@@ -37,6 +37,8 @@
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
 #include "mem/Allocator.h"
+#include "proc/ItemPool.h"
+#include "proc/Scheduler.h"
 
 /*! symbol speciefied in linker script */
 extern uint32_t _kernel_end;
@@ -63,17 +65,22 @@ public:
 	/*! returns currentConsole */
 	inline const Console& console() const { return m_console; };
 
+	inline ItemPool& pool() { return m_pool; };
+
+	inline thread_t addThread(Thread* thread) 
+		{ return m_scheduler->schedule(thread); };
+
 	/*! getter for physicalMemorySize */
 	inline size_t physicalMemorySize() const { return m_physicalMemorySize; };
 
 	/*! just a msim wrapper */
-	inline void stop() const { Processor::msim_stop(); };
+	static inline void stop() { Processor::msim_stop(); };
 
 	/*! another msim wrapper */
-	inline void regDump() const { Processor::msim_reg_dump(); };
+	static inline void regDump() { Processor::msim_reg_dump(); };
 
 	/*! block processor by falling in infinite loog */
-	inline void block() const { while(true) ;; };
+	static inline void block() { while(true) ;; };
 
 	/*! kernel heap alloc */
 	void* malloc(size_t size) const;
@@ -81,8 +88,10 @@ public:
 	/*! kernel heap free */
 	void free(void* address) const;
 
+	void inline yield() const { m_scheduler->switchThread(); };
+
 private:
-	
+	/*! kernel heap manager */	
 	Allocator m_alloc;
 
 	/*! console device */
@@ -97,6 +106,12 @@ private:
 	/*! TLB managing */
 	TLB m_tlb;
 
+	/*! reserve space needed by threads */
+	ItemPool m_pool;
+
+	/*! simple scheduler */
+	Scheduler* m_scheduler;
+
 	/*! counts accessible memory */
 	size_t getPhysicalMemorySize();
 
@@ -109,3 +124,4 @@ private:
 
 friend class Singleton<Kernel>;
 };
+

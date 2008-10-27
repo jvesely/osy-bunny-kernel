@@ -95,6 +95,8 @@ enum PageSize{
 
 };
 
+extern "C" void switch_cpu_context(void** old_top, void** new_top);
+
 /*! "tlbwr" instruction wrapper */
 inline void TLB_write_random() { asm volatile ("tlbwr\n"); }
 /*! "tlbwi" instruction wrapper */
