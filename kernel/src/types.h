@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://---svn repository here---
  *   
- *   @version $ID:$
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -52,6 +52,21 @@ typedef uint32_t off_t;
 typedef uint32_t size_t;
 typedef int32_t ssize_t;
 
+typedef uint32_t thread_t;
 typedef uint32_t ipl_t;
 
 typedef __builtin_va_list va_list;
+
+#include "errors.h"
+
+#ifndef NULL
+#define NULL 0
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
+#ifndef true
+#define true !(false)
+#endif

@@ -31,7 +31,7 @@
  * exit funtion.
  */
 
-#include "api.h"
+#include "Kernel.h"
 
 extern "C"
 {
@@ -46,4 +46,7 @@ extern "C"
 	int __cxa_atexit(void (*func) (void*), void* arg, void* dso_handle) { return 0; }
 }
 
-void operator delete (void *p) {};
+void* operator new(unsigned int size) { return malloc(size); };
+void operator delete (void* p) { Kernel::instance().free(p); };
+void* operator new[](unsigned int size) { return malloc(size); };
+void operator delete[] (void* p) { Kernel::instance().free(p); };

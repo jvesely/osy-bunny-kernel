@@ -42,7 +42,7 @@
  */
 inline size_t putc(const char c)
 {
-	return Kernel::instance().currentConsole().outputChar(c);
+	return Kernel::instance().console().outputChar(c);
 }
 
 /*! puts prints chars until char \0 is found
@@ -51,7 +51,7 @@ inline size_t putc(const char c)
  */
 inline size_t puts(const char * str)
 {
-	return Kernel::instance().currentConsole().outputString(str);
+	return Kernel::instance().console().outputString(str);
 }
 
 /*! prints number as unsigned decimal
@@ -98,6 +98,8 @@ size_t print_hexa(uint32_t number)
 {
 	puts("0x");
 	size_t count = 2;
+	if(number == 0)
+		return putc('0') + count;
 	size_t size;
 	uint32_t reverse;
 	for (size = reverse = 0; number != 0 ; ++size){
@@ -136,7 +138,7 @@ size_t vprintk(const char * format, va_list args)
 				case 'c': count += putc(va_arg(args, int));
 									++format;
 									break;
-				case 's': count += puts(va_arg(args, char*));
+				case 's': count += puts(va_arg(args, const char*));
 									++format;
 									break;
 				case 'i':
@@ -167,14 +169,105 @@ size_t vprintk(const char * format, va_list args)
  */
 size_t printk(const char * format, ...)
 {
-	if (!format)
-		return 0;
+	if (!format) return 0;
+
 	va_list args;
-	va_start(args,format);
+	va_start(args, format);
 	size_t written = vprintk(format, args);
 	va_end(args);
 
 	return written;
 }
 
+void kpanic(const char* format, ...){
+	Kernel::instance().regDump();
+	printf("Kernel PANIC: ");
+	if (!format) return;
 
+	va_list args;
+	va_start(args, format);
+	vprintk(format, args);
+	va_end(args);
+	
+	Kernel::instance().stop();
+	Kernel::instance().block();
+
+}
+
+void* malloc (size_t size)
+{
+	return Kernel::instance().malloc(size);
+}
+
+void free(void* ptr)
+{
+	Kernel::instance().free(ptr);
+}
+
+int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
+  void* data, const unsigned int flags)
+{
+	if (!Kernel::instance().pool().reserve()) return ENOMEM;
+	
+	Thread* thread = new Thread(thread_start, data);
+	if (!thread) return ENOMEM;
+
+	uint32_t ret = thread->setup();
+	if (ret != EOK) {
+		delete thread;
+		return ret;
+	}
+	*thread_ptr = Kernel::instance().scheduler().addThread(thread);
+	return EOK;
+}
+
+thread_t thread_get_current()
+{
+	return Kernel::instance().scheduler().activeThread()->id();
+}
+
+int thread_join(thread_t thr)
+{
+	return 0;
+}
+
+int thread_join_timeout(thread_t thr, const unsigned int usec)
+{
+	return 0;
+}
+
+int thread_detach(thread_t thr)
+{
+	return Kernel::instance().scheduler().thread(thr)->detach();
+}
+
+void thread_sleep(const unsigned int sec)
+{
+	Kernel::instance().scheduler().activeThread()->sleep(sec);
+}
+
+void thread_usleep(const unsigned int usec)
+{
+	Kernel::instance().scheduler().activeThread()->usleep(usec);
+}
+
+void thread_yield()
+{
+	Kernel::instance().scheduler().switchThread();
+}
+
+void thread_suspend()
+{
+	Kernel::instance().scheduler().suspend();
+	thread_yield();
+}
+
+int thread_wakeup(thread_t thr)
+{
+	return Kernel::instance().scheduler().wakeup(thr);
+}
+
+int thread_kill(thread_t thr)
+{
+	return Kernel::instance().scheduler().killThread(thr);
+}

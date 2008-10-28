@@ -42,7 +42,10 @@
 class TLB
 {
 public:
-	/*! @brief contructor should reset the tlb */
+	/*! @brief contructor should reset the tlb 
+	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
+	 * Inspired by Kalisto
+	 */
 	TLB();
 
 	/*! @brief setMapping inserts record into TLB.
@@ -54,8 +57,8 @@ public:
 	 * @param pageSize will use page of this size
 	 */
 	void setMapping(
-		uintptr_t virtualAddress, 
-		uintptr_t physicalAddress, 
-		Processor::PageSize pageSize
+		const uintptr_t virtualAddress, 
+		const uintptr_t physicalAddress, 
+		const Processor::PageSize pageSize
 		);
 };

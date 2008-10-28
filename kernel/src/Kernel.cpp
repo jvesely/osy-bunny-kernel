@@ -27,12 +27,11 @@
  * @file 
  * @brief Kernel class implementation.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * File contains Kernel class implementation.
  */
 #include "Kernel.h"
 #include "api.h"
+#include "devices.h"
 /*! This is our great bunny :) */
 const char * BUNNY_STR =
 "       _     _\n\
@@ -45,15 +44,12 @@ const char * BUNNY_STR =
      __\\ \" \" /__\n\
 jgs (____/^\\____)\n";
 
-Kernel::Kernel() :m_console(OUTPUT_PRINTER), m_clock(CLOCK) {
+Kernel::Kernel() :
+	m_console(OUTPUT_PRINTER), m_clock(CLOCK) {
 	Processor::reg_write_status(0);
 }
-/*---------------------------------------------------------------------------*/
-
-/*! @brief startup
- *
- * First greeting and memory size check
- */
+extern void test(void*);
+/*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
 	using namespace Processor;
@@ -69,37 +65,52 @@ void Kernel::run()
 	printf("Detecting freq....");
 	while (m_clock.time() == start) ;
 	const uint32_t from = reg_read_count();
-	while (m_clock.time() - (start + 1)<1 ) { //1 ms
+	while (m_clock.time() - (start + 1) < 1) { //1 ms
 		printf("\b.");
 		to = reg_read_count();
 	}
 	/* I would use constants here but they would not be used
-	 * in any other part of the program and still it's celar wht this does.
+	 * in any other part of the program and still it's clear what this does.
 	 * (counts Mhz :) )
 	 */
 	printf("%d.%d MHz\n", (to - from)/ 1000000, ((to- from)/1000) % 1000 );
 
+	// detect memory
 	m_physicalMemorySize = getPhysicalMemorySize();
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
+	
+	// setup allocator
+	m_alloc.setup((uintptr_t)&_kernel_end, 0x10000);
+
+	m_scheduler = new Scheduler();
+	assert(m_scheduler);
+
+	thread_t mainThread;
+	thread_create(&mainThread, test, NULL, 0);
+	
+	m_scheduler->switchThread();
 
 }
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){
 	printf("Probing memory range...");
 	const uint32_t MAGIC = 0xDEADBEEF;
 	
 	size_t size = 0;
 	const size_t range = 0x100000/sizeof(uint32_t); /* 1MB */
-	volatile uint32_t * point = (&_kernel_end - 0x80000000/sizeof(uint32_t));
 	volatile uint32_t * front = (&_kernel_end - 0x80000000/sizeof(uint32_t));
-	volatile uint32_t * back = (volatile uint32_t *)( (range -1) * sizeof(uint32_t) );
-	
+	volatile uint32_t * back = (volatile uint32_t *)( (range - 1) * sizeof(uint32_t) );
+	volatile uint32_t * point = front;
+
+
 	while(true) {
 		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M);
-	//	printf("Mapped %x to %x range = %d kB.\n", front, point, (range* sizeof(uint32_t)/1024));
+		printf( "Mapped %x to %x range = %d kB.\n", front, point, 
+			(range * sizeof(uint32_t)/1024) );
+		
 		(*front) = MAGIC; //write
 		(*back) = MAGIC; //write
-	//	printf("Proof read %x:%x %x:%x\n", front, *front, back, *back);
+		printf("Proof read %x:%x %x:%x\n", front, *front, back, *back);
 		if ( (*front != MAGIC) || (*back != MAGIC) ) break; //check
 		size += range * sizeof(uint32_t);
 		point += range; //add
@@ -107,4 +118,19 @@ size_t Kernel::getPhysicalMemorySize(){
 	printk("OK\n");
 	return size;
 }
-
+/*----------------------------------------------------------------------------*/
+void* Kernel::malloc(const size_t size) const
+{
+ ipl_t status = Processor::save_and_disable_interupts();
+ void * ret = m_alloc.getMemory(size);
+ Processor::revert_interupt_state(status);
+ return ret;
+}
+/*----------------------------------------------------------------------------*/
+void Kernel::free(void * address) const
+{
+	ipl_t status = Processor::save_and_disable_interupts();
+	m_alloc.freeMemory(address);
+	Processor::revert_interupt_state(status);
+}
+/*----------------------------------------------------------------------------*/

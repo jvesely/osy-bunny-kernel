@@ -32,10 +32,12 @@
 #pragma once
 
 #include "Singleton.h"
-#include "devices.h"
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
+#include "mem/Allocator.h"
+#include "structures/ItemPool.h"
+#include "proc/Scheduler.h"
 
 /*! symbol speciefied in linker script */
 extern uint32_t _kernel_end;
@@ -55,32 +57,56 @@ public:
 	 *
 	 * This method should never return from it's call. I initializes all stuff
 	 * that needs initializing, except that which is already initialized and
-	 * schedules first thread. (not yet)
+	 * schedules first thread. 
 	 */
 	void run();
 
-	/*! returns currentConsole */
-	inline const Console& currentConsole(){ return m_console; };
+	/*! @return Console IO device */
+	inline const Console& console() const { return m_console; };
+
+	/*! @return pool of Listitems used by threads in scheduler and mutex */
+	inline ItemPool& pool() { return m_pool; };
+
+	inline Scheduler& scheduler() { return *m_scheduler; };
+
+	inline const RTC& clock() { return m_clock; };
 
 	/*! getter for physicalMemorySize */
-	inline size_t physicalMemorySize(){ return m_physicalMemorySize; };
+	inline size_t physicalMemorySize() const 
+		{ return m_physicalMemorySize; };
 
 	/*! just a msim wrapper */
-	inline void stop() { Processor::msim_stop(); };
+	static inline void stop() { Processor::msim_stop(); };
 
 	/*! another msim wrapper */
-	inline void regDump() { Processor::msim_reg_dump(); };
+	static inline void regDump() { Processor::msim_reg_dump(); };
 
 	/*! block processor by falling in infinite loog */
-	inline void block() { while(true) ;; };
+	static inline void block() { while(true) ;; };
+
+	/*! @brief Kernel heap alloc.
+	 * @param size requested size
+	 * @return adress to the block of given size, NULL on failure
+	 */
+	void* malloc(size_t size) const;
+
+	/*! @brief Kernel heap free.
+	 * @param address adress of the returned block
+	 */
+	void free(void* address) const;
+
+	/*! My thread no longer wishes to run */
+	inline void yield() const { m_scheduler->switchThread(); };
 
 private:
-	
+	/*! kernel heap manager */	
+	Allocator m_alloc;
+
 	/*! console device */
 	Console m_console;
 
 	/*! clock device */
-	RTC m_clock;
+	const RTC m_clock;
 
 	/*! store memory size so it does not have to be detected again */
 	size_t m_physicalMemorySize;
@@ -88,13 +114,23 @@ private:
 	/*! TLB managing */
 	TLB m_tlb;
 
-	/*! counts accessible memory */
+	/*! reserve space needed by threads */
+	ItemPool m_pool;
+
+	/*! simple scheduler */
+	Scheduler* m_scheduler;
+
+	/*! @brief Detects accessible memory.
+	 *
+	 * Detects accesible memory by moving mapping of the first MB.
+	 * @return size of detected memory.
+	 */
 	size_t getPhysicalMemorySize();
 
 	/*! @brief initialize structures
 	 *
 	 * reset status register to turn on useg mapping
-	 * set clock address
+	 * sets clock and console
 	 */
 	Kernel();
 

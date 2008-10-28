@@ -283,7 +283,6 @@ protected:
 	inline unsigned int mhash ( const KeyType & key ) const
 	{
 		assert ( m_arraySize > 0 );
-		assert ( hash ( key , m_arraySize ) >= 0 );
 		assert ( hash ( key , m_arraySize ) < m_arraySize );
 		return hash ( key , m_arraySize );
 	};
@@ -318,13 +317,4 @@ private:
 
 /** @brief hash funtion for int */
 unsigned int hash ( int key, int rng );
-
-
-
-
-
-
-
-
-
 
