@@ -217,13 +217,13 @@ int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
 		delete thread;
 		return ret;
 	}
-	*thread_ptr = Kernel::instance().addThread(thread);
+	*thread_ptr = Kernel::instance().scheduler().addThread(thread);
 	return EOK;
 }
 
 thread_t thread_get_current()
 {
-	return 0;
+	return Kernel::instance().scheduler().activeThread()->id();
 }
 
 int thread_join(thread_t thr)
@@ -238,33 +238,36 @@ int thread_join_timeout(thread_t thr, const unsigned int usec)
 
 int thread_detach(thread_t thr)
 {
-	return 0;
+	return Kernel::instance().scheduler().thread(thr)->detach();
 }
 
 void thread_sleep(const unsigned int sec)
 {
+	Kernel::instance().scheduler().activeThread()->sleep(sec);
 }
 
 void thread_usleep(const unsigned int usec)
 {
+	Kernel::instance().scheduler().activeThread()->usleep(usec);
 }
 
 void thread_yield()
 {
-	Kernel::instance().yield();
+	Kernel::instance().scheduler().switchThread();
 }
 
 void thread_suspend()
 {
+	Kernel::instance().scheduler().suspend();
 }
 
 int thread_wakeup(thread_t thr)
 {
-	return 0;
+	return Kernel::instance().scheduler().wakeup(thr);
 }
 
 int thread_kill(thread_t thr)
 {
-	return 0;
+	return Kernel::instance().scheduler().killThread(thr);
 }
 

@@ -35,7 +35,7 @@
 #include "Kernel.h"
 #include "drivers/Processor.h"
 
-thread_t Scheduler::schedule(Thread* newThread)
+thread_t Scheduler::addThread(Thread* newThread)
 {
 	//ostrich stuff, there shall always be free id
 	thread_t id = m_nextThread++;
@@ -43,23 +43,30 @@ thread_t Scheduler::schedule(Thread* newThread)
 		//find free id
 		id = m_nextThread++;
 	}
-	assert( Kernel::instance().pool().reserved() );
-	ListItem<Thread*>* item = Kernel::instance().pool().get();
-	item->data() = newThread;
 	newThread->setId(id);
 
-	m_activeThreadList.pushBack(item);
-	dprintf("Scheduled thread %u to run.\n", id);
+	schedule(newThread);
+
 	return id;
 }
-
+/*----------------------------------------------------------------------------*/
+int Scheduler::wakeup(thread_t thread)
+{
+	if (!m_threadMap.exists(thread))
+		return EINVAL;
+	Thread * thr = m_threadMap.at(thread);
+	if (m_activeThreadList.find(thr) != m_activeThreadList.end())	
+		schedule(thr);
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
 void Scheduler::switchThread()
 {
 	//disable interupts
-	if (m_activeThreadList.size() == 0) { //no thread to switch to
+	if (m_activeThreadList.size() == 0) {
+		//TODO:switch to idle thread
 		return;
 	}
-	//dprintf("Rotating threadlist with %u items\n", m_activeThreadList.size());
 
 	void* DUMMYSTACK = (void*)0xF00;
 	void** old_stack = (void**)(m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
@@ -68,4 +75,18 @@ void Scheduler::switchThread()
 	//dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
 	Processor::switch_cpu_context(old_stack, new_stack);
 	//enable interupts
+}
+/*----------------------------------------------------------------------------*/
+void Scheduler::schedule(Thread * thread)
+{
+	assert( Kernel::instance().pool().reserved() );
+	ListItem<Thread*>* item = Kernel::instance().pool().get();
+	item->data() = thread;
+	m_activeThreadList.pushBack(item);
+	dprintf("Scheduled thread %u to run.\n", thread->id());
+}
+/*----------------------------------------------------------------------------*/
+void Scheduler::suspend()
+{
+	
 }

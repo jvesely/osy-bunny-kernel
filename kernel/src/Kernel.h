@@ -32,12 +32,11 @@
 #pragma once
 
 #include "Singleton.h"
-#include "devices.h"
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
 #include "mem/Allocator.h"
-#include "proc/ItemPool.h"
+#include "structures/ItemPool.h"
 #include "proc/Scheduler.h"
 
 /*! symbol speciefied in linker script */
@@ -58,20 +57,23 @@ public:
 	 *
 	 * This method should never return from it's call. I initializes all stuff
 	 * that needs initializing, except that which is already initialized and
-	 * schedules first thread. (not yet)
+	 * schedules first thread. 
 	 */
 	void run();
 
-	/*! returns currentConsole */
+	/*! @return Console IO device */
 	inline const Console& console() const { return m_console; };
 
+	/*! @return pool of Listitems used by threads in scheduler and mutex */
 	inline ItemPool& pool() { return m_pool; };
 
-	inline thread_t addThread(Thread* thread) 
-		{ return m_scheduler->schedule(thread); };
+	inline Scheduler& scheduler() { return *m_scheduler; };
+
+	inline const RTC& clock() { return m_clock; };
 
 	/*! getter for physicalMemorySize */
-	inline size_t physicalMemorySize() const { return m_physicalMemorySize; };
+	inline size_t physicalMemorySize() const 
+		{ return m_physicalMemorySize; };
 
 	/*! just a msim wrapper */
 	static inline void stop() { Processor::msim_stop(); };
@@ -82,13 +84,19 @@ public:
 	/*! block processor by falling in infinite loog */
 	static inline void block() { while(true) ;; };
 
-	/*! kernel heap alloc */
+	/*! @brief Kernel heap alloc.
+	 * @param size requested size
+	 * @return adress to the block of given size, NULL on failure
+	 */
 	void* malloc(size_t size) const;
 
-	/*! kernel heap free */
+	/*! @brief Kernel heap free.
+	 * @param address adress of the returned block
+	 */
 	void free(void* address) const;
 
-	void inline yield() const { m_scheduler->switchThread(); };
+	/*! My thread no longer wishes to run */
+	inline void yield() const { m_scheduler->switchThread(); };
 
 private:
 	/*! kernel heap manager */	
@@ -98,7 +106,7 @@ private:
 	Console m_console;
 
 	/*! clock device */
-	RTC m_clock;
+	const RTC m_clock;
 
 	/*! store memory size so it does not have to be detected again */
 	size_t m_physicalMemorySize;
@@ -112,13 +120,17 @@ private:
 	/*! simple scheduler */
 	Scheduler* m_scheduler;
 
-	/*! counts accessible memory */
+	/*! @brief Detects accessible memory.
+	 *
+	 * Detects accesible memory by moving mapping of the first MB.
+	 * @return size of detected memory.
+	 */
 	size_t getPhysicalMemorySize();
 
 	/*! @brief initialize structures
 	 *
 	 * reset status register to turn on useg mapping
-	 * set clock address
+	 * sets clock and console
 	 */
 	Kernel();
 

@@ -31,6 +31,7 @@
  */
 #include "Kernel.h"
 #include "api.h"
+#include "devices.h"
 /*! This is our great bunny :) */
 const char * BUNNY_STR =
 "       _     _\n\
@@ -47,14 +48,8 @@ Kernel::Kernel() :
 	m_console(OUTPUT_PRINTER), m_clock(CLOCK) {
 	Processor::reg_write_status(0);
 }
-/*----------------------------------------------------------------------------*/
-
-/*! @brief startup
- *
- * First greeting and memory size check, processor speed check,
- * some testing stuff.
- */
 extern "C" void test(void*);
+/*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
 	using namespace Processor;
@@ -75,10 +70,11 @@ void Kernel::run()
 		to = reg_read_count();
 	}
 	/* I would use constants here but they would not be used
-	 * in any other part of the program and still it's celar wht this does.
+	 * in any other part of the program and still it's clear what this does.
 	 * (counts Mhz :) )
 	 */
 	printf("%d.%d MHz\n", (to - from)/ 1000000, ((to- from)/1000) % 1000 );
+
 	// detect memory
 	m_physicalMemorySize = getPhysicalMemorySize();
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
@@ -104,11 +100,6 @@ void Kernel::run()
 
 }
 /*----------------------------------------------------------------------------*/
-/*! Detects accesible physical memory by trying to write/read from
- * the beginning and the end of 1MB chunk, while shifting virtual mapping
- * of this chunk.
- * @return size of detected memory
- */
 size_t Kernel::getPhysicalMemorySize(){
 	printf("Probing memory range...");
 	const uint32_t MAGIC = 0xDEADBEEF;
@@ -136,28 +127,20 @@ size_t Kernel::getPhysicalMemorySize(){
 	return size;
 }
 /*----------------------------------------------------------------------------*/
-/*! Kernel malloc implementation, ask for size bytes from the heap allocator
- * disables interupts while mangling with the heap (not yet :) )
- */
 void* Kernel::malloc(const size_t size) const
 {
- // disable interupts
+ ipl_t status = Processor::save_and_disable_interupts();
  void * ret = m_alloc.getMemory(size);
- // restore interupts
+ Processor::revert_interupt_state(status);
  return ret;
 }
 /*----------------------------------------------------------------------------*/
-/*! Kernel free implementation, returns block at address to the heap
- * @param address block to be returned
- */
 void Kernel::free(void * address) const
 {
-	//disable interupts
-//	ipl_t status = save_
+	ipl_t status = Processor::save_and_disable_interupts();
 	m_alloc.freeMemory(address);
-	//restoare interupts
+	Processor::revert_interupt_state(status);
 }
-
 /*----------------------------------------------------------------------------*/
 void test(void* param)
 {
@@ -165,7 +148,8 @@ void test(void* param)
 	if (param)
 		num = *(int*)param;
 	while(true) {
-		printf("Running test...%u\n", num);
+		printf("Running test...%u on thread %p\n", num, thread_get_current());
+		thread_sleep(1);
 		thread_yield();
 	}
 }

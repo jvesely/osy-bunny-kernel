@@ -108,7 +108,6 @@ public:
 
 	void yield();	
 
-
 	inline bool detached() const { return m_detached; }
 
 	inline bool detach() { return m_detached = true; }
@@ -130,21 +129,25 @@ public:
 	inline void** stackTop() { return &m_stackTop; };
 
 protected:
-	/* that's my stack */
+	/*! that's my stack */
 	void* m_stack;
 	void* m_stackTop;
 	uint32_t m_stackSize;
 
-	/* I'm supposed to run this stuff */
+	/*! I'm supposed to run this stuff */
 	void (*m_runFunc)(void*);
 	
-	/* runFunc expects this */
+	/*! runFunc expects this */
 	void* m_runData;
 
-	/* detached flag */
+	/*! detached flag */
 	bool m_detached;
 
+	/*! my id */
 	thread_t m_id;
+
+	/*! someone waiting */
+	Thread* m_follower;
 
 private:
 	Thread();

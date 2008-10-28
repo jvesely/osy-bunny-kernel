@@ -36,16 +36,18 @@
 #include "Kernel.h"
 #include "drivers/Processor.h"
 #include "address.h"
-
+/*----------------------------------------------------------------------------*/
 void Thread::run()
 {
 	m_runFunc(m_runData);
 	dprintf("Thread has ended\n");
-
-	yield();
+	
+	if (m_follower)
+		thread_wakeup(m_follower->id());
+	thread_suspend();
 	Kernel::block();
 }
-
+/*----------------------------------------------------------------------------*/
 uint32_t Thread::setup()
 {
 	m_stack = malloc(m_stackSize);
@@ -66,12 +68,24 @@ uint32_t Thread::setup()
 	context->sp = (unative_t)m_stackTop;
 	return EOK;
 }
-
+/*----------------------------------------------------------------------------*/
 void Thread::yield()
 {
 	Kernel::instance().yield();
 }
-
+/*----------------------------------------------------------------------------*/
+void Thread::sleep(const unsigned int sec)
+{
+	unsigned int end_time = Kernel::instance().clock().time() + sec;
+	// vulnurable to Y2k38 bug :)
+	while(Kernel::instance().clock().time() < end_time)
+		yield();
+}
+/*----------------------------------------------------------------------------*/
+void Thread::usleep(const unsigned int usec)
+{
+}
+/*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
 }

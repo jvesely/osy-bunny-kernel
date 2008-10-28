@@ -40,9 +40,13 @@ class Scheduler
 {
 public:
 	Scheduler():m_currentThread(NULL){};
-	thread_t schedule(Thread* newThread);
-	void removeThread(thread_t thread){};
-	void killThread(thread_t thread){};
+	Thread* thread(thread_t thread){ return NULL; };
+	thread_t addThread(Thread* newThread);
+	int killThread(thread_t thread){ return EOK; };
+	int wakeup(thread_t thread);
+	void suspend();
+	inline Thread* activeThread()
+		{ return m_currentThread; };
 	void switchThread();
 
 private:
@@ -50,4 +54,6 @@ private:
 	HashMap<thread_t, Thread*> m_threadMap;
 	Thread* m_currentThread;
 	thread_t m_nextThread;
+
+	void schedule(Thread * thread);
 };

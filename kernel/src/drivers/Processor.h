@@ -62,7 +62,7 @@
 
 /*! @namespace Processor
  * @brief Contains constants and routines associated with 
- * handling the control processor.
+ * handling processor and control processor.
  */
 namespace Processor
 {
@@ -77,9 +77,11 @@ static const unative_t VPN2_MASK = 0x01ffe000; /*!< upper 19 bits */
 static const unative_t PFN_SHIFT = 6; /*!< lower 6 bits contains flags */
 static const unative_t PFN_ADDR_MASK = (0xffffff << PFN_SHIFT); /*!< bits 6-30*/
 
-static const native_t PROBE_FAILURE = 0x80000000; /*!< highest bit */
-static const native_t ENTRY_LO_VALID_MASK = 0x00000002; /*!< second bit */
-static const native_t ENTRY_LO_DIRTY_MASK = 0x00000004; /*!< third bit */
+static const unative_t PROBE_FAILURE = 0x80000000; /*!< highest bit */
+static const unative_t ENTRY_LO_VALID_MASK = 0x00000002; /*!< second bit */
+static const unative_t ENTRY_LO_DIRTY_MASK = 0x00000004; /*!< third bit */
+
+static const unative_t STATUS_IE_MASK = 1; /*!< subject to change */
 
 static const uint32_t ENTRY_COUNT = 48; /*!< number of avialable TLB entries */
 
@@ -105,6 +107,7 @@ inline void TLB_write_index() { asm volatile ("tlbwi\n"); }
 inline void TLB_read() { asm volatile ("tlbr\n"); }
 /*! "tlbp" instruction wrapper */
 inline void TLB_probe() { asm volatile ("tlbp\n"); }
+
 
 /*! named register read wrapper */
 inline unative_t reg_read_index()     { return read_register(0); }
@@ -153,6 +156,21 @@ inline void reg_write_cause(unative_t value)    { write_register(13, value); }
 inline void reg_write_epc(unative_t value)      { write_register(14, value); }
 /*! named register write wrapper */
 inline void reg_write_eepc(unative_t value)     { write_register(30, value); }
+
+/*! return current status of interupts and disable them, taken from Kalisto */
+inline ipl_t save_and_disable_interupts()
+{
+	ipl_t status = reg_read_status();
+	reg_write_status(status & ~STATUS_IE_MASK);
+	return (status & STATUS_IE_MASK);
+}
+
+/*! revert to previous interupt status */
+inline void revert_interupt_state(ipl_t state)
+{
+	if (state)
+		reg_write_status(reg_read_status() & STATUS_IE_MASK);
+}
 
 /*! msim_special instruction: turn trace ON */
 inline void msim_trace_on (void)

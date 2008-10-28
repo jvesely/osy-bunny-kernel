@@ -32,11 +32,6 @@
 #include "mem/Allocator.h"
 #include "api.h"
 
-/*!
- * Aligns given addresses and creates one big free block.
- * @param from first byte belonging to this heap.
- * @param length number of bytes in my heap.
- */
 void Allocator::setup(const uintptr_t from, const size_t length)
 {
 	uintptr_t end = alignDown(from + length, ALIGMENT);
@@ -53,15 +48,10 @@ void Allocator::setup(const uintptr_t from, const size_t length)
 	m_start = start;
 	m_end = end;
 }
-
-/*!
- * Creates header and footer structures representing this block
- * @param start first byte of the block (must be aligned).
- * @param size size of the block (must be aligned).
- * @param free availability of the block. 
- */
+/*----------------------------------------------------------------------------*/
 void Allocator::createBlock(
-	const uintptr_t start, const size_t size, const bool free) const
+	const uintptr_t start, const size_t size, const bool free
+) const
 {
 	// test aligment
 	assert((start & ~(ALIGMENT - 1)) == start);
@@ -81,12 +71,7 @@ void Allocator::createBlock(
 	
 	assert(checkBlock(start));
 }
-
-/*!
- * Checks size values and magic values of both header and footer.
- * @param start addresss of the lock to be checked.
- * @return status of the block
- */
+/*----------------------------------------------------------------------------*/
 bool Allocator::checkBlock(const uintptr_t start) const
 {
 	BlockHeader* header = (BlockHeader*)start;
@@ -96,11 +81,7 @@ bool Allocator::checkBlock(const uintptr_t start) const
 	dprintf("Block of size %u B starting on %x seems %s\n", header->size, start + sizeof(BlockHeader), ok?"OK":"BAD");
 	return ok;
 }
-
-/*! Tries to find first big enough block, splits if necessary and marks as used
- * @param size requested size of the block
- * @return pointer to the inner part of assigned block, NULL on failure.
- */
+/*----------------------------------------------------------------------------*/
 void* Allocator::getMemory(const size_t size) const
 {
 	void * res = NULL;
@@ -119,8 +100,10 @@ void* Allocator::getMemory(const size_t size) const
 			} else {
 				// split
 				const size_t cut_off = header->size + sizeof(BlockHeader) + sizeof(BlockFooter) - real_size;
-				createBlock((uintptr_t)((uintptr_t)header + real_size), cut_off, true); // rest
-				createBlock((uintptr_t)(header), real_size, false); // used block
+				//unused rest
+				createBlock((uintptr_t)((uintptr_t)header + real_size), cut_off, true);
+				//used block
+				createBlock((uintptr_t)(header), real_size, false);
 				break;
 			}
 		}
@@ -130,11 +113,7 @@ void* Allocator::getMemory(const size_t size) const
 	}
 	return res;
 }
-
-/*! Return block to the heap and joins block it with its neighbours, 
- * if those are free blocks too.
- * @address address of the block to be freed
- */
+/*----------------------------------------------------------------------------*/
 void Allocator::freeMemory(void* address) const
 {
 	if ( ((uintptr_t)address <= m_start) 
@@ -142,10 +121,11 @@ void Allocator::freeMemory(void* address) const
 
 	BlockHeader* my_header = (BlockHeader*)((uintptr_t)address - sizeof(BlockHeader));
 	BlockHeader* from_header = my_header;
-	assert(checkBlock((uintptr_t)my_header));
+	assert(checkBlock((uintptr_t)my_header)); // should be a block
+
 	if (my_header->free) return; //already freed??
+
 	size_t size =  my_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);
-	
 	dprintf("Freeing block of size %u, real size:%u\n", my_header->size, size);
 
 	if ((uintptr_t)my_header > m_start)	{
