@@ -52,7 +52,7 @@ public:
 	 * @return pointer to Thread class, NULL on failure
 	 */
 	Thread* thread(thread_t thread)
-		{ return m_threadMap.exists(thread)?m_threadMap.at(threadd):NULL; };
+		{ return m_threadMap.exists(thread)?m_threadMap.at(thread):NULL; };
 	
 	/*! @brief Adds new thread, generates id for it and makes it READY
 	 * @param newThread thread to be added
