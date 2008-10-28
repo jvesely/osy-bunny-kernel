@@ -25,11 +25,9 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief ListItem Pool.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Pool of ListItems implementation.
  */
 
 #include "ItemPool.h"

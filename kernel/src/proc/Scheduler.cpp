@@ -25,11 +25,9 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Scheduler implementation.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Contains some method implementations both public and private.
  */
 #include "Scheduler.h"
 #include "Kernel.h"
@@ -103,8 +101,9 @@ int Scheduler::joinThread(thread_t thread)
 	if (!m_threadMap.exists(thread))
 		return EINVAL;
 	Thread* thr = m_threadMap.at(thread);
-	if (thr == m_currentThread || thr->detached() || thr->follower() 
-		|| thr->status() != Thread::KILLED) {
+	if (thr->status() == Thread::KILLED)
+		return EKILLED;
+	if (thr == m_currentThread || thr->detached() || thr->follower() ) {
 		return EINVAL;
 	}
 	thr->setFollower(m_currentThread);

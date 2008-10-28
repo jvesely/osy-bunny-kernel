@@ -85,7 +85,7 @@ void Kernel::run()
 	m_scheduler = new Scheduler();
 	assert(m_scheduler);
 
-thread_t mainThread;
+	thread_t mainThread;
 	thread_create(&mainThread, test, NULL, 0);
 	
 	m_scheduler->switchThread();

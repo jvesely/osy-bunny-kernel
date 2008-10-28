@@ -91,11 +91,16 @@ native_t getc_try();
  */
 ssize_t gets(char * str, const size_t len);
 
-
+/*! @brief Allocates block of size size on the heap.
+ *	@param size requested size of the block.
+ *	@return pointer to the allocated block, NULL on failure
+ */
 void * malloc(const size_t size);
 
+/*! @brief Returns no longer needed block back to the heap.
+ * @param ptr pointer to the block
+ */
 void free (const void * ptr);
-
 
 /*! assert and ASSERT are the same thing. */
 #define assert ASSERT
@@ -146,28 +151,71 @@ void kpanic(const char* format, ... );
  */
 #define reg_dump()
 
-
+/*! Creates and runs a new thread. Stores its identifier.
+ * @param thread_ptr pointer to place where identifier would be stored.
+ * @param thread_start routine to run in the new thread
+ * @param data data that will be sent to the routine
+ * @param flags ignored param
+ * @return ENOMEM on lack of memory, EOK on sucess
+ */
 int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
 	void* data, const unsigned int flags);
 
+/*! Gets identifier of the currently running thread.
+ * @return thread identifier
+ */
 thread_t thread_get_current();
 
+/*! Blocks calling thread until given thread finishes execution.
+ * @param thr id of the thread to wait for
+ * @return EINVAL if attempting to wait for oneself, non-existing thread
+ * id or if the thread is already beeing waited for, EKILLED if the thread
+ * has already been killed EOK on success. (wakes when the thread is dead).
+ */
 int thread_join(thread_t thr);
 
+/*! Similiar to version without timer, except that it waits max usec
+ * microsecs.
+ * @param thr thread id of the threadd one wants to wait for
+ * @param usec number of microsecs to wait before returning ETIMEDOUT.
+ * @return See non-timed version, plus ETIMEOUT if thread is still running 
+ * after given time.
+ */
 int thread_join_timeout(thread_t thr, const unsigned int usec);
 
+/*! Sets thread state to detached. Detached thread can not be waited for
+ * and its structures are deleted emediately after it finishes execution.
+ * @param thr thread to detach
+ */
 int thread_detach(thread_t thr);
 
+/*! Stops executing calling thread for sec seconds.
+ * @param sec number of seconds to refrain from execution.
+ */
 void thread_sleep(const unsigned int sec);
 
+/*! Similiar to sleep, this time in microseconds.
+ * @param usec umber of microseconds to wait.
+ */
 void thread_usleep(const unsigned int usec);
 
+/*! Surrender execution of the calling thread in favour of any other */
 void thread_yield();
 
+/*! Stop executing calling thread and don't schedule it until the thread has
+ * been woken up.
+ */
 void thread_suspend();
 
+/*! Start scheduling thread for execution again.
+ * @param thr thread to wake up.
+ */
 int thread_wakeup(thread_t thr);
 
+/*! Kills thread. If the thread is detached it will be destroyed. Attached
+ * threads will stop executing and won't be scheduled, but will remain in 
+ * the memory until ... .
+ */
 int thread_kill(thread_t thr);
 
 #ifdef __cplusplus

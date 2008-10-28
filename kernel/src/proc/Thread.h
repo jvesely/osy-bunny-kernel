@@ -27,16 +27,24 @@
  * @file 
  * @brief Shared Thread class.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Class is used as kernel thread, other thread-like stuff will hopefully 
+ * be able to inherit it.
  */
 #pragma once
 
 #include "api.h"
-
+/*!
+ * @class Thread Thread.h "proc/Thread.h"
+ * @brief Thread class.
+ *
+ * Thread class handles stack and routine that is to be executed
+ * in the separate threadd.
+ */
 class Thread
 {
+	/*! @struct Context Thread.h "proc/Thread.h"
+	 * @brief Helper structure tat helps address separate registers.
+	 */
 	struct Context
 	{
 		unative_t zero;
@@ -90,10 +98,20 @@ class Thread
 
 public:
 	static const uint32_t DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
+	
+	/*! @enum Status
+	 * @brief Possible states of threads
+	 */
 	enum Status {
 		READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED
 	};
-	/* creation myth */
+	
+	/*! @brief Creates thread.
+	 * @param func function to be executed in the separate thread
+	 * @param data the only parameter to handled to the function "func"
+	 * @param stackSize size of stack that will be available to this thread
+	 * @param flags ignored param :)
+	 */
 	inline Thread(
 		void (*func)(void*), 
 		void* data, 
@@ -103,62 +121,95 @@ public:
 		 m_follower(NULL)
 		{ assert(func); assert(stackSize); };
 
-	/* this method will be run in separate thread */
+	/*! this method will be run in separate thread, includes some management */
 	virtual void run();
-	/* put initial registers on stack, set pointer to run */
+	
+	/*! @brief initial setup that could not be done in the constructor.
+	 *
+	 * Allocates stack, stores initial context and sets some reg values
+	 * @return ENOMEM if stack allocation fails, otherwise EOK
+	 */
 	uint32_t setup();
 	
+	/*! @brief new thread entry point */
 	void start() { run(); };
 
+	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
 	void yield();	
 
+	/*! @brief Detached getter
+	 * @return detached state
+	 */
 	inline bool detached() const { return m_detached; }
 
+	/*! @brief Sets state to detached
+	 * @return new detached state (true)
+	 */
 	inline bool detach() { return m_detached = true; }
-
+	
+	/*! @brief Surrenderrs processing time for given time
+	 * @param sec number of seconds to sleep
+	 */
 	void sleep(const unsigned int sec);
 
+	/*! @brief Microsec brother of sleep()
+	 * @param usec number of microseconds to sleep
+	 */
 	void usleep(const unsigned int usec);
 
+	/*! @brief Conversion to thread_t type.
+	 * @return thread_t identifier of this thread
+	 */
 	inline thread_t id() { return m_id; };
 
+	/*! @brief Sets my thread_t identifier */
 	inline void setId(thread_t id) { m_id = id; };
 
+	/*! @brief Pointer to the pointer to the stacktop
+	 * @return pointer that store stacktop pointer address
+	 */
 	inline void** stackTop() { return &m_stackTop; };
 
+	/*! @brief Follower is the Thread waiting for me.
+	 * @return pointer to the thread waiting for my end
+	 */
 	inline Thread* follower() const { return m_follower; };
 
+	/*! @brief Sets follower.
+	 * @param follower new follower
+	 */
 	inline void setFollower(Thread* follower) { m_follower = follower; };
 
+	/*! @brief Gets current thread status.
+	 * @return current status
+	 */
 	inline Status status() const { return m_status; };
 
+	/*! @brief Sets current thread status.
+	 *
+	 * Used during thread switching, mutex locking, waiting,....
+	 * @param status new status
+	 */
 	inline void setStatus(Status status) { m_status = status; };
 
 protected:
-	/*! that's my stack */
-	void* m_stack;
-	void* m_stackTop;
-	uint32_t m_stackSize;
+	void* m_stack;	/*!< that's my stack */
+	void* m_stackTop;	/*!< top of my stack */
+	uint32_t m_stackSize; /*!< size of my stack */
 
-	/*! I'm supposed to run this stuff */
+	/*! I'm supposed to run this */
 	void (*m_runFunc)(void*);
 	
 	/*! runFunc expects this */
 	void* m_runData;
 
-	/*! detached flag */
-	bool m_detached;
-
-	/*! my status */
-	Status m_status;
-	/*! my id */
-	thread_t m_id;
-
-	/*! someone waiting */
-	Thread* m_follower;
+	bool m_detached;	/*!< detached flag */
+	Status m_status;	/*!< my status */
+	thread_t m_id;	/*!< my id */
+	Thread* m_follower;	/*!< someone waiting */
 
 private:
-	Thread();
-	Thread(const Thread& other);
-	const Thread& operator=(const Thread& other);
+	Thread(); /*!< no constructing without params */
+	Thread(const Thread& other); /*!< no copying */
+	const Thread& operator=(const Thread& other);	/*!< no assigning */
 };

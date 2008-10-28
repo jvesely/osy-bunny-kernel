@@ -25,11 +25,10 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Register stuff taken from Kalisto.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Lots of defines some of them are redundat and are present in 
+ * drivers/Processor.h too (needs to get sorted).
  */
 
 #pragma once

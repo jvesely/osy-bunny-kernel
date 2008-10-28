@@ -27,9 +27,8 @@
  * @file 
  * @brief Memory allocator class.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Allocator class declaration, togather with required structures of Header
+ * and Footer.
  */
 
 #pragma once
@@ -43,16 +42,21 @@
  * it into smaller pieces keeping track of free and used parts.
  */
 class Allocator {
-	/*! Header of the memory block keeps availability, size and some magic */
+	/*! @struct BlockHeader Allocator.h "mem/Allocator.h"
+	 * @brief Header of memory blocks keeps availability, 
+	 * size and some magic 
+	 */
 	struct BlockHeader {
-		bool free;
-		size_t size;
-		uint32_t magic;
+		bool free;  /*!< availability */
+		size_t size;	/*!< size of the block */
+		uint32_t magic; /*!< magic bytes for detecting corruption */
 	};
-	/*! Footer of the memory block keeps magic and size */
+	/*! @struct BlockFooter Allocator.h "mem/Allocator.h"
+	 * @brief Footer of memory blocks keeps magic and size 
+	 */
 	struct BlockFooter {
-		uint32_t magic;
-		size_t size;
+		uint32_t magic; /*!< magic bytes for detecting corruption */
+		size_t size;	/*!< size of the block */
 	};
 public:
 	/*! @brief initializes given chunk 

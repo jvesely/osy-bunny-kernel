@@ -25,11 +25,9 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Thread class implementation.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Some longer Thread methods like run(), setup(), yield(), sleep() ...
  */
 
 #include "Thread.h"
@@ -62,7 +60,7 @@ uint32_t Thread::setup()
 	//http://www.goingware.com/tips/member-pointers.html
 	//dereferencing address trick, advised by M. Burda
 	context->ra = *(unative_t*)(&runPtr);
-	//the first (and only)  param
+	//the first (and the only) param
 	context->a0 = (unative_t)this;
 	// global pointer
 	context->gp = ADDR_TO_KSEG0(0);

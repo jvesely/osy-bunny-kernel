@@ -37,6 +37,8 @@
  * Template class, uses type T. provides metod instance that returns reference 
  * to the static instance of type T.
  */
+#pragma once
+
 template<typename T>
 class Singleton
 {
