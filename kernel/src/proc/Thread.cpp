@@ -36,6 +36,7 @@
 #include "Kernel.h"
 #include "drivers/Processor.h"
 #include "address.h"
+#include "api.h"
 /*----------------------------------------------------------------------------*/
 void Thread::run()
 {
@@ -78,14 +79,22 @@ void Thread::sleep(const unsigned int sec)
 {
 	unsigned int end_time = Kernel::instance().clock().time() + sec;
 	// vulnurable to Y2k38 bug :)
+	// bad implementation, it will surely change when timer becomes avilable
 	while(Kernel::instance().clock().time() < end_time)
 		yield();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::usleep(const unsigned int usec)
 {
-}
-/*----------------------------------------------------------------------------*/
-Thread::~Thread()
-{
+	//another stupid implementation
+	unsigned int start_time = Kernel::instance().clock().usec();
+	unsigned int end_time = start_time + usec; // may overflow
+	if (end_time < start_time)
+		while (Kernel::instance().clock().usec() > start_time) {
+			yield();
+		}
+	
+	while (Kernel::instance().clock().usec() < end_time) {
+		yield();
+	}
 }

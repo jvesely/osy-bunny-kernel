@@ -60,11 +60,18 @@ $(OBJ_DIR)/%.o : %.S
 
 
 ### Cleaning ###
+.PHONY: clean
 clean:
-	@echo -e "$(COL_WHITE)Cleaning stuff...$(COL_RED)"
-	@rm -vf $(BIN_DIR)/$(LOADER_BIN)
-	@rm -vf $(BIN_DIR)/$(LOADER_RAW)
+	@echo -e "$(COL_WHITE)Cleaning object files...$(COL_RED)"
 	@rm -vf $(BIN_DIR)/$(LOADER_MAP)
+	@rm -vf $(BIN_DIR)/$(LOADER_RAW)
 	@rm -vf $(OBJ_DIR)/*.o
+	@echo -e "$(COL_WHITE)done$(COL_END)"
+
+### Dist clean ###
+.PHONY: distclean
+distclean: clean
+	@echo -e "$(COL_WHITE)Cleaning binary files...$(COL_RED)"
+	@rm -vf $(BIN_DIR)/$(LOADER_BIN)
 	@echo -e "$(COL_WHITE)done$(COL_END)"
 

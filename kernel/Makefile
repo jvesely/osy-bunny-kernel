@@ -11,7 +11,9 @@ OBJCOPY = $(shell which mipsel-linux-gnu-objcopy)
 AS = $(shell which mipsel-linux-gnu-as)
 LD = $(shell which mipsel-linux-gnu-ld)
 
-CFLAGS = -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -g3 -fno-rtti -fno-threadsafe-statics -nostartfiles -nostdlib -fno-exceptions -I. -I ../common -I $(SRC_DIR)
+CPPFLAGS = -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -g3 -fno-rtti -fno-threadsafe-statics -nostartfiles -nostdlib -fno-exceptions -I. -I ../common -I $(SRC_DIR)
+
+CFLAGS =  -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I $(SRC_DIR)
 
 ASFLAGS = -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I ../common -I $(SRC_DIR) -D__ASM__
 
@@ -39,7 +41,13 @@ KERNEL_BIN = kernel.bin
 KERNEL_RAW = kernel.raw
 KERNEL_MAP = kernel.map
 LDS_FILE = kernel.lds
-OBJS = $(shell find src -name "*.cpp" -o -name "*.S" -o -name "*.c")
+OBJS += $(shell find src -name "*.cpp" -o -name "*.S" -o -name "*.c")
+
+ifneq ($(KERNEL_TEST),)
+	OBJS += $(KERNEL_TEST)
+	CPPFLAGS += -DKERNEL_TEST
+endif
+
 OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(OBJS)))))
 
 
@@ -57,9 +65,13 @@ $(BIN_DIR)/$(KERNEL_RAW): depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 -include Makefile.depend
 .SUFFIXES:
 
+$(OBJ_DIR)/test.o: ../$(KERNEL_TEST)
+	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_VIOLET)$< $(COL_END)"
+	@$(CC) $(CFLAGS) -c -o $@ $<
+
 $(OBJ_DIR)/%.o : %.cpp
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_BLUE)$< $(COL_END)"
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CPPFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : %.c
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_VIOLET)$< $(COL_END)"
@@ -82,12 +94,17 @@ depend:
 
 ### Cleaning ###
 .PHONY: clean
-clean:
-	@echo -e "$(COL_WHITE)Cleaning stuff...$(COL_RED)"
-	@rm -vf $(BIN_DIR)/$(KERNEL_BIN)
+clean: 
+	@echo -e "$(COL_WHITE)Cleaning object files...$(COL_RED)"
 	@rm -vf $(BIN_DIR)/$(KERNEL_RAW)
 	@rm -vf $(BIN_DIR)/$(KERNEL_MAP)
 	@rm -vf $(OBJ_DIR)/*.o
 	@echo -e "$(COL_WHITE)done$(COL_END)"
 
+### Distcleaning ###
+.PHONY: distclean
+distclean: clean
+	@echo -e "$(COL_WHITE)Cleaning bin files...$(COL_RED)"
+	@rm -vf $(BIN_DIR)/$(KERNEL_BIN)
+	@echo -e "$(COL_WHITE)done$(COL_END)"
 

@@ -33,18 +33,23 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+void run_test(void);
+
 /*! putc outputs one character.
  * @param c character to be printed
  * @return number of printed chars (0 or 1)
  */
-inline size_t putc(const char c);
+size_t putc(const char c);
 
 /*! puts outputs strings.
  * checks whether param is not null, prints chars until "\0" is found
  * @param str pointer to the first char of the string
  * @return number of printed chars
  */
-inline size_t puts(const char * str);
+size_t puts(const char * str);
 
 /*! printf and printk are the same thing */
 #define printf printk
@@ -130,6 +135,7 @@ void free (const void * ptr);
  * and stops simulation, after that it block the kernel.
  */
 #define panic(ARGS...) \
+	reg_dump() \
 	kpanic(ARGS); // still needs tu dump those registers
 
 void kpanic(const char* format, ... );
@@ -163,3 +169,7 @@ void thread_suspend();
 int thread_wakeup(thread_t thr);
 
 int thread_kill(thread_t thr);
+
+#ifdef __cplusplus
+}
+#endif

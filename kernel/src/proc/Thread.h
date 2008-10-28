@@ -90,13 +90,17 @@ class Thread
 
 public:
 	static const uint32_t DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
+	enum Status {
+		READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED
+	};
 	/* creation myth */
 	inline Thread(
 		void (*func)(void*), 
 		void* data, 
 		uint32_t flags = 0,
 		uint32_t stackSize = DEFAULT_STACK_SIZE):
-		 m_stack(NULL), m_stackSize(stackSize), m_runFunc(func), m_runData(data)
+		 m_stack(NULL), m_stackSize(stackSize), m_runFunc(func), m_runData(data),
+		 m_follower(NULL)
 		{ assert(func); assert(stackSize); };
 
 	/* this method will be run in separate thread */
@@ -116,17 +120,19 @@ public:
 
 	void usleep(const unsigned int usec);
 
-	int wakeup();
-
-	int kill();
-
-	~Thread();
-
 	inline thread_t id() { return m_id; };
 
 	inline void setId(thread_t id) { m_id = id; };
 
 	inline void** stackTop() { return &m_stackTop; };
+
+	inline Thread* follower() const { return m_follower; };
+
+	inline void setFollower(Thread* follower) { m_follower = follower; };
+
+	inline Status status() const { return m_status; };
+
+	inline void setStatus(Status status) { m_status = status; };
 
 protected:
 	/*! that's my stack */
@@ -143,6 +149,8 @@ protected:
 	/*! detached flag */
 	bool m_detached;
 
+	/*! my status */
+	Status m_status;
 	/*! my id */
 	thread_t m_id;
 

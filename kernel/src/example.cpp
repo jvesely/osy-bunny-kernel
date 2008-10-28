@@ -31,31 +31,17 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
-#pragma once
-#include "Thread.h"
-#include "structures/List.h"
-#include "structures/HashMap.h"
 
-class Scheduler
+#include "api.h"
+
+void test(void*)
 {
-public:
-	Scheduler():m_currentThread(NULL){};
-	Thread* thread(thread_t thread){ return NULL; };
-	thread_t addThread(Thread* newThread);
-	int killThread(thread_t thread){ return EOK; };
-	int joinThread(thread_t thread);
-	int joinThread(thread_t thread, unsigned int usec);
-	int wakeup(thread_t thread);
-	void suspend();
-	inline Thread* activeThread()
-		{ return m_currentThread; };
-	void switchThread();
-
-private:
-	List<Thread*> m_activeThreadList;
-	HashMap<thread_t, Thread*> m_threadMap;
-	Thread* m_currentThread;
-	thread_t m_nextThread;
-
-	void schedule(Thread * thread);
-};
+	#ifdef KERNEL_TEST
+		run_test();
+		return;
+	#endif
+	while (true) {
+		printf("Hello World!\n");
+		thread_sleep(1);
+	}
+}

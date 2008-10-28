@@ -484,12 +484,39 @@ public:
 		return Iterator ( item );
 	}
 
+	/*! @brief gets ListItem containing value from the middle of the list
+	 * @param value value to find
+	 * @return pointer to listItem contaning value and detached from the list
+	 * NULL on failure
+	 */
+	ListItem<T>* removeFind(const T& value)
+	{
+		if (!m_first) return NULL;
+		if (m_first->data() == value)
+			return removeFront();
+		assert(m_last);
+		if (m_last->data() == value)
+			return removeBack();
+		ListItem<T>* ptr = m_first->next();
+		while (ptr) {
+			if(ptr->data() == value) break;
+			ptr = ptr->next();
+		}
+		if (ptr) {
+			assert(ptr->next()); //it's not last
+			ptr->next()->setPrev(ptr->prev());
+			assert(ptr->prev()); //it'snot first
+			ptr->prev()->setNext(ptr->next());
+		}
+		return ptr;
+	}
+
 	/** @brief disconnect first from list
 	*	does not delete the item, this is the difference against popFront
 	*	implementation note: does not allocate anything
 	*	@return pointer to disconnected element
 	*/
-	ListItem<T> * removeFront()
+	ListItem<T>* removeFront()
 	{
 		//get first item
 		if ( m_first == NULL ) return NULL;

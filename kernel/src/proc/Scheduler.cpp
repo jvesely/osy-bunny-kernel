@@ -70,7 +70,9 @@ void Scheduler::switchThread()
 
 	void* DUMMYSTACK = (void*)0xF00;
 	void** old_stack = (void**)(m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
+	m_currentThread->setStatus(Thread::READY);
 	m_currentThread = *m_activeThreadList.rotate();
+	m_currentThread->setStatus(Thread::RUNNING);
 	void** new_stack = m_currentThread->stackTop();
 	//dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
 	Processor::switch_cpu_context(old_stack, new_stack);
@@ -83,10 +85,31 @@ void Scheduler::schedule(Thread * thread)
 	ListItem<Thread*>* item = Kernel::instance().pool().get();
 	item->data() = thread;
 	m_activeThreadList.pushBack(item);
+	thread->setStatus(Thread::READY);
 	dprintf("Scheduled thread %u to run.\n", thread->id());
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::suspend()
 {
+	ListItem<Thread*>* ptr = m_activeThreadList.removeFind(m_currentThread);
+	if (!ptr) return;
+	//return to the pool
+	Kernel::instance().pool().put(ptr);
+	m_currentThread->setStatus(Thread::WAITING);
+}
+/*----------------------------------------------------------------------------*/
+int Scheduler::joinThread(thread_t thread)
+{
+	if (!m_threadMap.exists(thread))
+		return EINVAL;
+	Thread* thr = m_threadMap.at(thread);
+	if (thr == m_currentThread || thr->detached() || thr->follower() 
+		|| thr->status() != Thread::KILLED) {
+		return EINVAL;
+	}
+	thr->setFollower(m_currentThread);
+	suspend();
+	switchThread();
+	return EOK;
 	
 }

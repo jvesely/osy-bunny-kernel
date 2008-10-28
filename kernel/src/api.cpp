@@ -259,6 +259,7 @@ void thread_yield()
 void thread_suspend()
 {
 	Kernel::instance().scheduler().suspend();
+	thread_yield();
 }
 
 int thread_wakeup(thread_t thr)

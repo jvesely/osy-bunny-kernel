@@ -48,7 +48,7 @@ Kernel::Kernel() :
 	m_console(OUTPUT_PRINTER), m_clock(CLOCK) {
 	Processor::reg_write_status(0);
 }
-extern "C" void test(void*);
+extern void test(void*);
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
@@ -84,17 +84,9 @@ void Kernel::run()
 
 	m_scheduler = new Scheduler();
 	assert(m_scheduler);
-	int num = 0;
-	thread_t mainThread;
-	thread_create(&mainThread, test, &num, 0);
 
-	int num1 = 1;
-	thread_t secondThread;
-	thread_create(&secondThread, test, &num1, 0);
-	
-	int num2 = 2;
-	thread_t thirdThread;
-	thread_create(&thirdThread, test, &num2, 0);
+thread_t mainThread;
+	thread_create(&mainThread, test, NULL, 0);
 	
 	m_scheduler->switchThread();
 
@@ -142,15 +134,3 @@ void Kernel::free(void * address) const
 	Processor::revert_interupt_state(status);
 }
 /*----------------------------------------------------------------------------*/
-void test(void* param)
-{
-	int num = 0;
-	if (param)
-		num = *(int*)param;
-	while(true) {
-		printf("Running test...%u on thread %p\n", num, thread_get_current());
-		thread_sleep(1);
-		thread_yield();
-	}
-}
-
