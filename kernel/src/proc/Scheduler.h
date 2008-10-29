@@ -44,8 +44,8 @@
 class Scheduler
 {
 public:
-	/*! @brief Just sets current thread to NULL, later may create Idle thread */
-	Scheduler():m_currentThread(NULL){};
+	/*! @brief Just sets current thread to NULL, creates Idle thread */
+	Scheduler();
 
 	/*! @brief Converts identifier to pointer 
 	 * @param thread id to be converted
@@ -116,7 +116,13 @@ private:
 
 	/*! Thread id generating helper. Increases avery time thread is added. */
 	thread_t m_nextThread;
+
+	Thread* m_idle;
+
+	static const int DEFAULT_QUATNUM = 2000; /*!< 2 msec */
 	
 	/*! Enqueue Thread* to the scheduling queue */
 	void schedule(Thread * thread);
 };
+
+void* idleThread(void*);

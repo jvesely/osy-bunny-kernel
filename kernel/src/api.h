@@ -80,7 +80,7 @@ char getc();
  * of blocking.
  * @return read char or EWOULDBLOCK on empty buffer
  */
-native_t getc_try();
+int getc_try();
 
 /*! gets tries to read multiple chars from the device buffer.
  * If len is 0 returns EINVAL. Reads from the buffer until '\n'
@@ -158,7 +158,7 @@ void kpanic(const char* format, ... );
  * @param flags ignored param
  * @return ENOMEM on lack of memory, EOK on sucess
  */
-int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
+int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
 	void* data, const unsigned int flags);
 
 /*! Gets identifier of the currently running thread.

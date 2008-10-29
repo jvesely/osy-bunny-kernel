@@ -36,14 +36,14 @@ void Allocator::setup(const uintptr_t from, const size_t length)
 {
 	uintptr_t end = alignDown(from + length, ALIGMENT);
 	uintptr_t start = alignUp(from, ALIGMENT);
-	dprintf("Testing recieved memory chunk from %x to %x.\n", start, end);
+	//dprintf("Testing recieved memory chunk from %x to %x.\n", start, end);
 
 	//test first
 	*(uint8_t*)(end - sizeof(MAGIC)) = MAGIC;
 	assert( *(uint8_t*)(end - sizeof(MAGIC)) == MAGIC);
 	
 	// test ok
-	dprintf("Mem chunk seems OK, creating block.\n");
+	//dprintf("Mem chunk seems OK, creating block.\n");
 	createBlock(start, end - start, true);
 	m_start = start;
 	m_end = end;
@@ -56,7 +56,7 @@ void Allocator::createBlock(
 	// test aligment
 	assert((start & ~(ALIGMENT - 1)) == start);
 	assert((size & ~(ALIGMENT - 1)) == size );
-	dprintf("Creating block of size %u : %s\n", size, free?"free":"used");
+	//dprintf("Creating block of size %u : %s\n", size, free?"free":"used");
 	
 	// setup
 	BlockHeader* header = (BlockHeader *)start;
@@ -78,7 +78,7 @@ bool Allocator::checkBlock(const uintptr_t start) const
 	BlockFooter* footer = (BlockFooter*)(start + sizeof(BlockHeader) + header->size);
 	bool ok =  (header->magic == BIG_MAGIC) && (footer->magic == BIG_MAGIC)
 	        && (header->size == footer->size);
-	dprintf("Block of size %u B starting on %x seems %s\n", header->size, start + sizeof(BlockHeader), ok?"OK":"BAD");
+	//dprintf("Block of size %u B starting on %x seems %s\n", header->size, start + sizeof(BlockHeader), ok?"OK":"BAD");
 	return ok;
 }
 /*----------------------------------------------------------------------------*/

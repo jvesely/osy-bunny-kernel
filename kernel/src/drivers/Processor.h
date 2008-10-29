@@ -81,9 +81,7 @@ static const unative_t PROBE_FAILURE = 0x80000000; /*!< highest bit */
 static const unative_t ENTRY_LO_VALID_MASK = 0x00000002; /*!< second bit */
 static const unative_t ENTRY_LO_DIRTY_MASK = 0x00000004; /*!< third bit */
 
-static const unative_t STATUS_IE_MASK = 1; /*!< subject to change */
-
-static const uint32_t ENTRY_COUNT = 48; /*!< number of avialable TLB entries */
+static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
 
 /*! reverted bit usage mask in TLB according to page size */
 enum PageSize{
@@ -157,6 +155,94 @@ inline void reg_write_epc(unative_t value)      { write_register(14, value); }
 /*! named register write wrapper */
 inline void reg_write_eepc(unative_t value)     { write_register(30, value); }
 
+
+/*! @struct Context Processor.h "drivers/Processor.h"
+ * @brief Helper structure tat helps address separate registers.
+ */
+struct Context
+{
+	unative_t zero;
+
+	unative_t at;
+	unative_t v0;
+	unative_t v1;
+
+	unative_t a0;
+	unative_t a1;
+	unative_t a2;
+	unative_t a3;
+
+	unative_t t0;
+	unative_t t1;
+	unative_t t2;
+	unative_t t3;
+	unative_t t4;
+	unative_t t5;
+	unative_t t6;
+	unative_t t7;
+	unative_t t8;
+	unative_t t9;
+
+	unative_t s0;
+	unative_t s1;
+	unative_t s2;
+	unative_t s3;
+	unative_t s4;
+	unative_t s5;
+	unative_t s6;
+	unative_t s7;
+
+	unative_t k0;
+	unative_t k1;
+
+	unative_t gp;
+	unative_t fp;
+
+	unative_t sp;
+	unative_t ra;
+
+	unative_t lo;
+	unative_t hi;
+
+	unative_t epc;
+	unative_t cause;
+	unative_t badva;
+	unative_t status;
+};
+
+enum Cause {
+	CAUSE_IP_MASK  = 0x0000ff00,
+  CAUSE_IP0_MASK = 0x00000100,
+  CAUSE_IP1_MASK = 0x00000200,
+  CAUSE_IP2_MASK = 0x00000400,
+  CAUSE_IP3_MASK = 0x00000800,
+  CAUSE_IP4_MASK = 0x00001000,
+  CAUSE_IP5_MASK = 0x00002000,
+  CAUSE_IP6_MASK = 0x00004000,
+  CAUSE_IP7_MASK = 0x00008000
+};
+
+enum Status {
+	STATUS_IM_MASK  = 0x0000ff00,
+ 	STATUS_IM0_MASK = 0x00000100,
+ 	STATUS_IM1_MASK = 0x00000200,
+ 	STATUS_IM2_MASK = 0x00000400,
+ 	STATUS_IM3_MASK = 0x00000800,
+ 	STATUS_IM4_MASK = 0x00001000,
+ 	STATUS_IM5_MASK = 0x00002000,
+ 	STATUS_IM6_MASK = 0x00004000,
+ 	STATUS_IM7_MASK = 0x00008000,
+
+	STATUS_IE_MASK  = 0x00000001,
+
+	STATUS_CU0_MASK = 0x10000000,
+	STATUS_CU1_MASK = 0x20000000,
+	STATUS_CU2_MASK = 0x40000000,
+	STATUS_CU3_MASK = 0x80000000,
+	STATUS_CU_MASK  = 0xf0000000
+
+
+};
 /*! return current status of interupts and disable them, taken from Kalisto */
 inline ipl_t save_and_disable_interupts()
 {
@@ -169,9 +255,34 @@ inline ipl_t save_and_disable_interupts()
 inline void revert_interupt_state(ipl_t state)
 {
 	if (state)
-		reg_write_status(reg_read_status() & STATUS_IE_MASK);
+		reg_write_status(reg_read_status() | STATUS_IE_MASK);
 }
+/*----------------------------------------------------------------------------*/
+/*! @brief Exception codes */
+enum Exceptions {
+	CAUSE_EXCCODE_INT,  /*!< Interupt */
+	CAUSE_EXCCODE_MOD,  /*!< TLB Modification */
+	CAUSE_EXCCODE_TLBL, /*!< TLB Load */
+	CAUSE_EXCCODE_TLBS, /*!< TLB Store */
+	CAUSE_EXCCODE_ADEL, /*!< Address Error Load */
+	CAUSE_EXCCODE_ADES, /*!< Address Error Store */
+	CAUSE_EXCCODE_IBE,  /*!< Instruction Bus Error */
+	CAUSE_EXCCODE_DBE,  /*!< Data Bus Error */
+	CAUSE_EXCCODE_SYS,  /*!< Syscall */
+	CAUSE_EXCCODE_BP,   /*!< Breakpoint */
+	CAUSE_EXCCODE_RI,		/*!< Resrved Instruction */
+	CAUSE_EXCCODE_CPU,  /*!< Coprocessor Unusable */
+	CAUSE_EXCCODE_OV,   /*!< Integer Overflow */
+	CAUSE_EXCCODE_TR,   /*!< Trap */
+	CAUSE_EXCCODE_MASK  = 0x0000007c,
+	CAUSE_EXCCODE_SHIFT = 2
+};
 
+inline unative_t get_exccode(unative_t cause_reg)
+{
+	return (cause_reg & CAUSE_EXCCODE_MASK) >> CAUSE_EXCCODE_SHIFT;
+}
+/*----------------------------------------------------------------------------*/
 /*! msim_special instruction: turn trace ON */
 inline void msim_trace_on (void)
 {

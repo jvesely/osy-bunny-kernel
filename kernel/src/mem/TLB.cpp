@@ -50,7 +50,7 @@ TLB::TLB(){
 	reg_write_entryhi (ASID_MASK);
 
 	/* copy to all */
-	for(uint32_t i = 0; i < ENTRY_COUNT; ++i){
+	for(unsigned int i = 0; i < ENTRY_COUNT; ++i){
 		reg_write_index(i);
 		TLB_write_index();
 	}
@@ -93,7 +93,7 @@ void TLB::setMapping(
 	const unative_t reg_addr_value = ( physAddr & ~(pageSize>>1) & PFN_ADDR_MASK) >> PFN_SHIFT;
 
 	/* choose left/right in the pair, allow writing(Dirty) and set valid */
-	if (! (virtAddr & (1 << (MASK_SHIFT )) ) ) { // checks whther it ends with 1 or 0
+	if (! (virtAddr & (1 << (MASK_SHIFT - 1 )) ) ) { //  ends with 1 or 0
 		/* left/first */
 		reg_write_entrylo0(reg_addr_value | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK);
 	} else {

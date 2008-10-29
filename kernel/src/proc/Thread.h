@@ -42,62 +42,9 @@
  */
 class Thread
 {
-	/*! @struct Context Thread.h "proc/Thread.h"
-	 * @brief Helper structure tat helps address separate registers.
-	 */
-	struct Context
-	{
-		unative_t zero;
-
-		unative_t at;
-		unative_t v0;
-		unative_t v1;
-
-		unative_t a0;
-		unative_t a1;
-		unative_t a2;
-		unative_t a3;
-
-		unative_t t0;
-		unative_t t1;
-		unative_t t2;
-		unative_t t3;
-		unative_t t4;
-		unative_t t5;
-		unative_t t6;
-		unative_t t7;
-		unative_t t8;
-		unative_t t9;
-
-		unative_t s0;
-		unative_t s1;
-		unative_t s2;
-		unative_t s3;
-		unative_t s4;
-		unative_t s5;
-		unative_t s6;
-		unative_t s7;
-
-		unative_t k0;
-		unative_t k1;
-
-		unative_t gp;
-		unative_t fp;
-
-		unative_t sp;
-		unative_t ra;
-
-		unative_t lo;
-		unative_t hi;
-
-		unative_t epc;
-		unative_t cause;
-		unative_t badva;
-		unative_t status;
-	};
 
 public:
-	static const uint32_t DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
+	static const int DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
 	
 	/*! @enum Status
 	 * @brief Possible states of threads
@@ -113,13 +60,15 @@ public:
 	 * @param flags ignored param :)
 	 */
 	inline Thread(
-		void (*func)(void*), 
+		void* (*func)(void*), 
 		void* data, 
-		uint32_t flags = 0,
-		uint32_t stackSize = DEFAULT_STACK_SIZE):
+		unative_t flags = 0,
+		unsigned int stackSize = DEFAULT_STACK_SIZE):
 		 m_stack(NULL), m_stackSize(stackSize), m_runFunc(func), m_runData(data),
 		 m_follower(NULL)
-		{ assert(func); assert(stackSize); };
+		{ 
+		assert(func); assert(stackSize); 
+			};
 
 	/*! this method will be run in separate thread, includes some management */
 	virtual void run();
@@ -129,7 +78,7 @@ public:
 	 * Allocates stack, stores initial context and sets some reg values
 	 * @return ENOMEM if stack allocation fails, otherwise EOK
 	 */
-	uint32_t setup();
+	int setup();
 	
 	/*! @brief new thread entry point */
 	void start() { run(); };
@@ -195,10 +144,10 @@ public:
 protected:
 	void* m_stack;	/*!< that's my stack */
 	void* m_stackTop;	/*!< top of my stack */
-	uint32_t m_stackSize; /*!< size of my stack */
+	unsigned int m_stackSize; /*!< size of my stack */
 
 	/*! I'm supposed to run this */
-	void (*m_runFunc)(void*);
+	void* (*m_runFunc)(void*);
 	
 	/*! runFunc expects this */
 	void* m_runData;

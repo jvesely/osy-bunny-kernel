@@ -54,6 +54,24 @@ inline size_t puts(const char * str)
 	return Kernel::instance().console().outputString(str);
 }
 
+char getc()
+{	
+	return Kernel::instance().console().readChar();
+}
+/*----------------------------------------------------------------------------*/
+int getc_try()
+{
+	if (Kernel::instance().console().count())
+		return Kernel::instance().console().getChar();
+	else
+		return EWOULDBLOCK;
+}
+/*----------------------------------------------------------------------------*/
+ssize_t gets(char* str, const size_t len)
+{
+	return Kernel::instance().console().readString(str, len);
+}
+
 /*! prints number as unsigned decimal
  * @param number number to be printed
  * @return number of printed decimal digits
@@ -204,15 +222,15 @@ void free(void* ptr)
 	Kernel::instance().free(ptr);
 }
 
-int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
+int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
 {
 	if (!Kernel::instance().pool().reserve()) return ENOMEM;
-	
+
 	Thread* thread = new Thread(thread_start, data);
 	if (!thread) return ENOMEM;
-
-	uint32_t ret = thread->setup();
+	
+	int ret = thread->setup();
 	if (ret != EOK) {
 		delete thread;
 		return ret;

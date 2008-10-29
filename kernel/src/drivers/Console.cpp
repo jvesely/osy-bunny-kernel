@@ -32,7 +32,7 @@
  */
 
 #include "Console.h"
-
+#include "Kernel.h"
 /*! 
  * @brief method output string on associated output device.
  *
@@ -43,7 +43,7 @@
  */
 size_t Console::outputString(const char* str) const
 {
-	const char *  it = str; // fly through the string
+	const char *  it = str; /* fly through the string */
 	
 	for (;*it;++it)
 	{
@@ -51,4 +51,30 @@ size_t Console::outputString(const char* str) const
 	}
 
 	return it - str; /* finish - start should give the number of chars */
+}
+/*----------------------------------------------------------------------------*/
+char Console::readChar()
+{
+	while (count() == 0) { /* buffer is empty */
+		Kernel::instance().scheduler().suspend(); //remove from the scheduling queue
+		ListItem<Thread*>* item = Kernel::instance().pool().get();
+		assert(item); //there must be one as suspend returned one to the pool
+		item->data() = Kernel::instance().scheduler().activeThread(); 
+		m_waitList.pushBack(item);
+		item->data()->yield();
+
+	}
+	return getChar();
+}
+/*----------------------------------------------------------------------------*/
+ssize_t Console::readString(char* str, const size_t len)
+{
+	if (len == 0) return EINVAL;
+	char* c = str;
+	while ( (*c = readChar())  != '\n' 
+			&&  (unsigned int)(c - str) < (len - 1) ) {
+		++c;
+	}
+	*c = '\0';
+	return c - str;
 }

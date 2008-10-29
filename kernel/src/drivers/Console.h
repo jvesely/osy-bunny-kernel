@@ -33,6 +33,8 @@
 
 #include "OutputCharacterDevice.h"
 #include "InputCharacterDevice.h"
+#include "structures/List.h"
+#include "proc/Thread.h"
 
 /*!
  * @class Console Console.h "drivers/Console.h"
@@ -41,7 +43,7 @@
  * Console handles character output and keyboard input
  * inherits classes OutputCharacterDevice and InputCharacterDevice
  */
-class Console:public OutputCharacterDevice, InputCharacterDevice
+class Console:public OutputCharacterDevice, public InputCharacterDevice
 {
 public:
 	/*! Initializes parent classes for input and output */
@@ -54,4 +56,11 @@ public:
 	 * @return number of printed chars
 	 */
 	size_t outputString(const char* str) const;
+
+	char readChar();
+	
+	ssize_t readString(char* str, const size_t len);
+
+private:
+	List<Thread*> m_waitList;
 };

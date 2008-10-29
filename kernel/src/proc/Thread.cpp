@@ -40,17 +40,20 @@ void Thread::run()
 {
 	m_runFunc(m_runData);
 	dprintf("Thread has ended\n");
-	
+
+	m_status = FINISHED;
 	if (m_follower)
 		thread_wakeup(m_follower->id());
 	thread_suspend();
-	Kernel::block();
+	while (true) 
+		printf("Called dead Thread.\n");
 }
 /*----------------------------------------------------------------------------*/
-uint32_t Thread::setup()
+int Thread::setup()
 {
 	m_stack = malloc(m_stackSize);
 	if (!m_stack) return ENOMEM;
+	using namespace Processor;
 
 	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
 	Context * context = (Context*)(m_stackTop);
@@ -65,6 +68,7 @@ uint32_t Thread::setup()
 	// global pointer
 	context->gp = ADDR_TO_KSEG0(0);
 	context->sp = (unative_t)m_stackTop;
+	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
 	return EOK;
 }
 /*----------------------------------------------------------------------------*/

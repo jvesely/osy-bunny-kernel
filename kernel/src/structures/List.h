@@ -508,6 +508,7 @@ public:
 			assert(ptr->prev()); //it'snot first
 			ptr->prev()->setNext(ptr->next());
 		}
+		--m_count;
 		return ptr;
 	}
 

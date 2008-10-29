@@ -30,7 +30,8 @@
  * Provides kernel entry points called by assembelr routines.
  */
 #pragma once
+#include "drivers/Processor.h"
 
 extern "C" void wrapped_start(void);
-extern "C" void wrapped_general(void);
+extern "C" void wrapped_general(Processor::Context* registers);
 extern "C" void wrapped_tlbrefill(void);

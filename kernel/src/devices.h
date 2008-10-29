@@ -36,8 +36,9 @@
 /*! simple character output */
 #define OUTPUT_PRINTER (char*)(0x90000000)
 
-/*! keyboard, no yet used */
-#define CHARACTER_INPUT (char*)(0)
+/*! keyboard */
+#define CHARACTER_INPUT (char*)(0x900000004)
+#define CHARACTER_INPUT_INTERUPT 1
 
 /*! rtc */
 #define CLOCK (uint32_t*)(0x90000008)
