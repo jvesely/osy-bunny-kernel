@@ -136,4 +136,3 @@ private:
 
 friend class Singleton<Kernel>;
 };
-

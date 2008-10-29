@@ -27,7 +27,7 @@
  * @file 
  * @brief Register stuff taken from Kalisto.
  *
- * Lots of defines some of them are redundat and are present in 
+ * Lots of defines some of them are redundant and are present in 
  * drivers/Processor.h too (needs to get sorted).
  */
 
@@ -437,4 +437,3 @@
 
 /* Trap Exception. */
 #define CP0_CAUSE_EXCCODE_TR    13
-

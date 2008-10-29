@@ -107,4 +107,3 @@ distclean: clean
 	@echo -e "$(COL_WHITE)Cleaning bin files...$(COL_RED)"
 	@rm -vf $(BIN_DIR)/$(KERNEL_BIN)
 	@echo -e "$(COL_WHITE)done$(COL_END)"
-

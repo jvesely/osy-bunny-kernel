@@ -271,4 +271,3 @@ int thread_kill(thread_t thr)
 {
 	return Kernel::instance().scheduler().killThread(thr);
 }
-

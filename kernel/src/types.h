@@ -70,4 +70,3 @@ typedef __builtin_va_list va_list;
 #ifndef true
 #define true !(false)
 #endif
-
