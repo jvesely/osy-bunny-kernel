@@ -225,23 +225,12 @@ void free(void* ptr)
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
 {
-	if (!Kernel::instance().pool().reserve()) return ENOMEM;
-
-	Thread* thread = new Thread(thread_start, data);
-	if (!thread) return ENOMEM;
-	
-	int ret = thread->setup();
-	if (ret != EOK) {
-		delete thread;
-		return ret;
-	}
-	*thread_ptr = Kernel::instance().scheduler().addThread(thread);
-	return EOK;
+	return Thread::create(thread_ptr, thread_start, data, flags);
 }
 
 thread_t thread_get_current()
 {
-	return Kernel::instance().scheduler().activeThread()->id();
+	return Scheduler::instance().activeThread()->id();
 }
 
 int thread_join(thread_t thr)
@@ -256,36 +245,41 @@ int thread_join_timeout(thread_t thr, const unsigned int usec)
 
 int thread_detach(thread_t thr)
 {
-	return Kernel::instance().scheduler().thread(thr)->detach();
+	return Scheduler::instance().thread(thr)->detach();
 }
 
 void thread_sleep(const unsigned int sec)
 {
-	Kernel::instance().scheduler().activeThread()->sleep(sec);
+	Scheduler::instance().activeThread()->sleep(sec);
 }
 
 void thread_usleep(const unsigned int usec)
 {
-	Kernel::instance().scheduler().activeThread()->usleep(usec);
+	Scheduler::instance().activeThread()->usleep(usec);
 }
 
 void thread_yield()
 {
-	Kernel::instance().scheduler().switchThread();
+	Scheduler::instance().switchThread();
 }
 
 void thread_suspend()
 {
-	Kernel::instance().scheduler().suspend();
-	thread_yield();
+	Scheduler::instance().activeThread()->suspend();
 }
 
 int thread_wakeup(thread_t thr)
 {
-	return Kernel::instance().scheduler().wakeup(thr);
+	Thread* thread = Scheduler::instance().thread(thr);
+	if (!thread) return EINVAL;
+	thread->wakeup();
+	return EOK;
 }
 
 int thread_kill(thread_t thr)
 {
-	return Kernel::instance().scheduler().killThread(thr);
+	Thread* thread = Scheduler::instance().thread(thr);
+	if (!thread) return EINVAL;
+	thread->kill();
+	return EOK;
 }

@@ -31,6 +31,7 @@
  */
 #pragma once
 
+#include "Singleton.h"
 #include "Thread.h"
 #include "structures/List.h"
 #include "structures/HashMap.h"
@@ -41,7 +42,7 @@
  * Schedules threads and thread queue of active threads, can suspend, wakeup
  * switch kill and join
  */
-class Scheduler
+class Scheduler: public Singleton<Scheduler>
 {
 public:
 	/*! @brief Just sets current thread to NULL, creates Idle thread */
@@ -58,38 +59,35 @@ public:
 	 * @param newThread thread to be added
 	 * @result id of the new thread
 	 */
-	thread_t addThread(Thread* newThread);
-
-	/*! @brief Kills thread.
-	 * @param thread thread to kill
-	 * @return EINVAL on invalid identifier, EOK on sucess
-	 * @note not yet implemented :)
-	 */
-	int killThread(thread_t thread){ return EOK; };
+	thread_t getId(Thread* newThread);
 
 	/*! @brief Waits fot thread to finish.
 	 * @param thread thread id of the thread to wait for
 	 * @return EINVAL on invalid thread, EKILLED on killed thread, EOK on sucess
 	 */
-	int joinThread(thread_t thread);
+//	int joinThread(thread_t thread);
 
 	/*! @brief Timed version of waiting, waits only specified amount of time.
 	 * @param thread thread id of the thread to wait for
 	 * @return same as not timed version plus ETIMEDOUT on timeout
 	 */
-	int joinThread(thread_t thread, unsigned int usec);
+//	int joinThread(thread_t thread, unsigned int usec);
 
 	/*! @brief Queues thread in scheduling queue
 	 * @param thread thread to woken
 	 * @return EINVAL on non-existing thread, EOK on success
 	 */
-	int wakeup(thread_t thread);
+//	int wakeup(thread_t thread);
 	
 	/*! @brief Removes thread from scheduling queue (ONLY).
 	 *
 	 * To actually suspend you need to call yeild after this.
 	 */
-	void suspend();
+	void dequeue(Thread * thread);
+	
+	/*! Enqueue Thread* to the scheduling queue */
+	void enqueue(Thread * thread);
+
 	
 	/*! @brief Gets pointer to current thread.
 	 * @return Pointer to structure representing running thread.
@@ -121,8 +119,6 @@ private:
 
 	static const int DEFAULT_QUATNUM = 2000; /*!< 2 msec */
 	
-	/*! Enqueue Thread* to the scheduling queue */
-	void schedule(Thread * thread);
 };
 
 void* idleThread(void*);

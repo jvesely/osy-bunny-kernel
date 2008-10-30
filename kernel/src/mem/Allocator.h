@@ -84,6 +84,7 @@ public:
 	 */
 	void freeMemory(void* address) const;
 
+	bool check();
 private:
 	/*! @brief starting address of my heap */
 	uintptr_t m_start;
@@ -119,7 +120,7 @@ private:
 	 * @param align align amount
 	 * @return aligned address
 	 */
-	inline uintptr_t alignUp(const uintptr_t  address, const uint8_t align)
+	inline uintptr_t alignUp(const uintptr_t  address, const uint8_t align) const
 		{ return  (address + (align - 1) ) & ~(align - 1); };
 
 	/*! aligns address to nearest smaller 4byte block 
@@ -127,6 +128,6 @@ private:
 	 * @param align align amount
 	 * @return aligned address
 	 */
-	inline uintptr_t alignDown(const uintptr_t address, const uint8_t align)
+	inline uintptr_t alignDown(const uintptr_t address, const uint8_t align) const
 		{ return address & ~(align - 1); }
 };

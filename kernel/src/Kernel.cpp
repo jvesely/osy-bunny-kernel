@@ -84,13 +84,12 @@ void Kernel::run()
 	
 	// setup allocator
 	m_alloc.setup((uintptr_t)&_kernel_end, 0x10000);
-
-	m_scheduler = new Scheduler();
-	assert(m_scheduler);
+	
 
 	thread_t mainThread;
+	Scheduler::instance();
 	thread_create(&mainThread, test, NULL, 0);
-	m_scheduler->switchThread();
+	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){

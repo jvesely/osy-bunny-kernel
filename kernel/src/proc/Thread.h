@@ -53,23 +53,8 @@ public:
 		READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED
 	};
 	
-	/*! @brief Creates thread.
-	 * @param func function to be executed in the separate thread
-	 * @param data the only parameter to handled to the function "func"
-	 * @param stackSize size of stack that will be available to this thread
-	 * @param flags ignored param :)
-	 */
-	inline Thread(
-		void* (*func)(void*), 
-		void* data, 
-		unative_t flags = 0,
-		unsigned int stackSize = DEFAULT_STACK_SIZE):
-		 m_stack(NULL), m_stackSize(stackSize), m_runFunc(func), m_runData(data),
-		 m_follower(NULL)
-		{ 
-		assert(func); assert(stackSize); 
-			};
-
+	static int create(thread_t* thread_ptr, void* (*thread_start)(void*),
+	  void* data = NULL, const unsigned int flags = 0);
 	/*! this method will be run in separate thread, includes some management */
 	virtual void run();
 	
@@ -78,13 +63,19 @@ public:
 	 * Allocates stack, stores initial context and sets some reg values
 	 * @return ENOMEM if stack allocation fails, otherwise EOK
 	 */
-	int setup();
+	inline bool isOK() { return m_stackTop != NULL; };
 	
 	/*! @brief new thread entry point */
 	void start() { run(); };
 
 	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
-	void yield();	
+	void yield();
+
+	void wakeup();
+
+	void suspend();
+
+	void kill();
 
 	/*! @brief Detached getter
 	 * @return detached state
@@ -161,4 +152,13 @@ private:
 	Thread(); /*!< no constructing without params */
 	Thread(const Thread& other); /*!< no copying */
 	const Thread& operator=(const Thread& other);	/*!< no assigning */
+
+	/*! @brief Creates thread.
+	 * @param func function to be executed in the separate thread
+	 * @param data the only parameter to handled to the function "func"
+	 * @param stackSize size of stack that will be available to this thread
+	 * @param flags ignored param :)
+	 */
+	Thread(	void* (*func)(void*), void* data, unative_t flags, unsigned int stackSize);
+	friend class Scheduler;
 };

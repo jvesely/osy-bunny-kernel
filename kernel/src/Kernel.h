@@ -67,7 +67,7 @@ public:
 	/*! @return pool of Listitems used by threads in scheduler and mutex */
 	inline ItemPool& pool() { return m_pool; };
 
-	inline Scheduler& scheduler() { return *m_scheduler; };
+	inline Scheduler& scheduler() { return Scheduler::instance(); };
 
 	inline const RTC& clock() { return m_clock; };
 
@@ -97,7 +97,7 @@ public:
 	void free(void* address) const;
 
 	/*! My thread no longer wishes to run */
-	inline void yield() const { m_scheduler->switchThread(); };
+	inline void yield() const { Scheduler::instance().switchThread(); };
 
 	void handle(Processor::Context* registers);
 
@@ -124,7 +124,7 @@ private:
 	ItemPool m_pool;
 
 	/*! simple scheduler */
-	Scheduler* m_scheduler;
+//	Scheduler& m_scheduler;
 
 	/*! @brief Detects accessible memory.
 	 *

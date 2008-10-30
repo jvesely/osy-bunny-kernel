@@ -56,7 +56,7 @@ size_t Console::outputString(const char* str) const
 char Console::readChar()
 {
 	while (count() == 0) { /* buffer is empty */
-		Kernel::instance().scheduler().suspend(); //remove from the scheduling queue
+//		Scheduler::instance().activeThread()->suspend(); //remove from the scheduling queue
 		ListItem<Thread*>* item = Kernel::instance().pool().get();
 		assert(item); //there must be one as suspend returned one to the pool
 		item->data() = Kernel::instance().scheduler().activeThread(); 
