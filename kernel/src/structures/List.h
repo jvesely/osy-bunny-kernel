@@ -756,8 +756,8 @@ public:
 	*/
 	Iterator insert ( ListItem<T> * item, ListItem<T> * insertedItem )
 	{
-		if ( item == NULL ) return pushBack ( insertedItem );
 		if ( insertedItem == NULL ) return Iterator ( NULL );
+		if ( item == NULL ) return pushBack ( insertedItem );
 
 		insertedItem->insertBefore ( item );
 		if ( item == m_first )
@@ -775,8 +775,8 @@ public:
 
 	Iterator rinsert ( ListItem<T> * item, ListItem<T> * insertedItem )
 	{
-		if ( item == NULL ) return pushFront ( insertedItem );
 		if ( insertedItem == NULL ) return Iterator ( NULL );
+		if ( item == NULL ) return pushFront ( insertedItem );
 
 		insertedItem->insertAfter ( item );
 		if ( item == m_last )
