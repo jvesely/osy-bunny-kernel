@@ -84,10 +84,8 @@ void Kernel::run()
 	
 	// setup allocator
 	m_alloc.setup((uintptr_t)&_kernel_end, 0x10000);
-	
 
 	thread_t mainThread;
-	Scheduler::instance();
 	thread_create(&mainThread, test, NULL, 0);
 	Scheduler::instance().switchThread();
 }

@@ -58,9 +58,9 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	m_detached(false), m_follower(NULL)
 {
 	m_stack = malloc(m_stackSize);
-	if (!m_stack) return;
+	if (m_stack == 0) return;
 	using namespace Processor;
-
+	
 	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
 	Context * context = (Context*)(m_stackTop);
 	
@@ -158,11 +158,11 @@ int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
 {
 	if (!Kernel::instance().pool().reserve()) return ENOMEM;
 	Thread* new_thread = new Thread(thread_start, thread_data);
-	if (!new_thread || !new_thread->isOK() ) {
+	if (!new_thread || new_thread->m_stack == NULL ) {
 		delete new_thread;
+		Kernel::instance().pool().free();
 		return ENOMEM;
 	}
-	
 	*thread_ptr = Scheduler::instance().getId(new_thread);
 	Scheduler::instance().enqueue(new_thread);
 	return EOK;

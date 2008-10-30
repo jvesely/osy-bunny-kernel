@@ -131,7 +131,7 @@ void Allocator::freeMemory(void* address) const
 	BlockHeader* my_header = (BlockHeader*)((uintptr_t)address - sizeof(BlockHeader));
 	BlockHeader* from_header = my_header;
 	assert(checkBlock((uintptr_t)my_header)); // should be a block
-
+	//dprintf("Freeing block at %p, size: %u free: %d.\n", my_header, my_header->size, my_header->free);
 	if (my_header->free) return; //already freed??
 
 	size_t size =  my_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);

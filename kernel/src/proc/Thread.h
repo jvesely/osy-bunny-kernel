@@ -63,7 +63,7 @@ public:
 	 * Allocates stack, stores initial context and sets some reg values
 	 * @return ENOMEM if stack allocation fails, otherwise EOK
 	 */
-	inline bool isOK() { return m_stackTop != NULL; };
+	//inline bool isOK() { return m_stack != NULL; };
 	
 	/*! @brief new thread entry point */
 	void start() { run(); };
