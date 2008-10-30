@@ -36,8 +36,8 @@ void Allocator::setup(const uintptr_t from, const size_t length)
 {
 	uintptr_t end = alignDown(from + length, ALIGMENT);
 	uintptr_t start = alignUp(from, ALIGMENT);
-	dprintf("Testing recieved memory chunk from %x to %x.\n", start, end);
-	dprintf("Original blocak from %x to %x \n", from, from + length );
+	//dprintf("Testing recieved memory chunk from %x to %x.\n", start, end);
+	//dprintf("Original block from %x to %x \n", from, from + length );
 
 	//test first
 	*(uint8_t*)(end - sizeof(MAGIC)) = MAGIC;
@@ -55,9 +55,8 @@ void Allocator::createBlock(
 	const uintptr_t start, const size_t size, const bool free
 ) const
 {
-	dprintf("Creating block from %x of size %u : %s\n", start, size, free?"free":"used");
+//	dprintf("Creating block from %x of size %u : %s\n", start, size, free?"free":"used");
 	assert(start >= m_start);
-	printf("requested %x end real end %x\n ", (start + size), m_end);
 	assert( (start + size) <= m_end);
 	// test aligment
 	assert((start & ~(ALIGMENT - 1)) == start);
@@ -83,26 +82,25 @@ bool Allocator::checkBlock(const uintptr_t start) const
 	BlockFooter* footer = (BlockFooter*)(start + sizeof(BlockHeader) + header->size);
 	bool ok =  (header->magic == BIG_MAGIC) && (footer->magic == BIG_MAGIC)
 	        && (header->size == footer->size);
-	dprintf("Block of size %u B starting on %x seems %s\n", header->size, start + sizeof(BlockHeader), ok?"OK":"BAD");
+	//dprintf("Block of size %u B starting on %x seems %s\n", header->size, start + sizeof(BlockHeader), ok?"OK":"BAD");
 	return ok;
 }
 /*----------------------------------------------------------------------------*/
 void* Allocator::getMemory(size_t size) const
 {
-	dprintf("Requested memory of size: %d B, aligning to %d\n", size, alignUp(size, ALIGMENT) );
+	//dprintf("Requested memory of size: %d B, aligning to %d\n", size, alignUp(size, ALIGMENT) );
 	size = alignUp(size, ALIGMENT);
 	void * res = NULL;
 	if (size > (m_end - m_start)) return res;
 
 	BlockHeader* header = (BlockHeader*)m_start;
 	const size_t real_size = size + sizeof(BlockHeader) + sizeof(BlockFooter);
-	dprintf("Statring search from %x (m_start %x) size %d\n", header, m_start, size);
 
 	while (res == NULL && ( (uintptr_t)header < m_end) ) {
-		printf("Testing block at %x, size %d\n", header, header->size);
+//		dprintf("Testing block at %x, size %d\n", header, header->size);
 		if (header->free && (header->size >= size) ) { // first fit
 			res = (void*)(header + 1);
-			printf ("Found free block at %x, size %d\n", header, header->size );
+//			dprintf ("Found free block at %x, size %d\n", header, header->size );
 			if ( (header->size - size) < (sizeof(BlockHeader) + sizeof(BlockFooter)) ) {
 				// not splitting
 				header->free = false;
@@ -112,7 +110,6 @@ void* Allocator::getMemory(size_t size) const
 				const size_t cut_off = header->size + sizeof(BlockHeader) + sizeof(BlockFooter) - real_size;
 
 				//unused rest
-				printf ("Create unused block from: %x, size %d\n", (uintptr_t)header + real_size, cut_off);
 				createBlock((uintptr_t)((uintptr_t)header + real_size), cut_off, true);
 				//used block
 				createBlock((uintptr_t)(header), real_size, false);
@@ -138,7 +135,7 @@ void Allocator::freeMemory(void* address) const
 	if (my_header->free) return; //already freed??
 
 	size_t size =  my_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);
-	dprintf("Freeing block of size %u, real size:%u\n", my_header->size, size);
+	//dprintf("Freeing block of size %u, real size:%u\n", my_header->size, size);
 
 	if ((uintptr_t)my_header > m_start)	{
 		// check previous block
@@ -154,7 +151,7 @@ void Allocator::freeMemory(void* address) const
 	      + my_header->size + sizeof(BlockHeader) + sizeof(BlockFooter) );
 	if ( ((uintptr_t)next_header < m_end) && next_header->free){
 		// add next block
-		dprintf("Adding next header of size %u\n", next_header->size );
+	//	dprintf("Adding next header of size %u\n", next_header->size );
 		size += next_header->size + sizeof(BlockHeader) + sizeof(BlockFooter);
 	}
 	createBlock((uintptr_t)from_header, size, true);

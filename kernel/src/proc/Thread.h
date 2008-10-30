@@ -102,6 +102,8 @@ public:
 	 */
 	inline thread_t id() { return m_id; };
 
+	int join(Thread* other);
+
 	/*! @brief Sets my thread_t identifier */
 	inline void setId(thread_t id) { m_id = id; };
 
@@ -133,15 +135,13 @@ public:
 	inline void setStatus(Status status) { m_status = status; };
 
 protected:
-	void* m_stack;	/*!< that's my stack */
-	void* m_stackTop;	/*!< top of my stack */
+	void* m_stack;	          /*!< that's my stack */
+	void* m_stackTop;	        /*!< top of my stack */
 	unsigned int m_stackSize; /*!< size of my stack */
 
-	/*! I'm supposed to run this */
-	void* (*m_runFunc)(void*);
-	
-	/*! runFunc expects this */
-	void* m_runData;
+	void* (*m_runFunc)(void*); /*! I'm supposed to run this */
+	void* m_runData; /*!< runFunc expects this */
+
 
 	bool m_detached;	/*!< detached flag */
 	Status m_status;	/*!< my status */

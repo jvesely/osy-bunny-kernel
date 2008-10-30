@@ -82,7 +82,7 @@ void Scheduler::switchThread()
 
 	m_currentThread->setStatus(Thread::RUNNING);
 	void** new_stack = m_currentThread->stackTop();
-	dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
+//	dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
 	if (m_currentThread != m_idle)
 		Kernel::instance().setTimeInterupt(DEFAULT_QUATNUM);	
 	else
@@ -111,25 +111,8 @@ void Scheduler::dequeue(Thread* thread)
 	if (!ptr) return;
 	Kernel::instance().pool().put(ptr);
 	m_currentThread->setStatus(Thread::WAITING);
-	dprintf("Returning listitem %x.\n", ptr);
+	//dprintf("Returning listitem %x.\n", ptr);
 	Processor::revert_interupt_state(status);
 }
-/*----------------------------------------------------------------------------*/
-/*int Scheduler::joinThread(thread_t thread)
-{
-	if (!m_threadMap.exists(thread))
-		return EINVAL;
-	Thread* thr = m_threadMap.at(thread);
-	if (thr->status() == Thread::KILLED)
-		return EKILLED;
-	if (thr == m_currentThread || thr->detached() || thr->follower() ) {
-		return EINVAL;
-	}
-	thr->setFollower(m_currentThread);
-	suspend();
-	switchThread();
-	return EOK;
-	
-}*/
 /*----------------------------------------------------------------------------*/
 void * idleThread(void*) { asm volatile ( "wait" ); return NULL; }

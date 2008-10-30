@@ -235,7 +235,8 @@ thread_t thread_get_current()
 
 int thread_join(thread_t thr)
 {
-	return 0;
+	Thread* thread = Scheduler::instance().thread(thr);
+	return Scheduler::instance().activeThread()->join(thread);
 }
 
 int thread_join_timeout(thread_t thr, const unsigned int usec)

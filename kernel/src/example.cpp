@@ -46,26 +46,32 @@ void* test(void*)
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
 
-	thread_t thread1;
+//	thread_t thread1;
 	//thread_t thread2;
-	thread_create(&thread1, test1, NULL, 0);
+//	thread_create(&thread1, test1, NULL, 0);
 	//thread_create(&thread2, test2, NULL, 0);
 
 //	panic ("foo\n");
-//	while (true) {
+	while (true) {
 		printf("Hello World!\n");
 //		char c = getc();
 //		printf("Hi %c\n", c);
 //		thread_sleep(1);
 //		panic("foo");
-//	}
+		thread_t thread;
+		if (thread_create(&thread, test1, NULL, 0) == EOK)
+			printf("Thread join: %d\n", thread_join(thread));
+		else {
+			printf("Thread creation failed.\n");
+		}
+	}
 	return NULL;
 }
 
 void* test1(void*)
 {
 //	while (true)
-		printf("Test1...\n");
+		printf("Test...%d\n", thread_get_current());
 		return NULL;
 }
 

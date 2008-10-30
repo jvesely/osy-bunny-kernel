@@ -39,9 +39,10 @@
 void Thread::run()
 {
 	m_runFunc(m_runData);
-	dprintf("Thread has ended\n");
+//	dprintf("Thread has ended\n");
 
 	m_status = FINISHED;
+	dprintf("Thread %d finished.\n", m_id);
 	if (m_follower)
 		m_follower->wakeup();
 	Scheduler::instance().dequeue(this);
@@ -53,7 +54,8 @@ void Thread::run()
 /*----------------------------------------------------------------------------*/
 Thread::Thread(void* (*thread_start)(void*), void* data, 
 	unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE):
-	m_stackSize(stackSize), m_runFunc(thread_start), m_runData(data), m_follower(NULL)
+	m_stackSize(stackSize), m_runFunc(thread_start), m_runData(data), 
+	m_detached(false), m_follower(NULL)
 {
 	m_stack = malloc(m_stackSize);
 	if (!m_stack) return;
@@ -115,9 +117,35 @@ void Thread::suspend()
 /*----------------------------------------------------------------------------*/
 void Thread::wakeup()
 {
-	assert(m_status == WAITING);
+//	assert(m_status == WAITING);
 	m_status = READY;
 	Scheduler::instance().enqueue(this);
+}
+/*----------------------------------------------------------------------------*/
+
+int Thread::join(Thread * thread)
+{
+	ipl_t status = Processor::save_and_disable_interupts();
+	dprintf("Trying to join thread %d with thread %d\n",
+		m_id, thread->id());
+	if (!thread                                          /* no such thread */
+		|| thread == Scheduler::instance().activeThread()  /* it's me */
+		|| thread->detached()                              /* detached thread */
+		|| thread->follower()                              /* already waited for */
+	) {
+		Processor::revert_interupt_state(status);
+		return EINVAL;
+	}
+	if (thread->status() == KILLED) {
+		Processor::revert_interupt_state(status);
+		return EKILLED;
+	}
+	thread->setFollower(this);
+	Scheduler::instance().dequeue(this);
+	m_status = WAITING;
+	Scheduler::instance().switchThread();
+	Processor::revert_interupt_state(status);
+	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 void Thread::kill()
@@ -128,17 +156,14 @@ void Thread::kill()
 int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
   void* thread_data, const unsigned int thread_flags)
 {
-	dprintf("Creating thread...\n");
 	if (!Kernel::instance().pool().reserve()) return ENOMEM;
-	dprintf("Reserved ListItem..\n");
 	Thread* new_thread = new Thread(thread_start, thread_data);
 	if (!new_thread || !new_thread->isOK() ) {
 		delete new_thread;
 		return ENOMEM;
 	}
-	dprintf("Thread created...\n");
 	
-	Scheduler::instance().getId(new_thread);
+	*thread_ptr = Scheduler::instance().getId(new_thread);
 	Scheduler::instance().enqueue(new_thread);
-	return new_thread->id();
+	return EOK;
 }

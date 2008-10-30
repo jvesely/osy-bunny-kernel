@@ -173,7 +173,7 @@ void Kernel::handleInterupts(Processor::Context* registers)
 	using namespace Processor;
 
 	if (registers->cause & CAUSE_IP7_MASK) {//timer interupt
-		dprintf("Timer interupt.\n");
+		//dprintf("Timer interupt.\n");
 		reg_write_cause(0);
 		yield();
 	} else
@@ -192,7 +192,7 @@ void Kernel::setTimeInterupt(const unsigned int usec)
 		//plan
 		reg_write_compare( planned );
 	}
-	dprintf("Set time interupt current: %x, planned: %x.\n", current, planned);
+//	dprintf("Set time interupt current: %x, planned: %x.\n", current, planned);
 
 	revert_interupt_state(state);
 	
