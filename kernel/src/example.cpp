@@ -40,7 +40,7 @@ void* test(void*)
 {
 	#ifdef KERNEL_TEST
 		run_test();
-		return;
+		return NULL;
 	#endif
 	
 //	dprintf("Pausing execution");
@@ -53,17 +53,26 @@ void* test(void*)
 
 //	panic ("foo\n");
 	while (true) {
-		printf("Hello World!\n");
+		printf("\nWrite something: ");
+		thread_usleep(1000000);
+		//char c[150];
+		//int ret = gets(c, 150);
+		//if (ret >= 0 )
+		//	printf("Your string(%d) \"%s\".\n", ret, c);
+		//else
+		//	printf("Error reading string: %d\n", ret);
+
 //		char c = getc();
 //		printf("Hi %c\n", c);
 //		thread_sleep(1);
 //		panic("foo");
-		thread_t thread;
+/*		thread_t thread;
 		if (thread_create(&thread, test1, NULL, 0) == EOK)
 			printf("Thread join: %d\n", thread_join(thread));
 		else {
 			printf("Thread creation failed.\n");
-		}
+			break;
+		}*/
 	}
 	return NULL;
 }

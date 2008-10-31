@@ -53,8 +53,11 @@ public:
 		READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED
 	};
 	
+	~Thread();
+
 	static int create(thread_t* thread_ptr, void* (*thread_start)(void*),
 	  void* data = NULL, const unsigned int flags = 0);
+	
 	/*! this method will be run in separate thread, includes some management */
 	virtual void run();
 	

@@ -53,7 +53,7 @@ public:
 	 */
 	inline size_t outputChar(char c) const { *m_outputAddress = c; return 1; };
 
-private:
+protected:
 	/*! writing address */
 	char * m_outputAddress;
 };

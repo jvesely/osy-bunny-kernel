@@ -58,8 +58,9 @@ public:
 		if (m_count == SIZE) // buffer is full
 			return 0;
 		m_buffer[m_tail] = item; 
-		m_tail = (m_tail + 1) % SIZE;
 		++m_count;
+//		dprintf("Inserted \"%c\" on position %d count is now %d.\n", item, m_tail, m_count);	
+		m_tail = (m_tail + 1) % SIZE;
 		assert(m_count <= SIZE);
 		return 1;
 	};
@@ -68,12 +69,18 @@ public:
 	 * Should only be called on non-empty buffer.
 	 * @return const refernce to the first item.
 	 */
-	inline const T& read() const
+	inline const T& readFirst() const
 	/* expects non-empty buffer, needs to be checked before using it */
 	{
 		assert(m_count > 0);
 		return m_buffer[m_head];
 	};
+	
+	inline const T& readLast() const
+	{
+		assert(m_count > 0);
+		return m_buffer[m_tail - 1];
+	}
 
 	/*! reads and removes te first item from the array.
 	 * Should only be called on non-empty buffer.

@@ -61,6 +61,8 @@ public:
 	
 	ssize_t readString(char* str, const size_t len);
 
+	void interupt();
+
 private:
 	List<Thread*> m_waitList;
 };

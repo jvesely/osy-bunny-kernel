@@ -45,7 +45,7 @@ const char * BUNNY_STR =
 jgs (____/^\\____)\n";
 
 Kernel::Kernel() :
-	m_console(OUTPUT_PRINTER), m_clock(CLOCK) {
+	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK) {
 	Processor::reg_write_status(0);
 }
 extern void* test(void*);
@@ -84,9 +84,9 @@ void Kernel::run()
 	
 	// setup allocator
 	m_alloc.setup((uintptr_t)&_kernel_end, 0x10000);
-
 	thread_t mainThread;
 	thread_create(&mainThread, test, NULL, 0);
+//	m_alloc.check();
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
@@ -170,12 +170,16 @@ void Kernel::handleInterupts(Processor::Context* registers)
 {
 	using namespace Processor;
 
+	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
+		m_console.interupt();
+//		Processor::msim_stop();
+	}
 	if (registers->cause & CAUSE_IP7_MASK) {//timer interupt
 		//dprintf("Timer interupt.\n");
 		reg_write_cause(0);
 		yield();
-	} else
-		panic("Unknown interupt");
+	} 
+
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::setTimeInterupt(const unsigned int usec)

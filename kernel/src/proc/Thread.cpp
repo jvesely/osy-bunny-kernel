@@ -57,8 +57,12 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	m_stackSize(stackSize), m_runFunc(thread_start), m_runData(data), 
 	m_detached(false), m_follower(NULL)
 {
+	if (Kernel::instance().pool().reserve() == 0) return; /* prepare listItem */
+
 	m_stack = malloc(m_stackSize);
-	if (m_stack == 0) return;
+	if (m_stack == 0) return;  /* test stack */
+
+
 	using namespace Processor;
 	
 	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
@@ -95,16 +99,23 @@ void Thread::sleep(const unsigned int sec)
 void Thread::usleep(const unsigned int usec)
 {
 	//another stupid implementation
+//	dprintf("Sleeping for %u usecs.\n", usec);
+	if (usec >= 1000000)
+		sleep(usec/1000000);
 	unsigned int start_time = Kernel::instance().clock().usec();
-	unsigned int end_time = start_time + usec; // may overflow
+	unsigned int end_time = (start_time + usec) % 1000000; 
+//	dprintf("Start time is %u, end time is %u and time is %u\n", start_time, end_time, Kernel::instance().clock().usec());
 	if (end_time < start_time)
 		while (Kernel::instance().clock().usec() > start_time) {
 			yield();
 		}
 	
 	while (Kernel::instance().clock().usec() < end_time) {
-		yield();
+//		if (end_time > 100000)
+//			dprintf("Current time %d, and still sleeping.\n", Kernel::instance().clock().usec());
+	//	yield();
 	}
+//	dprintf("Endtime was %u an now is %u.\n", end_time, Kernel::instance().clock().usec());
 }
 /*----------------------------------------------------------------------------*/
 void Thread::suspend()
@@ -152,15 +163,20 @@ void Thread::kill()
 {
 
 }
+Thread::~Thread()
+{
+	Kernel::instance().free(m_stack);
+	Kernel::instance().pool().free();
+}
 /*----------------------------------------------------------------------------*/
 int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
   void* thread_data, const unsigned int thread_flags)
 {
-	if (!Kernel::instance().pool().reserve()) return ENOMEM;
+//	if (!Kernel::instance().pool().reserve()) return ENOMEM;
 	Thread* new_thread = new Thread(thread_start, thread_data);
 	if (!new_thread || new_thread->m_stack == NULL ) {
 		delete new_thread;
-		Kernel::instance().pool().free();
+//		Kernel::instance().pool().free();
 		return ENOMEM;
 	}
 	*thread_ptr = Scheduler::instance().getId(new_thread);

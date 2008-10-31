@@ -36,8 +36,8 @@
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
 	m_idle = new Thread(idleThread, (void*)NULL, 0, 256); // small stack should be enough
-	bool success = m_idle->isOK();
-	assert(success); // must have odle thread
+	//bool success = m_idle->isOK();
+	assert(m_idle->m_stack); // must have odle thread
 }
 /*----------------------------------------------------------------------------*/
 thread_t Scheduler::getId(Thread* newThread)
@@ -53,16 +53,6 @@ thread_t Scheduler::getId(Thread* newThread)
 	return id;
 }
 /*----------------------------------------------------------------------------*/
-/*int Scheduler::wakeup(thread_t thread)
-{
-	if (!m_threadMap.exists(thread))
-		return EINVAL;
-	Thread * thr = m_threadMap.at(thread);
-	if (m_activeThreadList.find(thr) != m_activeThreadList.end())	
-		schedule(thr);
-	return EOK;
-}*/
-/*----------------------------------------------------------------------------*/
 void Scheduler::switchThread()
 {
 	//disable interupts
@@ -75,7 +65,7 @@ void Scheduler::switchThread()
 	//dprintf("Next thread %x.\n", m_currentThread);
 	if (!m_currentThread) {
 		m_currentThread = m_idle;
-		dprintf("Nothing to do switching to the idle thread.\n");
+//		dprintf("Nothing to do switching to the idle thread.\n");
 	} else {
 		m_activeThreadList.rotate();
 	}
@@ -100,7 +90,9 @@ void Scheduler::enqueue(Thread * thread)
 	item->data() = thread;
 	m_activeThreadList.pushBack(item);
 	thread->setStatus(Thread::READY);
-	dprintf("Scheduled thread %u to run.\n", thread->id());
+//	dprintf("Scheduled thread %u to run.\n", thread->id());
+	if (m_currentThread == m_idle)
+			Kernel::instance().setTimeInterupt(DEFAULT_QUATNUM);
 	Processor::revert_interupt_state(status);
 }
 /*----------------------------------------------------------------------------*/
