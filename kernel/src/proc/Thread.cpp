@@ -43,9 +43,14 @@ void Thread::run()
 
 	m_status = FINISHED;
 	dprintf("Thread %d finished.\n", m_id);
-	if (m_follower)
-		m_follower->wakeup();
+	if (m_follower) {
+		assert(m_follower->m_status == JOINING);
+		m_follower->setStatus(READY);
+		Scheduler::instance().enqueue(m_follower);
+	}
+
 	Scheduler::instance().dequeue(this);
+	Scheduler::instance().removeThread();
 	Scheduler::instance().switchThread();
 	// do detached stuff
 	while (true) 
@@ -98,24 +103,19 @@ void Thread::sleep(const unsigned int sec)
 /*----------------------------------------------------------------------------*/
 void Thread::usleep(const unsigned int usec)
 {
-	//another stupid implementation
-//	dprintf("Sleeping for %u usecs.\n", usec);
-	if (usec >= 1000000)
-		sleep(usec/1000000);
+	if (usec >= RTC::SECOND)
+		sleep(usec / RTC::SECOND);
 	unsigned int start_time = Kernel::instance().clock().usec();
-	unsigned int end_time = (start_time + usec) % 1000000; 
-//	dprintf("Start time is %u, end time is %u and time is %u\n", start_time, end_time, Kernel::instance().clock().usec());
+	unsigned int end_time = (start_time + usec) % RTC::SECOND; 
+	
 	if (end_time < start_time)
 		while (Kernel::instance().clock().usec() > start_time) {
 			yield();
 		}
 	
 	while (Kernel::instance().clock().usec() < end_time) {
-//		if (end_time > 100000)
-//			dprintf("Current time %d, and still sleeping.\n", Kernel::instance().clock().usec());
-	//	yield();
+		yield();
 	}
-//	dprintf("Endtime was %u an now is %u.\n", end_time, Kernel::instance().clock().usec());
 }
 /*----------------------------------------------------------------------------*/
 void Thread::suspend()
@@ -128,12 +128,12 @@ void Thread::suspend()
 /*----------------------------------------------------------------------------*/
 void Thread::wakeup()
 {
-//	assert(m_status == WAITING);
+//	dprintf("My(%x) status: %d\n", this, m_status);
+	assert(m_status == WAITING);
 	m_status = READY;
 	Scheduler::instance().enqueue(this);
 }
 /*----------------------------------------------------------------------------*/
-
 int Thread::join(Thread * thread)
 {
 	ipl_t status = Processor::save_and_disable_interupts();
@@ -148,25 +148,45 @@ int Thread::join(Thread * thread)
 		return EINVAL;
 	}
 	if (thread->status() == KILLED) {
+		delete thread;
 		Processor::revert_interupt_state(status);
 		return EKILLED;
 	}
+	if (thread->status() == FINISHED) {
+		delete thread;
+		Processor::revert_interupt_state(status);
+		return EOK;
+	}
 	thread->setFollower(this);
 	Scheduler::instance().dequeue(this);
-	m_status = WAITING;
+	this->m_status = JOINING;
 	Scheduler::instance().switchThread();
+	delete thread;
 	Processor::revert_interupt_state(status);
 	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 void Thread::kill()
 {
+	m_status = KILLED;
+	if (m_follower) {
+		assert(m_follower->m_status == JOINING);
+		m_follower->setStatus(READY);
+		Scheduler::instance().enqueue(m_follower);
+	}
+	Scheduler::instance().dequeue(this);
+	Scheduler::instance().removeThread();
 
+	if (Scheduler::instance().activeThread() == this)
+		Scheduler::instance().switchThread();
+	
 }
+/*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
 	Kernel::instance().free(m_stack);
 	Kernel::instance().pool().free();
+	Scheduler::instance().returnId(m_id);
 }
 /*----------------------------------------------------------------------------*/
 int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
@@ -181,5 +201,6 @@ int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
 	}
 	*thread_ptr = Scheduler::instance().getId(new_thread);
 	Scheduler::instance().enqueue(new_thread);
+	Scheduler::instance().addThread();
 	return EOK;
 }

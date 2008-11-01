@@ -61,24 +61,9 @@ public:
 	 */
 	thread_t getId(Thread* newThread);
 
-	/*! @brief Waits fot thread to finish.
-	 * @param thread thread id of the thread to wait for
-	 * @return EINVAL on invalid thread, EKILLED on killed thread, EOK on sucess
-	 */
-//	int joinThread(thread_t thread);
+	inline void returnId(thread_t id)
+		{ m_threadMap.erase(id); };
 
-	/*! @brief Timed version of waiting, waits only specified amount of time.
-	 * @param thread thread id of the thread to wait for
-	 * @return same as not timed version plus ETIMEDOUT on timeout
-	 */
-//	int joinThread(thread_t thread, unsigned int usec);
-
-	/*! @brief Queues thread in scheduling queue
-	 * @param thread thread to woken
-	 * @return EINVAL on non-existing thread, EOK on success
-	 */
-//	int wakeup(thread_t thread);
-	
 	/*! @brief Removes thread from scheduling queue (ONLY).
 	 *
 	 * To actually suspend you need to call yeild after this.
@@ -102,6 +87,10 @@ public:
 	 */
 	void switchThread();
 
+	inline unsigned int addThread() { return ++m_threadCount; };
+
+	inline unsigned int removeThread() { return --m_threadCount; }; 
+
 private:
 	/*! Planning queue */
 	List<Thread*> m_activeThreadList;
@@ -114,6 +103,8 @@ private:
 
 	/*! Thread id generating helper. Increases avery time thread is added. */
 	thread_t m_nextThread;
+
+	unsigned int m_threadCount;
 
 	Thread* m_idle;
 

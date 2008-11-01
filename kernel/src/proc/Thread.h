@@ -50,7 +50,7 @@ public:
 	 * @brief Possible states of threads
 	 */
 	enum Status {
-		READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED
+		READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED, JOINING
 	};
 	
 	~Thread();

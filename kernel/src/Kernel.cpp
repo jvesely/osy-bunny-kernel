@@ -32,6 +32,7 @@
 #include "Kernel.h"
 #include "api.h"
 #include "devices.h"
+#include "tools.h"
 /*! This is our great bunny :) */
 const char * BUNNY_STR =
 "       _     _\n\
@@ -175,9 +176,9 @@ void Kernel::handleInterupts(Processor::Context* registers)
 //		Processor::msim_stop();
 	}
 	if (registers->cause & CAUSE_IP7_MASK) {//timer interupt
-		//dprintf("Timer interupt.\n");
+//		dprintf("Timer interupt: %u.\n", reg_read_count());
 		reg_write_cause(0);
-		yield();
+		Scheduler::instance().activeThread()->yield();
 	} 
 
 }
@@ -187,13 +188,17 @@ void Kernel::setTimeInterupt(const unsigned int usec)
 	using namespace Processor;
 	ipl_t state = save_and_disable_interupts();
 	const unative_t current = reg_read_count();
-	const unative_t next =  reg_read_compare();
-	const unative_t planned = current + (usec * m_timeToTicks);
-
-	if ( !(next > current &&  next < planned) ) {
-		//plan
+//	const unative_t next =  reg_read_compare();
+		
+	const unative_t planned = 
+	(usec != 0) ?
+		roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILI_SECOND)
+		:
+		0;
+	//if ( !(next > current &&  next < planned) ) {
+//	dprintf("Set timer interupt %u.\n", planned);	
 		reg_write_compare( planned );
-	}
+//	}
 //	dprintf("Set time interupt current: %x, planned: %x.\n", current, planned);
 
 	revert_interupt_state(state);

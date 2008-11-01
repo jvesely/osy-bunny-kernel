@@ -53,8 +53,8 @@ void* test(void*)
 
 //	panic ("foo\n");
 	while (true) {
-		printf("\nWrite something: ");
-		thread_usleep(1000000);
+//		printf("\nWrite something: ");
+//		thread_usleep(1000000);
 		//char c[150];
 		//int ret = gets(c, 150);
 		//if (ret >= 0 )
@@ -66,14 +66,15 @@ void* test(void*)
 //		printf("Hi %c\n", c);
 //		thread_sleep(1);
 //		panic("foo");
-/*		thread_t thread;
+		thread_t thread;
 		if (thread_create(&thread, test1, NULL, 0) == EOK)
 			printf("Thread join: %d\n", thread_join(thread));
 		else {
 			printf("Thread creation failed.\n");
 			break;
-		}*/
+		}
 	}
+	printf("Bailing out.\n");
 	return NULL;
 }
 

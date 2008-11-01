@@ -85,7 +85,7 @@ void Console::interupt()
 {
 //	dprintf("Char on address %p : %c (%d).\n", m_inputAddress, *m_inputAddress, *m_inputAddress);
 	insert();
-	*m_outputAddress = m_buffer.readLast();
+//	*m_outputAddress = m_buffer.readLast(); //echo
 //	dprintf("First char is still \"%c\".\n", m_buffer.read());
 	if (m_waitList.size()) {
 		ListItem<Thread*>* item = m_waitList.removeFront();

@@ -60,14 +60,19 @@ void Scheduler::switchThread()
 
 	void* DUMMYSTACK = (void*)0xF00;
 	void** old_stack = (m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
-	m_currentThread->setStatus(Thread::READY);
+//	m_currentThread->setStatus(Thread::READY);
 	m_currentThread = m_activeThreadList.getFront();
 	//dprintf("Next thread %x.\n", m_currentThread);
 	if (!m_currentThread) {
 		m_currentThread = m_idle;
-//		dprintf("Nothing to do switching to the idle thread.\n");
+	//		dprintf("Nothing to do switching to the idle thread.\n");
 	} else {
 		m_activeThreadList.rotate();
+	}
+	
+	if (m_threadCount == 0) {
+			dprintf("No more active threads, shutting down.\n");
+			Kernel::halt();
 	}
 
 	m_currentThread->setStatus(Thread::RUNNING);

@@ -78,6 +78,8 @@ public:
 	/*! just a msim wrapper */
 	static inline void stop() { Processor::msim_stop(); };
 
+	static inline void halt() { Processor::msim_halt(); };
+
 	/*! another msim wrapper */
 	static inline void regDump() { Processor::msim_reg_dump(); };
 
@@ -95,9 +97,6 @@ public:
 	 * @param address adress of the returned block
 	 */
 	void free(void* address) const;
-
-	/*! My thread no longer wishes to run */
-	inline void yield() const { Scheduler::instance().switchThread(); };
 
 	void handle(Processor::Context* registers);
 
