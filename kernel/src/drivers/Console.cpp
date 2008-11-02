@@ -91,9 +91,11 @@ void Console::interupt()
 		ListItem<Thread*>* item = m_waitList.removeFront();
 		assert(item);
 		assert(item->data());
-		Scheduler::instance().enqueue(item->data());
+		Thread * thr = item->data();
 		item->data() = NULL;
 		Kernel::instance().pool().put(item);
+		Scheduler::instance().enqueue(thr);
+
 	}
 //	dprintf("Buffer count: %u \n", m_buffer.count());
 }

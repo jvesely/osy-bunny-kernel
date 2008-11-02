@@ -80,7 +80,6 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	context->ra = *(unative_t*)(&runPtr);  /* return address (run this) */
 	context->a0 = (unative_t)this;         /* the first and the only argument */
 	context->gp = ADDR_TO_KSEG0(0);        /* global pointer */
-	context->sp = (unative_t)m_stackTop;   /* stack top */
 	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
 
 	m_status = READY;
