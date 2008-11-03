@@ -31,13 +31,13 @@
  */
 #include "Scheduler.h"
 #include "Kernel.h"
-#include "drivers/Processor.h"
+#include "InteruptDisabler.h"
 
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
 	m_idle = new Thread(idleThread, (void*)NULL, 0, 512); // small stack should be enough
 	//bool success = m_idle->isOK();
-	assert(m_idle->m_stack); // must have odle thread
+	assert(m_idle->m_status == Thread::INITIALIZED); // must have odle thread
 }
 /*----------------------------------------------------------------------------*/
 thread_t Scheduler::getId(Thread* newThread)
@@ -56,7 +56,7 @@ thread_t Scheduler::getId(Thread* newThread)
 void Scheduler::switchThread()
 {
 	//disable interupts
-	const ipl_t state = Processor::save_and_disable_interupts();
+	InteruptDisabler interupts;
 
 	void* DUMMYSTACK = (void*)0xF00;
 	void** old_stack = (m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
@@ -83,15 +83,13 @@ void Scheduler::switchThread()
 		Kernel::instance().setTimeInterupt(DEFAULT_QUATNUM);	
 	else
 		Kernel::instance().setTimeInterupt(0);
-//	if (*old)
-	Processor::switch_cpu_context(old_stack, new_stack);
-	//enable interupts
-	Processor::revert_interupt_state(state);
+	if (old_stack != new_stack)
+		Processor::switch_cpu_context(old_stack, new_stack);
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::enqueue(Thread * thread)
 {
-	ipl_t status = Processor::save_and_disable_interupts();
+	InteruptDisabler interupts;
 	assert( Kernel::instance().pool().reserved() );
 	
 	ListItem<Thread*>* item = Kernel::instance().pool().get();
@@ -100,7 +98,6 @@ void Scheduler::enqueue(Thread * thread)
 
 	if (thread->status() == Thread::INITIALIZED) 
 		++m_threadCount; // new thread
-
 	
 	thread->setStatus(Thread::READY);
 	
@@ -109,23 +106,24 @@ void Scheduler::enqueue(Thread * thread)
 	if (m_currentThread == m_idle)
 			Kernel::instance().setTimeInterupt(1); // plan to nearest slot
 	
-	Processor::revert_interupt_state(status);
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::dequeue(Thread* thread)
 {
-	ipl_t status = Processor::save_and_disable_interupts();
+	InteruptDisabler interupts;
+
 	ListItem<Thread*>* ptr = m_activeThreadList.removeFind(thread);
-	if (thread->status() == Thread::KILLED || thread->status() == Thread::FINISHED) 
-		--m_threadCount; // remove dead
 	if (!ptr) {
-		Processor::revert_interupt_state(status);
 		return;  // not in the list
+	}
+
+	if ( (thread->status() == Thread::KILLED)
+		|| (thread->status() == Thread::FINISHED) ) {
+		--m_threadCount; // remove dead
 	}
 	Kernel::instance().pool().put(ptr);
 	//dprintf("Returning listitem %x.\n", ptr);
 	dprintf("Thread %d dequeued.\n", thread->m_id);
-	Processor::revert_interupt_state(status);
 }
 /*----------------------------------------------------------------------------*/
 void * idleThread(void*) { asm volatile ( "wait" ); return NULL; }

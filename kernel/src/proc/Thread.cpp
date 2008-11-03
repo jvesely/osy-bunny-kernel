@@ -32,7 +32,7 @@
 
 #include "Thread.h"
 #include "Kernel.h"
-#include "drivers/Processor.h"
+#include "InteruptDisabler.h"
 #include "address.h"
 #include "api.h"
 /*----------------------------------------------------------------------------*/
@@ -45,9 +45,9 @@ void Thread::run()
 	dprintf("Thread %d finished.\n", m_id);
 	if (m_follower) {
 		assert(m_follower->m_status == JOINING);
-		m_follower->setStatus(READY);
 		Scheduler::instance().enqueue(m_follower);
 	}
+
 	Scheduler::instance().dequeue(this);
 	Scheduler::instance().switchThread();
 	
@@ -132,7 +132,7 @@ void Thread::wakeup()
 /*----------------------------------------------------------------------------*/
 int Thread::join(Thread * thread)
 {
-	ipl_t status = Processor::save_and_disable_interupts();
+	InteruptDisabler interupts;
 	dprintf("Trying to join thread %d with thread %d (status: %d)\n",
 		m_id, thread->m_id, thread->m_status);
 	if (!thread                                          /* no such thread */
@@ -140,26 +140,23 @@ int Thread::join(Thread * thread)
 		|| thread->detached()                              /* detached thread */
 		|| thread->follower()                              /* already waited for */
 	) {
-		Processor::revert_interupt_state(status);
 		return EINVAL;
 	}
 	if (thread->status() == KILLED) {
 		delete thread;
-		Processor::revert_interupt_state(status);
 		return EKILLED;
 	}
 	if (thread->status() == FINISHED) {
 		dprintf("Thread %d already finished.\n", thread->m_id);
 		delete thread;
-		Processor::revert_interupt_state(status);
 		return EOK;
 	}
 	thread->setFollower(this);
 	m_status = JOINING;
 	Scheduler::instance().dequeue(this);
 	Scheduler::instance().switchThread();
+	assert( (thread->m_status == FINISHED) || (thread->m_status == KILLED) );
 	delete thread;
-	Processor::revert_interupt_state(status);
 	return EOK;
 }
 /*----------------------------------------------------------------------------*/
@@ -168,7 +165,6 @@ void Thread::kill()
 	dprintf("Killing thread %d.\n", m_id);
 	if ( (m_status == KILLED) || (m_status == FINISHED) )
 		return;
-	ipl_t status = Processor::save_and_disable_interupts();
 
 	if (m_follower) {
 		assert(m_follower->m_status == JOINING);
@@ -177,8 +173,6 @@ void Thread::kill()
 
 	m_status = KILLED;
 	Scheduler::instance().dequeue(this);
-
-		Processor::revert_interupt_state(status);	
 
 	if (Scheduler::instance().activeThread() == this)
 		Scheduler::instance().switchThread();
