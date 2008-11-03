@@ -32,7 +32,7 @@
  */
 #pragma once
 
-#define BUFF_SIZE 50
+#define BUFF_SIZE 128
 #include "structures/Buffer.h"
 
 /*!
@@ -46,22 +46,22 @@ class InputCharacterDevice
 {
 public:
 	/*! constructor sets the reading address */
-	InputCharacterDevice(char * address):m_address(address){};
+	InputCharacterDevice(char * address):m_inputAddress(address){};
 
 	/*! reads one stored char from the buffer */
-	inline char readChar(){ return m_buffer.get(); };
+	inline char getChar() { return m_buffer.get(); };
 	
 	/*! outputs buffer size */
-	inline size_t size(){ return BUFF_SIZE; };
+	inline size_t size() const { return BUFF_SIZE; };
 
 	/*! outputs current buffer usege */
-	inline size_t count(){ return m_buffer.count(); };
+	inline size_t count() const { return m_buffer.count(); };
 
 	/*! kick to read value from input and put it to the buffer */
-	inline size_t insert(){	return m_buffer.insert(*m_address);	};
-private:
+	inline size_t insert() {	return m_buffer.insert(*m_inputAddress);	};
+protected:
 	/*! device address */
-	char * m_address;
+	char * m_inputAddress;
 
 	/*! buffer */
 	Buffer<char, BUFF_SIZE> m_buffer;

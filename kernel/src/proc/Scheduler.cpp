@@ -31,9 +31,16 @@
  */
 #include "Scheduler.h"
 #include "Kernel.h"
-#include "drivers/Processor.h"
+#include "InteruptDisabler.h"
 
-thread_t Scheduler::addThread(Thread* newThread)
+Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
+{
+	m_idle = new Thread(idleThread, (void*)NULL, 0, 512); // small stack should be enough
+	//bool success = m_idle->isOK();
+	assert(m_idle->m_status == Thread::INITIALIZED); // must have odle thread
+}
+/*----------------------------------------------------------------------------*/
+thread_t Scheduler::getId(Thread* newThread)
 {
 	//ostrich stuff, there shall always be free id
 	thread_t id = m_nextThread++;
@@ -43,72 +50,80 @@ thread_t Scheduler::addThread(Thread* newThread)
 	}
 	newThread->setId(id);
 
-	schedule(newThread);
-
 	return id;
-}
-/*----------------------------------------------------------------------------*/
-int Scheduler::wakeup(thread_t thread)
-{
-	if (!m_threadMap.exists(thread))
-		return EINVAL;
-	Thread * thr = m_threadMap.at(thread);
-	if (m_activeThreadList.find(thr) != m_activeThreadList.end())	
-		schedule(thr);
-	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::switchThread()
 {
 	//disable interupts
-	if (m_activeThreadList.size() == 0) {
-		//TODO:switch to idle thread
-		return;
-	}
+	InteruptDisabler interupts;
 
 	void* DUMMYSTACK = (void*)0xF00;
-	void** old_stack = (void**)(m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
-	m_currentThread->setStatus(Thread::READY);
-	m_currentThread = *m_activeThreadList.rotate();
+	void** old_stack = (m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
+//	m_currentThread->setStatus(Thread::READY);
+//	m_currentThread = m_activeThreadList.getFront();
+	//dprintf("Next thread %x.\n", m_currentThread);
+	if (!m_activeThreadList.size()) {
+		m_currentThread = m_idle;
+	//		dprintf("Nothing to do switching to the idle thread.\n");
+	} else {
+		m_currentThread = *m_activeThreadList.rotate();
+	}
+	
+	if (m_threadCount == 0) {
+			assert(m_activeThreadList.size() == 0);
+			dprintf("No more active threads, shutting down.\n");
+			Kernel::halt();
+	}
+
 	m_currentThread->setStatus(Thread::RUNNING);
 	void** new_stack = m_currentThread->stackTop();
-	//dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
-	Processor::switch_cpu_context(old_stack, new_stack);
-	//enable interupts
+	dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
+	if (m_currentThread != m_idle)
+		Kernel::instance().setTimeInterupt(DEFAULT_QUATNUM);	
+	else
+		Kernel::instance().setTimeInterupt(0);
+	if (old_stack != new_stack)
+		Processor::switch_cpu_context(old_stack, new_stack);
 }
 /*----------------------------------------------------------------------------*/
-void Scheduler::schedule(Thread * thread)
+void Scheduler::enqueue(Thread * thread)
 {
+	InteruptDisabler interupts;
 	assert( Kernel::instance().pool().reserved() );
+	
 	ListItem<Thread*>* item = Kernel::instance().pool().get();
 	item->data() = thread;
 	m_activeThreadList.pushBack(item);
+
+	if (thread->status() == Thread::INITIALIZED) 
+		++m_threadCount; // new thread
+	
 	thread->setStatus(Thread::READY);
+	
 	dprintf("Scheduled thread %u to run.\n", thread->id());
-}
-/*----------------------------------------------------------------------------*/
-void Scheduler::suspend()
-{
-	ListItem<Thread*>* ptr = m_activeThreadList.removeFind(m_currentThread);
-	if (!ptr) return;
-	//return to the pool
-	Kernel::instance().pool().put(ptr);
-	m_currentThread->setStatus(Thread::WAITING);
-}
-/*----------------------------------------------------------------------------*/
-int Scheduler::joinThread(thread_t thread)
-{
-	if (!m_threadMap.exists(thread))
-		return EINVAL;
-	Thread* thr = m_threadMap.at(thread);
-	if (thr->status() == Thread::KILLED)
-		return EKILLED;
-	if (thr == m_currentThread || thr->detached() || thr->follower() ) {
-		return EINVAL;
-	}
-	thr->setFollower(m_currentThread);
-	suspend();
-	switchThread();
-	return EOK;
+	
+	if (m_currentThread == m_idle)
+			Kernel::instance().setTimeInterupt(1); // plan to nearest slot
 	
 }
+/*----------------------------------------------------------------------------*/
+void Scheduler::dequeue(Thread* thread)
+{
+	InteruptDisabler interupts;
+
+	ListItem<Thread*>* ptr = m_activeThreadList.removeFind(thread);
+	if (!ptr) {
+		return;  // not in the list
+	}
+
+	if ( (thread->status() == Thread::KILLED)
+		|| (thread->status() == Thread::FINISHED) ) {
+		--m_threadCount; // remove dead
+	}
+	Kernel::instance().pool().put(ptr);
+	//dprintf("Returning listitem %x.\n", ptr);
+	dprintf("Thread %d dequeued.\n", thread->m_id);
+}
+/*----------------------------------------------------------------------------*/
+void * idleThread(void*) { asm volatile ( "wait" ); return NULL; }

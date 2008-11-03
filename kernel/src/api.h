@@ -80,7 +80,7 @@ char getc();
  * of blocking.
  * @return read char or EWOULDBLOCK on empty buffer
  */
-native_t getc_try();
+int getc_try();
 
 /*! gets tries to read multiple chars from the device buffer.
  * If len is 0 returns EINVAL. Reads from the buffer until '\n'
@@ -158,7 +158,7 @@ void kpanic(const char* format, ... );
  * @param flags ignored param
  * @return ENOMEM on lack of memory, EOK on sucess
  */
-int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
+int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
 	void* data, const unsigned int flags);
 
 /*! Gets identifier of the currently running thread.
@@ -218,10 +218,6 @@ int thread_wakeup(thread_t thr);
  */
 int thread_kill(thread_t thr);
 
-#ifdef __cplusplus
-}
-#endif
-
 /*! 
  * @brief Copies block of memory from one place to another.
  *
@@ -236,3 +232,20 @@ int thread_kill(thread_t thr);
  */
 
 void* memcpy( void* dest, const void* src, size_t count );
+
+/*! 
+ * @brief Copies block of memory from one place to another.
+ *
+ * This function copies @a count bytes starting from address given by 
+ * the @a src pointer to an address given by the @a dest pointer. 
+ * If the source and destination blocks overlap, the behaviour is undefined.
+ *
+ * @param dest Destination address.
+ * @param src Source address.
+ * @param count Number of bytes to copy.
+ * @return Pointer to the destination block (i.e. @a dest).
+ */
+void* memcpy( void* dest, const void* src, size_t count );
+#ifdef __cplusplus
+}
+#endif

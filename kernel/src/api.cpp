@@ -35,25 +35,35 @@
 #define va_start __builtin_va_start
 #define va_end __builtin_va_end
 #define va_arg __builtin_va_arg
-
-/*! putc prints one char
- * @param c char to be printed
- * @return number of printed chars (0 or 1)
- */
+/*----------------------------------------------------------------------------*/
 inline size_t putc(const char c)
 {
 	return Kernel::instance().console().outputChar(c);
 }
-
-/*! puts prints chars until char \0 is found
- * @param str pointer to the first char
- * @return number of written chars
- */
+/*----------------------------------------------------------------------------*/
 inline size_t puts(const char * str)
 {
 	return Kernel::instance().console().outputString(str);
 }
-
+/*----------------------------------------------------------------------------*/
+char getc()
+{	
+	return Kernel::instance().console().readChar();
+}
+/*----------------------------------------------------------------------------*/
+int getc_try()
+{
+	if (Kernel::instance().console().count())
+		return Kernel::instance().console().getChar();
+	else
+		return EWOULDBLOCK;
+}
+/*----------------------------------------------------------------------------*/
+ssize_t gets(char* str, const size_t len)
+{
+	return Kernel::instance().console().readString(str, len);
+}
+/*----------------------------------------------------------------------------*/
 /*! prints number as unsigned decimal
  * @param number number to be printed
  * @return number of printed decimal digits
@@ -75,7 +85,7 @@ size_t print_udecimal( uint32_t number)
 	
 	return count;
 };
-
+/*----------------------------------------------------------------------------*/
 /*! prints number as signed decimal
  * @param number number to be printed
  * @return number of printed decimal digits (+ sign)
@@ -89,7 +99,7 @@ size_t print_decimal(const int32_t number)
 	return print_udecimal(number);
 
 }
-
+/*----------------------------------------------------------------------------*/
 /*! prints number as unsigned hexadecimal
  * @param number number to be printed
  * @return number of printed hexadigits
@@ -115,7 +125,7 @@ size_t print_hexa(uint32_t number)
 			count += putc('0' + res);
 	return count;	
 }
-
+/*----------------------------------------------------------------------------*/
 /*! printk prints formated string on the console.
  * formating string may include:
  * %c: corresponding input variable is treated as char
@@ -161,7 +171,7 @@ size_t vprintk(const char * format, va_list args)
 	}
 	return count;
 }
-
+/*----------------------------------------------------------------------------*/
 /*! printk is varibale paramerr version of vprintk
  * see declaration or vprintk for details
  * @param format format string
@@ -178,7 +188,7 @@ size_t printk(const char * format, ...)
 
 	return written;
 }
-
+/*----------------------------------------------------------------------------*/
 void kpanic(const char* format, ...){
 	Kernel::instance().regDump();
 	printf("Kernel PANIC: ");
@@ -193,83 +203,78 @@ void kpanic(const char* format, ...){
 	Kernel::instance().block();
 
 }
-
+/*----------------------------------------------------------------------------*/
 void* malloc (size_t size)
 {
 	return Kernel::instance().malloc(size);
 }
-
+/*----------------------------------------------------------------------------*/
 void free(void* ptr)
 {
 	Kernel::instance().free(ptr);
 }
-
-int thread_create( thread_t* thread_ptr, void (*thread_start)(void*),
+/*----------------------------------------------------------------------------*/
+int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
 {
-	if (!Kernel::instance().pool().reserve()) return ENOMEM;
-	
-	Thread* thread = new Thread(thread_start, data);
-	if (!thread) return ENOMEM;
-
-	uint32_t ret = thread->setup();
-	if (ret != EOK) {
-		delete thread;
-		return ret;
-	}
-	*thread_ptr = Kernel::instance().scheduler().addThread(thread);
-	return EOK;
+	return Thread::create(thread_ptr, thread_start, data, flags);
 }
-
+/*----------------------------------------------------------------------------*/
 thread_t thread_get_current()
 {
-	return Kernel::instance().scheduler().activeThread()->id();
+	return Scheduler::instance().activeThread()->id();
 }
-
+/*----------------------------------------------------------------------------*/
 int thread_join(thread_t thr)
 {
-	return 0;
+	Thread* thread = Scheduler::instance().thread(thr);
+	return Scheduler::instance().activeThread()->join(thread);
 }
-
+/*----------------------------------------------------------------------------*/
 int thread_join_timeout(thread_t thr, const unsigned int usec)
 {
 	return 0;
 }
-
+/*----------------------------------------------------------------------------*/
 int thread_detach(thread_t thr)
 {
-	return Kernel::instance().scheduler().thread(thr)->detach();
+	return Scheduler::instance().thread(thr)->detach();
 }
-
+/*----------------------------------------------------------------------------*/
 void thread_sleep(const unsigned int sec)
 {
-	Kernel::instance().scheduler().activeThread()->sleep(sec);
+	Scheduler::instance().activeThread()->sleep(sec);
 }
-
+/*----------------------------------------------------------------------------*/
 void thread_usleep(const unsigned int usec)
 {
-	Kernel::instance().scheduler().activeThread()->usleep(usec);
+	Scheduler::instance().activeThread()->usleep(usec);
 }
-
+/*----------------------------------------------------------------------------*/
 void thread_yield()
 {
-	Kernel::instance().scheduler().switchThread();
+	Scheduler::instance().switchThread();
 }
-
+/*----------------------------------------------------------------------------*/
 void thread_suspend()
 {
-	Kernel::instance().scheduler().suspend();
-	thread_yield();
+	Scheduler::instance().activeThread()->suspend();
 }
-
+/*----------------------------------------------------------------------------*/
 int thread_wakeup(thread_t thr)
 {
-	return Kernel::instance().scheduler().wakeup(thr);
+	Thread* thread = Scheduler::instance().thread(thr);
+	if (!thread) return EINVAL;
+	thread->wakeup();
+	return EOK;
 }
-
+/*----------------------------------------------------------------------------*/
 int thread_kill(thread_t thr)
 {
-	return Kernel::instance().scheduler().killThread(thr);
+	Thread* thread = Scheduler::instance().thread(thr);
+	if (!thread) return EINVAL;
+	thread->kill();
+	return EOK;
 }
 
 void* memcpy( void* dest, const void* src, size_t count )

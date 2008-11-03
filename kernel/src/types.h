@@ -32,6 +32,9 @@
 
 #pragma once
 
+#include "errors.h"
+
+
 /*! basic platfom types, taken from Kalisto */
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
@@ -57,8 +60,7 @@ typedef uint32_t ipl_t;
 
 typedef __builtin_va_list va_list;
 
-#include "errors.h"
-
+/*----------------------------------------------------------------------------*/
 #ifndef NULL
 #define NULL 0
 #endif

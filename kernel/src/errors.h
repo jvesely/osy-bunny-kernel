@@ -30,10 +30,11 @@
  * All error constants are <0, except for EOK, but EOK is no error. ;)
  */
 #pragma once
-
-static const uint32_t EOK = 0; /*!< everything OK */
-static const uint32_t ENOMEM = -1; /*!< no more memory */
-static const uint32_t EINVAL = -2; /*!< Invalid argument */
-static const uint32_t EKILLED = -3; /*!< Requested thread heas been killed */
-static const uint32_t ETIMEDOUT = -4; /*!< Time limit reached */
-static const uint32_t EWOULDBLOCK = -5; /*!< Operation would block */
+enum errors {
+	EOK         =  0, /*!< everything OK */
+	ENOMEM      = -1, /*!< no more memory */
+	EINVAL      = -2, /*!< Invalid argument */
+	EKILLED     = -3, /*!< Requested thread heas been killed */
+	ETIMEDOUT   = -4, /*!< Time limit reached */
+	EWOULDBLOCK = -5  /*!< Operation would block */
+};

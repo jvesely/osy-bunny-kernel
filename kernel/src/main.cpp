@@ -40,13 +40,14 @@ void wrapped_start(void)
 {
 	Kernel::instance().run();
 
-	Kernel::instance().stop();
+//	Kernel::instance().stop();
 //	msim_stop();
 }
 
 /*! entry point for general_exceptions */
-void wrapped_general(void)
+void wrapped_general(Processor::Context* registers)
 {
+	Kernel::instance().handle(registers);
 }
 
 /*! TLB miss handler */

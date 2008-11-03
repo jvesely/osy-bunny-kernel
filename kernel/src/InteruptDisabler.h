@@ -19,19 +19,35 @@
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *
+ *   
  *   @date 2008-2009
  */
 
 /*!
  * @file 
- * @brief Kernel entry points.
+ * @brief Short description.
  *
- * Provides kernel entry points called by assembelr routines.
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
+
 #pragma once
 #include "drivers/Processor.h"
 
-extern "C" void wrapped_start(void);
-extern "C" void wrapped_general(Processor::Context* registers);
-extern "C" void wrapped_tlbrefill(void);
+class InteruptDisabler
+{
+public:
+	inline InteruptDisabler()
+		{ m_status = Processor::save_and_disable_interupts(); }
+	
+	inline ~InteruptDisabler()
+		{ Processor::revert_interupt_state(m_status); }
+
+private:
+	ipl_t m_status;
+
+	InteruptDisabler(const InteruptDisabler& other);
+	const InteruptDisabler& operator=(const InteruptDisabler& other);
+
+};

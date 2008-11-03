@@ -62,12 +62,12 @@ public:
 	void run();
 
 	/*! @return Console IO device */
-	inline const Console& console() const { return m_console; };
+	inline Console& console() { return m_console; };
 
 	/*! @return pool of Listitems used by threads in scheduler and mutex */
 	inline ItemPool& pool() { return m_pool; };
 
-	inline Scheduler& scheduler() { return *m_scheduler; };
+	inline Scheduler& scheduler() { return Scheduler::instance(); };
 
 	inline const RTC& clock() { return m_clock; };
 
@@ -78,11 +78,14 @@ public:
 	/*! just a msim wrapper */
 	static inline void stop() { Processor::msim_stop(); };
 
+	static inline void halt() { Processor::msim_halt(); };
+
 	/*! another msim wrapper */
 	static inline void regDump() { Processor::msim_reg_dump(); };
 
 	/*! block processor by falling in infinite loog */
-	static inline void block() { while(true) ;; };
+	static inline void block() 
+		{ Processor::save_and_disable_interupts(); while(true) ;; };
 
 	/*! @brief Kernel heap alloc.
 	 * @param size requested size
@@ -95,9 +98,11 @@ public:
 	 */
 	void free(void* address) const;
 
-	/*! My thread no longer wishes to run */
-	inline void yield() const { m_scheduler->switchThread(); };
+	void handle(Processor::Context* registers);
 
+	void handleInterupts(Processor::Context* registers);
+
+	void setTimeInterupt( const unsigned int usec );
 private:
 	/*! kernel heap manager */	
 	Allocator m_alloc;
@@ -118,7 +123,7 @@ private:
 	ItemPool m_pool;
 
 	/*! simple scheduler */
-	Scheduler* m_scheduler;
+//	Scheduler& m_scheduler;
 
 	/*! @brief Detects accessible memory.
 	 *
@@ -126,6 +131,8 @@ private:
 	 * @return size of detected memory.
 	 */
 	size_t getPhysicalMemorySize();
+
+	unsigned int m_timeToTicks;
 
 	/*! @brief initialize structures
 	 *
