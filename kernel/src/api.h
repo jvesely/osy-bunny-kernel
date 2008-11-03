@@ -235,4 +235,4 @@ int thread_kill(thread_t thr);
  * @return Pointer to the destination block (i.e. @a dest).
  */
 
-void *memcpy( void *dest, const void *src, size_t count );
+void* memcpy( void* dest, const void* src, size_t count );

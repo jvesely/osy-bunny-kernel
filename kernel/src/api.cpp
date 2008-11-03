@@ -272,10 +272,10 @@ int thread_kill(thread_t thr)
 	return Kernel::instance().scheduler().killThread(thr);
 }
 
-void *memcpy( void *dest, const void *src, size_t count )
+void* memcpy( void* dest, const void* src, size_t count )
 {
-	char *dstc = (char *) dest;
-    char *srcc = (char *) src;
+	char* dstc = (char*) dest;
+    char* srcc = (char*) src;
     
     while (count--) {
         *dstc++ = *srcc++;
