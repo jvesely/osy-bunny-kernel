@@ -221,3 +221,18 @@ int thread_kill(thread_t thr);
 #ifdef __cplusplus
 }
 #endif
+
+/*! 
+ * @brief Copies block of memory from one place to another.
+ *
+ * This function copies @a count bytes starting from address given by 
+ * the @a src pointer to an address given by the @a dest pointer. 
+ * If the source and destination blocks overlap, the behaviour is undefined.
+ *
+ * @param dest Destination address.
+ * @param src Source address.
+ * @param count Number of bytes to copy.
+ * @return Pointer to the destination block (i.e. @a dest).
+ */
+
+void *memcpy( void *dest, const void *src, size_t count );
