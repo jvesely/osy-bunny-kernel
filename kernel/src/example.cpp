@@ -53,7 +53,6 @@ void* test(void*)
 
 //	panic ("foo\n");
 	while (true) {
-		printf("\nWrite something: ");
 //		thread_usleep(1000000);
 		//char c[150];
 		//int ret = gets(c, 150);
@@ -62,14 +61,18 @@ void* test(void*)
 		//else
 		//	printf("Error reading string: %d\n", ret);
 
-		char c = getc();
-		printf("Hi %c\n", c);
+//		char c = getc();
+//		printf("Hi %c\n", c);
 //		thread_sleep(1);
 //		panic("foo");
-/*		thread_t thread;
-		if (thread_create(&thread, test1, NULL, 0) == EOK)
+		thread_t thread;
+		if (thread_create(&thread, test1, NULL, 0) == EOK) {
+			printf("Before kill\n");
+			thread_kill(thread);
+			printf("After kill.\n");
 			printf("Thread join: %d\n", thread_join(thread));
-		else {
+			printf("Thread again.\n");
+		} else {
 			printf("Thread creation failed.\n");
 			break;
 		}// */

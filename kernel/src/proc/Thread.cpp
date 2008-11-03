@@ -48,11 +48,9 @@ void Thread::run()
 		m_follower->setStatus(READY);
 		Scheduler::instance().enqueue(m_follower);
 	}
-
 	Scheduler::instance().dequeue(this);
-	Scheduler::instance().removeThread();
 	Scheduler::instance().switchThread();
-	// do detached stuff
+	
 	while (true) 
 		printf("Called dead Thread.\n");
 }
@@ -82,7 +80,7 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	context->gp = ADDR_TO_KSEG0(0);        /* global pointer */
 	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
 
-	m_status = READY;
+	m_status = INITIALIZED;
 }
 /*----------------------------------------------------------------------------*/
 void Thread::yield()
@@ -120,8 +118,8 @@ void Thread::usleep(const unsigned int usec)
 void Thread::suspend()
 {
 	assert(m_status == RUNNING);
-	Scheduler::instance().dequeue(this);
 	m_status = WAITING;
+	Scheduler::instance().dequeue(this);
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
@@ -129,15 +127,14 @@ void Thread::wakeup()
 {
 //	dprintf("My(%x) status: %d\n", this, m_status);
 	assert(m_status == WAITING);
-	m_status = READY;
 	Scheduler::instance().enqueue(this);
 }
 /*----------------------------------------------------------------------------*/
 int Thread::join(Thread * thread)
 {
 	ipl_t status = Processor::save_and_disable_interupts();
-	dprintf("Trying to join thread %d with thread %d\n",
-		m_id, thread->id());
+	dprintf("Trying to join thread %d with thread %d (status: %d)\n",
+		m_id, thread->m_id, thread->m_status);
 	if (!thread                                          /* no such thread */
 		|| thread == Scheduler::instance().activeThread()  /* it's me */
 		|| thread->detached()                              /* detached thread */
@@ -152,13 +149,14 @@ int Thread::join(Thread * thread)
 		return EKILLED;
 	}
 	if (thread->status() == FINISHED) {
+		dprintf("Thread %d already finished.\n", thread->m_id);
 		delete thread;
 		Processor::revert_interupt_state(status);
 		return EOK;
 	}
 	thread->setFollower(this);
+	m_status = JOINING;
 	Scheduler::instance().dequeue(this);
-	this->m_status = JOINING;
 	Scheduler::instance().switchThread();
 	delete thread;
 	Processor::revert_interupt_state(status);
@@ -167,18 +165,23 @@ int Thread::join(Thread * thread)
 /*----------------------------------------------------------------------------*/
 void Thread::kill()
 {
-	m_status = KILLED;
+	dprintf("Killing thread %d.\n", m_id);
+	if ( (m_status == KILLED) || (m_status == FINISHED) )
+		return;
+	ipl_t status = Processor::save_and_disable_interupts();
+
 	if (m_follower) {
 		assert(m_follower->m_status == JOINING);
-		m_follower->setStatus(READY);
 		Scheduler::instance().enqueue(m_follower);
 	}
+
+	m_status = KILLED;
 	Scheduler::instance().dequeue(this);
-	Scheduler::instance().removeThread();
+
+		Processor::revert_interupt_state(status);	
 
 	if (Scheduler::instance().activeThread() == this)
 		Scheduler::instance().switchThread();
-	
 }
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
@@ -191,15 +194,17 @@ Thread::~Thread()
 int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
   void* thread_data, const unsigned int thread_flags)
 {
-//	if (!Kernel::instance().pool().reserve()) return ENOMEM;
+	dprintf("Entered thread create\n");
 	Thread* new_thread = new Thread(thread_start, thread_data);
-	if (!new_thread || new_thread->m_stack == NULL ) {
+	if (!new_thread || new_thread->m_status != INITIALIZED ) {
 		delete new_thread;
 //		Kernel::instance().pool().free();
+		dprintf("Thread creation unsuccessfull deleted.\n");
 		return ENOMEM;
 	}
 	*thread_ptr = Scheduler::instance().getId(new_thread);
+	dprintf("Thread %d created, now enqueue.\n", new_thread->m_id);
 	Scheduler::instance().enqueue(new_thread);
-	Scheduler::instance().addThread();
+	dprintf("Enqueued and leaving.\n");
 	return EOK;
 }

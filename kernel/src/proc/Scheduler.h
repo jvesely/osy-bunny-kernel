@@ -87,10 +87,6 @@ public:
 	 */
 	void switchThread();
 
-	inline unsigned int addThread() { return ++m_threadCount; };
-
-	inline unsigned int removeThread() { return --m_threadCount; }; 
-
 private:
 	/*! Planning queue */
 	List<Thread*> m_activeThreadList;
