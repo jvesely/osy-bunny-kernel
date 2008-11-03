@@ -65,6 +65,7 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	m_stack = malloc(m_stackSize);
 	if (m_stack == 0) return;  /* test stack */
 
+
 	using namespace Processor;
 	
 	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
@@ -175,8 +176,6 @@ void Thread::kill()
 
 	if (Scheduler::instance().activeThread() == this)
 		Scheduler::instance().switchThread();
-	else if (m_detached)
-		delete this;
 }
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()

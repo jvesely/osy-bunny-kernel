@@ -276,6 +276,7 @@ int thread_kill(thread_t thr)
 	thread->kill();
 	return EOK;
 }
+
 void* memcpy( void* dest, const void* src, size_t count )
 {
 	char* dstc = (char*) dest;
