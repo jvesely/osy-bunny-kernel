@@ -10,16 +10,16 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
@@ -62,11 +62,14 @@ public:
 	inline ListItem<T> * getPrev() const { return m_prev; } /**< @brief previous item in list */
 	inline ListItem<T> * prev() const { return getPrev(); } /**< @brief previous item in list */
 
-	inline void setNext ( ListItem<T> * next ) { m_next = next; } /**< @brief set next item in list */
-	inline void next ( ListItem<T> * nnext ) { setNext ( nnext ); } /**< @brief set next item in list */
+	inline void setNext ( ListItem<T> * next ) { m_next = next; } 	/**< @brief set next item in list */
+	inline void next ( ListItem<T> * nnext ) { setNext ( nnext ); }	/**< @brief set next item in list */
 
-	void setPrev ( ListItem<T> * prev ) { m_prev = prev; } /**< @brief set previous item in list */
-	inline void prev ( ListItem<T> * nprev ) { setNext ( nprev ); } /**< @brief set previous item in list */
+	inline void setPrev ( ListItem<T> * prev ) { m_prev = prev; }	/**< @brief set previous item in list */
+	inline void prev ( ListItem<T> * nprev ) { setNext ( nprev ); }	/**< @brief set previous item in list */
+
+	inline void setData ( T & data) {m_data = data;} 	/**< @brief set data */
+	inline void data(T & data){ setData(data);}			/**< @brief wrapper over setData */
 
 	/** @brief append after \a prev
 	*	@note prev->next() is ignored, even if exists
@@ -484,40 +487,12 @@ public:
 		return Iterator ( item );
 	}
 
-	/*! @brief gets ListItem containing value from the middle of the list
-	 * @param value value to find
-	 * @return pointer to listItem contaning value and detached from the list
-	 * NULL on failure
-	 */
-	ListItem<T>* removeFind(const T& value)
-	{
-		if (!m_first) return NULL;
-		if (m_first->data() == value)
-			return removeFront();
-		assert(m_last);
-		if (m_last->data() == value)
-			return removeBack();
-		ListItem<T>* ptr = m_first->next();
-		while (ptr) {
-			if(ptr->data() == value) break;
-			ptr = ptr->next();
-		}
-		if (ptr) {
-			assert(ptr->next()); //it's not last
-			ptr->next()->setPrev(ptr->prev());
-			assert(ptr->prev()); //it'snot first
-			ptr->prev()->setNext(ptr->next());
-		}
-		--m_count;
-		return ptr;
-	}
-
 	/** @brief disconnect first from list
 	*	does not delete the item, this is the difference against popFront
 	*	implementation note: does not allocate anything
-	*	@return pointer to disconnected element
+	*	@return pointer to disconnected element; if nothing in list, NULL is returned
 	*/
-	ListItem<T>* removeFront()
+	ListItem<T> * removeFront()
 	{
 		//get first item
 		if ( m_first == NULL ) return NULL;
@@ -541,7 +516,7 @@ public:
 	/** @brief disconnect last from list
 	*	does not delete the item, this is the difference against popBack
 	*	implementation note: does not allocate anything
-	*	@return pointer to disconnected element
+	*	@return pointer to disconnected element; if nothing in list, NULL is returned
 	*/
 	ListItem<T> * removeBack()
 	{
@@ -562,6 +537,47 @@ public:
 		--m_count;
 		item->disconnect();
 		return item;
+	}
+
+	/** @brief disconects item from list
+	*	does not delete the item, this is the difference against erase
+	*	item is after this operation definitelly not conencted to this list
+	*	(but can be connected in other, if method was called on bad object)
+	*	@note does not check whether item is in 'this' list
+	*	@param item removed list item
+	*	@return pointer to removed item
+	*/
+	ListItem<T> * remove(ListItem<T> * item)
+	{
+		if(item == NULL) return item;
+		if(m_count == 0) return item;//cannot be here
+		//setting first/last pointer
+		if(item == m_first)
+		{
+			m_first = item->getNext();
+		}
+		if(item == m_last)
+		{
+			m_last = item->getPrev();
+		}
+		//disconencting from list
+		item->disconnect();
+		//count
+		--m_count;
+		return item;
+	}
+
+	/** @brief disconects item from list - wrapper over remove(ListItem) method
+	*	does not delete the item, this is the difference against erase
+	*	item is after this operation definitelly not conencted to this list
+	*	(but can be connected in other, if method was called on bad object)\n
+	*	@note does not check whether item is in 'this' list. does not invalidate iterator it
+	*	@param it iterator to item removed from list
+	*	@return pointer to removed ListItem
+	*/
+	inline ListItem<T> * remove(Iterator it)
+	{
+		return remove(it.getItem());
 	}
 
 
@@ -635,6 +651,40 @@ public:
 		return it;
 	}
 
+	/*! @brief gets ListItem containing value from the middle of the list
+	 * @param value value to find
+	 * @return pointer to listItem contaning value and detached from the list
+	 * NULL on failure
+	 */
+	ListItem<T>* removeFind(const T& value)
+	{
+		Iterator it = find(value);
+		if(it==end()) return NULL;
+		remove(it);
+		return it.getItem();
+
+
+		/*if (!m_first) return NULL;
+		if (m_first->data() == value)
+			return removeFront();
+		assert(m_last);
+		if (m_last->data() == value)
+			return removeBack();
+		ListItem<T>* ptr = m_first->next();
+		while (ptr) {
+			if(ptr->data() == value) break;
+			ptr = ptr->next();
+		}
+		if (ptr) {
+			assert(ptr->next()); //it's not last
+			ptr->next()->setPrev(ptr->prev());
+			assert(ptr->prev()); //it'snot first
+			ptr->prev()->setNext(ptr->next());
+		}*/
+//		return ptr;
+	}
+
+
 	/** @brief find from first item */
 	inline Iterator find ( const T & data ) const { return find ( data, this->begin() ); }
 
@@ -653,7 +703,7 @@ public:
 	{
 		if ( it.getItem() != NULL )
 		{
-			remove ( it.getItem() );
+			removeDelete ( it.getItem() );
 		}//else nothing
 	}
 
@@ -670,6 +720,7 @@ public:
 
 	/** @brief insert before iterator
 	*	if it == end() element is inserted on the end of list
+	*	@return iterator to new element; if fails, end() is returned
 	*/
 	Iterator insert ( const Iterator& it, const T& value )
 	{
@@ -677,17 +728,13 @@ public:
 
 		ListItem<T> * item = it.getItem();
 		ListItem<T> * newItem = new ListItem<T> ( value );
-		if ( newItem == NULL ) return Iterator ( NULL );
 
-		newItem->insertBefore ( item );
-		if ( item == m_first )
-			m_first = newItem;
-		++m_count;
-		return Iterator ( newItem );
+		return insert(item,newItem);
 	}
 
 	/** @brief insert after iterator
 	*	if it == rend() element is inserted on the begin of list
+	*	@return iterator to new element; if fails, rend() is returned
 	*/
 
 	Iterator rinsert ( const Iterator& it, const T& value )
@@ -696,14 +743,49 @@ public:
 
 		ListItem<T> * item = it.getItem();
 		ListItem<T> * newItem = new ListItem<T> ( value );
-		if ( newItem == NULL ) return Iterator ( NULL );
 
-		newItem->insertAfter ( item );
-		if ( item == m_last )
-			m_last = newItem;
-		++m_count;
-		return Iterator ( newItem );
+		return rinsert(item,newItem);
 	}
+
+	/** @brief new-free insert before item
+	*	if item == NULL, new item is inserted on the end of list
+	*	@param item listItem before which will be insertedItem inserted
+	*	@param inertedItem inserted item
+	*	@return iterator to new element; if fails(insertedItem is NULL), end() is returned
+	*
+	*/
+	Iterator insert ( ListItem<T> * item, ListItem<T> * insertedItem )
+	{
+		if ( insertedItem == NULL ) return Iterator ( NULL );
+		if ( item == NULL ) return pushBack ( insertedItem );
+
+		insertedItem->insertBefore ( item );
+		if ( item == m_first )
+			m_first = insertedItem;
+		++m_count;
+		return Iterator ( insertedItem );
+	}
+
+	/** @brief new-freeinsert after iterator
+	*	if it == rend() element is inserted on the begin of list
+	*	@param item listItem after which will be insertedItem inserted
+	*	@param inertedItem inserted item
+	*	@return iterator to new element; if fails(insertedItem is NULL), rend() is returned
+	*/
+
+	Iterator rinsert ( ListItem<T> * item, ListItem<T> * insertedItem )
+	{
+		if ( insertedItem == NULL ) return Iterator ( NULL );
+		if ( item == NULL ) return pushFront ( insertedItem );
+
+		insertedItem->insertAfter ( item );
+		if ( item == m_last )
+			m_last = insertedItem;
+		++m_count;
+		return Iterator ( insertedItem );
+	}
+
+
 
 	/** @brief copies list
 	*	clears list first
@@ -737,10 +819,10 @@ protected:
 		m_count = 0;
 	}
 
-	/** @brief correctly removes item from list
+	/** @brief correctly removes and deletes item from list
 	*	item is deleted
 	*/
-	void remove ( ListItem<T> * item )
+	void removeDelete ( ListItem<T> * item )
 	{
 		//special cases
 		if ( item == NULL ) return;
