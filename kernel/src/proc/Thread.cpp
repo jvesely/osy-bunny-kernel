@@ -27,12 +27,12 @@
  * @file 
  * @brief Thread class implementation.
  *
- * Some longer Thread methods like run(), setup(), yield(), sleep() ...
+ * Constians Thread member functions' implementations.
  */
 
 #include "Thread.h"
 #include "Kernel.h"
-#include "InteruptDisabler.h"
+#include "InterruptDisabler.h"
 #include "address.h"
 #include "api.h"
 /*----------------------------------------------------------------------------*/
@@ -71,7 +71,7 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
 	Context * context = (Context*)(m_stackTop);
 	
-	//would use run but virtual methods are tricky
+	//would use run but virtual member functions are tricky
 	void (Thread::*runPtr)(void) = &Thread::start; 
 	//http://www.goingware.com/tips/member-pointers.html
 	//dereferencing address trick, advised by M. Burda
@@ -132,7 +132,7 @@ void Thread::wakeup()
 /*----------------------------------------------------------------------------*/
 int Thread::join(Thread * thread)
 {
-	InteruptDisabler interupts;
+	InterruptDisabler interrupts;
 	dprintf("Trying to join thread %d with thread %d (status: %d)\n",
 		m_id, thread->m_id, thread->m_status);
 	if (!thread                                          /* no such thread */

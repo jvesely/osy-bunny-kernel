@@ -58,7 +58,7 @@ public:
 	static int create(thread_t* thread_ptr, void* (*thread_start)(void*),
 	  void* data = NULL, const unsigned int flags = 0);
 	
-	/*! this method will be run in separate thread, includes some management */
+	/*! this will be run in the separate thread, includes some management */
 	virtual void run();
 	
 	/*! @brief initial setup that could not be done in the constructor.

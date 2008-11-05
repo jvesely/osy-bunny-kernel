@@ -33,6 +33,8 @@
 #include "api.h"
 #include "devices.h"
 #include "tools.h"
+#include "InterruptDisabler.h"
+
 /*! This is our great bunny :) */
 const char * BUNNY_STR =
 "       _     _\n\
@@ -119,17 +121,15 @@ size_t Kernel::getPhysicalMemorySize(){
 /*----------------------------------------------------------------------------*/
 void* Kernel::malloc(const size_t size) const
 {
- ipl_t status = Processor::save_and_disable_interupts();
- void * ret = m_alloc.getMemory(size);
- Processor::revert_interupt_state(status);
- return ret;
+	InterruptDisabler inter;  // should be replaced by mutex
+	void * ret = m_alloc.getMemory(size);
+	return ret;
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::free(void * address) const
 {
-	ipl_t status = Processor::save_and_disable_interupts();
+  InterruptDisabler inter; //should be replaced by mutex
 	m_alloc.freeMemory(address);
-	Processor::revert_interupt_state(status);
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::handle(Processor::Context* registers)
@@ -139,7 +139,7 @@ void Kernel::handle(Processor::Context* registers)
 
 	switch (reason){
 		case CAUSE_EXCCODE_INT:
-			handleInterupts(registers);
+			handleInterrupts(registers);
 			break;
 		case CAUSE_EXCCODE_SYS:
 			panic("Syscall.\n");
@@ -167,40 +167,37 @@ void Kernel::handle(Processor::Context* registers)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::handleInterupts(Processor::Context* registers)
+void Kernel::handleInterrupts(Processor::Context* registers)
 {
 	using namespace Processor;
 
 	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
-		m_console.interupt();
+		m_console.interrupt();
 //		Processor::msim_stop();
 	}
-	if (registers->cause & CAUSE_IP7_MASK) {//timer interupt
-//		dprintf("Timer interupt: %u.\n", reg_read_count());
+	if (registers->cause & CAUSE_IP7_MASK) {//timer interrupt
+//		dprintf("Timer interrupt: %u.\n", reg_read_count());
 		reg_write_cause(0);
 		Scheduler::instance().activeThread()->yield();
 	} 
 
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::setTimeInterupt(const unsigned int usec)
+void Kernel::setTimeInterrupt(const unsigned int usec)
 {
 	using namespace Processor;
-	ipl_t state = save_and_disable_interupts();
+	InterruptDisabler interrupts;
+
+
 	const unative_t current = reg_read_count();
 //	const unative_t next =  reg_read_compare();
 		
-	const unative_t planned = 
-	(usec != 0) ?
-		roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILI_SECOND)
-		:
-		0;
+	const unative_t planned = (usec != 0)
+		? roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILI_SECOND)
+		: 0;
 	//if ( !(next > current &&  next < planned) ) {
-//	dprintf("Set timer interupt %u.\n", planned);	
+//	dprintf("Set timer interrupt %u.\n", planned);	
 		reg_write_compare( planned );
 //	}
-//	dprintf("Set time interupt current: %x, planned: %x.\n", current, planned);
-
-	revert_interupt_state(state);
-	
+//	dprintf("Set time interrupt current: %x, planned: %x.\n", current, planned);
 }

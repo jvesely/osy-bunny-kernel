@@ -35,19 +35,19 @@
 #pragma once
 #include "drivers/Processor.h"
 
-class InteruptDisabler
+class InterruptDisabler
 {
 public:
-	inline InteruptDisabler()
-		{ m_status = Processor::save_and_disable_interupts(); }
+	inline InterruptDisabler()
+		{ m_status = Processor::save_and_disable_interrupts(); }
 	
-	inline ~InteruptDisabler()
-		{ Processor::revert_interupt_state(m_status); }
+	inline ~InterruptDisabler()
+		{ Processor::revert_interrupt_state(m_status); }
 
 private:
 	ipl_t m_status;
 
-	InteruptDisabler(const InteruptDisabler& other);
-	const InteruptDisabler& operator=(const InteruptDisabler& other);
+	InterruptDisabler(const InterruptDisabler& other);
+	const InterruptDisabler& operator=(const InterruptDisabler& other);
 
 };

@@ -28,7 +28,7 @@
  * @brief Kernel entry points.
  *
  * Entry point implementation, most of them just gets Kernel instance and calls
- * its method.
+ * its member function.
  */
 
 #include "main.h"

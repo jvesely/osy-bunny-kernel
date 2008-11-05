@@ -42,7 +42,7 @@ void* test(void*)
 		run_test();
 		return NULL;
 	#endif
-	
+	panic("foo");
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
 

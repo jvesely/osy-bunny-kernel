@@ -236,9 +236,17 @@ int thread_join_timeout(thread_t thr, const unsigned int usec)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-int thread_detach(thread_t thr)
+int thread_detach(thread_t thread)
 {
-	return Scheduler::instance().thread(thr)->detach();
+	Thread* thr = Scheduler::instance().thread(thread);
+	if (!thr 
+		|| thr->detached() 
+		|| thr->status() == Thread::FINISHED
+		|| thr->status() == Thread::KILLED
+		|| thr->status() == Thread::JOINING
+		|| thr->follower()) 
+		return EINVAL;
+	return thr->detach();
 }
 /*----------------------------------------------------------------------------*/
 void thread_sleep(const unsigned int sec)
@@ -253,7 +261,7 @@ void thread_usleep(const unsigned int usec)
 /*----------------------------------------------------------------------------*/
 void thread_yield()
 {
-	Scheduler::instance().switchThread();
+	Scheduler::instance().activeThread()->yield();
 }
 /*----------------------------------------------------------------------------*/
 void thread_suspend()
@@ -280,10 +288,10 @@ int thread_kill(thread_t thr)
 void* memcpy( void* dest, const void* src, size_t count )
 {
 	char* dstc = (char*) dest;
-    char* srcc = (char*) src;
-    
-    while (count--) {
-        *dstc++ = *srcc++;
-    }
-    return dest;
+	char* srcc = (char*) src;
+	
+	while (count--) {
+			*dstc++ = *srcc++;
+	}
+	return dest;
 }

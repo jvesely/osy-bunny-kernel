@@ -26,21 +26,12 @@
  * @file 
  * @brief Console class implementation.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Implements class Console member functions.
  */
 
 #include "Console.h"
 #include "Kernel.h"
-/*! 
- * @brief method output string on associated output device.
- *
- * This method uses inherited method outputChar to output multiple chars.
- * Method does not need to change any members so its constant
- * @param str pointer to the first char
- * @return return the number of printed chars
- */
+/*----------------------------------------------------------------------------*/
 size_t Console::outputString(const char* str) const
 {
 	const char *  it = str; /* fly through the string */
@@ -81,21 +72,23 @@ ssize_t Console::readString(char* str, const size_t len)
 	return c - str;
 }
 /*----------------------------------------------------------------------------*/
-void Console::interupt()
+void Console::interrupt()
 {
 //	dprintf("Char on address %p : %c (%d).\n", m_inputAddress, *m_inputAddress, *m_inputAddress);
 	insert();
 //	*m_outputAddress = m_buffer.readLast(); //echo
 //	dprintf("First char is still \"%c\".\n", m_buffer.read());
 	if (m_waitList.size()) {
+		// get first waiting thread
 		ListItem<Thread*>* item = m_waitList.removeFront();
 		assert(item);
 		assert(item->data());
 		Thread * thr = item->data();
 		item->data() = NULL;
+
+		// item needs to be returned before the thread could be scheduled
 		Kernel::instance().pool().put(item);
 		Scheduler::instance().enqueue(thr);
-
 	}
 //	dprintf("Buffer count: %u \n", m_buffer.count());
 }
