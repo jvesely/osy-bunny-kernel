@@ -27,7 +27,8 @@
  * @file 
  * @brief TLB class implementation.
  *
- * Implementing methods for class TLB. For class description look in header file
+ * Implementing member functions for class TLB. For class description 
+ * look in header file
  */
 #include "TLB.h"
 #include "api.h"

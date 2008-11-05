@@ -80,10 +80,10 @@ public:
 	inline Thread* activeThread()
 		{ return m_currentThread; };
 
-	/*! @brief Rescheduling method.
+	/*! @brief Rescheduling member function.
 	 *
-	 * Saves context of the running thread on its stack and loads next thread
-	 * in queue.
+	 * Saves context of the running thread on its stack and loads context 
+	 * of the next thread in queue.
 	 */
 	void switchThread();
 

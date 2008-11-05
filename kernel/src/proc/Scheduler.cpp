@@ -27,16 +27,17 @@
  * @file 
  * @brief Scheduler implementation.
  *
- * Contains some method implementations both public and private.
+ * Contains some member functions' implementations both public and private.
  */
 #include "Scheduler.h"
 #include "Kernel.h"
-#include "InteruptDisabler.h"
+#include "InterruptDisabler.h"
 
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
 	m_idle = new Thread(idleThread, (void*)NULL, 0, 512); // small stack should be enough
 	//bool success = m_idle->isOK();
+	m_threadMap.insert(0, NULL);
 	assert(m_idle->m_status == Thread::INITIALIZED); // must have odle thread
 }
 /*----------------------------------------------------------------------------*/
@@ -55,8 +56,8 @@ thread_t Scheduler::getId(Thread* newThread)
 /*----------------------------------------------------------------------------*/
 void Scheduler::switchThread()
 {
-	//disable interupts
-	InteruptDisabler interupts;
+	//disable interrupts
+	InterruptDisabler interrupts;
 
 	void* DUMMYSTACK = (void*)0xF00;
 	void** old_stack = (m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
@@ -80,16 +81,16 @@ void Scheduler::switchThread()
 	void** new_stack = m_currentThread->stackTop();
 	dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
 	if (m_currentThread != m_idle)
-		Kernel::instance().setTimeInterupt(DEFAULT_QUATNUM);	
+		Kernel::instance().setTimeInterrupt(DEFAULT_QUATNUM);	
 	else
-		Kernel::instance().setTimeInterupt(0);
+		Kernel::instance().setTimeInterrupt(0);
 	if (old_stack != new_stack)
 		Processor::switch_cpu_context(old_stack, new_stack);
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::enqueue(Thread * thread)
 {
-	InteruptDisabler interupts;
+	InterruptDisabler interrupts;
 	assert( Kernel::instance().pool().reserved() );
 	
 	ListItem<Thread*>* item = Kernel::instance().pool().get();
@@ -104,13 +105,13 @@ void Scheduler::enqueue(Thread * thread)
 	dprintf("Scheduled thread %u to run.\n", thread->id());
 	
 	if (m_currentThread == m_idle)
-			Kernel::instance().setTimeInterupt(1); // plan to nearest slot
+			Kernel::instance().setTimeInterrupt(1); // plan to nearest slot
 	
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::dequeue(Thread* thread)
 {
-	InteruptDisabler interupts;
+	InterruptDisabler interrupts;
 
 	ListItem<Thread*>* ptr = m_activeThreadList.removeFind(thread);
 	if (!ptr) {

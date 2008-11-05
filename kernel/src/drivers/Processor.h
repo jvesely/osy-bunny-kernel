@@ -243,16 +243,16 @@ enum Status {
 
 
 };
-/*! return current status of interupts and disable them, taken from Kalisto */
-inline ipl_t save_and_disable_interupts()
+/*! return current status of interrupts and disable them, taken from Kalisto */
+inline ipl_t save_and_disable_interrupts()
 {
 	ipl_t status = reg_read_status();
 	reg_write_status(status & ~STATUS_IE_MASK);
 	return (status & STATUS_IE_MASK);
 }
 
-/*! revert to previous interupt status */
-inline void revert_interupt_state(ipl_t state)
+/*! revert to previous interrupt status */
+inline void revert_interrupt_state(ipl_t state)
 {
 	if (state)
 		reg_write_status(reg_read_status() | STATUS_IE_MASK);
@@ -260,7 +260,7 @@ inline void revert_interupt_state(ipl_t state)
 /*----------------------------------------------------------------------------*/
 /*! @brief Exception codes */
 enum Exceptions {
-	CAUSE_EXCCODE_INT,  /*!< Interupt */
+	CAUSE_EXCCODE_INT,  /*!< Interrupt */
 	CAUSE_EXCCODE_MOD,  /*!< TLB Modification */
 	CAUSE_EXCCODE_TLBL, /*!< TLB Load */
 	CAUSE_EXCCODE_TLBS, /*!< TLB Store */

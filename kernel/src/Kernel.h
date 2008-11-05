@@ -53,9 +53,9 @@ class Kernel:public Singleton<Kernel>
 
 public:
 	/*! 
-	 * @brief Main method.
+	 * @brief Main member function.
 	 *
-	 * This method should never return from it's call. I initializes all stuff
+	 * This function should never return from it's call. I initializes all stuff
 	 * that needs initializing, except that which is already initialized and
 	 * schedules first thread. 
 	 */
@@ -85,7 +85,7 @@ public:
 
 	/*! block processor by falling in infinite loog */
 	static inline void block() 
-		{ Processor::save_and_disable_interupts(); while(true) ;; };
+		{ Processor::save_and_disable_interrupts(); while(true) ;; };
 
 	/*! @brief Kernel heap alloc.
 	 * @param size requested size
@@ -100,9 +100,9 @@ public:
 
 	void handle(Processor::Context* registers);
 
-	void handleInterupts(Processor::Context* registers);
+	void handleInterrupts(Processor::Context* registers);
 
-	void setTimeInterupt( const unsigned int usec );
+	void setTimeInterrupt( const unsigned int usec );
 private:
 	/*! kernel heap manager */	
 	Allocator m_alloc;
