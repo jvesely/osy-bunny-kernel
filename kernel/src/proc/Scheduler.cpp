@@ -37,6 +37,7 @@ Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
 	m_idle = new Thread(idleThread, (void*)NULL, 0, 512); // small stack should be enough
 	//bool success = m_idle->isOK();
+	m_threadMap.insert(0, NULL);
 	assert(m_idle->m_status == Thread::INITIALIZED); // must have odle thread
 }
 /*----------------------------------------------------------------------------*/
