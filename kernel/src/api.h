@@ -237,10 +237,27 @@ void* memcpy( void* dest, const void* src, size_t count );
 /* ----------------------      MUTEX    -------------------------------- */
 /* --------------------------------------------------------------------- */
 
-/** Mutex structure. */
+/**
+ * @struct mutex api.h "api.h"
+ * @brief Sructure for mutex (mutual exclusion).
+ *
+ * Mutex structure for use in C and C++ code. It is possible to use it as struct mutex
+ * or mutex_t, which is a typedef for it.
+ */
 typedef struct mutex {
+	/**
+	 * Identification of the thread, for which is the lock locked. If 0 (zero)
+	 * the lock is unlocked.
+	 */
 	volatile thread_t locked;
-	volatile unative_t waitingList[4]; // ceil of sizeof(List<Thread *>) / sizeof(unative_t)
+
+	/**
+	 * The list of blocked (waiting) threads on this mutex. It is a placeholder
+	 * for List<Thread *> because it is not possible to include C++ code to C code.
+	 * The size of waitingList[] should be ceil of
+	 * sizeof(List<Thread *>) / sizeof(unative_t).
+	 */
+	volatile unative_t waitingList[4];
 } mutex_t;
 
 /**

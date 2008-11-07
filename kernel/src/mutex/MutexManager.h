@@ -35,13 +35,12 @@
 #pragma once
 
 #include <api.h>
-
-#include "cpp.h"
 #include "Singleton.h"
-#include "structures/List.h"
-#include "proc/Thread.h"
 
 /**
+ * @class MutexManager MutexManager.h "MutexManager.h"
+ * @brief Implementation of the init, lock, unlock and destroy functions on mutex locks.
+ *
  * MutexManager is a singleton class providing interface to init, lock, unlock and
  * destroy mutex locks. It manages the mutex struct and the waiting lists for the
  * locked mutexes. It dequeues/enques the threads in Scheduler.

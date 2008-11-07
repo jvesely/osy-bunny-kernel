@@ -34,9 +34,12 @@
 
 #include "MutexManager.h"
 
+#include "cpp.h"
 #include "Kernel.h"
 #include "InterruptDisabler.h"
 #include "proc/Scheduler.h"
+#include "proc/Thread.h"
+#include "structures/List.h"
 
 //#define DEBUG_MUTEX
 //#define DEBUG_MUTEX_ACTIONS
