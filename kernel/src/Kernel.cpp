@@ -183,7 +183,7 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::setTimeInterrupt(const unsigned int usec)
+void Kernel::setTimeInterrupt(const uint usec)
 {
 	using namespace Processor;
 	InterruptDisabler interrupts;
@@ -192,12 +192,11 @@ void Kernel::setTimeInterrupt(const unsigned int usec)
 	const unative_t current = reg_read_count();
 //	const unative_t next =  reg_read_compare();
 		
-	const unative_t planned = (usec != 0)
-		? roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILI_SECOND)
-		: 0;
-	//if ( !(next > current &&  next < planned) ) {
-//	dprintf("Set timer interrupt %u.\n", planned);	
-		reg_write_compare( planned );
-//	}
-//	dprintf("Set time interrupt current: %x, planned: %x.\n", current, planned);
+	const unative_t planned = (usec)
+		?	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILI_SECOND)
+		: current;
+
+		
+	reg_write_compare( planned );
+	dprintf("Set time interrupt in %u usecs current: %x, planned: %x.\n", usec, current, planned);
 }

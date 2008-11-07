@@ -60,7 +60,7 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	m_stackSize(stackSize), m_runFunc(thread_start), m_runData(data), 
 	m_detached(false), m_follower(NULL)
 {
-	if (Kernel::instance().pool().reserve() == 0) return; /* prepare listItem */
+//	if (Kernel::instance().pool().reserve() == 0) return; /* prepare listItem */
 
 	m_stack = malloc(m_stackSize);
 	if (m_stack == 0) return;  /* test stack */
@@ -83,9 +83,8 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	m_status = INITIALIZED;
 }
 /*----------------------------------------------------------------------------*/
-void Thread::yield()
+void Thread::yield() const
 {
-	m_status = READY;
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
@@ -123,11 +122,11 @@ void Thread::suspend()
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
-void Thread::wakeup()
+void Thread::wakeup() const
 {
 //	dprintf("My(%x) status: %d\n", this, m_status);
 	assert(m_status == WAITING);
-	Scheduler::instance().enqueue(this);
+	Scheduler::instance().enqueue(const_cast<Thread*>(this));
 }
 /*----------------------------------------------------------------------------*/
 int Thread::join(Thread * thread)
@@ -176,12 +175,13 @@ void Thread::kill()
 
 	if (Scheduler::instance().activeThread() == this)
 		Scheduler::instance().switchThread();
+	else if (m_detached) delete this;
 }
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
 	Kernel::instance().free(m_stack);
-	Kernel::instance().pool().free();
+//	Kernel::instance().pool().free();
 	Scheduler::instance().returnId(m_id);
 }
 /*----------------------------------------------------------------------------*/

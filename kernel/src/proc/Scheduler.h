@@ -45,9 +45,7 @@
 class Scheduler: public Singleton<Scheduler>
 {
 public:
-	/*! @brief Just sets current thread to NULL, creates Idle thread */
-	Scheduler();
-
+	
 	/*! @brief Converts identifier to pointer 
 	 * @param thread id to be converted
 	 * @return pointer to Thread class, NULL on failure
@@ -62,7 +60,7 @@ public:
 	thread_t getId(Thread* newThread);
 
 	inline void returnId(thread_t id)
-		{ m_threadMap.erase(id); };
+		{ --m_threadCount; m_threadMap.erase(id); };
 
 	/*! @brief Removes thread from scheduling queue (ONLY).
 	 *
@@ -106,6 +104,10 @@ private:
 
 	static const int DEFAULT_QUATNUM = 2000; /*!< 2 msec */
 	
+	/*! @brief Just sets current thread to NULL, creates Idle thread */
+	Scheduler();
+	
+	friend class Singleton<Scheduler>;
 };
 
 void* idleThread(void*);

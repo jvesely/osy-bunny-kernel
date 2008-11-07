@@ -44,27 +44,21 @@ void* test(void*)
 	#endif
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
+/*  
+	thread_t thread1;
+	thread_t thread2;
+	thread_t thread3;
+	thread_create(&thread1, test1, NULL, 0);
+	thread_create(&thread2, test1, NULL, 0);
+	thread_create(&thread3, test1, NULL, 0);
+*/
 
-//	thread_t thread1;
-	//thread_t thread2;
-//	thread_create(&thread1, test1, NULL, 0);
-	//thread_create(&thread2, test2, NULL, 0);
-
-//	panic ("foo\n");
 	while (true) {
-//		thread_usleep(1000000);
-		//char c[150];
-		//int ret = gets(c, 150);
-		//if (ret >= 0 )
-		//	printf("Your string(%d) \"%s\".\n", ret, c);
-		//else
-		//	printf("Error reading string: %d\n", ret);
-
-//		char c = getc();
-//		printf("Hi %c\n", c);
-//		thread_sleep(1);
-//		panic("foo");
+		char c = getc();
+		printf("Hello: %c\n",c);
+		continue;
 		thread_t thread;
+
 		if (thread_create(&thread, test1, NULL, 0) == EOK) {
 			printf("Before kill\n");
 			thread_kill(thread);
@@ -82,13 +76,17 @@ void* test(void*)
 
 void* test1(void*)
 {
-//	while (true)
+	while (true){
 		printf("Test...%d\n", thread_get_current());
-		return NULL;
+		thread_sleep(1);
+//		for (int i = 1; i < 4000000; ++i) ;
+	}
+	return NULL;
 }
 
 void* test2(void*)
 {
 	while (true)
-		printf("Test2...\n");
+		printf("Test...\n");
+	return NULL;
 }

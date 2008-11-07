@@ -36,6 +36,10 @@
 
 
 /*! basic platfom types, taken from Kalisto */
+#ifndef __cplusplus
+typedef uint8_t bool;
+#endif
+
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
 
@@ -57,6 +61,8 @@ typedef int32_t ssize_t;
 
 typedef uint32_t thread_t;
 typedef uint32_t ipl_t;
+
+typedef unsigned int uint;
 
 typedef __builtin_va_list va_list;
 

@@ -47,14 +47,18 @@ size_t Console::outputString(const char* str) const
 char Console::readChar()
 {
 	while (count() == 0) { /* buffer is empty */
-		Scheduler::instance().dequeue(Scheduler::instance().activeThread());
+//		Scheduler::instance().dequeue(Scheduler::instance().activeThread());
 		//remove from the scheduling queue
-		ListItem<Thread*>* item = Kernel::instance().pool().get();
-		assert(item); //there must be one as dequeue returned one to the pool
-		item->data() = Kernel::instance().scheduler().activeThread(); 
-		m_waitList.pushBack(item);
-		item->data()->setStatus(Thread::BLOCKED);
-		item->data()->yield();
+//		ListItem<Thread*>* item = Kernel::instance().pool().get();
+//		assert(item); //there must be one as dequeue returned one to the pool
+//		item->data() = Kernel::instance().scheduler().activeThread(); 
+		Thread * thread = Scheduler::instance().activeThread();
+		thread->append(&m_waitList); 
+		thread->setStatus(Thread::BLOCKED);
+		thread->yield();
+	//	m_waitList.pushBack(item);
+	//	item->data()->setStatus(Thread::BLOCKED);
+	//	item->data()->yield();
 
 	}
 	return getChar();
@@ -78,17 +82,19 @@ void Console::interrupt()
 	insert();
 //	*m_outputAddress = m_buffer.readLast(); //echo
 //	dprintf("First char is still \"%c\".\n", m_buffer.read());
+	dprintf("Processing Interupt\n");
 	if (m_waitList.size()) {
 		// get first waiting thread
-		ListItem<Thread*>* item = m_waitList.removeFront();
-		assert(item);
-		assert(item->data());
-		Thread * thr = item->data();
-		item->data() = NULL;
-
+//		ListItem<Thread*>* item = m_waitList.removeFront();
+//		assert(item);
+//		assert(item->data());
+		Thread * thr = m_waitList.getFront(); //item->data();
+		dprintf("Unblocking thread %u\n", thr->id());
+//		item->data() = NULL;
+		assert(thr->status() == Thread::BLOCKED);
 		// item needs to be returned before the thread could be scheduled
-		Kernel::instance().pool().put(item);
+//		Kernel::instance().pool().put(item);
 		Scheduler::instance().enqueue(thr);
 	}
-//	dprintf("Buffer count: %u \n", m_buffer.count());
+	dprintf("Buffer count: %u \n", m_buffer.count());
 }

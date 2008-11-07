@@ -36,7 +36,6 @@
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
 #include "mem/Allocator.h"
-#include "structures/ItemPool.h"
 #include "proc/Scheduler.h"
 
 /*! symbol speciefied in linker script */
@@ -65,7 +64,7 @@ public:
 	inline Console& console() { return m_console; };
 
 	/*! @return pool of Listitems used by threads in scheduler and mutex */
-	inline ItemPool& pool() { return m_pool; };
+//	inline ItemPool& pool() { return m_pool; };
 
 	inline Scheduler& scheduler() { return Scheduler::instance(); };
 
@@ -120,7 +119,7 @@ private:
 	TLB m_tlb;
 
 	/*! reserve space needed by threads */
-	ItemPool m_pool;
+//	ItemPool m_pool;
 
 	/*! simple scheduler */
 //	Scheduler& m_scheduler;
