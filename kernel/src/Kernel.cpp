@@ -146,8 +146,9 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
-			panic("Exception: Address error exception.\n");
-			break;
+			Scheduler::instance().activeThread()->kill();
+//			panic("Exception: Address error exception.\n");
+//			break;
 		case CAUSE_EXCCODE_BP:
 			if (reason & CAUSE_BD_MASK) {
 				panic("Exception: Break.\n");
@@ -162,7 +163,8 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_CPU:
 			panic("Exception: Coprocessor unusable.\n");
 		case CAUSE_EXCCODE_RI:
-			panic("Exception: Reserved Instruction.\n");
+			Scheduler::instance().activeThread()->kill();
+//			panic("Exception: Reserved Instruction.\n");
 		case CAUSE_EXCCODE_IBE:
 		case CAUSE_EXCCODE_DBE:
 			panic("Exception: Invalid address.\n");
