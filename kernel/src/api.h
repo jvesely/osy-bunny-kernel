@@ -232,6 +232,60 @@ int thread_kill(thread_t thr);
  */
 
 void* memcpy( void* dest, const void* src, size_t count );
+
+/* --------------------------------------------------------------------- */
+/* ----------------------      MUTEX    -------------------------------- */
+/* --------------------------------------------------------------------- */
+
+/** Mutex structure. */
+typedef struct mutex {
+	volatile thread_t locked;
+	volatile unative_t waitingList[4]; // ceil of sizeof(List<Thread *>) / sizeof(unative_t)
+} mutex_t;
+
+/**
+ * Wrapper to MutexManager member function.
+ * Initialize the given mutex struct (to unlocked state).
+ *
+ * @param mtx Mutex struct to initialize.
+ */
+void mutex_init(struct mutex *mtx);
+
+/**
+ * Wrapper to MutexManager member function.
+ * Destroy the given mutex struct. Remove it from all kernel structures.
+ * If there are any locked threads on this mutex, destroy will cause panic.
+ *
+ * @param mtx Mutex struct to destroy.
+ */
+void mutex_destroy(struct mutex *mtx);
+
+/**
+ * Wrapper to MutexManager member function.
+ * Lock the given mutex. If the mutex is already locked, blocks untill it is unlocked.
+ *
+ * @param mtx Mutex to lock.
+ */
+void mutex_lock(struct mutex *mtx);
+
+/**
+ * Wrapper to MutexManager member function.
+ * Lock the given mutex, but don't let it take more than the given timelimit in microseconds.
+ *
+ * @param mtx Mutex to lock within time limit.
+ * @param usec Timelimit in microseconds for trying to lock the mutex.
+ */
+int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec);
+
+/**
+ * Wrapper to MutexManager member function.
+ * Unlock the mutex.
+ *
+ * @param mtx Mutex struct to unlock.
+ */
+void mutex_unlock(struct mutex *mtx);
+
 #ifdef __cplusplus
 }
 #endif
+

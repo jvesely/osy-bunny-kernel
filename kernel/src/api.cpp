@@ -31,6 +31,7 @@
  */
 #include "api.h"
 #include "Kernel.h"
+#include "mutex/MutexManager.h"
 
 #define va_start __builtin_va_start
 #define va_end __builtin_va_end
@@ -296,3 +297,34 @@ void* memcpy( void* dest, const void* src, size_t count )
 	}
 	return dest;
 }
+
+/* --------------------------------------------------------------------- */
+
+void mutex_init(struct mutex *mtx) {
+	MutexManager::instance().mutex_init(mtx);
+}
+
+/* --------------------------------------------------------------------- */
+
+void mutex_destroy(struct mutex *mtx) {
+	MutexManager::instance().mutex_destroy(mtx);
+}
+
+/* --------------------------------------------------------------------- */
+
+void mutex_lock(struct mutex *mtx) {
+	MutexManager::instance().mutex_lock(mtx);
+}
+
+/* --------------------------------------------------------------------- */
+
+int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec) {
+	return MutexManager::instance().mutex_lock_timeout(mtx, usec);
+}
+
+/* --------------------------------------------------------------------- */
+
+void mutex_unlock(struct mutex *mtx) {
+	MutexManager::instance().mutex_unlock(mtx);
+}
+
