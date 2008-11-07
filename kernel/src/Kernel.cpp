@@ -86,7 +86,7 @@ void Kernel::run()
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
 	
 	// setup allocator
-	m_alloc.setup((uintptr_t)&_kernel_end, 0x10000);
+	m_alloc.setup((uintptr_t)&_kernel_end, 0x80000); /* 512 KB */
 	thread_t mainThread;
 	thread_create(&mainThread, test, NULL, 0);
 //	m_alloc.check();

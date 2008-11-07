@@ -51,7 +51,7 @@ public:
 	 * @brief Possible states of threads
 	 */
 	enum Status {
-		INITIALIZED, READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED, JOINING
+		UNITIALIZED, INITIALIZED, READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED, JOINING
 	};
 	
 	~Thread();

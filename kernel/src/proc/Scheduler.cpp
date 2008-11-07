@@ -110,7 +110,7 @@ void Scheduler::enqueue(Thread * thread)
 	
 	thread->setStatus(Thread::READY);
 	
-	dprintf("Scheduled thread %u to run.\n", thread->id());
+//	dprintf("Scheduled thread %u to run.\n", thread->id());
 	
 	if (m_currentThread == m_idle)
 			Kernel::instance().setTimeInterrupt(1); // plan to nearest slot

@@ -58,13 +58,13 @@ void Thread::run()
 Thread::Thread(void* (*thread_start)(void*), void* data, 
 	unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE):
 	m_stackSize(stackSize), m_runFunc(thread_start), m_runData(data), 
-	m_detached(false), m_follower(NULL)
+	m_detached(false), m_status(UNITIALIZED), m_follower(NULL)
 {
 //	if (Kernel::instance().pool().reserve() == 0) return; /* prepare listItem */
 
 	m_stack = malloc(m_stackSize);
-	if (m_stack == 0) return;  /* test stack */
-
+	if (m_stack == NULL) return;  /* test stack */
+//	dprintf("Stack on me %p is %p.\n", this, m_stack);
 
 	using namespace Processor;
 	
@@ -188,17 +188,18 @@ Thread::~Thread()
 int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
   void* thread_data, const unsigned int thread_flags)
 {
-	dprintf("Entered thread create\n");
+//	dprintf("Entered thread create\n");
 	Thread* new_thread = new Thread(thread_start, thread_data);
-	if (!new_thread || new_thread->m_status != INITIALIZED ) {
+	if ( (new_thread == NULL) || (new_thread->m_status != INITIALIZED) ) {
 		delete new_thread;
 //		Kernel::instance().pool().free();
-		dprintf("Thread creation unsuccessfull deleted.\n");
+		dprintf("Thread creation unsuccessfull, thread deleted.\n");
 		return ENOMEM;
 	}
+//	dprintf("Getting ID.\n");
 	*thread_ptr = Scheduler::instance().getId(new_thread);
-	dprintf("Thread %d created, now enqueue.\n", new_thread->m_id);
+//	dprintf("Thread %d created, now enqueue.\n", new_thread->m_id);
 	Scheduler::instance().enqueue(new_thread);
-	dprintf("Enqueued and leaving.\n");
+//	dprintf("Enqueued and leaving.\n");
 	return EOK;
 }
