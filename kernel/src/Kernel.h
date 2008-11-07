@@ -99,8 +99,6 @@ public:
 
 	void handle(Processor::Context* registers);
 
-	void handleInterrupts(Processor::Context* registers);
-
 	void setTimeInterrupt( const unsigned int usec );
 private:
 	/*! kernel heap manager */	
@@ -118,11 +116,7 @@ private:
 	/*! TLB managing */
 	TLB m_tlb;
 
-	/*! reserve space needed by threads */
-//	ItemPool m_pool;
-
-	/*! simple scheduler */
-//	Scheduler& m_scheduler;
+	uint m_timeToTicks;
 
 	/*! @brief Detects accessible memory.
 	 *
@@ -130,8 +124,8 @@ private:
 	 * @return size of detected memory.
 	 */
 	size_t getPhysicalMemorySize();
-
-	unsigned int m_timeToTicks;
+	
+	void handleInterrupts(Processor::Context* registers);
 
 	/*! @brief initialize structures
 	 *

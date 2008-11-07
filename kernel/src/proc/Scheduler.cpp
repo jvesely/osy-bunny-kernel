@@ -74,7 +74,7 @@ void Scheduler::switchThread()
 		dprintf("Nothing to do switching to the idle thread.\n");
 	} else {
 		m_currentThread = *m_activeThreadList.rotate();
-		dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
+//		dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
 	}
 	
 	if (m_threadCount == 0) {
@@ -127,10 +127,10 @@ void Scheduler::dequeue(Thread* thread)
 //		return;  // not in the list
 //	}
 
-//	if ( (thread->status() == Thread::KILLED)
-//		|| (thread->status() == Thread::FINISHED) ) {
-//		--m_threadCount; // remove dead
-//	}
+	if ( (thread->status() == Thread::KILLED)
+		|| (thread->status() == Thread::FINISHED) ) {
+		--m_threadCount; // remove dead
+	}
 //	Kernel::instance().pool().put(ptr);
 	//dprintf("Returning listitem %x.\n", ptr);
 	dprintf("Thread %d dequeued.\n", thread->m_id);
