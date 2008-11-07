@@ -34,6 +34,7 @@
 #pragma once
 #include <api.h>
 
+//------------------------------------------------------------------------------
 /** @brief element in doubly-linked list
 *	@note type T must have defined: ctor, dtor, cpy-ctor, operator == and !=
 */
@@ -49,7 +50,7 @@ public:
 	*	disconnects from list
 	*	see disconnect()
 	*/
-	~ListItem()	{ disconnect(); }
+	virtual ~ListItem()	{ disconnect(); }
 
 	inline const T& getData() const { return m_data; } /**< @brief const reference to data */
 	inline const T& data() const { return getData(); } /**< @brief const reference to data */
@@ -153,8 +154,7 @@ public:
 		m_prev = NULL;
 	}
 
-
-protected:
+private:
 
 	T m_data;/**< @brief data */
 	ListItem<T> * m_prev; /**< @brief previous item in list */
@@ -172,7 +172,7 @@ protected:
 
 };
 
-
+//------------------------------------------------------------------------------
 /** @brief doubly-linked list
 *	@note type T must have defined: ctor, dtor, cpy-ctor, operator == and !=
 */
@@ -277,7 +277,6 @@ public:
 			return ret;
 		}
 
-
 		/** @brief compares iterators
 		*	compares stored pointers
 		*/
@@ -309,10 +308,8 @@ public:
 
 		ListItem<T> * m_item; /**< @brief stored pointer to list item with data */
 
-
 	private:
 	};
-
 
 	/** @brief default ctor
 	*	creaets empty list
@@ -410,7 +407,6 @@ public:
 		else return m_last->getData();
 	}
 
-
 	/** @brief clear
 	*	implementation note: uses popBack()
 	*/
@@ -454,7 +450,6 @@ public:
 		++m_count ;
 		return Iterator ( item );
 	}
-
 
 	/** @brief add item to head
 	*	@return iterator to new element if succesfull; rend() else
@@ -580,7 +575,6 @@ public:
 		return remove(it.getItem());
 	}
 
-
 	/** @brief rotates list by 1 item forward
 	*	moves first element behind the last
 	*	implementation note: does not use any local variables and does not allocate or delete anything
@@ -624,7 +618,6 @@ public:
 		return begin();
 	}
 
-
 	/** @brief find
 	*	searches for first matching item from start; uses defined == operator for type T
 	*	searches towards front
@@ -636,7 +629,6 @@ public:
 		for ( it = start; ( it != end() ) && ( ( *it ) != data ); ++it ) {};
 		return it;
 	}
-
 
 	/** @brief reverse find
 	*	searches for first matching item from rstart; uses defined == operator for type T
@@ -750,7 +742,7 @@ public:
 	/** @brief new-free insert before item
 	*	if item == NULL, new item is inserted on the end of list
 	*	@param item listItem before which will be insertedItem inserted
-	*	@param inertedItem inserted item
+	*	@param insertedItem inserted item
 	*	@return iterator to new element; if fails(insertedItem is NULL), end() is returned
 	*
 	*/
@@ -764,6 +756,17 @@ public:
 			m_first = insertedItem;
 		++m_count;
 		return Iterator ( insertedItem );
+	}
+	
+	/** @brief new-free insert before item
+	*	if item == NULL, new item is inserted on the end of list
+	*	@param item listItem before which will be insertedItem inserted; default NULL
+	*	@param insertedItem inserted item
+	*	@return iterator to new element; if fails(insertedItem is NULL), end() is returned
+	*	wrapper for insert(item,insertedItem)
+	*/
+	inline Iterator insertBefore( ListItem<T> * insertedItem ,ListItem<T> * item = NULL){
+		return insert(item,insertedItem);
 	}
 
 	/** @brief new-freeinsert after iterator
@@ -784,8 +787,18 @@ public:
 		++m_count;
 		return Iterator ( insertedItem );
 	}
-
-
+	
+	/** @brief new-freeinsert after iterator
+	*	if it == rend() element is inserted on the begin of list
+	*	@param item listItem after which will be insertedItem inserted; default NULL
+	*	@param inertedItem inserted item
+	*	@return iterator to new element; if fails(insertedItem is NULL), rend() is returned
+	*	wrapper for rinsert(item,insertedItem)
+	*/
+	inline Iterator insertAfter ( ListItem<T> * insertedItem, ListItem<T> * item = NULL ){
+		return rinsert(item,insertedItem);
+	}
+	
 
 	/** @brief copies list
 	*	clears list first
@@ -804,8 +817,6 @@ public:
 			pushBack ( *it );
 		}
 	}
-
-
 
 protected:
 
@@ -850,6 +861,5 @@ protected:
 
 private:
 };
-
 
 
