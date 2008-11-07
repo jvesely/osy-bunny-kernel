@@ -146,11 +146,14 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
+			Scheduler::instance().activeThread()->kill();
 			panic("Exception: Address error exception.\n");
-			break;
 		case CAUSE_EXCCODE_BP:
+			if (!(reason & CAUSE_BD_MASK) ) {
+				registers->epc +=4; // go to the next instruction
+				break;	
+			}
 			panic("Exception: Break.\n");
-			break;
 		case CAUSE_EXCCODE_TR:
 			panic("Exception: Conditional instruction.\n");
 		case CAUSE_EXCCODE_OV:
@@ -158,6 +161,7 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_CPU:
 			panic("Exception: Coprocessor unusable.\n");
 		case CAUSE_EXCCODE_RI:
+			Scheduler::instance().activeThread()->kill();
 			panic("Exception: Reserved Instruction.\n");
 		case CAUSE_EXCCODE_IBE:
 		case CAUSE_EXCCODE_DBE:
@@ -188,9 +192,7 @@ void Kernel::setTimeInterrupt(const uint usec)
 	using namespace Processor;
 	InterruptDisabler interrupts;
 
-
 	const unative_t current = reg_read_count();
-//	const unative_t next =  reg_read_compare();
 		
 	const unative_t planned = (usec)
 		?	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILI_SECOND)
@@ -198,5 +200,6 @@ void Kernel::setTimeInterrupt(const uint usec)
 
 		
 	reg_write_compare( planned );
-	dprintf("Set time interrupt in %u usecs current: %x, planned: %x.\n", usec, current, planned);
+//	dprintf("Set time interrupt in %u usecs current: %x, planned: %x.\n", usec, current, planned);
 }
+/*----------------------------------------------------------------------------*/

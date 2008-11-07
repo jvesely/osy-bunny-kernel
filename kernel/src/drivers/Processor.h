@@ -219,7 +219,9 @@ enum Cause {
   CAUSE_IP4_MASK = 0x00001000,
   CAUSE_IP5_MASK = 0x00002000,
   CAUSE_IP6_MASK = 0x00004000,
-  CAUSE_IP7_MASK = 0x00008000
+  CAUSE_IP7_MASK = 0x00008000,
+
+	CAUSE_BD_MASK  = 0x80000000
 };
 
 enum Status {
@@ -240,7 +242,6 @@ enum Status {
 	STATUS_CU2_MASK = 0x40000000,
 	STATUS_CU3_MASK = 0x80000000,
 	STATUS_CU_MASK  = 0xf0000000
-
 
 };
 /*! return current status of interrupts and disable them, taken from Kalisto */

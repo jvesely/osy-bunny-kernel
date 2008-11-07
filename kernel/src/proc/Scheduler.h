@@ -60,7 +60,7 @@ public:
 	thread_t getId(Thread* newThread);
 
 	inline void returnId(thread_t id)
-		{ --m_threadCount; m_threadMap.erase(id); };
+		{ m_threadMap.erase(id); };
 
 	/*! @brief Removes thread from scheduling queue (ONLY).
 	 *
@@ -102,7 +102,7 @@ private:
 
 	Thread* m_idle;
 
-	static const int DEFAULT_QUATNUM = 2000; /*!< 2 msec */
+	static const int DEFAULT_QUATNUM = 20000; /*!< 20 msec */
 	
 	/*! @brief Just sets current thread to NULL, creates Idle thread */
 	Scheduler();

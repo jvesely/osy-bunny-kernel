@@ -246,7 +246,8 @@ int thread_detach(thread_t thread)
 		|| thr->status() == Thread::JOINING
 		|| thr->follower()) 
 		return EINVAL;
-	return thr->detach();
+	if (thr->detach()) return EOK;
+	return EOTHER;
 }
 /*----------------------------------------------------------------------------*/
 void thread_sleep(const unsigned int sec)
