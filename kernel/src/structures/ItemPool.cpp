@@ -33,9 +33,9 @@
 #include "ItemPool.h"
 #include "api.h"
 
-unsigned int ItemPool::reserve(unsigned int n)
+uint32_t ItemPool::reserve(uint32_t n)
 {
-	unsigned int i;
+	uint32_t i;
 	for ( i = 0; i < n; ++i){
 		List<Thread*>::Iterator it = m_pool.pushBack( ((Thread*)NULL) );
 		if (it == m_pool.end()) break;

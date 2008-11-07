@@ -33,6 +33,7 @@
 #pragma once
 
 #include "api.h"
+#include "structures/ListInsertable.h"
 /*!
  * @class Thread Thread.h "proc/Thread.h"
  * @brief Thread class.
@@ -40,7 +41,7 @@
  * Thread class handles stack and routine that is to be executed
  * in the separate threadd.
  */
-class Thread
+class Thread: public ListInsertable<Thread>
 {
 
 public:
@@ -72,9 +73,9 @@ public:
 	void start() { run(); };
 
 	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
-	void yield();
+	void yield() const;
 
-	void wakeup();
+	void wakeup() const;
 
 	void suspend();
 

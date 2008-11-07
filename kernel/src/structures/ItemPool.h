@@ -50,12 +50,12 @@ public:
 	 * @param n number of items to create and store
 	 * @return number of created items
 	 */
-	unsigned int reserve( unsigned int n = 1 );
+	uint32_t reserve( uint32_t n = 1 );
 	
 	/*! @brief Returns number of available ListItems.
 	 * @return number of stored preallocated items
 	 */
-	inline unsigned int reserved() { return m_pool.size(); };
+	inline uint32_t reserved() { return m_pool.size(); };
 
 	/*! @brief Gets one preallocated items.
 	 * @return pointer to one allocated item

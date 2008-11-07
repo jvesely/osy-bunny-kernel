@@ -62,6 +62,7 @@ $(BIN_DIR)/$(KERNEL_RAW): depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 	@echo -e "$(COL_WHITE)Linking kernel RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJS)$(COL_END)"
 	@$(LD) $(LDFLAGS) -T $(INC_DIR)/$(LDS_FILE) -Map $(BIN_DIR)/$(KERNEL_MAP) -o $@ $(OBJS)
 
+.PHONY: $(OBJ_DIR)/test.o
 -include Makefile.depend
 .SUFFIXES:
 
