@@ -61,8 +61,16 @@ void Scheduler::switchThread()
 	//disable interrupts
 	InterruptDisabler interrupts;
 
-	void* DUMMYSTACK = (void*)0xF00;
-	void** old_stack = (m_currentThread?m_currentThread->stackTop():&DUMMYSTACK);
+//	void* DUMMYSTACK = (void*)0xF00;
+	if (   m_currentThread 
+			&& m_currentThread->detached() 
+			&& (  m_currentThread->status() == Thread::KILLED 
+				 || m_currentThread->status() == Thread::FINISHED   )) {
+		delete m_currentThread;
+		m_currentThread = NULL;
+	}
+
+	void** old_stack = (m_currentThread?m_currentThread->stackTop():NULL);
 //	m_currentThread->setStatus(Thread::READY);
 //	m_currentThread = m_activeThreadList.getFront();
 	//dprintf("Next thread %x.\n", m_currentThread);
@@ -73,7 +81,10 @@ void Scheduler::switchThread()
 		m_currentThread = m_idle;
 		dprintf("Nothing to do switching to the idle thread.\n");
 	} else {
-		m_currentThread = *m_activeThreadList.rotate();
+		if (m_currentThread != m_activeThreadList.getFront()) {
+			m_currentThread = m_activeThreadList.getFront();
+		} else
+			m_currentThread = *m_activeThreadList.rotate();
 //		dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
 	}
 	

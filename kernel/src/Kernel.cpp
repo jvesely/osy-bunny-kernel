@@ -91,6 +91,7 @@ void Kernel::run()
 	thread_create(&mainThread, test, NULL, 0);
 //	m_alloc.check();
 	Scheduler::instance().switchThread();
+	dprintf("Should never reach this.\n");
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){

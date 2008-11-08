@@ -441,6 +441,8 @@ handle_general:
 
 switch_cpu_context:
 
+	beqz $a0, load
+	nop
 	/* Allocate a frame on the stack of the old thread and update
 	   the address of the stack top of the old thread. */
 
@@ -466,7 +468,10 @@ switch_cpu_context:
 	/* Switch to the stack of the new thread. The stack of the
 	   new thread should be in the same state as the stack of
 	   the old thread. */
-
+load:
+	
+	beqz $a1, out
+	nop
 	lw $sp, ($a1)
 	
 	/* Load the general registers and the $hi and $lo registers from the stack. */
@@ -496,7 +501,8 @@ switch_cpu_context:
 	   trash the content of the $k0 and $k1 registers. This is why we
 	   have disabled interrupts earlier, and do not touch anything
 	   in memory. */
-	
+out:
+
 	j $ra
 	mtc0 $k0, $status
 

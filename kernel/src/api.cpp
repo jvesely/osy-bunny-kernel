@@ -190,8 +190,28 @@ size_t printk(const char * format, ...)
 	return written;
 }
 /*----------------------------------------------------------------------------*/
-void kpanic(const char* format, ...){
+void kpanic(void** context, const char* format, ...){
+	using namespace Processor;
 	Kernel::instance().regDump();
+
+	Context* registers = (Context*)*context;
+	printf("Register DUMP: %p\n", *context );
+	printf("\t 0 %x\t\tat %x\t\tv0 %x\tv1 %x\ta0 %x\n", registers->zero, 
+		registers->at, registers->v0, registers->v1, registers->a0 );
+	printf("\ta1 %x\t\ta2 %x\t\ta3 %x\tt0 %x\tt1 %x\n", registers->a1, registers->a2,
+		registers->a3, registers->t0, registers->t1 );
+	printf("\tt2 %x\t\tt3 %x\t\tt4 %x\tt5 %x\tt6 %x\n", registers->t2, registers->t3,
+		registers->t4, registers->t5, registers->t6 );
+	printf("\tt7 %x\t\ts0 %x\t\ts1 %x\ts2 %x\ts3 %x\n", registers->t7, registers->s0,
+		registers->s1, registers->s2, registers->s3 );
+	printf("\ts4 %x\t\ts5 %x\t\ts6 %x\ts7 %x\tt8 %x\n", registers->s4, registers->s5,
+		registers->s6, registers->s7, registers->t8 );
+	printf("\tt9 %x\t\tk0 %x\t\tk1 %x\tgp %x\tsp %x\n", registers->t9, registers->k0,
+		registers->k1, registers->gp, registers->sp );
+	printf("\tfp %x\t\tra %x\t\tepc %x\tlo %x\thi %x\n", registers->fp, registers->ra,
+		registers->epc, registers->lo, registers->hi );
+	printf("\tcause %x\t\tbadva %x\tstatus %x\n", registers->cause,	registers->badva, registers->status);
+
 	printf("Kernel PANIC: ");
 	if (!format) return;
 

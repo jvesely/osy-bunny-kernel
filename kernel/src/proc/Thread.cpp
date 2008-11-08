@@ -180,8 +180,8 @@ void Thread::kill()
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
+	//dprintf("Deleting thread %u (det:%d)\n", m_id, m_detached);
 	Kernel::instance().free(m_stack);
-//	Kernel::instance().pool().free();
 	Scheduler::instance().returnId(m_id);
 }
 /*----------------------------------------------------------------------------*/
