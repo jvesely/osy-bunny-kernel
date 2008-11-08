@@ -38,7 +38,10 @@
 #include "types.h"
 
 /**
- * Atomic variable. The atomic data type is opaque to the user to prevent
+ * @class Atomic atomic.h "atomic.h"
+ * @brief Atomic variable.
+ *
+ * The atomic data type is opaque to the user to prevent
  * access by other than atomic operations. It is also small enough to be
  * passed by value (one CPU native variable and no virtual member functions).
  * All the functions implement an optimistic algorithm that keeps trying
@@ -107,14 +110,26 @@ private:
 
 	/** Deny copy-constructor. */
 	Atomic(Atomic&);
+
+	/** Deny assignment. */
+	Atomic& operator=(const Atomic&);
+
 	/** Deny postfix increment. */
 	Atomic operator++ (int);
+
 	/** Deny postfix decrement. */
 	Atomic operator-- (int);
 };
 
 /* --------------------------------------------------------------------- */
 
+/**
+ * @typedef Atomic atomic_t
+ * @brief C-style name for Atomic.
+ *
+ * Atomic is a C++ name for a class, while this class is just a cover of one
+ * simple integer type.
+ */
 typedef Atomic atomic_t;
 
 /* --------------------------------------------------------------------- */
@@ -157,14 +172,7 @@ inline Atomic& Atomic::operator++ () {
 /* --------------------------------------------------------------------- */
 
 inline Atomic& Atomic::operator-- () {
-	// no subiu (substract with immediate) instruction :-(
-	return operator-=(1);
-}
-
-/* --------------------------------------------------------------------- */
-
-inline Atomic& Atomic::operator+= (const native_t number) {
-	register native_t temp, result;
+	register native_t temp;
 
 	asm volatile (
 		".set push\n"
@@ -172,13 +180,38 @@ inline Atomic& Atomic::operator+= (const native_t number) {
 
 		"1:\n"
 		"  ll %[temp], %[value]\n"
-		"  addu %[result], %[temp], %[number]\n"
-		"  sc %[result], %[value]\n"
-		"  beqz %[result], 1b\n"
+		"  subu %[temp], %[temp], 1\n"
+		"  sc %[temp], %[value]\n"
+		"  beqz %[temp], 1b\n"
 		"  nop\n"
 
 		".set pop\n"
-		: [temp] "=&r" (temp), [result] "=&r" (result), [value] "+m" (m_value)
+		: [temp] "=&r" (temp), [value] "+m" (m_value)
+		:
+		: "memory"
+	);
+
+	return *this;
+}
+
+/* --------------------------------------------------------------------- */
+
+inline Atomic& Atomic::operator+= (const native_t number) {
+	register native_t temp;
+
+	asm volatile (
+		".set push\n"
+		".set noreorder\n"
+
+		"1:\n"
+		"  ll %[temp], %[value]\n"
+		"  addu %[temp], %[temp], %[number]\n"
+		"  sc %[temp], %[value]\n"
+		"  beqz %[temp], 1b\n"
+		"  nop\n"
+
+		".set pop\n"
+		: [temp] "=&r" (temp), [value] "+m" (m_value)
 		: [number] "Ir" (number)
 		: "memory"
 	);
@@ -189,7 +222,7 @@ inline Atomic& Atomic::operator+= (const native_t number) {
 /* --------------------------------------------------------------------- */
 
 inline Atomic& Atomic::operator-= (const native_t number) {
-	register native_t temp, result;
+	register native_t temp;
 
 	asm volatile (
 		".set push\n"
@@ -197,13 +230,13 @@ inline Atomic& Atomic::operator-= (const native_t number) {
 
 		"1:\n"
 		"  ll %[temp], %[value]\n"
-		"  subu %[result], %[temp], %[number]\n"
-		"  sc %[result], %[value]\n"
-		"  beqz %[result], 1b\n"
+		"  subu %[temp], %[temp], %[number]\n"
+		"  sc %[temp], %[value]\n"
+		"  beqz %[temp], 1b\n"
 		"  nop\n"
 
 		".set pop\n"
-		: [temp] "=&r" (temp), [result] "=&r" (result), [value] "+m" (m_value)
+		: [temp] "=&r" (temp), [value] "+m" (m_value)
 		: [number] "Ir" (number)
 		: "memory"
 	);

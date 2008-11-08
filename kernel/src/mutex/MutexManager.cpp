@@ -34,9 +34,12 @@
 
 #include "MutexManager.h"
 
+#include "cpp.h"
 #include "Kernel.h"
 #include "InterruptDisabler.h"
 #include "proc/Scheduler.h"
+#include "proc/Thread.h"
+#include "structures/List.h"
 
 //#define DEBUG_MUTEX
 //#define DEBUG_MUTEX_ACTIONS
@@ -131,6 +134,29 @@ int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
 	ASSERT(mtx != NULL);
 	if (!mtx) return ETIMEDOUT;
 
+#ifdef DEBUG_MUTEX_ACTIONS
+	printf("[MUTEX] Timed lock called on mutex %p from thread %u, locked for %u. Waitinglist size before lock: %u.\n",
+		mtx, Scheduler::instance().activeThread()->id(), mtx->locked, ((ThreadList *)mtx->waitingList)->size());
+#endif
+
+	// disable interrupts
+	InterruptDisabler lock;
+
+	// get the current thread info
+	Thread* thread = Scheduler::instance().activeThread();
+
+	if (!mtx->locked) {
+		// if mutex not locked, just store the locking thread's id
+		mtx->locked = thread->id();
+		return EOK;
+	}
+
+	// if the sleep is 0 microsecs, just return the lock state (like trylock)
+	if (usec == 0) {
+		return ETIMEDOUT;
+	}
+
+	//TODO: add the waiting
 	return ETIMEDOUT;
 }
 
@@ -145,6 +171,7 @@ void MutexManager::mutex_unlock(mutex_t *mtx) {
 		mtx, Scheduler::instance().activeThread()->id(), ((ThreadList *)mtx->waitingList)->size());
 #endif
 
+	// disable interrupts
 	InterruptDisabler lock;
 
 #ifdef DEBUG_MUTEX

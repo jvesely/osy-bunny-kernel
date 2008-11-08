@@ -60,18 +60,17 @@ Thread::Thread(void* (*thread_start)(void*), void* data,
 	m_stackSize(stackSize), m_runFunc(thread_start), m_runData(data), 
 	m_detached(false), m_status(UNITIALIZED), m_follower(NULL)
 {
-//	if (Kernel::instance().pool().reserve() == 0) return; /* prepare listItem */
 
 	m_stack = malloc(m_stackSize);
 	if (m_stack == NULL) return;  /* test stack */
-//	dprintf("Stack on me %p is %p.\n", this, m_stack);
+
 
 	using namespace Processor;
 	
 	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
 	Context * context = (Context*)(m_stackTop);
 	
-	//would use run but virtual member functions are tricky
+	//would use run but virtual methods are tricky
 	void (Thread::*runPtr)(void) = &Thread::start; 
 	//http://www.goingware.com/tips/member-pointers.html
 	//dereferencing address trick, advised by M. Burda

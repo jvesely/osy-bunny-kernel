@@ -39,6 +39,9 @@
 #include "api.h"
 
 /**
+ * @class Mutex Mutex.h "Mutex.h"
+ * @brief Class with C++ class interface for mutex struct.
+ *
  * Class wich holds one mutex lock and provides interface (member functions)
  * to lock() and unlock() it. All member functions are defined as inline.
  */
@@ -72,6 +75,9 @@ private:
 /* --------------------------------------------------------------------- */
 
 /**
+ * @class MutexLocker Mutex.h "Mutex.h"
+ * @brief Mutex locking class used for locking a Mutex in a block.
+ *
  * MutexLocker locks the mutex lock (given in constructor) on construction
  * and unlocks it on destruction (eg stack unwinding). Should be used as a
  * local variable (allocated on stack) to make the destructor do the work
@@ -97,6 +103,16 @@ public:
 	}
 
 private:
+	/** The reference to lock from the constructor. */
 	Mutex& m_mutex;
+
+	/** Deny copy-constructor. */
+	MutexLocker(const MutexLocker&);
+	
+	/** Deny assignment. */
+	MutexLocker& operator=(const MutexLocker&);
+
+	/** Deny creation on heap, because it is useless for this class. */
+	void* operator new(unsigned int);
 };
 
