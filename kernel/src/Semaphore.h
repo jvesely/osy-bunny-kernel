@@ -69,7 +69,7 @@ public:
 	inline unative_t get() const;
 
 	/**
-	 * Prefix increment operator used to lift up the semaphore. It could be faster
+	 * Prefix increment operator is used to lift up the semaphore. It could be faster
 	 * than up().
 	 */
 	inline void operator++ ();
@@ -80,12 +80,14 @@ public:
 	inline void operator++ (int);
 
 	/**
-	 * Prefix decrement operator is wrapper to operator -=.
+	 * Prefix decrement operator is used to push down the semaphore by one.
+	 * If the semaphore value is zero, this call blocks, till its not lifted up
+	 * by someone else.
 	 */
 	inline void operator-- ();
 
 	/**
-	 * Postfix decrement operator is wrapper to operator -=.
+	 * Postfix decrement operator is wrapper to the prefix decrement operator..
 	 */
 	inline void operator-- (int);
 
@@ -148,7 +150,7 @@ inline unative_t Semaphore::get() const {
 /* --------------------------------------------------------------------- */
 
 inline void Semaphore::operator++ () {
-	register native_t temp, result;
+	register native_t temp;
 
 	asm volatile (
 		".set push\n"
@@ -156,13 +158,13 @@ inline void Semaphore::operator++ () {
 
 		"1:\n"
 		"  ll %[temp], %[value]\n"
-		"  addiu %[result], %[temp], 1\n"
-		"  sc %[result], %[value]\n"
-		"  beqz %[result], 1b\n"
+		"  addiu %[temp], %[temp], 1\n"
+		"  sc %[temp], %[value]\n"
+		"  beqz %[temp], 1b\n"
 		"  nop\n"
 
 		".set pop\n"
-		: [temp] "=&r" (temp), [result] "=&r" (result), [value] "+m" (m_value)
+		: [temp] "=&r" (temp), [value] "+m" (m_value)
 		:
 		: "memory"
 	);
@@ -175,19 +177,7 @@ inline void Semaphore::operator++ (int) {
 /* --------------------------------------------------------------------- */
 
 inline void Semaphore::operator-- () {
-	// no subiu (substract with immediate) instruction :-(
-	return operator-=(1);
-}
-
-inline void Semaphore::operator-- (int) {
-	// no subiu (substract with immediate) instruction :-(
-	return operator-=(1);
-}
-
-/* --------------------------------------------------------------------- */
-
-inline void Semaphore::operator+= (const unative_t number) {
-	register unative_t temp, result;
+	register unative_t temp;
 
 	asm volatile (
 		".set push\n"
@@ -195,13 +185,42 @@ inline void Semaphore::operator+= (const unative_t number) {
 
 		"1:\n"
 		"  ll %[temp], %[value]\n"
-		"  addu %[result], %[temp], %[number]\n"
-		"  sc %[result], %[value]\n"
-		"  beqz %[result], 1b\n"
+		"  subu %[temp], %[temp], 1\n"
+		"  bltz %[temp], 1b\n"
+		"  nop\n"
+		"  sc %[temp], %[value]\n"
+		"  beqz %[temp], 1b\n"
 		"  nop\n"
 
 		".set pop\n"
-		: [temp] "=&r" (temp), [result] "=&r" (result), [value] "+m" (m_value)
+		: [temp] "=&r" (temp), [value] "+m" (m_value)
+		:
+		: "memory"
+	);
+}
+
+inline void Semaphore::operator-- (int) {
+	this->operator--();
+}
+
+/* --------------------------------------------------------------------- */
+
+inline void Semaphore::operator+= (const unative_t number) {
+	register unative_t temp;
+
+	asm volatile (
+		".set push\n"
+		".set noreorder\n"
+
+		"1:\n"
+		"  ll %[temp], %[value]\n"
+		"  addu %[temp], %[temp], %[number]\n"
+		"  sc %[temp], %[value]\n"
+		"  beqz %[temp], 1b\n"
+		"  nop\n"
+
+		".set pop\n"
+		: [temp] "=&r" (temp), [value] "+m" (m_value)
 		: [number] "Ir" (number)
 		: "memory"
 	);
@@ -210,22 +229,23 @@ inline void Semaphore::operator+= (const unative_t number) {
 /* --------------------------------------------------------------------- */
 
 inline void Semaphore::operator-= (const unative_t number) {
-	register unative_t temp, result;
+	register unative_t temp;
 
-	//TODO: make it not go under 0
 	asm volatile (
 		".set push\n"
 		".set noreorder\n"
 
 		"1:\n"
 		"  ll %[temp], %[value]\n"
-		"  subu %[result], %[temp], %[number]\n"
-		"  sc %[result], %[value]\n"
-		"  beqz %[result], 1b\n"
+		"  subu %[temp], %[temp], %[number]\n"
+		"  bltz %[temp], 1b\n"
+		"  nop\n"
+		"  sc %[temp], %[value]\n"
+		"  beqz %[temp], 1b\n"
 		"  nop\n"
 
 		".set pop\n"
-		: [temp] "=&r" (temp), [result] "=&r" (result), [value] "+m" (m_value)
+		: [temp] "=&r" (temp), [value] "+m" (m_value)
 		: [number] "Ir" (number)
 		: "memory"
 	);
