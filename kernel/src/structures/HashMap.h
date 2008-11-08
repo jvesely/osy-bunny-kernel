@@ -10,16 +10,16 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
@@ -40,9 +40,11 @@
 /** default size of hash map; should be prime number*/
 const int defaultHashArraySize = 1999;
 
-/** error: not inserted (element already exists) */
-const int eAlreadyExists = -1;
+/** error: not inserted (element already exists) - not used (EINVAL used instead)*/
+const int eAlreadyExists = -2;
 
+/** internal error enomem - not used right now (ENOMEM is now sufficient)*/
+const int eNoMemory = -1;
 
 
 /** @brief pair of key and data, used in Map or HashMap
@@ -120,7 +122,6 @@ public:
 		return res;
 	}
 
-
 	/** @brief count of stored elements
 	*	computational complexity is O(array size)
 	*/
@@ -129,12 +130,12 @@ public:
 	/** @brief insert
 	*	if element with equal key exists, nothing happens and eAlreadyExists is returned
 	*	@note returns int, which is not unsigned int, remember it for methods such as getList
-	*	@return hash(key) if success; -1( = eAlreadyExists) else
+	*	@return EOK if success; EINVAL if already eisted, ENOMEM if not enough memory is available
 	*/
 	inline int insert ( const KeyType & key, const DataType & value )
 	{
 		if ( exists ( key ) ) {
-			return -1;
+			return EINVAL;
 		}
 		//else
 		return insertNew ( key, value );
@@ -253,6 +254,7 @@ public:
 protected:
 
 	/** @brief creates array of List< Pair<KeyType,DataType> >
+	*	this opertion may fall on no memory and nothing will be signalled
 	*	@param size array size; if is 0 or less, array with size 1 is created
 	*/
 	void init ( unsigned int size ) {
@@ -267,13 +269,16 @@ protected:
 
 	/** @brief inserts new item
 	*	expects that key does not exist in map, no check for existence is performed
-	*	@return hash value
+	*	@return EOK if success or ENOMEM on memory size failure
 	*/
 	inline int insertNew ( const KeyType & key, const DataType & data ) {
 		assert ( m_arraySize != 0 );
 		assert ( m_array != NULL );
-		m_array[mhash ( key ) ].pushBack ( Pair<KeyType, DataType> ( key, data ) );
-		return (int) mhash ( key );
+		//creation and controll of correst insertion
+		if(m_array[mhash ( key ) ].pushBack ( Pair<KeyType, DataType> ( key, data ) )
+				==m_array[mhash ( key ) ].end())
+				return ENOMEM;
+		return EOK;//(int) mhash ( key );
 	}
 
 	/** @brief hash function
