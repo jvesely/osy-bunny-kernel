@@ -424,6 +424,7 @@ public:
 	{
 		//create item
 		ListItem<T> * item = new ListItem<T> ( data );
+		if(item ==NULL) return end();
 		//integrate
 		return pushBack ( item );
 	}
@@ -458,6 +459,7 @@ public:
 	{
 		//create item
 		ListItem<T> * item = new ListItem<T> ( data );
+		if(item ==NULL) return rend();
 		//integrate
 		return pushFront ( item );
 	}
@@ -757,7 +759,7 @@ public:
 		++m_count;
 		return Iterator ( insertedItem );
 	}
-	
+
 	/** @brief new-free insert before item
 	*	if item == NULL, new item is inserted on the end of list
 	*	@param item listItem before which will be insertedItem inserted; default NULL
@@ -787,7 +789,7 @@ public:
 		++m_count;
 		return Iterator ( insertedItem );
 	}
-	
+
 	/** @brief new-freeinsert after iterator
 	*	if it == rend() element is inserted on the begin of list
 	*	@param item listItem after which will be insertedItem inserted; default NULL
@@ -798,7 +800,7 @@ public:
 	inline Iterator insertAfter ( ListItem<T> * insertedItem, ListItem<T> * item = NULL ){
 		return rinsert(item,insertedItem);
 	}
-	
+
 
 	/** @brief copies list
 	*	clears list first
@@ -809,13 +811,16 @@ public:
 		appendList ( oldList );
 	}
 
-	/** @brief appends data from other list */
-	inline void appendList ( const List<T> & oldList )
+	/** @brief appends data from other list
+	*	@return error message EOK or ENOMEM*/
+	inline int appendList ( const List<T> & oldList )
 	{
 		Iterator it;
+		int errmsg = EOK;
 		for ( it = oldList.begin(); it != oldList.end(); ++it ) {
-			pushBack ( *it );
+			if(pushBack ( *it ) == end()) errmsg = ENOMEM;
 		}
+		return errmsg;
 	}
 
 protected:
