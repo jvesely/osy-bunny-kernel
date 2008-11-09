@@ -10,21 +10,21 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief API imaplementation
  *
  * Functions from api.h and helper functions are implemented here.
@@ -34,22 +34,26 @@
 #include "mutex/MutexManager.h"
 #include "InterruptDisabler.h"
 
+//timer includes
+#include "timer/TimerManager.h"
+#include "timer/ClassTimer.h"
+
 #define va_start __builtin_va_start
 #define va_end __builtin_va_end
 #define va_arg __builtin_va_arg
 /*----------------------------------------------------------------------------*/
-inline size_t putc(const char c)
+size_t putc(const char c)
 {
 	return Kernel::instance().console().outputChar(c);
 }
 /*----------------------------------------------------------------------------*/
-inline size_t puts(const char * str)
+size_t puts(const char * str)
 {
 	return Kernel::instance().console().outputString(str);
 }
 /*----------------------------------------------------------------------------*/
 char getc()
-{	
+{
 	return Kernel::instance().console().readChar();
 }
 /*----------------------------------------------------------------------------*/
@@ -84,7 +88,7 @@ size_t print_udecimal( uint32_t number)
 	}
 	for (;size;reverse/=10,--size)
 		count += putc('0' + reverse % 10);
-	
+
 	return count;
 };
 /*----------------------------------------------------------------------------*/
@@ -96,7 +100,7 @@ size_t print_udecimal( uint32_t number)
 size_t print_decimal(const int32_t number)
 {
 	if (number < 0){
-		return putc('-') + print_udecimal(-number);	
+		return putc('-') + print_udecimal(-number);
 	}
 	return print_udecimal(number);
 
@@ -125,7 +129,7 @@ size_t print_hexa(uint32_t number)
 			count += putc('a' + res%10);
 		else
 			count += putc('0' + res);
-	return count;	
+	return count;
 }
 /*----------------------------------------------------------------------------*/
 /*! printk prints formated string on the console.
@@ -356,4 +360,34 @@ int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec) {
 void mutex_unlock(struct mutex *mtx) {
 	MutexManager::instance().mutex_unlock(mtx);
 }
+
+//------------------------------------------------------------------------------
+int timer_init( struct timer *tmr, const unsigned int usec,
+				void (*handler)(struct timer *, void *), void *data)
+{
+	if(!tmr) return EINVAL;
+	return drftmr(tmr).init(tmr,usec,handler,data);
+}
+
+//------------------------------------------------------------------------------
+void timer_start(struct timer *tmr)
+{
+	//timermanager instance call startEvent(tmr2Tmr(tmr));
+	TimerManager::instance().startEvent(tmr2Tmr(tmr));
+}
+
+//------------------------------------------------------------------------------
+void timer_destroy(struct timer *tmr)
+{
+	//timermanager instance call destroyTimer(tmr2Tmr(tmr));
+	TimerManager::instance().destroyTimer(tmr2Tmr(tmr));
+}
+
+//------------------------------------------------------------------------------
+int timer_pending(struct timer *tmr)
+{
+	if(!tmr) return (int) false;
+	return (int) drftmr(tmr).pending();
+}
+
 

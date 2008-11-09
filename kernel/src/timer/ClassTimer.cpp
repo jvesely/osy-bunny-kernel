@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *
- *   @version $Id$
+ *   @version $Id: ClassTimer.cpp 149 2008-11-08 23:41:58Z dekanek $
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -32,10 +32,29 @@
  * at least people can understand it.
  */
 
-#include "timer/Time.h"
-#include "Kernel.h"
 
-Time Time::getCurrentTime()
+#include <timer/ClassTimer.h>
+
+//------------------------------------------------------------------------------
+int ClassTimer::init( timer * tmr, const unsigned int usec,
+                      void ( *handler )( struct timer *, void * ), void *data )
 {
-	return Time(Kernel::instance().clock().time(), Kernel::instance().clock().usec());
+	if ( handler == NULL ) return EINVAL;
+	m_delay.setTime( 0, usec );
+	m_handler = handler;
+	m_data = data;
+	m_tmrThis = tmr;
+	m_eventStruct.setData( this );
+	//abs time not yet
+	m_state = TIMER_INITIALISED;
+	return EOK;
+}
+
+//------------------------------------------------------------------------------
+void ClassTimer::deinit()
+{
+	m_delay.setTime( 0, 0 );
+	m_handler = NULL;
+	m_data = NULL;
+	m_state = 0;
 }
