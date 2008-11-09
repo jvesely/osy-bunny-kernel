@@ -35,6 +35,8 @@
 
 #pragma once
 
+#include "api.h"
+
 template <class T, int Children> class Heap;
 
 /*! @class HeapItem HeapItem "structures/HeapItem.h"
@@ -172,7 +174,7 @@ friend class Heap<T, Children>;
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-inline HeapItem<T, Children>::HeapItem( const T& data = T() ) 
+inline HeapItem<T, Children>::HeapItem( const T& data ) 
 	: m_data(data), m_parent(NULL), m_follower(NULL), m_previous(NULL), 
 	m_count(0)
 {

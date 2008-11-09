@@ -32,7 +32,8 @@
 #pragma once
 
 #include "Singleton.h"
-#include "Thread.h"
+#include "KernelThread.h"
+#include "IdleThread.h"
 #include "structures/List.h"
 #include "structures/HashMap.h"
 
@@ -100,7 +101,7 @@ private:
 
 	unsigned int m_threadCount;
 
-	Thread* m_idle;
+	IdleThread* m_idle;
 
 	static const int DEFAULT_QUATNUM = 20000; /*!< 20 msec */
 	
@@ -110,4 +111,3 @@ private:
 	friend class Singleton<Scheduler>;
 };
 
-void* idleThread(void*);

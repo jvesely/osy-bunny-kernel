@@ -36,6 +36,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void switch_cpu_context(void** old_top, void** new_top);
+
 void run_test(void);
 
 /*! putc outputs one character.
@@ -140,10 +142,11 @@ void free (const void * ptr);
  * and stops simulation, after that it block the kernel.
  */
 #define panic(ARGS...) \
-	reg_dump() \
-	kpanic(ARGS); // still needs tu dump those registers
+	{	void* _panic_top_ = (void*)0xF00;\
+	switch_cpu_context(&_panic_top_, (void**)NULL);\
+	kpanic(&_panic_top_, ARGS); } // still needs tu dump those registers
 
-void kpanic(const char* format, ... );
+void kpanic(void** context, const char* format, ... );
 
 /*! reg_dump macro.
  * Dumps processor registers, now uses msim special instruction,

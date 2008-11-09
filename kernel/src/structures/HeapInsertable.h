@@ -101,7 +101,7 @@ public:
 	/*! @brief Returns the data stored in the HeapItem (i.e. a pointer
 	 * to myself).
 	 */
-	inline T* value() const { return m_data; }
+	inline const T* value() const { return static_cast<T*>(this->m_data); }
 
 	/*! @brief Inserts itself into @a heap, initializing it's key to @a key. 
 	 *
@@ -149,6 +149,7 @@ bool HeapInsertable<T, Key, Children>::operator<(
 template <class T, typename Key, int Children>
 void HeapInsertable<T, Key, Children>::insertIntoHeap(Heap<T*, Children>* heap, const Key &key)
 {
+	assert(!m_owner);
 	if (!m_owner) {
 		m_key = key;
 		(m_owner = heap)->insert(this);

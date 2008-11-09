@@ -82,19 +82,19 @@ void Console::interrupt()
 	insert();
 //	*m_outputAddress = m_buffer.readLast(); //echo
 //	dprintf("First char is still \"%c\".\n", m_buffer.read());
-	dprintf("Processing Interupt\n");
+	//dprintf("Processing Interupt\n");
 	if (m_waitList.size()) {
 		// get first waiting thread
 //		ListItem<Thread*>* item = m_waitList.removeFront();
 //		assert(item);
 //		assert(item->data());
 		Thread * thr = m_waitList.getFront(); //item->data();
-		dprintf("Unblocking thread %u\n", thr->id());
+	//	dprintf("Unblocking thread %u\n", thr->id());
 //		item->data() = NULL;
 		assert(thr->status() == Thread::BLOCKED);
 		// item needs to be returned before the thread could be scheduled
 //		Kernel::instance().pool().put(item);
 		Scheduler::instance().enqueue(thr);
 	}
-	dprintf("Buffer count: %u \n", m_buffer.count());
+//	dprintf("Buffer count: %u \n", m_buffer.count());
 }

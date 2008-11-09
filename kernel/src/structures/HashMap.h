@@ -275,9 +275,9 @@ protected:
 		assert ( m_arraySize != 0 );
 		assert ( m_array != NULL );
 		//creation and controll of correst insertion
-		if(m_array[mhash ( key ) ].pushBack ( Pair<KeyType, DataType> ( key, data ) )
-				==m_array[mhash ( key ) ].end())
-				return ENOMEM;
+		if (m_array[mhash ( key ) ].pushBack ( Pair<KeyType, DataType> ( key, data ) )
+				== m_array[mhash ( key ) ].end())
+			return ENOMEM;
 		return EOK;//(int) mhash ( key );
 	}
 

@@ -88,7 +88,7 @@ bool Allocator::checkBlock(const uintptr_t start) const
 /*----------------------------------------------------------------------------*/
 void* Allocator::getMemory(size_t size) const
 {
-	//dprintf("Requested memory of size: %d B, aligning to %d\n", size, alignUp(size, ALIGMENT) );
+//	dprintf("Requested memory of size: %d B, aligning to %d\n", size, alignUp(size, ALIGMENT) );
 	size = alignUp(size, ALIGMENT);
 	void * res = NULL;
 	if (size > (m_end - m_start)) return res;
@@ -119,6 +119,10 @@ void* Allocator::getMemory(size_t size) const
 
 		// next block
 		header = (BlockHeader*)((uintptr_t)header + header->size + sizeof(BlockHeader) + sizeof(BlockFooter));
+	}
+	
+	if (res == NULL) {
+		dprintf("------------OUT OF MEMORY------------\n");
 	}
 	return res;
 }
