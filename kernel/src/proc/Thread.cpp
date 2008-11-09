@@ -59,7 +59,7 @@ Thread::Thread( unative_t flags, uint stackSize):
 	context->gp = ADDR_TO_KSEG0(0);        /* global pointer */
 	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
 	
-	dprintf("Created thread %p id: %d and stack: %p\n", this, m_id, m_stack);
+	//dprintf("Created thread %p id: %d and stack: %p\n", this, m_id, m_stack);
 
 	m_status = INITIALIZED;
 }
@@ -109,6 +109,7 @@ void Thread::suspend()
 {
 	assert(m_status == RUNNING);
 	m_status = WAITING;
+	removeFromHeap();
 	Scheduler::instance().dequeue(this);
 //	if (Scheduler::instance().activeThread() == this)
 	Scheduler::instance().switchThread();
@@ -124,8 +125,8 @@ void Thread::wakeup() const
 int Thread::joinTimeout(Thread* thread, const uint usec)
 {
 	InterruptDisabler interrupts;
-	dprintf("Trying to join thread %d with thread %d (status: %d) timeout: %u\n",
-		m_id, thread->m_id, thread->m_status, usec);
+/*	dprintf("Trying to join thread %d with thread %d (status: %d) timeout: %u\n",
+		m_id, thread->m_id, thread->m_status, usec); // */
 	if (!thread                    /* no such thread */
 		|| thread == this            /* it's me */
 		|| thread->detached()        /* detached thread */
@@ -138,11 +139,11 @@ int Thread::joinTimeout(Thread* thread, const uint usec)
 		return EKILLED;
 	}
 	if (thread->status() == FINISHED) {
-		dprintf("Thread %d already finished(%d).\n", thread->m_id, thread->m_detached);
+//		dprintf("Thread %d already finished(%d).\n", thread->m_id, thread->m_detached);
 		delete thread;
 		return EOK;
 	}
-	dprintf(" %u JOINING with timeout %u\n", m_id, usec);
+//	dprintf(" %u JOINING with timeout %u\n", m_id, usec);
 	if (usec == 0) return EWOULDBLOCK;
 	assert(usec);
 	thread->m_follower = this;
@@ -163,8 +164,8 @@ int Thread::joinTimeout(Thread* thread, const uint usec)
 int Thread::join(Thread * thread)
 {
 	InterruptDisabler interrupts;
-	dprintf("Trying to join thread %d with thread %d (status: %d)\n",
-		m_id, thread->m_id, thread->m_status);
+/*	dprintf("Trying to join thread %d with thread %d (status: %d)\n",
+		m_id, thread->m_id, thread->m_status); // */
 	if (!thread                                          /* no such thread */
 		|| thread == Scheduler::instance().activeThread()  /* it's me */
 		|| thread->detached()                              /* detached thread */
@@ -177,7 +178,7 @@ int Thread::join(Thread * thread)
 		return EKILLED;
 	}
 	if (thread->status() == FINISHED) {
-		dprintf("Thread %d already finished(%d).\n", thread->m_id, thread->m_detached);
+	//	dprintf("Thread %d already finished(%d).\n", thread->m_id, thread->m_detached);
 		delete thread;
 		return EOK;
 	}
@@ -193,21 +194,21 @@ int Thread::join(Thread * thread)
 /*----------------------------------------------------------------------------*/
 void Thread::kill()
 {
-	dprintf("Started kill %p\n", this);
+//	dprintf("Started kill %p\n", this);
 	InterruptDisabler inter;
-	dprintf("Killing thread %d ().\n", m_id);
+//	dprintf("Killing thread %d ().\n", m_id);
 	if ( (m_status == KILLED) || (m_status == FINISHED) )
 		return;
 	m_status = KILLED;
 
 	if (m_follower) {
-		dprintf("Somenone is expecting me to die!!\n");
+	//	dprintf("Somenone is expecting me to die!!\n");
 		assert(m_follower->m_status == JOINING);
 		Scheduler::instance().enqueue(m_follower);
 	}
 	
 	
-	dprintf("Oficially dead getting off the list.\n");
+//	dprintf("Oficially dead getting off the list.\n");
 	Scheduler::instance().dequeue(this);
 
 	if (Scheduler::instance().activeThread() == this)
@@ -217,7 +218,7 @@ void Thread::kill()
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
-	dprintf("Deleting thread %u (det:%d)\n", m_id, m_detached);
+	//dprintf("Deleting thread %u (det:%d)\n", m_id, m_detached);
 	Kernel::instance().free(m_stack);
 }
 
