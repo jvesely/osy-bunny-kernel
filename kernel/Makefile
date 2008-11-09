@@ -48,6 +48,12 @@ ifneq ($(KERNEL_TEST),)
 	CPPFLAGS += -DKERNEL_TEST
 endif
 
+# Define DEBUG_MUTEX for mutex5 test
+ifneq (, $(findstring mutex5,$(KERNEL_TEST)))
+	CPPFLAGS += -DDEBUG_MUTEX
+	CFLAGS += -DDEBUG_MUTEX
+endif
+
 OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(OBJS)))))
 
 
