@@ -53,6 +53,7 @@ char Console::readChar()
 //		assert(item); //there must be one as dequeue returned one to the pool
 //		item->data() = Kernel::instance().scheduler().activeThread(); 
 		Thread * thread = Scheduler::instance().activeThread();
+		thread->removeFromHeap();
 		thread->append(&m_waitList); 
 		thread->setStatus(Thread::BLOCKED);
 		thread->yield();
