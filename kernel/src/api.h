@@ -10,11 +10,11 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
@@ -24,7 +24,7 @@
  */
 
 /*!
- * @file 
+ * @file
  * @brief API declarations
  *
  * Requiered functions that should be provided by kernel.
@@ -181,7 +181,7 @@ int thread_join(thread_t thr);
  * microsecs.
  * @param thr thread id of the threadd one wants to wait for
  * @param usec number of microsecs to wait before returning ETIMEDOUT.
- * @return See non-timed version, plus ETIMEOUT if thread is still running 
+ * @return See non-timed version, plus ETIMEOUT if thread is still running
  * after given time.
  */
 int thread_join_timeout(thread_t thr, const unsigned int usec);
@@ -216,16 +216,16 @@ void thread_suspend();
 int thread_wakeup(thread_t thr);
 
 /*! Kills thread. If the thread is detached it will be destroyed. Attached
- * threads will stop executing and won't be scheduled, but will remain in 
+ * threads will stop executing and won't be scheduled, but will remain in
  * the memory until ... .
  */
 int thread_kill(thread_t thr);
 
-/*! 
+/*!
  * @brief Copies block of memory from one place to another.
  *
- * This function copies @a count bytes starting from address given by 
- * the @a src pointer to an address given by the @a dest pointer. 
+ * This function copies @a count bytes starting from address given by
+ * the @a src pointer to an address given by the @a dest pointer.
  * If the source and destination blocks overlap, the behaviour is undefined.
  *
  * @param dest Destination address.
@@ -304,6 +304,47 @@ int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec);
  * @param mtx Mutex struct to unlock.
  */
 void mutex_unlock(struct mutex *mtx);
+
+//------------------------------------------------------------------------------
+/** @brief struct of timer
+*	struct which allocates space required for ClassTimer
+*/
+struct timer{
+	unsigned char data[44];//44 should be size of ClassTimer
+};
+
+
+//------------------------------------------------------------------------------
+/** @brief initializes timer
+*	@param usec delay time
+*	@param handler event handler for this timer
+*	@param data pointer to data sent to handler routine
+*	@note almost wrapper for ClassTimer::init() (controlls NULL)
+*/
+int timer_init( struct timer *tmr, const unsigned int usec,
+				void (*handler)(struct timer *, void *), void *data);
+
+
+//------------------------------------------------------------------------------
+
+/** @brief start timer
+*	inserts timer into kernel structure holding all timed events and therefore starts it
+*	@note wrapper for Timer->startEvent()
+*/
+void timer_start(struct timer *tmr);
+
+//------------------------------------------------------------------------------
+
+/** @brief safely deinitializes timer
+*	is NULL safe
+*	calls TimerManager::destroyTimer(tmr)
+*/
+void timer_destroy(struct timer *tmr);
+
+//------------------------------------------------------------------------------
+/** @brief returns whether tmr is pending*/
+int timer_pending(struct timer *tmr);
+
 
 #ifdef __cplusplus
 }
