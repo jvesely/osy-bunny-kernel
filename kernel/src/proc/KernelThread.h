@@ -25,17 +25,17 @@
 
 /*!
  * @file 
- * @brief Shared Thread class.
+ * @brief Kernel Thread class.
  *
- * Class is used as kernel thread, other thread-like stuff will hopefully 
- * be able to inherit it.
+ * Class is used as kernel thread, inherits general thread handling 
+ * abilities from class Thread.
  */
 #pragma once
 
 #include "api.h"
 #include "Thread.h"
 /*!
- * @class Thread Thread.h "proc/Thread.h"
+ * @class KernelThread KernelThread.h "proc/KernelThread.h"
  * @brief Thread class.
  *
  * Thread class handles stack and routine that is to be executed
@@ -45,6 +45,7 @@ class KernelThread: public Thread
 {
 
 public:
+	/*! At the end it returns used id to the Scheduler */
 	~KernelThread();
 
 	static int create(thread_t* thread_ptr, void* (*thread_start)(void*),
@@ -54,15 +55,15 @@ public:
 	void run();
 
 protected:
-	void* (*m_runFunc)(void*); /*! I'm supposed to run this */
+	void* (*m_runFunc)(void*); /*!< I'm supposed to run this */
 	void* m_runData; /*!< runFunc expects this */
 
 
 
 private:
 	KernelThread(); /*!< no constructing without params */
-//	KernelThread(const KernelThread& other); /*!< no copying */
-//	const Thread& operator=(const KerrnelThread& other);	/*!< no assigning */
+	KernelThread(const KernelThread& other); /*!< no copying */
+	const Thread& operator=(const KerrnelThread& other);	/*!< no assigning */
 
 	/*! @brief Creates thread.
 	 * @param func function to be executed in the separate thread

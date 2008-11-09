@@ -157,7 +157,7 @@ inline void reg_write_eepc(unative_t value)     { write_register(30, value); }
 
 
 /*! @struct Context Processor.h "drivers/Processor.h"
- * @brief Helper structure tat helps address separate registers.
+ * @brief Helper structure that helps address separate registers.
  */
 struct Context
 {

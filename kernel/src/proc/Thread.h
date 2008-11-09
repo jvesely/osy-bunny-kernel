@@ -27,7 +27,7 @@
  * @file 
  * @brief Shared Thread class.
  *
- * Class is used as kernel thread, other thread-like stuff will hopefully 
+ * Class is used as a generic thread, other thread-like class will hopefuly 
  * be able to inherit it.
  */
 #pragma once
@@ -40,10 +40,10 @@
  * @class Thread Thread.h "proc/Thread.h"
  * @brief Thread class.
  *
- * Thread class handles stack and routine that is to be executed
- * in the separate thread.
+ * Abstract class that handles basic thread abilities. Member function to be
+ * run in the separate thread is pure virtual, thus to use thread is is 
+ * necessary to inherit this class and reimplment this member function.
  */
-
 class Thread: public ListInsertable<Thread>,
               public HeapInsertable<Thread, Time, 4>
 {
@@ -51,6 +51,17 @@ class Thread: public ListInsertable<Thread>,
 public:
 	static const int DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
 	
+	/*! @brief Contructs Thread usinng the given parameters.
+	 *
+	 * Unless paramters are given contructs the thread using defaults.
+	 * Construction involves allocating stack and preparing context.
+	 * If successfull thread's status will be INITIALIZED, if someting went 
+	 * wrong it will be UNITIALIZED.
+	 * @param flags Thread flags -- ingored
+	 * @param stackSize size of requested stack
+	 */
+	Thread(	unative_t flags, uint stackSize);
+
 	/*! @enum Status
 	 * @brief Possible states of threads
 	 */
@@ -58,17 +69,11 @@ public:
 		UNITIALIZED, INITIALIZED, READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED, JOINING
 	};
 	
+	/*! if stack was sucessfully allocated, it is freed here */
 	virtual ~Thread();
 
 	/*! this will be run in the separate thread, includes some management */
 	virtual void run() = 0;
-	
-	/*! @brief initial setup that could not be done in the constructor.
-	 *
-	 * Allocates stack, stores initial context and sets some reg values
-	 * @return ENOMEM if stack allocation fails, otherwise EOK
-	 */
-	//inline bool isOK() { return m_stack != NULL; };
 	
 	/*! @brief new thread entry point */
 	void start() { run(); };
@@ -76,10 +81,15 @@ public:
 	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
 	void yield() const;
 
+	/*! @brief Puts Thread back into the running queue */
 	void wakeup() const;
 
+	/*! @brief Takes Thread of the running queue */
 	void suspend();
 
+	/*! @brief Takes the thread off the queue, and if it was detached 
+	 * deletes it on the spot.
+	 */
 	void kill();
 
 	/*! @brief Detached getter
@@ -92,7 +102,7 @@ public:
 	 */
 	inline bool detach() { return m_detached = true; }
 	
-	/*! @brief Surrenderrs processing time for given time
+	/*! @brief Surrenders processing time for given time
 	 * @param sec number of seconds to sleep
 	 */
 	void sleep(const unsigned int sec);
@@ -107,6 +117,16 @@ public:
 	 */
 	inline thread_t id() { return m_id; };
 
+	/*! @brief Attempts to wait until the given thread ends.
+	 *
+	 * Unless the given thread is non existent detached or already beeing 
+	 * joined by another thread
+	 * @retval EINVAL if the thread non-existent, detached or already being joined
+	 * @retval EKILLED if the thread was killed
+	 * @retval FINISHED if the thread has already finished it's execution
+	 * @retval EOK this thread was suspended and successfully awoken on 
+	 * others ending
+	 */
 	int join(Thread* other);
 
 	/*! @brief Sets my thread_t identifier */
@@ -154,17 +174,11 @@ protected:
 	thread_t m_id;	/*!< my id */
 	Thread* m_follower;	/*!< someone waiting */
 
-	Thread(	unative_t flags, uint stackSize);
-
 private:
-		Thread(const Thread& other); /*!< no copying */
+	Thread(const Thread& other); /*!< no copying */
 	const Thread& operator=(const Thread& other);	/*!< no assigning */
 
-	/*! @brief Creates thread.
-	 * @param stackSize size of stack that will be available to this thread
-	 * @param flags ignored param :)
-	 */
 };
 
 template class ListInsertable<Thread>; 
-
+template class HeapInsertable<Thread, Time, 4>;
