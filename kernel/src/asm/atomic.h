@@ -25,7 +25,7 @@
 
 /*!
  * @file 
- * @brief Atomic data type (inspired by Kalisto).
+ * @brief Atomic swap function and Atomic data type (inspired by Kalisto).
  *
  * Basic primitives for atomic variables. The implementation here uses the
  * LL (load linked) and SC (store conditional) instruction pair to achieve
@@ -36,6 +36,36 @@
 #pragma once
 
 #include "types.h"
+
+/**
+ * Atomic XCHG (exchange) function, which swaps the variable value with
+ * a new value given in parameter. The old value is returned.
+ *
+ * @param variable Reference to the variable, which we want to change.
+ * @param value The new value, we want to place in the variable.
+ * @return The old value of variable.
+ */
+inline native_t swap(native_t& variable, native_t value) {
+	register unative_t temp;
+
+	asm volatile (
+		".set push\n"
+		".set noreorder\n"
+
+		"1:\n"
+		"  ll %[temp], %[variable]\n"
+		"  sc %[value], %[variable]\n"
+		"  beqz %[value], 1b\n"
+		"  nop\n"
+
+		".set pop\n"
+		: [temp] "=&r" (temp), [variable] "+m" (variable), [value] "+r" (value)
+		:
+		: "memory"
+	);
+
+	return temp;
+}
 
 /**
  * @class Atomic atomic.h "atomic.h"

@@ -69,8 +69,8 @@ public:
 	inline void setPrev ( ListItem<T> * prev ) { m_prev = prev; }	/**< @brief set previous item in list */
 	inline void prev ( ListItem<T> * nprev ) { setNext ( nprev ); }	/**< @brief set previous item in list */
 
-	inline void setData ( T & data) {m_data = data;} 	/**< @brief set data */
-	inline void data(T & data){ setData(data);}			/**< @brief wrapper over setData */
+	inline void setData ( const T & data) {m_data = data;} 	/**< @brief set data */
+	inline void data(const T & data){ setData(data);}			/**< @brief wrapper over setData */
 
 	/** @brief append after \a prev
 	*	@note prev->next() is ignored, even if exists
