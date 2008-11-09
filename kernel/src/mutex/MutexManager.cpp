@@ -111,6 +111,8 @@ void MutexManager::mutex_lock(mutex_t *mtx) {
 
 	if (mtx->locked != 0) {
 		// if mutex locked already
+		// remove from timer's heap
+		thread->removeFromHeap();
 		// unschedule and put the thread to mutex's waiting list
 		thread->append((ThreadList *)mtx->waitingList); 
 		// set the thread state to blocked
