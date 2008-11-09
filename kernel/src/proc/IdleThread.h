@@ -25,41 +25,35 @@
 
 /*!
  * @file 
- * @brief Shared Thread class.
+ * @brief IdleThread class.
  *
- * Class is used as kernel thread, other thread-like stuff will hopefully 
- * be able to inherit it.
+ * Class is used as idle thread, inherits class Thread, that handles most 
+ * of the thread stuff.
  */
 #pragma once
 
 #include "api.h"
 #include "Thread.h"
 /*!
- * @class Thread Thread.h "proc/Thread.h"
- * @brief Thread class.
+ * @class IdleThread IdleThread.h "proc/IdleThread.h"
+ * @brief IdleThread class.
  *
- * Thread class handles stack and routine that is to be executed
- * in the separate threadd.
+ * Special thread that is executed when no other thread wishes to run.
  */
 class IdleThread: public Thread
 {
 
 public:
 
-	/*! this will be run in the separate thread, includes some management */
+	/*! @brief This will be run in the separate thread, stops processor until next interrupt */
 	void run() { asm volatile (" wait "); };
 
 private:
+	/*! @brief Nothing is done so smaller stack is eneough */
 	static const uint IDLE_STACK_SIZE = 1024;
-	IdleThread():Thread(0, IDLE_STACK_SIZE) {}; 
-//	KernelThread(const KernelThread& other); /*!< no copying */
-//	const Thread& operator=(const KerrnelThread& other);	/*!< no assigning */
 
-	/*! @brief Creates thread.
-	 * @param func function to be executed in the separate thread
-	 * @param data the only parameter to handled to the function "func"
-	 * @param stackSize size of stack that will be available to this thread
-	 * @param flags ignored param :)
-	 */
+	/*! @brief Send just flags and changed stack size */
+	IdleThread():Thread(0, IDLE_STACK_SIZE) {}; 
+	
 	friend class Scheduler;
 };
