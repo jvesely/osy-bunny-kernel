@@ -34,7 +34,6 @@
 
 #include "MutexManager.h"
 
-#include "asm/atomic.h"
 #include "cpp.h"
 #include "Kernel.h"
 #include "InterruptDisabler.h"
@@ -63,12 +62,6 @@ void MutexManager::mutex_init(mutex_t *mtx) {
 	printf("[MUTEX] Init on mutex %p from thread %u.\n",
 		mtx, Scheduler::instance().activeThread()->id());
 #endif
-
-	native_t a = 235;
-	native_t b = 42;
-
-	printf("RETURNING: %d\n", swap(a, b));
-	printf("Values: a %d, b %d\n", a, b);
 }
 
 /* --------------------------------------------------------------------- */
