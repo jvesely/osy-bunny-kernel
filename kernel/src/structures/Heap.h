@@ -31,7 +31,8 @@
  * (class Heap<@a T, @a Children>).
  *
  * @note This class never allocates memory, just inserts and removes 
- * prepared items. These are of type HeapItem<@a T, @a Children>.
+ * prepared items. These are of either of type HeapItem<@a T, @a Children>,
+ * or of a type derived from HeapInsertable<@a T, @a Key, @a Children>.
  */
 
 #pragma once
@@ -47,7 +48,14 @@
  * @param Children Number of item's children. Should be a power of 2.
  * 
  * @note This class never allocates memory, just inserts and removes 
- * prepared items. These are of type HeapItem<@a T, @a Children>.
+ * prepared items. These are of either of type HeapItem<@a T, @a Children>,
+ * or of a type derived from HeapInsertable<@a T, @a Key, @a Children>.
+ *
+ * @todo Add functions to insert pure data into the heap. The heap will then 
+ * create a new HeapItem and store it. In this case, the destructor should
+ * delete all items or only those inserted this way (maybe use some flag on
+ * the items and in detructor, pop all items out and according to the flag
+ * either delete it or not). 
  */
 template <class T, int Children> 
 class Heap
@@ -57,8 +65,9 @@ public:
 	 * @a m_last_parent pointer to NULL and size of the array @a m_size to 0. 
 	 */
 	inline Heap();
-	/*! @brief Default destructor. Does nothing yet.
-	 * @todo Remove all items from the heap.
+
+	/*! @brief Default destructor. Does nothing as all items stored in the heap
+	 * should be maintained outside of it.
 	 */
 	inline ~Heap() {};
 
@@ -69,22 +78,30 @@ public:
 	void remove( HeapItem<T, Children>* item );
 
 	/*! @brief Returns the first (i.e. the smallest) item in the heap.
-	 * as a pointer to the proper HeapItem.
-	 */
-	inline HeapItem<T, Children>* topItem() const;
-	
-	/*! @brief Returns the first (i.e. the smallest) item in the heap.
-	 * as a const reference to the item value.
+	 * If the heap is @b empty, it will cause an @b error.
+	 *
+	 * @return Const reference of the value of the first item in the heap
+	 * if there is some.
 	 */
 	inline const T& top() const;
 
+	/*! @brief Returns the first (i.e. the smallest) item in the heap.
+	 *
+	 * @retval Pointer to the first HeapItem in the heap
+	 * @retval NULL if there are no items in the heap.
+	 */
+	inline HeapItem<T, Children>* topItem() const;
+
 	/*! @brief Returns the first (i.e. the smallest) element of the heap 
 	 * and deletes it from the heap. 
+	 *
+	 * @retval Pointer to the first HeapItem in the heap
+	 * @retval NULL if there are no items in the heap.
 	 */
 	inline HeapItem<T, Children>* getTop();
 
 	/*! @brief Returns the number of items in the heap. */
-	unsigned int size() const { return m_size; }
+	unsigned int size() const;
 
 	/*! @brief Checks if heap satisfies the heap property. 
 	 * 
@@ -103,6 +120,8 @@ public:
 
 private:
 
+	/* MEMBER DATA ----------------------------------------------------------*/
+
 	/*! @brief Pointer to the first (i.e. the smallest) item in the heap. */
 	HeapItem<T, Children>* m_root;
 
@@ -116,6 +135,8 @@ private:
 	/*! @brief The actual count of items in the heap. */
 	unsigned int m_size;
 
+	/* MEMBER FUCTIONS ------------------------------------------------------*/
+
 	/*! @brief Default copy constructor. 
 	 * Made private in order not to allow copying the heap.
 	 */
@@ -125,19 +146,19 @@ private:
 	 */
 	Heap<T, Children>& operator=( const Heap<T, Children>& other);
 
-	/*! @brief Percolates the given item down down the heap. */
+	/*! @brief Percolates the given item down the heap. */
 	void percolateDown( HeapItem<T, Children>* item );
 	
-	/*! @brief Percolates the given item down up the heap. */
+	/*! @brief Percolates the given item up the heap. */
 	void percolateUp( HeapItem<T, Children>* item );
+
+	/*! @brief Returns the first (i.e. the smallest) item in the heap. */
+	inline const T& findMin() const;
 
 	/*! @brief Returns the first (i.e. the smallest) item in the heap.
 	 * as a pointer to the proper HeapItem.
 	 */
-	inline HeapItem<T, Children>* findMinItem() const { return m_root; }
-
-	/*! @brief Returns the first (i.e. the smallest) item in the heap. */
-	inline const T& findMin() const { return m_root->m_data; }
+	inline HeapItem<T, Children>* findMinItem() const;
 	
 	/*! @brief Returns the first (i.e. the smallest) element of the heap 
 	 * and deletes it from the heap. 
@@ -146,7 +167,7 @@ private:
 
 	/*! @brief Swaps two items in the heap. 
 	 *
-	 * Uses HeapItem<@a T>::swapWithAny() to swap two different items.
+	 * Uses HeapItem<T>::swapWithAny() to swap two different items.
 	 */
 	void swapItems( HeapItem<T, Children>* item1, HeapItem<T, Children>* item2 );
 
@@ -182,12 +203,14 @@ inline void Heap<T, Children>::insert( HeapItem<T, Children>* item )
 		ASSERT(!m_last_parent);
 		m_last_parent = m_root = item;
 		ASSERT(m_root->isEmpty() && !m_root->m_parent && !m_root->m_follower);
+		++m_size;
 		return;
 	}	// OK
 	
 	ASSERT(m_root && m_last_parent);
 	
 	m_last_parent = m_last_parent->insertChild(item);
+	++m_size;
 
 	/*------------------------------------------------
 	2) percolate the inserted child up  
@@ -207,6 +230,7 @@ inline void Heap<T, Children>::remove( HeapItem<T, Children>* item )
 		// there is no other item in the heap than the root
 		ASSERT(item == m_root);
 		m_last_parent = m_root = NULL;
+		--m_size;
 		return;
 	}
 
@@ -257,6 +281,7 @@ inline void Heap<T, Children>::remove( HeapItem<T, Children>* item )
 		ASSERT(m_last_parent == last->m_parent);
 	}
 	last->m_parent = NULL;
+	--m_size;
 
 	if (!removing_last) {
 		/*---------------------------------------------------
@@ -322,6 +347,22 @@ void Heap<T, Children>::percolateUp( HeapItem<T, Children>* item )
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
+inline const T& Heap<T, Children>::top() const 
+{ 
+	return findMin(); 
+}
+
+/*---------------------------------------------------------------------------*/
+
+template <class T, int Children>
+inline const T& Heap<T, Children>::findMin() const 
+{ 
+	return m_root->m_data;
+}
+
+/*---------------------------------------------------------------------------*/
+
+template <class T, int Children>
 inline HeapItem<T, Children>* Heap<T, Children>::topItem() const 
 { 
 	return findMinItem(); 
@@ -330,9 +371,9 @@ inline HeapItem<T, Children>* Heap<T, Children>::topItem() const
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-inline const T& Heap<T, Children>::top() const 
+inline HeapItem<T, Children>* Heap<T, Children>::findMinItem() const 
 { 
-	return findMin(); 
+	return m_root; 
 }
 
 /*---------------------------------------------------------------------------*/
@@ -351,6 +392,14 @@ HeapItem<T, Children>* Heap<T, Children>::getMinItem()
 	HeapItem<T, Children>* ptr = m_root;
 	remove(m_root);
 	return ptr;
+}
+
+/*---------------------------------------------------------------------------*/
+
+template <class T, int Children>
+unsigned int Heap<T, Children>::size() const 
+{ 
+	return m_size; 
 }
 
 /*---------------------------------------------------------------------------*/

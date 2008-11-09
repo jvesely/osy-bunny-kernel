@@ -51,6 +51,8 @@ void KernelThread::run()
 	Scheduler::instance().dequeue(this);
 	Scheduler::instance().switchThread();
 	
+	dprintf("I'm dead: %u\n", m_id);
+	assert(false);
 	while (true) 
 		printf("Called dead Thread.\n");
 }

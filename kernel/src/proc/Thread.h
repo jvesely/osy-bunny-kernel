@@ -35,7 +35,7 @@
 #include "api.h"
 #include "structures/ListInsertable.h"
 #include "structures/HeapInsertable.h"
-#include "structures/Time.h"
+#include "timer/Time.h"
 /*!
  * @class Thread Thread.h "proc/Thread.h"
  * @brief Thread class.
@@ -60,7 +60,7 @@ public:
 	 * @param flags Thread flags -- ingored
 	 * @param stackSize size of requested stack
 	 */
-	Thread(	unative_t flags, uint stackSize);
+	Thread(	unative_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE);
 
 	/*! @enum Status
 	 * @brief Possible states of threads
@@ -129,6 +129,7 @@ public:
 	 */
 	int join(Thread* other);
 
+	int joinTimeout(Thread* other, const uint usec);
 	/*! @brief Sets my thread_t identifier */
 	inline void setId(thread_t id) { m_id = id; };
 

@@ -63,7 +63,7 @@ protected:
 private:
 	KernelThread(); /*!< no constructing without params */
 	KernelThread(const KernelThread& other); /*!< no copying */
-	const Thread& operator=(const KerrnelThread& other);	/*!< no assigning */
+	const Thread& operator=(const KernelThread& other);	/*!< no assigning */
 
 	/*! @brief Creates thread.
 	 * @param func function to be executed in the separate thread

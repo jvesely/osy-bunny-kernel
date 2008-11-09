@@ -35,6 +35,8 @@
 
 #pragma once
 
+#include "api.h"
+
 template <class T, int Children> class Heap;
 
 /*! @class HeapItem HeapItem "structures/HeapItem.h"
@@ -43,8 +45,7 @@ template <class T, int Children> class Heap;
  * Template class:
  * @param T	Type of the data to be stored in the heap.
  *			It is required to have operator < defined.
- * @param Children Number of item's children. Should be a power of 2.
- *		  (i.e. Heap<@a T, @a Children> will then be a Children-ary heap).
+ * @param Children Number of item's children (i.e. Heap<@a T, @a Children> will then be a @a Children-ary heap). Should be a power of 2.
  *
  * @note In contrast to class HeapInsertable, this class can be used separately
  * and be inserted into Heap.
@@ -57,21 +58,32 @@ public:
 	 * 
 	 * Also initializes the internal structure (all pointers to NULL).
 	 */
-	inline HeapItem( const T& data );
+	inline HeapItem( const T& data = T() );
+
+	/*! @brief Default destructor. Does nothing. Virtual because of
+	 * HeapInsertable derived from this class.
+	 */
+	virtual ~HeapItem() {};
 	
 	/*! @brief Operator <. 
 	 *
 	 * Made virtual so class HeapInsertable and classes derived from it
 	 * can redefine it.
+	 * When called on HeapItem itself (thus not on a derived item), 
+	 * it compares the data stored in item.
 	 */
 	virtual bool operator<( const HeapItem<T, Children>& other ) const;
 
-	/*! @brief Returns const reference to the data stored in this item. */
+	/*! @brief Returns const reference to the data stored in item. */
 	inline const T& data() const { return m_data; }
 
-private:
+protected:
 	/*! @brief Data stored in the heap item. */
 	T m_data;
+
+private:
+
+	/* MEMBER DATA ----------------------------------------------------------*/
 	
 	/*! @brief Pointer to the parent item in the heap. 
 	 * NULL if this item is the root. 
@@ -101,6 +113,8 @@ private:
 	
 	/*! @brief Number of children of this item. */
 	unsigned short m_count;
+
+	/* MEMBER FUNCTIONS -----------------------------------------------------*/
 
 	/*! @brief Tries to insert a new child to the item.
 	 *
@@ -160,7 +174,7 @@ friend class Heap<T, Children>;
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-inline HeapItem<T, Children>::HeapItem( const T& data = NULL ) 
+inline HeapItem<T, Children>::HeapItem( const T& data ) 
 	: m_data(data), m_parent(NULL), m_follower(NULL), m_previous(NULL), 
 	m_count(0)
 {
@@ -456,29 +470,7 @@ bool HeapItem<T, Children>::checkItem() const
 template <class T, int Children>
 void HeapItem<T, Children>::printItem() const
 {
-	char c = 'x';
-	for (int i = 0; i < 150; ++i) {
-		if (nodes[i] == m_data) {
-			c = chars[i];
-			break;
-		}
-	}
-
-	char d = 'x';
-	HeapItem<T, Children>* data2 = NULL;
-	if (m_parent)
-		data2 = m_parent->m_data;
-
-	if (data2) {
-		for (int i = 0; i < 150; ++i) {
-			if (nodes[i] == data2) {
-				d = chars[i];
-				break;
-			}
-		} 
-	}
-
-	printf("%c <%c> (%x), ", c, d, this);
+	printf("%x <%x>, ", this, m_parent);
 	if (m_follower)
 		m_follower->printItem();
 }

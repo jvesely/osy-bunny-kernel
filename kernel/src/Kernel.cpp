@@ -197,13 +197,14 @@ void Kernel::setTimeInterrupt(const Time& time)
 {
 	using namespace Processor;
 	InterruptDisabler interrupts;
+
 	
 	Time relative = time - Time::getCurrent();
 
 	const unative_t current = reg_read_count();
 	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();
 
-	const unative_t planned = (usec)
+	const unative_t planned = (time.secs())
 		?	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
 		: current;
 

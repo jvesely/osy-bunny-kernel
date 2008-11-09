@@ -34,29 +34,40 @@
 
 #include "Timer.h"
 #include "Kernel.h"
+#include "InterruptDisabler.h"
 
-/*----------------------------------------------------------------------------*/
-/*uint Timer::add(const Event& event)
-{
-	assert(m_heap.isAvailable());
-	return 0;
-}*/
-/*----------------------------------------------------------------------------*/
-/*uint Timer::remove(Thread* thread)
-{
-	return 0;
-}*/
 /*----------------------------------------------------------------------------*/
 void Timer::plan(Thread* thread, const Time& time)
 {
 	ASSERT(thread);
-	Time planned = Time::getCurrent() + time;
+	InterruptDisabler inter;
+	Time planned = (Time::getCurrent() + time);
 //	dprintf("Inserting into heap %d(%p).\n", thread->id(), thread);
+//	thread->removeFromHeap(); //just in case it is already planned
+/*		dprintf("Inserted into heap %d(%d) to run on %x,%u and now is %x,%u.\n",
+		thread->id(), m_heap.size(), planned.secs(), planned.usecs(),
+		Time::getCurrent().secs(), planned.usecs() );
+	// */
+	if (thread->status() != Thread::RUNNING){
+	//	dprintf("Planning %d by %d\n", thread->id(), Scheduler::instance().activeThread()->id());
+/*		dprintf("Planned for time %x,%u now is %x,%u\n", 
+			thread->key().secs(), thread->key().usecs(), Time::getCurrent().secs(), Time::getCurrent().usecs()); */
+		Scheduler::instance().dequeue(thread);
+		//dprintf("DONE\n");
+	} else thread->removeFromHeap();
 	thread->insertIntoHeap(&m_heap, planned);
-//	dprintf("Inserted into heap %d(%d) to run on %u and now is %u.\n",
-	//	thread->id(), m_heap.size(), planned.secs(), Time::getCurrent().secs());
-	Scheduler::instance().dequeue(thread);
-	Kernel::instance().setTimeInterrupt(planned);
+
+	//Time now;
+	if ( thread == static_cast<Thread*>(m_heap.topItem()) )
+		Kernel::instance().setTimeInterrupt(thread->key());
+	//if (thr)
+	//	now = thr->key();
+	//else
+	//	now = Time();
+//	dprintf("Nearest event: %p, time: %x\n", m_heap.topItem(), static_cast<Thread*>(m_heap.topItem())->key().secs() );
+
+	
+
 }
 /*----------------------------------------------------------------------------*/
 void Timer::interupt()
@@ -69,23 +80,24 @@ void Timer::interupt()
 	{
 		thr->removeFromHeap();
 //		dprintf("On the TOP of heap was: %p %u\n", thr, thr->id());
-//		dprintf("Planned event was %u,%u and now is %u,%u\n",
-			//thr->key().secs(), thr->key().usecs(), now.secs(), now.usecs());
+/*		dprintf("Planned event was %u : %x,%u and now is %x,%u\n",
+			thr->id(),
+			thr->key().secs(), thr->key().usecs(), now.secs(), now.usecs()); // */
 		if ( thr->status() == Thread::RUNNING ) {
-			dprintf("Thread was RUNNING.\n");
+//			dprintf("Thread was RUNNING.\n");
 			nextThread = true;
 		} else {
 //			dprintf("Thread status was: %d\n", thr->status());
-			ASSERT(thr->status() != Thread::READY);
-			Scheduler::instance().enqueue(thr);
+			if (thr->status() != Thread::READY)
+				Scheduler::instance().enqueue(thr);
 		}
 	}
 	thr = static_cast<Thread*>(m_heap.topItem());
 	if (thr)
 		now = thr->key();
 	else
-		now = Time(0,0);
-//	dprintf("Nearest event: %p, time: %x\n", m_heap.topItem(), static_cast<Thread*>(m_heap.topItem())->key().secs() );
+		now = Time();
+	//dprintf("Nearest event: %p, time: %x now:%x\n", m_heap.topItem(), static_cast<Thread*>(m_heap.topItem())->key().secs(), Time::getCurrent().secs() );
 
 	Kernel::instance().setTimeInterrupt(now);
 	if (nextThread)

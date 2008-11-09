@@ -255,10 +255,11 @@ int thread_join(thread_t thr)
 	return Scheduler::instance().activeThread()->join(thread);
 }
 /*----------------------------------------------------------------------------*/
-int thread_join_timeout(thread_t thr, const unsigned int usec)
+int thread_join_timeout(thread_t thr, const uint usec)
 {
 	InterruptDisabler inter;
-	return 0;
+	Thread* thread = Scheduler::instance().thread(thr);
+	return Scheduler::instance().activeThread()->joinTimeout(thread, usec);
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach(thread_t thread)

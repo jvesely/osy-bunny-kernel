@@ -37,8 +37,7 @@
 #include "timer/Timer.h"
 #include "api.h"
 /*----------------------------------------------------------------------------*/
-Thread::Thread( 
-	unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE):
+Thread::Thread( unative_t flags, uint stackSize):
 	ListInsertable<Thread>(), HeapInsertable<Thread, Time, 4>(),
 	m_stackSize(stackSize),	m_detached(false), m_status(UNITIALIZED), 
 	m_id(0), m_follower(NULL)
@@ -72,12 +71,12 @@ void Thread::yield() const
 /*----------------------------------------------------------------------------*/
 void Thread::sleep(const uint sec)
 {
-	InterruptDisabler inter;
 	//unsigned int end_time = Kernel::instance().clock().time() + sec;
 	// vulnurable to Y2k38 bug :)
 	// bad implementation, it will surely change when timer becomes avilable
 	m_status = BLOCKED;
-	Timer::instance().plan(this, sec);
+	removeFromHeap(); // iwas planed for rescheduling
+	Timer::instance().plan(this, Time(sec,0));
 	yield();
 //	while(Kernel::instance().clock().time() < end_time)
 //		yield();
@@ -85,15 +84,21 @@ void Thread::sleep(const uint sec)
 /*----------------------------------------------------------------------------*/
 void Thread::usleep(const uint usec)
 {
+//	m_status = BLOCKED;
+//	Timer::instance().plan(this, Time(0,usec));
+//	yield();
+//	return;
 	if (usec >= RTC::SECOND)
 		sleep(usec / RTC::SECOND);
 	unsigned int start_time = Kernel::instance().clock().usec();
 	unsigned int end_time = (start_time + usec) % RTC::SECOND; 
 	
-	if (end_time < start_time)
+
+	if (end_time < start_time){
 		while (Kernel::instance().clock().usec() > start_time) {
 			yield();
 		}
+	}
 	
 	while (Kernel::instance().clock().usec() < end_time) {
 		yield();
@@ -105,6 +110,7 @@ void Thread::suspend()
 	assert(m_status == RUNNING);
 	m_status = WAITING;
 	Scheduler::instance().dequeue(this);
+//	if (Scheduler::instance().activeThread() == this)
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
@@ -113,6 +119,45 @@ void Thread::wakeup() const
 //	dprintf("My(%x) status: %d\n", this, m_status);
 	assert(m_status == WAITING);
 	Scheduler::instance().enqueue(const_cast<Thread*>(this));
+}
+/*----------------------------------------------------------------------------*/
+int Thread::joinTimeout(Thread* thread, const uint usec)
+{
+	InterruptDisabler interrupts;
+	dprintf("Trying to join thread %d with thread %d (status: %d) timeout: %u\n",
+		m_id, thread->m_id, thread->m_status, usec);
+	if (!thread                    /* no such thread */
+		|| thread == this            /* it's me */
+		|| thread->detached()        /* detached thread */
+		|| thread->follower()        /* already waited for */
+	) {
+		return EINVAL;
+	}
+	if (thread->status() == KILLED) {
+		delete thread;
+		return EKILLED;
+	}
+	if (thread->status() == FINISHED) {
+		dprintf("Thread %d already finished(%d).\n", thread->m_id, thread->m_detached);
+		delete thread;
+		return EOK;
+	}
+	dprintf(" %u JOINING with timeout %u\n", m_id, usec);
+	if (usec == 0) return EWOULDBLOCK;
+	assert(usec);
+	thread->m_follower = this;
+	m_status = JOINING;
+	//Scheduler::instance().dequeue(this);
+	removeFromHeap();
+	Timer::instance().plan(this, Time(0, usec));
+	yield();
+	if ( (thread->m_status == FINISHED) || (thread->m_status == KILLED) ){
+		delete thread;
+		return EOK;
+	}
+	thread->m_follower = NULL; // stop joining
+	return EWOULDBLOCK;
+
 }
 /*----------------------------------------------------------------------------*/
 int Thread::join(Thread * thread)
@@ -139,6 +184,7 @@ int Thread::join(Thread * thread)
 	thread->setFollower(this);
 	m_status = JOINING;
 	Scheduler::instance().dequeue(this);
+	removeFromHeap();
 	Scheduler::instance().switchThread();
 	assert( (thread->m_status == FINISHED) || (thread->m_status == KILLED) );
 	delete thread;

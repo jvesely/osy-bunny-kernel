@@ -32,7 +32,7 @@
  * at least people can understand it.
  */
 #pragma once
-#include "types.h"
+#include "api.h"
 
 //------------------------------------------------------------------------------
 /** @brief time respresentation
@@ -57,7 +57,15 @@ public:
 		m_secs += (m_usecs / MILLION);
 		m_usecs %= MILLION;
 	};
+/*
+	inline Time& operator =(const Time& other) {
+//		dprintf("Calling operator = \n");
 
+		m_secs = other.m_secs;
+		m_usecs = other.m_usecs;
+		return *this;
+	}
+*/
 	/** @brief Adds the given time to this time, and 
 	 * returns a reference to this time.
 	 *

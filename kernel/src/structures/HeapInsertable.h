@@ -69,9 +69,8 @@
  * @param T Class that is derived from HeapInsertable.
  * @param Key Key used for comparing items during heap operations.
  *			  It must have operator < defined.
- * @param Children Number of children the heap's item. Should be a power of 2.
- *		  (HeapItem<@a T, @a Children>) will have 
- *		  (i.e. Heap<@a T, @a Children> will then be a Children-ary heap).
+ * @param Children Number of children of the heap's item. Should be a power of 2.
+ *		  (i.e. Heap<@a T, @a Children> will then be a @a Children-ary heap).
  *
  * @note This class must not be used separately, use it only to derive
  * your class from it.
@@ -80,30 +79,40 @@ template <class T, typename Key, int Children>
 class HeapInsertable: public HeapItem<T*, Children>
 {
 public:
-	/*! @brief Default constructor.
-	 * Initializes the HeapItem with a pointer to itself.
+	/*! @brief Default constructor initializes the HeapItem with a pointer 
+	 * to itself and sets itself as not inserted into a heap.
 	 */
 	inline HeapInsertable() 
 		: HeapItem<T*, Children>( static_cast<T*> (this) ), m_owner(NULL) {};
 	
 	/*! @brief Destructor removes self from the heap it was inserted into. */
-	inline ~HeapInsertable() {};	// TODO: should remove item from heap
+	inline ~HeapInsertable();
 
-	/*! @brief Operator < compares the keys of two HeapInsertable objects. */
+	/*! @brief Operator < compares the keys of two HeapInsertable objects. 
+	 *
+	 * Can be called only when tie object was inserted into heap,
+	 * otherwise the results are undefined.
+	 */
 	bool operator<( const HeapItem<T*, Children>& other ) const;
 	
 	/*! @brief Returns const reference to the key. */
 	inline const Key& key() const { return m_key; }
 	
-	/*! @brief Returns const reference to the value 
-	 * (i.e. a pointer to myself). 
+	/*! @brief Returns the data stored in the HeapItem (i.e. a pointer
+	 * to myself).
 	 */
-	inline T* value() const { return m_data; }
+	inline const T* value() const { return static_cast<T*>(this->m_data); }
 
-	/*! @brief Inserts itself into @a heap, initializing it's key to @a key. */
+	/*! @brief Inserts itself into @a heap, initializing it's key to @a key. 
+	 *
+	 * Does nothing in case the object has already been inserted into a heap.
+	 */
 	void insertIntoHeap(Heap<T*, Children>* heap, const Key &key);
 	
-	/*! @brief Removes itself from the heap it was inserted into. */
+	/*! @brief Removes itself from the heap it was inserted into. 
+	 *
+	 * Does nothing in case the object was not yet inserted into a heap.
+	 */
 	void removeFromHeap();
 
 private:
@@ -119,10 +128,18 @@ private:
 /*---------------------------------------------------------------------------*/
 
 template <class T, typename Key, int Children>
+inline HeapInsertable<T, Key, Children>::~HeapInsertable()
+{
+	if (m_owner)
+		m_owner->remove(this);
+}
+
+/*---------------------------------------------------------------------------*/
+
+template <class T, typename Key, int Children>
 bool HeapInsertable<T, Key, Children>::operator<( 
 	const HeapItem<T*, Children>&other ) const
 {
-	
 	return m_key < static_cast<const HeapInsertable<T, Key, Children>*>
 					(&other)->m_key;
 }
@@ -132,10 +149,11 @@ bool HeapInsertable<T, Key, Children>::operator<(
 template <class T, typename Key, int Children>
 void HeapInsertable<T, Key, Children>::insertIntoHeap(Heap<T*, Children>* heap, const Key &key)
 {
-	ASSERT(!m_owner);
-	
-	m_key = key;
-	(m_owner = heap)->insert(this);
+	assert(!m_owner);
+	if (!m_owner) {
+		m_key = key;
+		(m_owner = heap)->insert(this);
+	}
 }
 
 /*---------------------------------------------------------------------------*/
@@ -143,8 +161,8 @@ void HeapInsertable<T, Key, Children>::insertIntoHeap(Heap<T*, Children>* heap, 
 template <class T, typename Key, int Children>
 void HeapInsertable<T, Key, Children>::removeFromHeap()
 {
-	ASSERT(m_owner);
-	
-	m_owner->remove(this);
-	m_owner = NULL;
+	if (m_owner) {
+		m_owner->remove(this);
+		m_owner = NULL;
+	}
 }

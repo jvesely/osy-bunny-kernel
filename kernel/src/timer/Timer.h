@@ -35,7 +35,7 @@
 #include "structures/Heap.h"
 #include "proc/Thread.h"
 #include "Singleton.h"
-#include "structures/Time.h"
+#include "timer/Time.h"
 
 #define TIMER_CHILDREN 4
 

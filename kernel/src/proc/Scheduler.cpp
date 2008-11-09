@@ -76,7 +76,7 @@ void Scheduler::switchThread()
 	void** old_stack = (m_currentThread?m_currentThread->stackTop():NULL);
 //	m_currentThread->setStatus(Thread::READY);
 //	m_currentThread = m_activeThreadList.getFront();
-	//dprintf("Next thread %x.\n", m_currentThread);
+//	dprintf("Next thread %x.\n", m_currentThread);
 	if (m_currentThread->status() == Thread::RUNNING)
 		m_currentThread->setStatus(Thread::READY);
 
@@ -88,7 +88,7 @@ void Scheduler::switchThread()
 			m_currentThread = m_activeThreadList.getFront();
 		} else
 			m_currentThread = *m_activeThreadList.rotate();
-		dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
+//		dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
 	}
 	
 	if (m_threadCount == 0) {
@@ -108,8 +108,9 @@ void Scheduler::switchThread()
 	if (old_stack != new_stack)
 		Processor::switch_cpu_context(old_stack, new_stack);
 
-	if (m_currentThread != m_idle)
-		Timer::instance().plan(m_currentThread, DEFAULT_QUATNUM);
+	if (m_currentThread != m_idle) {
+		Timer::instance().plan(m_currentThread, Time(0, DEFAULT_QUATNUM) );
+	}
 	
 }
 /*----------------------------------------------------------------------------*/
@@ -117,19 +118,18 @@ void Scheduler::enqueue(Thread * thread)
 {
 	InterruptDisabler interrupts;
 	
-	dprintf("Scheduling thread %u.\n", thread->id());
+	dprintf("Scheduling thread %u(%u).\n", thread->id(), m_activeThreadList.size());
 
 	thread->append(&m_activeThreadList);
 
-//	if (thread->status() == Thread::INITIALIZED) 
-//		++m_threadCount; // new thread
-//	dprintf("Setting status\n");
 	thread->setStatus(Thread::READY);
 	
 //	dprintf("Scheduled thread %u to run.\n", thread->id());
 	
-	if (m_currentThread == m_idle)
+	if (m_currentThread == m_idle){
+//		dprintf("IDLE PLAN\n");
 		Timer::instance().plan(m_idle, Time(0, DEFAULT_QUATNUM));
+	}
 //			Kernel::instance().setTimeInterrupt(1); // plan to nearest slot
 	
 }
@@ -144,8 +144,9 @@ void Scheduler::dequeue(Thread* thread)
 	if ( (thread->status() == Thread::KILLED)
 		|| (thread->status() == Thread::FINISHED) ) {
 		dprintf("Decreasing thread count...(%d)\n", thread->status());
+		thread->removeFromHeap();
 		--m_threadCount; // remove dead
 	}
-	dprintf("Thread %d dequeued (%d active remain).\n", thread->id(), m_threadCount);
+	//dprintf("Thread %d dequeued (%d active remain).\n", thread->id(), m_threadCount);
 }
 /*----------------------------------------------------------------------------*/
