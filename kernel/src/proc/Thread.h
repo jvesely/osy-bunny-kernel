@@ -41,6 +41,7 @@
  * Thread class handles stack and routine that is to be executed
  * in the separate threadd.
  */
+
 class Thread: public ListInsertable<Thread>
 {
 
@@ -54,13 +55,10 @@ public:
 		UNITIALIZED, INITIALIZED, READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED, JOINING
 	};
 	
-	~Thread();
+	virtual ~Thread();
 
-	static int create(thread_t* thread_ptr, void* (*thread_start)(void*),
-	  void* data = NULL, const unsigned int flags = 0);
-	
 	/*! this will be run in the separate thread, includes some management */
-	virtual void run();
+	virtual void run() = 0;
 	
 	/*! @brief initial setup that could not be done in the constructor.
 	 *
@@ -137,14 +135,15 @@ public:
 	 * @param status new status
 	 */
 	inline void setStatus(Status status) { m_status = status; };
+	
+	/*! @brief prepare stack and set initialized */
+	Thread();
 
 protected:
 	void* m_stack;	          /*!< that's my stack */
 	void* m_stackTop;	        /*!< top of my stack */
 	unsigned int m_stackSize; /*!< size of my stack */
 
-	void* (*m_runFunc)(void*); /*! I'm supposed to run this */
-	void* m_runData; /*!< runFunc expects this */
 
 
 	bool m_detached;	/*!< detached flag */
@@ -152,17 +151,17 @@ protected:
 	thread_t m_id;	/*!< my id */
 	Thread* m_follower;	/*!< someone waiting */
 
+	Thread(	unative_t flags, uint stackSize);
+
 private:
-	Thread(); /*!< no constructing without params */
-	Thread(const Thread& other); /*!< no copying */
+		Thread(const Thread& other); /*!< no copying */
 	const Thread& operator=(const Thread& other);	/*!< no assigning */
 
 	/*! @brief Creates thread.
-	 * @param func function to be executed in the separate thread
-	 * @param data the only parameter to handled to the function "func"
 	 * @param stackSize size of stack that will be available to this thread
 	 * @param flags ignored param :)
 	 */
-	Thread(	void* (*func)(void*), void* data, unative_t flags, unsigned int stackSize);
-	friend class Scheduler;
 };
+
+template class ListInsertable<Thread>; 
+

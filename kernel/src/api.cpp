@@ -32,6 +32,7 @@
 #include "api.h"
 #include "Kernel.h"
 #include "mutex/MutexManager.h"
+#include "InterruptDisabler.h"
 
 #define va_start __builtin_va_start
 #define va_end __builtin_va_end
@@ -237,8 +238,9 @@ void free(void* ptr)
 /*----------------------------------------------------------------------------*/
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
-{
-	return Thread::create(thread_ptr, thread_start, data, flags);
+{	
+	InterruptDisabler inter;
+	return KernelThread::create(thread_ptr, thread_start, data, flags);
 }
 /*----------------------------------------------------------------------------*/
 thread_t thread_get_current()
@@ -248,17 +250,20 @@ thread_t thread_get_current()
 /*----------------------------------------------------------------------------*/
 int thread_join(thread_t thr)
 {
+	InterruptDisabler inter;
 	Thread* thread = Scheduler::instance().thread(thr);
 	return Scheduler::instance().activeThread()->join(thread);
 }
 /*----------------------------------------------------------------------------*/
 int thread_join_timeout(thread_t thr, const unsigned int usec)
 {
+	InterruptDisabler inter;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach(thread_t thread)
 {
+	InterruptDisabler inter;
 	Thread* thr = Scheduler::instance().thread(thread);
 	if (!thr 
 		|| thr->detached() 
@@ -293,6 +298,7 @@ void thread_suspend()
 /*----------------------------------------------------------------------------*/
 int thread_wakeup(thread_t thr)
 {
+	InterruptDisabler inter;
 	Thread* thread = Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
 	thread->wakeup();
@@ -301,8 +307,10 @@ int thread_wakeup(thread_t thr)
 /*----------------------------------------------------------------------------*/
 int thread_kill(thread_t thr)
 {
+	InterruptDisabler inter;
 	Thread* thread = Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
+	dprintf("Killing thread %p\n", thread);
 	thread->kill();
 	return EOK;
 }

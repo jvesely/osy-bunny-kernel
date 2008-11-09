@@ -36,34 +36,14 @@
 #include "address.h"
 #include "api.h"
 /*----------------------------------------------------------------------------*/
-void Thread::run()
-{
-	m_runFunc(m_runData);
-//	dprintf("Thread has ended\n");
-
-	m_status = FINISHED;
-	dprintf("Thread %d finished.\n", m_id);
-	if (m_follower) {
-		assert(m_follower->m_status == JOINING);
-		Scheduler::instance().enqueue(m_follower);
-	}
-
-	Scheduler::instance().dequeue(this);
-	Scheduler::instance().switchThread();
-	
-	while (true) 
-		printf("Called dead Thread.\n");
-}
-/*----------------------------------------------------------------------------*/
-Thread::Thread(void* (*thread_start)(void*), void* data, 
+Thread::Thread( 
 	unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE):
-	m_stackSize(stackSize), m_runFunc(thread_start), m_runData(data), 
-	m_detached(false), m_status(UNITIALIZED), m_follower(NULL)
+	ListInsertable<Thread>(),
+	m_stackSize(stackSize),	m_detached(false), m_status(UNITIALIZED), 
+	m_follower(NULL)
 {
-
 	m_stack = malloc(m_stackSize);
 	if (m_stack == NULL) return;  /* test stack */
-
 
 	using namespace Processor;
 	
@@ -145,7 +125,7 @@ int Thread::join(Thread * thread)
 		return EKILLED;
 	}
 	if (thread->status() == FINISHED) {
-		dprintf("Thread %d already finished.\n", thread->m_id);
+		dprintf("Thread %d already finished(%d).\n", thread->m_id, thread->m_detached);
 		delete thread;
 		return EOK;
 	}
@@ -160,16 +140,21 @@ int Thread::join(Thread * thread)
 /*----------------------------------------------------------------------------*/
 void Thread::kill()
 {
-	dprintf("Killing thread %d.\n", m_id);
+	dprintf("Started kill %p\n", this);
+	InterruptDisabler inter;
+	dprintf("Killing thread %d ().\n", m_id);
 	if ( (m_status == KILLED) || (m_status == FINISHED) )
 		return;
+	m_status = KILLED;
 
 	if (m_follower) {
+		dprintf("Somenone is expecting me to die!!\n");
 		assert(m_follower->m_status == JOINING);
 		Scheduler::instance().enqueue(m_follower);
 	}
-
-	m_status = KILLED;
+	
+	
+	dprintf("Oficially dead getting off the list.\n");
 	Scheduler::instance().dequeue(this);
 
 	if (Scheduler::instance().activeThread() == this)
@@ -179,26 +164,7 @@ void Thread::kill()
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
-	//dprintf("Deleting thread %u (det:%d)\n", m_id, m_detached);
+	dprintf("Deleting thread %u (det:%d)\n", m_id, m_detached);
 	Kernel::instance().free(m_stack);
-	Scheduler::instance().returnId(m_id);
 }
-/*----------------------------------------------------------------------------*/
-int Thread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
-  void* thread_data, const unsigned int thread_flags)
-{
-//	dprintf("Entered thread create\n");
-	Thread* new_thread = new Thread(thread_start, thread_data);
-	if ( (new_thread == NULL) || (new_thread->m_status != INITIALIZED) ) {
-		delete new_thread;
-//		Kernel::instance().pool().free();
-		dprintf("Thread creation unsuccessfull, thread deleted.\n");
-		return ENOMEM;
-	}
-//	dprintf("Getting ID.\n");
-	*thread_ptr = Scheduler::instance().getId(new_thread);
-//	dprintf("Thread %d created, now enqueue.\n", new_thread->m_id);
-	Scheduler::instance().enqueue(new_thread);
-//	dprintf("Enqueued and leaving.\n");
-	return EOK;
-}
+

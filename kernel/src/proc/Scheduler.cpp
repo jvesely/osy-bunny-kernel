@@ -31,22 +31,23 @@
  */
 #include "Scheduler.h"
 #include "Kernel.h"
+#include "KernelThread.h"
 #include "InterruptDisabler.h"
 
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
-	m_idle = new Thread(idleThread, (void*)NULL, 0, 512); // small stack should be enough
-	//bool success = m_idle->isOK();
+	m_idle = new IdleThread(); // small stack should be enough
+	//bool success = m_idle->isOK(); */
 	m_idle->setId(0);
 	m_threadMap.insert(0, NULL);
-	assert(m_idle->m_status == Thread::INITIALIZED); // must have odle thread
+	assert(m_idle->status() == Thread::INITIALIZED); // must have idle thread
 }
 /*----------------------------------------------------------------------------*/
 thread_t Scheduler::getId(Thread* newThread)
 {
 	//ostrich stuff, there shall always be free id
 	thread_t id = m_nextThread++;
-	while (m_threadMap.insert(id, newThread) == -1) {
+	while (m_threadMap.insert(id, newThread) == EINVAL) {
 		//find free id
 		id = m_nextThread++;
 	}
@@ -79,7 +80,7 @@ void Scheduler::switchThread()
 
 	if (!m_activeThreadList.size()) {
 		m_currentThread = m_idle;
-		dprintf("Nothing to do switching to the idle thread.\n");
+		dprintf("Nothing to do (waiting for %d threads) switching to the idle thread.\n", m_threadCount);
 	} else {
 		if (m_currentThread != m_activeThreadList.getFront()) {
 			m_currentThread = m_activeThreadList.getFront();
@@ -109,16 +110,14 @@ void Scheduler::switchThread()
 void Scheduler::enqueue(Thread * thread)
 {
 	InterruptDisabler interrupts;
-//	assert( Kernel::instance().pool().reserved() );
 	
-	//ListItem<Thread*>* item = Kernel::instance().pool().get();
-	//item->data() = thread;
-//	m_activeThreadList.pushBack(item);
+//	dprintf("Scheduling thread %u.\n", thread->id());
+
 	thread->append(&m_activeThreadList);
 
 //	if (thread->status() == Thread::INITIALIZED) 
 //		++m_threadCount; // new thread
-	
+//	dprintf("Setting status\n");
 	thread->setStatus(Thread::READY);
 	
 //	dprintf("Scheduled thread %u to run.\n", thread->id());
@@ -131,6 +130,7 @@ void Scheduler::enqueue(Thread * thread)
 void Scheduler::dequeue(Thread* thread)
 {
 	InterruptDisabler interrupts;
+	dprintf("Dequeueing thread %d\n", thread->id());
 	thread->remove();
 
 //	ListItem<Thread*>* ptr = m_activeThreadList.removeFind(thread);
@@ -144,7 +144,6 @@ void Scheduler::dequeue(Thread* thread)
 	}
 //	Kernel::instance().pool().put(ptr);
 	//dprintf("Returning listitem %x.\n", ptr);
-	dprintf("Thread %d dequeued.\n", thread->m_id);
+	dprintf("Thread %d dequeued.\n", thread->id());
 }
 /*----------------------------------------------------------------------------*/
-void * idleThread(void*) { asm volatile ( "wait" ); return NULL; }

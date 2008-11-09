@@ -54,19 +54,28 @@ void* test(void*)
 */
 
 	while (true) {
-		char c = getc();
-		printf("Hello: %c\n",c);
-		continue;
+//		char c = getc();
+//		printf("Hello: %c\n",c);
+//		continue;
 		thread_t thread;
 
+//		printf("My thread num is %d\n", thread_get_current());
+//		return NULL;
 		if (thread_create(&thread, test1, NULL, 0) == EOK) {
-			printf("Before kill\n");
+//			thread_detach(thread);
+
+//			printf("Before kill\n");
 			thread_kill(thread);
-			printf("After kill.\n");
-			printf("Thread join: %d\n", thread_join(thread));
+//			printf("After kill.\n");
+			int res = thread_join(thread);
+			printf("Thread join: %d\n", res);
+//			assert(res == EINVAL);
 			printf("Thread again.\n");
+//			thread_sleep(10);
+//			return NULL;
 		} else {
 			printf("Thread creation failed.\n");
+			assert(false);
 			break;
 		}// */
 	}
@@ -78,6 +87,7 @@ void* test1(void*)
 {
 	while (true){
 		printf("Test...%d\n", thread_get_current());
+		break;
 		thread_sleep(1);
 //		for (int i = 1; i < 4000000; ++i) ;
 	}

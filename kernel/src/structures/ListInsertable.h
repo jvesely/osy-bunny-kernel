@@ -53,7 +53,8 @@ public:
 	 * Pointer to self is stored in ListItem data field.
 	 */
 	inline ListInsertable()
-		:ListItem<T*>(static_cast<T*> (this)) {};
+		:ListItem<T*>(static_cast<T*> (this)), m_myList(NULL) {
+			};
 	
 	/*! @brief Appends itself to the given List.
 	 *
@@ -89,6 +90,7 @@ inline void ListInsertable<T>::append( List<T*>* list )
 	remove();
 	assert(!m_myList);
 	m_myList = list;
+
 	m_myList->pushBack(this);
 }
 /*----------------------------------------------------------------------------*/
