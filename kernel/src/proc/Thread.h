@@ -34,15 +34,18 @@
 
 #include "api.h"
 #include "structures/ListInsertable.h"
+#include "structures/HeapInsertable.h"
+#include "structures/Time.h"
 /*!
  * @class Thread Thread.h "proc/Thread.h"
  * @brief Thread class.
  *
  * Thread class handles stack and routine that is to be executed
- * in the separate threadd.
+ * in the separate thread.
  */
 
-class Thread: public ListInsertable<Thread>
+class Thread: public ListInsertable<Thread>,
+              public HeapInsertable<Thread, Time, 4>
 {
 
 public:

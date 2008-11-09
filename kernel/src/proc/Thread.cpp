@@ -34,13 +34,14 @@
 #include "Kernel.h"
 #include "InterruptDisabler.h"
 #include "address.h"
+#include "timer/Timer.h"
 #include "api.h"
 /*----------------------------------------------------------------------------*/
 Thread::Thread( 
 	unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE):
-	ListInsertable<Thread>(),
+	ListInsertable<Thread>(), HeapInsertable<Thread, Time, 4>(),
 	m_stackSize(stackSize),	m_detached(false), m_status(UNITIALIZED), 
-	m_follower(NULL)
+	m_id(0), m_follower(NULL)
 {
 	m_stack = malloc(m_stackSize);
 	if (m_stack == NULL) return;  /* test stack */
@@ -58,6 +59,8 @@ Thread::Thread(
 	context->a0 = (unative_t)this;         /* the first and the only argument */
 	context->gp = ADDR_TO_KSEG0(0);        /* global pointer */
 	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
+	
+	dprintf("Created thread %p id: %d and stack: %p\n", this, m_id, m_stack);
 
 	m_status = INITIALIZED;
 }
@@ -67,16 +70,20 @@ void Thread::yield() const
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
-void Thread::sleep(const unsigned int sec)
+void Thread::sleep(const uint sec)
 {
-	unsigned int end_time = Kernel::instance().clock().time() + sec;
+	InterruptDisabler inter;
+	//unsigned int end_time = Kernel::instance().clock().time() + sec;
 	// vulnurable to Y2k38 bug :)
 	// bad implementation, it will surely change when timer becomes avilable
-	while(Kernel::instance().clock().time() < end_time)
-		yield();
+	m_status = BLOCKED;
+	Timer::instance().plan(this, sec);
+	yield();
+//	while(Kernel::instance().clock().time() < end_time)
+//		yield();
 }
 /*----------------------------------------------------------------------------*/
-void Thread::usleep(const unsigned int usec)
+void Thread::usleep(const uint usec)
 {
 	if (usec >= RTC::SECOND)
 		sleep(usec / RTC::SECOND);

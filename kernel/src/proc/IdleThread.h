@@ -50,7 +50,7 @@ public:
 	void run() { asm volatile (" wait "); };
 
 private:
-	static const uint IDLE_STACK_SIZE = 512;
+	static const uint IDLE_STACK_SIZE = 1024;
 	IdleThread():Thread(0, IDLE_STACK_SIZE) {}; 
 //	KernelThread(const KernelThread& other); /*!< no copying */
 //	const Thread& operator=(const KerrnelThread& other);	/*!< no assigning */
