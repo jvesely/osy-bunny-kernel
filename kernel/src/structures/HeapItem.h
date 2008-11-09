@@ -75,12 +75,13 @@ public:
 	/*! @brief Returns const reference to the data stored in item. */
 	inline const T& data() const { return m_data; }
 
+protected:
+	/*! @brief Data stored in the heap item. */
+	T m_data;
+
 private:
 
 	/* MEMBER DATA ----------------------------------------------------------*/
-
-	/*! @brief Data stored in the heap item. */
-	T m_data;
 	
 	/*! @brief Pointer to the parent item in the heap. 
 	 * NULL if this item is the root. 
