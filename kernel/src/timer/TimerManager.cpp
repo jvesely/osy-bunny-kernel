@@ -39,11 +39,17 @@ TimerManager::TimerManager():
 Thread(0,Thread::DEFAULT_STACK_SIZE),
 mySemaphore(0)
 {
+	printk("TimerManager ctor\n");
 	m_lastEvent.setTime( 0, 0 );
+	Scheduler::instance().getId(this);
+	Scheduler::instance().enqueue(this);
+
+	printk("TimerManager ctor OK\n");
 }
 
 //------------------------------------------------------------------------------
 void TimerManager::deactivateEvent( ClassTimer * tmr ){
+	printk("TimerManager deactivating event");
 	assert( tmr != NULL );//this should not happen, because public methods would not allow it
 	if ( !tmr->pending() ) return;
 
@@ -52,6 +58,7 @@ void TimerManager::deactivateEvent( ClassTimer * tmr ){
 
 	assert( tmrItem != NULL );
 	assert( m_activeEvents.size() > 0 );
+	printk(" Removing and deactivating event\n");
 
 	//removing
 	m_activeEvents.remove( tmrItem );
@@ -75,6 +82,7 @@ void TimerManager::destroyTimer( ClassTimer * tmr ){
 
 //------------------------------------------------------------------------------
 void TimerManager::startEvent( ClassTimer * tmr ){
+
 	if ( tmr == NULL ) return;
 
 	timerMutex.lock();
@@ -87,6 +95,7 @@ void TimerManager::startEvent( ClassTimer * tmr ){
 		timerMutex.unlock();
 		return;
 	}
+
 	Time currentTime = Time::getCurrentTime();
 
 	//init listItem
@@ -96,7 +105,7 @@ void TimerManager::startEvent( ClassTimer * tmr ){
 	assert( tmrItem != NULL );
 
 	tmr->setAbsTime( currentTime + tmr->getDelay() );
-
+	tmr->setToStarted();
 	//insert listItem: increasing order
 	// this routine will not be needed once there is a heap structure
 	///\todo heap
@@ -104,6 +113,8 @@ void TimerManager::startEvent( ClassTimer * tmr ){
 	{
 		afterItem = afterItem->next();
 	}
+
+
 	//now either afterItem==NULL or tmr is before afterItem
 	List<ClassTimer*>::Iterator it = m_activeEvents.insert( afterItem, tmrItem );//insertbefore
 
@@ -119,12 +130,17 @@ void TimerManager::startEvent( ClassTimer * tmr ){
 void TimerManager::run()
 {
 	Time timeout( 0, 0 );
+	printk("timerManager Thread running\n");
 	while ( true ){
+		//printk("timerManager Thread in loop\n");
 		timerMutex.lock();
+		//printk("timerManager Thread locked\n");
 		if ( m_activeEvents.empty() ){
 			timeout.setTime( 0, 0 );
+			//printk("timerManager no events now\n");
 		}else{
 			//handle events from lastEvent to now
+			//printk("timerManager got events \n");
 			Time currentTime = Time::getCurrentTime();
 			ClassTimer * event;
 			List<ClassTimer*>::Iterator eventIt;
@@ -134,6 +150,7 @@ void TimerManager::run()
 			        &&	( isLater( ( *eventIt )->getAbsTime(), m_lastEvent ) ) 		//is after last timer event
 			        &&	( !isLater( ( *eventIt )->getAbsTime(), currentTime ) ))	//is before or equal to current time
 			{
+				printk("timerManager handling event");
 				//process event
 				event = ( *eventIt );
 				event->handler();
@@ -147,20 +164,25 @@ void TimerManager::run()
 			//plan nearest event
 			if ( ! m_activeEvents.empty() )//there are events
 			{
+				//printk("timerManager preparing new event\n");
 				m_nearest = m_activeEvents.getFront()->getAbsTime();
 				timeout = m_nearest - currentTime;
 			}else{//no events
+				//printk("timerManager all events done\n");
 				timeout.setTime(0,0);
 			};
 		}
+		//printk("timerManager Thread unlocking\n");
 		timerMutex.unlock();
 		//it really is not possible to unlock earlier:
 		if(timeout==Time(0,0)){
+			thread_yield();
+			//printk("timerManager no events, waiting\n");
 			//wait till someone adds an event
-			mySemaphore--;
+			//mySemaphore.down(1);
 		}else{
 			//wait to nearest event or till somebody adds and event
-			/// \todo semaphore timed down (timeout)
+			printk("timerManager waiting with time\n");
 			if(timeout.getSecs()>Time::MAX_USEC_SECS){
 				mySemaphore.downTimeout(1, Time::MAX_USEC_SECS*Time::MILLION);//will wait max allowed time
 			}else{

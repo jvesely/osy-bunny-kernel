@@ -47,6 +47,8 @@ int ClassTimer::init( timer * tmr, const unsigned int usec,
 	m_eventStruct.setData( this );
 	//abs time not yet
 	m_state = TIMER_INITIALISED;
+	m_eventStruct.setNext(NULL);
+	m_eventStruct.setPrev(NULL);
 	return EOK;
 }
 
