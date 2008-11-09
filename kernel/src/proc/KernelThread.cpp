@@ -35,14 +35,16 @@
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "api.h"
+#include "timer/Timer.h"
 /*----------------------------------------------------------------------------*/
 void KernelThread::run()
 {
+	Timer::instance().plan(this, Time(0, Scheduler::DEFAULT_QUANTUM));
 	m_runFunc(m_runData);
 //	dprintf("Thread has ended\n");
 
 	m_status = FINISHED;
-	dprintf("Thread %d finished.\n", m_id);
+//	dprintf("Thread %d finished.\n", m_id);
 	if (m_follower) {
 		assert(m_follower->status() == JOINING);
 		Scheduler::instance().enqueue(m_follower);
@@ -53,8 +55,6 @@ void KernelThread::run()
 	
 	dprintf("I'm dead: %u\n", m_id);
 	assert(false);
-	while (true) 
-		printf("Called dead Thread.\n");
 }
 /*----------------------------------------------------------------------------*/
 KernelThread::KernelThread(void* (*thread_start)(void*), void* data, 
@@ -82,7 +82,7 @@ int KernelThread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
 	}
 //	dprintf("Getting ID.\n");
 	*thread_ptr = Scheduler::instance().getId(new_thread);
-	dprintf("Thread %d(%p) created, now enqueue.\n", new_thread->id(), new_thread);
+//	dprintf("Thread %d(%p) created, now enqueue.\n", new_thread->id(), new_thread);
 	Scheduler::instance().enqueue(new_thread);
 //	dprintf("Enqueued and leaving.\n");
 	return EOK;

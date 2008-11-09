@@ -46,7 +46,8 @@
 class Scheduler: public Singleton<Scheduler>
 {
 public:
-	
+	static const int DEFAULT_QUANTUM = 20000; /*!< 20 msec */
+
 	/*! @brief Converts identifier to pointer 
 	 * @param thread id to be converted
 	 * @return pointer to Thread class, NULL on failure
@@ -103,7 +104,6 @@ private:
 
 	IdleThread* m_idle;
 
-	static const int DEFAULT_QUATNUM = 20000; /*!< 20 msec */
 	
 	/*! @brief Just sets current thread to NULL, creates Idle thread */
 	Scheduler();

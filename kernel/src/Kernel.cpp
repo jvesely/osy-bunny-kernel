@@ -151,6 +151,7 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
+			printf("Exception: Address error exception. THREAD KILLED\n");
 			Scheduler::instance().activeThread()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
@@ -166,6 +167,7 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_CPU:
 			panic("Exception: Coprocessor unusable.\n");
 		case CAUSE_EXCCODE_RI:
+			printf("Exception: Address error exception. THREAD KILLED\n");
 			Scheduler::instance().activeThread()->kill();
 			panic("Exception: Reserved Instruction.\n");
 		case CAUSE_EXCCODE_IBE:
@@ -210,6 +212,6 @@ void Kernel::setTimeInterrupt(const Time& time)
 
 		
 	reg_write_compare( planned );
-//	dprintf("Set time interrupt in %u usecs current: %x, planned: %x.\n", usec, current, planned);
+	//dprintf("Set time interrupt in %u usecs current: %x, planned: %x.\n", usec, current, planned);
 }
 /*----------------------------------------------------------------------------*/
