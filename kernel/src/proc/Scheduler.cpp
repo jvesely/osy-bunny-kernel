@@ -33,6 +33,7 @@
 #include "Kernel.h"
 #include "KernelThread.h"
 #include "InterruptDisabler.h"
+#include "timer/Timer.h"
 
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
@@ -40,7 +41,8 @@ Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 	//bool success = m_idle->isOK(); */
 	m_idle->setId(0);
 	m_threadMap.insert(0, NULL);
-	assert(m_idle->status() == Thread::INITIALIZED); // must have idle thread
+	assert(m_idle->status() == Thread::INITIALIZED && m_idle->id() == 0); // must have idle thread
+	dprintf("Idle thread at address %p.\n", m_idle);
 }
 /*----------------------------------------------------------------------------*/
 thread_t Scheduler::getId(Thread* newThread)
@@ -86,7 +88,7 @@ void Scheduler::switchThread()
 			m_currentThread = m_activeThreadList.getFront();
 		} else
 			m_currentThread = *m_activeThreadList.rotate();
-//		dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
+		dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
 	}
 	
 	if (m_threadCount == 0) {
@@ -98,12 +100,16 @@ void Scheduler::switchThread()
 	m_currentThread->setStatus(Thread::RUNNING);
 	void** new_stack = m_currentThread->stackTop();
 //	dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
-	if (m_currentThread != m_idle)
+	/*if (m_currentThread != m_idle)
 		Kernel::instance().setTimeInterrupt(DEFAULT_QUATNUM);	
 	else
 		Kernel::instance().setTimeInterrupt(0);
+	*/
 	if (old_stack != new_stack)
 		Processor::switch_cpu_context(old_stack, new_stack);
+
+	if (m_currentThread != m_idle)
+		Timer::instance().plan(m_currentThread, DEFAULT_QUATNUM);
 	
 }
 /*----------------------------------------------------------------------------*/
@@ -111,7 +117,7 @@ void Scheduler::enqueue(Thread * thread)
 {
 	InterruptDisabler interrupts;
 	
-//	dprintf("Scheduling thread %u.\n", thread->id());
+	dprintf("Scheduling thread %u.\n", thread->id());
 
 	thread->append(&m_activeThreadList);
 
@@ -123,27 +129,23 @@ void Scheduler::enqueue(Thread * thread)
 //	dprintf("Scheduled thread %u to run.\n", thread->id());
 	
 	if (m_currentThread == m_idle)
-			Kernel::instance().setTimeInterrupt(1); // plan to nearest slot
+		Timer::instance().plan(m_idle, Time(0, DEFAULT_QUATNUM));
+//			Kernel::instance().setTimeInterrupt(1); // plan to nearest slot
 	
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::dequeue(Thread* thread)
 {
 	InterruptDisabler interrupts;
-	dprintf("Dequeueing thread %d\n", thread->id());
+	dprintf("Dequeueing thread %d of %d\n", thread->id(), m_threadCount);
 	thread->remove();
 
-//	ListItem<Thread*>* ptr = m_activeThreadList.removeFind(thread);
-//	if (!ptr) {
-//		return;  // not in the list
-//	}
 
 	if ( (thread->status() == Thread::KILLED)
 		|| (thread->status() == Thread::FINISHED) ) {
+		dprintf("Decreasing thread count...(%d)\n", thread->status());
 		--m_threadCount; // remove dead
 	}
-//	Kernel::instance().pool().put(ptr);
-	//dprintf("Returning listitem %x.\n", ptr);
-	dprintf("Thread %d dequeued.\n", thread->id());
+	dprintf("Thread %d dequeued (%d active remain).\n", thread->id(), m_threadCount);
 }
 /*----------------------------------------------------------------------------*/
