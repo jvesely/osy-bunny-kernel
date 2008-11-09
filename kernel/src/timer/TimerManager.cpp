@@ -39,17 +39,17 @@ TimerManager::TimerManager():
 Thread(0,Thread::DEFAULT_STACK_SIZE),
 mySemaphore(0)
 {
-	printk("TimerManager ctor\n");
+	//printk("TimerManager ctor\n");
 	m_lastEvent.setTime( 0, 0 );
-	Scheduler::instance().getId(this);
+	//Scheduler::instance().getId(this);
 	Scheduler::instance().enqueue(this);
 
-	printk("TimerManager ctor OK\n");
+	//printk("TimerManager ctor OK\n");
 }
 
 //------------------------------------------------------------------------------
 void TimerManager::deactivateEvent( ClassTimer * tmr ){
-	printk("TimerManager deactivating event");
+	//printk("TimerManager deactivating event");
 	assert( tmr != NULL );//this should not happen, because public methods would not allow it
 	if ( !tmr->pending() ) return;
 
@@ -58,7 +58,7 @@ void TimerManager::deactivateEvent( ClassTimer * tmr ){
 
 	assert( tmrItem != NULL );
 	assert( m_activeEvents.size() > 0 );
-	printk(" Removing and deactivating event\n");
+	//printk(" Removing and deactivating event\n");
 
 	//removing
 	m_activeEvents.remove( tmrItem );
@@ -120,7 +120,9 @@ void TimerManager::startEvent( ClassTimer * tmr ){
 
 	if ( it == m_activeEvents.begin() )
 	{//is earliest - change nearest time interrupt
-		mySemaphore++;
+		//mySemaphore++;
+		//thread_wakeup(id());
+		Scheduler::instance().enqueue(this);
 	}
 
 	timerMutex.unlock();
@@ -130,7 +132,7 @@ void TimerManager::startEvent( ClassTimer * tmr ){
 void TimerManager::run()
 {
 	Time timeout( 0, 0 );
-	printk("timerManager Thread running\n");
+	//printk("timerManager Thread running\n");
 	while ( true ){
 		//printk("timerManager Thread in loop\n");
 		timerMutex.lock();
@@ -150,7 +152,7 @@ void TimerManager::run()
 			        &&	( isLater( ( *eventIt )->getAbsTime(), m_lastEvent ) ) 		//is after last timer event
 			        &&	( !isLater( ( *eventIt )->getAbsTime(), currentTime ) ))	//is before or equal to current time
 			{
-				printk("timerManager handling event");
+				//printk("timerManager handling event");
 				//process event
 				event = ( *eventIt );
 				event->handler();
@@ -176,13 +178,16 @@ void TimerManager::run()
 		timerMutex.unlock();
 		//it really is not possible to unlock earlier:
 		if(timeout==Time(0,0)){
-			thread_yield();
+			//thread_yield();
+			//dequeue(this);
+
+			thread_suspend();
 			//printk("timerManager no events, waiting\n");
 			//wait till someone adds an event
 			//mySemaphore.down(1);
 		}else{
 			//wait to nearest event or till somebody adds and event
-			printk("timerManager waiting with time\n");
+			//printk("timerManager waiting with time\n");
 			if(timeout.getSecs()>Time::MAX_USEC_SECS){
 				mySemaphore.downTimeout(1, Time::MAX_USEC_SECS*Time::MILLION);//will wait max allowed time
 			}else{
