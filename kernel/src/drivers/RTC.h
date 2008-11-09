@@ -31,6 +31,7 @@
  */
 #pragma once
 #include "types.h"
+#include "api.h"
 
 #define TIMER_USEC  1 /*!< next byte, taken from msim source */
 
@@ -44,7 +45,7 @@ class RTC {
 
 public:
 	static const unsigned int SECOND = 1000000;    /*!< usecs in 1 sec  */
-	static const unsigned int MILI_SECOND = 1000;  /*!< usecs in 1 msec */
+	static const unsigned int MILLI_SECOND = 1000;  /*!< usecs in 1 msec */
 
 	/*! @brief asumes rtc device on given address 
 	 *
@@ -56,7 +57,7 @@ public:
 	 * @return const timestamp
 	 */
 	inline unsigned int time() const 
-		{	return m_timeAddress?(*m_timeAddress):0; };
+		{	return m_timeAddress ? (*m_timeAddress) : 0; };
 
 	/*! @brief get usec part of the time 
 	 * @return const usec part of the time

@@ -34,6 +34,7 @@
 #include "devices.h"
 #include "tools.h"
 #include "InterruptDisabler.h"
+#include "timer/Timer.h"
 
 /*! This is our great bunny :) */
 const char * BUNNY_STR =
@@ -86,7 +87,10 @@ void Kernel::run()
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
 	
 	// setup allocator
-	m_alloc.setup((uintptr_t)&_kernel_end, 0x80000); /* 512 KB */
+	m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
+	
+	Timer::instance();
+	
 	thread_t mainThread;
 	thread_create(&mainThread, test, NULL, 0);
 //	m_alloc.check();
@@ -147,7 +151,7 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
-			Scheduler::instance().activeThread()->kill();
+//			Scheduler::instance().activeThread()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
 			if (!(reason & CAUSE_BD_MASK) ) {
@@ -162,7 +166,7 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_CPU:
 			panic("Exception: Coprocessor unusable.\n");
 		case CAUSE_EXCCODE_RI:
-			Scheduler::instance().activeThread()->kill();
+//			Scheduler::instance().activeThread()->kill();
 			panic("Exception: Reserved Instruction.\n");
 		case CAUSE_EXCCODE_IBE:
 		case CAUSE_EXCCODE_DBE:
@@ -175,28 +179,32 @@ void Kernel::handle(Processor::Context* registers)
 void Kernel::handleInterrupts(Processor::Context* registers)
 {
 	using namespace Processor;
-
+	InterruptDisabler inter;
 	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
 		m_console.interrupt();
 //		Processor::msim_stop();
 	}
 	if (registers->cause & CAUSE_IP7_MASK) {//timer interrupt
-//		dprintf("Timer interrupt: %u.\n", reg_read_count());
+//		dprintf("Timer interrupt: %x.\n", reg_read_count());
 		reg_write_cause(0);
-		Scheduler::instance().activeThread()->yield();
+		Timer::instance().interupt();
+//		Scheduler::instance().activeThread()->yield();
 	} 
 
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::setTimeInterrupt(const uint usec)
+void Kernel::setTimeInterrupt(const Time& time)
 {
 	using namespace Processor;
 	InterruptDisabler interrupts;
+	
+	Time relative = time - Time::getCurrent();
 
 	const unative_t current = reg_read_count();
-		
+	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();
+
 	const unative_t planned = (usec)
-		?	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILI_SECOND)
+		?	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
 		: current;
 
 		

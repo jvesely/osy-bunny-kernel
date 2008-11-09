@@ -99,7 +99,7 @@ public:
 
 	void handle(Processor::Context* registers);
 
-	void setTimeInterrupt( const unsigned int usec );
+	void setTimeInterrupt( const Time& time );
 private:
 	/*! kernel heap manager */	
 	Allocator m_alloc;
