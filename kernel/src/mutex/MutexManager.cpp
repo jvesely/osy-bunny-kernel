@@ -40,6 +40,8 @@
 #include "proc/Scheduler.h"
 #include "proc/Thread.h"
 #include "structures/List.h"
+#include "timer/Time.h"
+#include "timer/Timer.h"
 
 //#define DEBUG_MUTEX
 //#define DEBUG_MUTEX_ACTIONS
@@ -158,8 +160,22 @@ int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
 		return ETIMEDOUT;
 	}
 
-	//TODO: add the waiting
-	return ETIMEDOUT;
+	// store, which thread have the lock (for the mutex6 test)
+	thread_t locked = mtx->locked;
+
+	// if you got here, you are willing to sleep
+	// plan to wake up after usec
+	Timer::instance().plan(thread, Time(0, usec));
+	// unschedule and put the thread to mutex's waiting list
+	thread->append((ThreadList *)mtx->waitingList); 
+	// set the thread state to blocked
+	thread->setStatus(Thread::BLOCKED);
+	// switch to other thread
+	thread->yield();
+
+	return ((locked != mtx->locked) && (mtx->locked == thread->id()))
+		? EOK
+		: ETIMEDOUT;
 }
 
 /* --------------------------------------------------------------------- */
@@ -189,6 +205,8 @@ void MutexManager::mutex_unlock(mutex_t *mtx) {
 		Thread* thread = ((ThreadList *)mtx->waitingList)->getFront();
 		// lock the mutex with new id
 		mtx->locked = thread->id();
+		// remove from timer's heap (in case of timed lock)
+		thread->removeFromHeap();
 		// enqueue the thread in Scheduler
 		Scheduler::instance().enqueue(thread);
 	} else {

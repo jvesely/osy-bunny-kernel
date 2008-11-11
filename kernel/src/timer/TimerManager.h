@@ -33,6 +33,7 @@
 #pragma once
 
 #include <Kernel.h>
+#include <proc/Scheduler.h>
 #include <structures/List.h>
 #include <mutex/Mutex.h>
 #include <Semaphore.h>

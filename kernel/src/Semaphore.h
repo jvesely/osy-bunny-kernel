@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id: Semaphore.h 134 2008-11-08 12:27:20Z petrusek $
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
