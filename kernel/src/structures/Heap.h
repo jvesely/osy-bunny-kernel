@@ -39,7 +39,8 @@
 
 #include "HeapItem.h"
 
-/*! @class Heap Heap "structures/Heap.h"
+/*! 
+ * @class Heap Heap "structures/Heap.h"
  * @brief Implementation of a d-ary dynamic min-heap.
  * 
  * Template class:
@@ -61,12 +62,14 @@ template <class T, int Children>
 class Heap
 {
 public:
-	/*! @brief Default constructor. Initializes root pointer @a m_root to NULL,
+	/*! 
+	 * @brief Default constructor. Initializes root pointer @a m_root to NULL,
 	 * @a m_last_parent pointer to NULL and size of the array @a m_size to 0. 
 	 */
-	inline Heap();
+	inline Heap(): m_root(NULL), m_last_parent(NULL), m_size(0) {};
 
-	/*! @brief Default destructor. Does nothing as all items stored in the heap
+	/*!
+	 * @brief Default destructor. Does nothing as all items stored in the heap
 	 * should be maintained outside of it.
 	 */
 	inline ~Heap() {};
@@ -77,7 +80,8 @@ public:
 	/*! @brief Removes item beign pointed to by @a item, from the heap. */
 	void remove( HeapItem<T, Children>* item );
 
-	/*! @brief Returns the first (i.e. the smallest) item in the heap.
+	/*! 
+	 * @brief Returns the first (i.e. the smallest) item in the heap.
 	 * If the heap is @b empty, it will cause an @b error.
 	 *
 	 * @return Const reference of the value of the first item in the heap
@@ -85,14 +89,16 @@ public:
 	 */
 	inline const T& top() const;
 
-	/*! @brief Returns the first (i.e. the smallest) item in the heap.
+	/*! 
+	 * @brief Returns the first (i.e. the smallest) item in the heap.
 	 *
 	 * @retval Pointer to the first HeapItem in the heap
 	 * @retval NULL if there are no items in the heap.
 	 */
 	inline HeapItem<T, Children>* topItem() const;
 
-	/*! @brief Returns the first (i.e. the smallest) element of the heap 
+	/*! 
+	 * @brief Returns the first (i.e. the smallest) element of the heap 
 	 * and deletes it from the heap. 
 	 *
 	 * @retval Pointer to the first HeapItem in the heap
@@ -101,15 +107,17 @@ public:
 	inline HeapItem<T, Children>* getTop();
 
 	/*! @brief Returns the number of items in the heap. */
-	unsigned int size() const;
+	unsigned int size() const { return m_size; };
 
-	/*! @brief Checks if heap satisfies the heap property. 
+	/*! 
+	 * @brief Checks if heap satisfies the heap property. 
 	 * 
 	 * Uses isHeapPart() to check the root of the heap.
 	 */
 	bool isHeap() const;
 
-	/*! @brief Checks heap integrity.
+	/*! 
+	 * @brief Checks heap integrity.
 	 *
 	 * Uses checkHeapPart() to check the root of the heap.
 	 */
@@ -125,7 +133,8 @@ private:
 	/*! @brief Pointer to the first (i.e. the smallest) item in the heap. */
 	HeapItem<T, Children>* m_root;
 
-	/*! @brief Pointer to the parent whose child will be the next item inserted. 
+	/*! 
+	 * @brief Pointer to the parent whose child will be the next item inserted. 
 	 * @note This is IMHO the best way how to determine where to 
 	 * insert a new item and in the same time to simply change all pointers
 	 * that have to be changed during the insertion.
@@ -137,35 +146,45 @@ private:
 
 	/* MEMBER FUCTIONS ------------------------------------------------------*/
 
-	/*! @brief Default copy constructor. 
-	 * Made private in order not to allow copying the heap.
-	 */
+	/*! @brief Disable copy constructor. */
 	Heap( const Heap<T, Children>& other );
 
-	/*! @brief Operator =. Made private in order not to allow copying the heap.
-	 */
+	/*! @brief Disable Operator =. */
 	Heap<T, Children>& operator=( const Heap<T, Children>& other);
 
-	/*! @brief Percolates the given item down the heap. */
+	/*! 
+	 * @brief Percolates the given item down the heap.
+	 *
+	 * Switches the item with the smallest of it's children until the heap 
+	 * property isn't satisfied.
+	 */
 	void percolateDown( HeapItem<T, Children>* item );
 	
-	/*! @brief Percolates the given item up the heap. */
+	/*! 
+	 * @brief Percolates the given item up the heap. 
+	 *
+	 * Switches the item with it's parent until the heap property
+	 * isn't satisfied.
+	 */
 	void percolateUp( HeapItem<T, Children>* item );
 
 	/*! @brief Returns the first (i.e. the smallest) item in the heap. */
-	inline const T& findMin() const;
+	inline const T& findMin() const { return m_root->m_data; };
 
-	/*! @brief Returns the first (i.e. the smallest) item in the heap.
+	/*! 
+	 * @brief Returns the first (i.e. the smallest) item in the heap.
 	 * as a pointer to the proper HeapItem.
 	 */
-	inline HeapItem<T, Children>* findMinItem() const;
+	inline HeapItem<T, Children>* findMinItem() const { return m_root; };
 	
-	/*! @brief Returns the first (i.e. the smallest) element of the heap 
+	/*! 
+	 * @brief Returns the first (i.e. the smallest) element of the heap 
 	 * and deletes it from the heap. 
 	 */
 	HeapItem<T, Children>* getMinItem();
 
-	/*! @brief Swaps two items in the heap. 
+	/*! 
+	 * @brief Swaps two items in the heap. 
 	 *
 	 * Uses HeapItem<T>::swapWithAny() to swap two different items.
 	 */
@@ -184,11 +203,6 @@ private:
 /*---------------------------------------------------------------------------*/
 /* DEFINITIONS --------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
-
-template <class T, int Children>
-inline Heap<T, Children>::Heap()
-	: m_root(NULL), m_last_parent(NULL), m_size(0) 
-{}
 
 template <class T, int Children>
 inline void Heap<T, Children>::insert( HeapItem<T, Children>* item )
@@ -226,7 +240,7 @@ inline void Heap<T, Children>::remove( HeapItem<T, Children>* item )
 	if (!item)
 		return;
 
-	if ((m_last_parent == m_root) && (m_last_parent->isEmpty()) ) {
+	if ( (m_last_parent == m_root) && (m_last_parent->isEmpty()) ) {
 		// there is no other item in the heap than the root
 		ASSERT(item == m_root);
 		m_last_parent = m_root = NULL;
@@ -275,6 +289,7 @@ inline void Heap<T, Children>::remove( HeapItem<T, Children>* item )
 	ASSERT(last->m_parent && last->m_parent == m_last_parent);
 	last->m_parent->replaceChild(last, NULL);
 	last->m_parent->m_count -= 1;
+
 	if ( (!last->m_parent->m_count) && (last->m_parent != m_root) ) {
 		m_last_parent = last->m_parent->m_previous;
 	} else {
@@ -303,7 +318,7 @@ template <class T, int Children>
 void Heap<T, Children>::percolateDown( HeapItem<T, Children>* item )
 {
 	// while item is not a leaf
-	while (/*item->m_follower && */item->m_count) {
+	while (item->m_count) {
 		HeapItem<T, Children>* min = item->minChild();
 
 		if (*min < *item) {
@@ -355,25 +370,9 @@ inline const T& Heap<T, Children>::top() const
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-inline const T& Heap<T, Children>::findMin() const 
-{ 
-	return m_root->m_data;
-}
-
-/*---------------------------------------------------------------------------*/
-
-template <class T, int Children>
 inline HeapItem<T, Children>* Heap<T, Children>::topItem() const 
 { 
 	return findMinItem(); 
-}
-
-/*---------------------------------------------------------------------------*/
-
-template <class T, int Children>
-inline HeapItem<T, Children>* Heap<T, Children>::findMinItem() const 
-{ 
-	return m_root; 
 }
 
 /*---------------------------------------------------------------------------*/
@@ -397,14 +396,6 @@ HeapItem<T, Children>* Heap<T, Children>::getMinItem()
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-unsigned int Heap<T, Children>::size() const 
-{ 
-	return m_size; 
-}
-
-/*---------------------------------------------------------------------------*/
-
-template <class T, int Children>
 void Heap<T, Children>::swapItems( 
 	HeapItem<T, Children>* item1, HeapItem<T, Children>* item2 )
 {
@@ -416,7 +407,7 @@ void Heap<T, Children>::swapItems(
 template <class T, int Children>
 bool Heap<T, Children>::isHeap() const
 {
-	return isHeapPart( m_root );
+	return isHeapPart(m_root);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -446,7 +437,7 @@ bool Heap<T, Children>::isHeapPart( HeapItem<T, Children>* item ) const
 template <class T, int Children>
 bool Heap<T, Children>::checkHeap() const
 {
-	return checkHeapPart( m_root );
+	return checkHeapPart(m_root);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -485,11 +476,12 @@ bool Heap<T, Children>::isNew( HeapItem<T, Children>* item ) const
 		return false;
 	
 	bool ok = true;
-	for (unsigned int i = 0; i < Children; ++i)
+	for (unsigned int i = 0; i < Children; ++i) {
 		if (item->m_children[i]) {
 			ok = false;
 			break;
 		}
+	}
 	return ok;
 }
 

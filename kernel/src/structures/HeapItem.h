@@ -35,11 +35,12 @@
 
 #pragma once
 
-#include "api.h"
+//#include "api.h"
 
 template <class T, int Children> class Heap;
 
-/*! @class HeapItem HeapItem "structures/HeapItem.h"
+/*! 
+ * @class HeapItem HeapItem "structures/HeapItem.h"
  * @brief This class represents one item in Heap.
  *
  * Template class:
@@ -54,25 +55,28 @@ template <class T, int Children>
 class HeapItem
 {
 public:
-	/*! @brief Default constructor, initializes data to the given value.
+	/*! 
+	 * @brief Default constructor, initializes data to the given value.
 	 * 
 	 * Also initializes the internal structure (all pointers to NULL).
 	 */
 	inline HeapItem( const T& data = T() );
 
-	/*! @brief Default destructor. Does nothing. Virtual because of
+	/*! 
+	 * @brief Default destructor. Does nothing. Virtual because of
 	 * HeapInsertable derived from this class.
 	 */
 	virtual ~HeapItem() {};
 	
-	/*! @brief Operator <. 
+	/*! 
+	 * @brief Operator <. 
 	 *
 	 * Made virtual so class HeapInsertable and classes derived from it
 	 * can redefine it.
 	 * When called on HeapItem itself (thus not on a derived item), 
 	 * it compares the data stored in item.
 	 */
-	virtual bool operator<( const HeapItem<T, Children>& other ) const;
+	virtual bool operator < ( const HeapItem<T, Children>& other ) const;
 
 	/*! @brief Returns const reference to the data stored in item. */
 	inline const T& data() const { return m_data; }
@@ -85,7 +89,8 @@ private:
 
 	/* MEMBER DATA ----------------------------------------------------------*/
 	
-	/*! @brief Pointer to the parent item in the heap. 
+	/*! 
+	 * @brief Pointer to the parent item in the heap. 
 	 * NULL if this item is the root. 
 	 */
 	HeapItem<T, Children>* m_parent;
@@ -93,7 +98,8 @@ private:
 	/*! @brief  Array of pointers to this item's children. */
 	HeapItem<T, Children>* m_children[Children];
 	
-	/*! @brief Pointer to the next item in the heap.
+	/*! 
+	 * @brief Pointer to the next item in the heap.
 	 * 
 	 * In case I'm the last item in the heap it's NULL.
 	 * In case, I'm the rightmost item in a row and am not the last item,
@@ -102,7 +108,8 @@ private:
 	 */
 	HeapItem<T, Children>* m_follower;
 	
-	/*! @brief Pointer to the previous item in the heap.
+	/*! 
+	 * @brief Pointer to the previous item in the heap.
 	 * 
 	 * In case I'm the root in the heap it's NULL.
 	 * In case, I'm the leftmost item and am not the root,
@@ -116,7 +123,8 @@ private:
 
 	/* MEMBER FUNCTIONS -----------------------------------------------------*/
 
-	/*! @brief Tries to insert a new child to the item.
+	/*! 
+	 * @brief Tries to insert a new child to the item.
 	 *
 	 * @param child Item to be inserted as a child of this node.
 	 *
@@ -135,7 +143,8 @@ private:
 	void swapWithAny( HeapItem<T, Children>* other );
 
 	/*! @brief Replaces my child @a old_child with @a new child. */
-	void replaceChild( HeapItem<T, Children>* old_child, HeapItem<T, Children>* new_child );
+	void replaceChild( 
+		HeapItem<T, Children>* old_child, HeapItem<T, Children>* new_child );
 
 	/*! @brief Returns pointer to the pointer to the found child. */
 	HeapItem<T, Children>** findChild( HeapItem<T, Children>* child ); 
@@ -144,10 +153,10 @@ private:
 	inline void swap( HeapItem<T, Children>** ptr1, HeapItem<T, Children>** ptr2 );
 
 	/*! @brief Checks whether the item has no children. */
-	inline bool isEmpty() { return m_count == 0; }
+	inline bool isEmpty() const { return m_count == 0; }
 
 	/*! @brief Checks whether the item has maximum children. */
-	inline bool isFull() { return m_count == Children; }
+	inline bool isFull() const { return m_count == Children; }
 
 	/*! @brief Returns pointer to the last child of the item. */
 	inline HeapItem<T, Children>* lastChild() const;
@@ -155,7 +164,8 @@ private:
 	/*! @brief Returns pointer to the minimum of the item's children. */
 	HeapItem<T, Children>* minChild() const;
 
-	/*! @brief Checks the integrity of the item,
+	/*! 
+	 * @brief Checks the integrity of the item,
 	 * i.e. whether the following, previous, parent and children
 	 * items have their proper pointer pointed to me.
 	 * E.g. my follower has to have me set as his previous item.
@@ -185,7 +195,8 @@ inline HeapItem<T, Children>::HeapItem( const T& data )
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-bool HeapItem<T, Children>::operator<( const HeapItem<T, Children>& other ) const
+bool HeapItem<T, Children>::operator<( 
+	const HeapItem<T, Children>& other ) const
 {
 	return m_data < other.m_data;
 }
@@ -193,7 +204,8 @@ bool HeapItem<T, Children>::operator<( const HeapItem<T, Children>& other ) cons
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-HeapItem<T, Children>* HeapItem<T, Children>::insertChild( HeapItem<T, Children>* child )
+HeapItem<T, Children>* HeapItem<T, Children>::insertChild( 
+	HeapItem<T, Children>* child )
 {
 	if (isFull()) {
 		lastChild()->m_follower = child;
@@ -208,17 +220,15 @@ HeapItem<T, Children>* HeapItem<T, Children>::insertChild( HeapItem<T, Children>
 		// set the new child as follower of my last child
 		lastChild()->m_follower = child;
 		child->m_previous = lastChild();
-	}
+	} 
 	else if (!m_parent) {
 		ASSERT(!m_follower);
 		// I'm the root node, so set my first child as the next item
 		m_follower = child;
 		child->m_previous = this;
 	}
-	else {
-		// I'm not the root and I'm empty
-		// nothing to do
-	}
+	// else I'm not the root and I'm empty
+	// nothing to do
 	
 	// I'm either the special case when a full node wants to insert
 	// it's new child to me, or a normal node
@@ -241,9 +251,6 @@ void HeapItem<T, Children>::swapWithAny( HeapItem<T, Children>* other )
 	1)	change the properties of following and preceding nodes  
 		change followers and previous items
 	--------------------------------------------------------*/
-
-	//ASSERT(m_follower);	
-	// I'm a parent, I must have some follower
 	
 	if (m_previous != other) {
 		if (m_previous)
@@ -296,8 +303,7 @@ void HeapItem<T, Children>::swapWithAny( HeapItem<T, Children>* other )
 		// replace other in it's parent with me
 		if (other->m_parent)
 			other->m_parent->replaceChild(other, this);
-	}
-	else {
+	} else {
 		swap(m_parent->findChild(this), m_parent->findChild(other));
 	}
 
@@ -347,7 +353,8 @@ void HeapItem<T, Children>::swapWithAny( HeapItem<T, Children>* other )
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-void HeapItem<T, Children>::replaceChild( HeapItem<T, Children>* old_child, HeapItem<T, Children>* new_child )
+void HeapItem<T, Children>::replaceChild( 
+	HeapItem<T, Children>* old_child, HeapItem<T, Children>* new_child )
 {
 	for (unsigned int i = 0; i < m_count; ++i) {
 		if (m_children[i] == old_child) {
@@ -370,13 +377,15 @@ HeapItem<T, Children>** HeapItem<T, Children>::findChild(
 			return &m_children[i];
 	}
 	ASSERT(false);
-	return false;
+	// should not reach this point but we must return something ;-)
+	return NULL;
 }
 
 /*---------------------------------------------------------------------------*/
 
 template <class T, int Children>
-inline void HeapItem<T, Children>::swap( HeapItem<T, Children>** ptr1, HeapItem<T, Children>** ptr2)
+inline void HeapItem<T, Children>::swap( 
+	HeapItem<T, Children>** ptr1, HeapItem<T, Children>** ptr2)
 {
 	HeapItem<T, Children>* p = *ptr1;
 	*ptr1 = *ptr2;
