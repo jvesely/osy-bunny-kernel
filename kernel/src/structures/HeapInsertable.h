@@ -39,7 +39,8 @@
 
 #include "Heap.h"
 
-/*! @class HeapInsertable HeapInsertable "structures/HeapInsertable.h"
+/*! 
+ * @class HeapInsertable HeapInsertable "structures/HeapInsertable.h"
  * @brief This is a base class of all objects that can be inserted into Heap.
  * 
  * All classes that inherit this base class can be inserted into Heap 
@@ -79,7 +80,8 @@ template <class T, typename Key, int Children>
 class HeapInsertable: public HeapItem<T*, Children>
 {
 public:
-	/*! @brief Default constructor initializes the HeapItem with a pointer 
+	/*! 
+	 * @brief Default constructor initializes the HeapItem with a pointer 
 	 * to itself and sets itself as not inserted into a heap.
 	 */
 	inline HeapInsertable() 
@@ -88,28 +90,32 @@ public:
 	/*! @brief Destructor removes self from the heap it was inserted into. */
 	inline ~HeapInsertable();
 
-	/*! @brief Operator < compares the keys of two HeapInsertable objects. 
+	/*! 
+	 * @brief Operator < compares the keys of two HeapInsertable objects. 
 	 *
 	 * Can be called only when tie object was inserted into heap,
 	 * otherwise the results are undefined.
 	 */
-	bool operator<( const HeapItem<T*, Children>& other ) const;
+	bool operator < ( const HeapItem<T*, Children>& other ) const;
 	
 	/*! @brief Returns const reference to the key. */
 	inline const Key& key() const { return m_key; }
 	
-	/*! @brief Returns the data stored in the HeapItem (i.e. a pointer
+	/*! 
+	 * @brief Returns the data stored in the HeapItem (i.e. a pointer
 	 * to myself).
 	 */
 	inline const T* value() const { return static_cast<T*>(this->m_data); }
 
-	/*! @brief Inserts itself into @a heap, initializing it's key to @a key. 
+	/*! 
+	 * @brief Inserts itself into @a heap, initializing it's key to @a key. 
 	 *
 	 * Does nothing in case the object has already been inserted into a heap.
 	 */
 	void insertIntoHeap(Heap<T*, Children>* heap, const Key &key);
 	
-	/*! @brief Removes itself from the heap it was inserted into. 
+	/*! 
+	 * @brief Removes itself from the heap it was inserted into. 
 	 *
 	 * Does nothing in case the object was not yet inserted into a heap.
 	 */
