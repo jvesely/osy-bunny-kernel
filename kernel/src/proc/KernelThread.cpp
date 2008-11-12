@@ -39,21 +39,20 @@
 /*----------------------------------------------------------------------------*/
 void KernelThread::run()
 {
-	Timer::instance().plan(this, Time(0, Scheduler::DEFAULT_QUANTUM));
 	m_runFunc(m_runData);
-//	dprintf("Thread has ended\n");
 
 	m_status = FINISHED;
-//	dprintf("Thread %d finished.\n", m_id);
+	
 	if (m_follower) {
 		assert(m_follower->status() == JOINING);
 		Scheduler::instance().enqueue(m_follower);
 	}
 
+	removeFromHeap(); //no more plans for me
 	Scheduler::instance().dequeue(this);
 	Scheduler::instance().switchThread();
 	
-	dprintf("I'm dead: %u\n", m_id);
+	printf("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);
 	assert(false);
 }
 /*----------------------------------------------------------------------------*/
@@ -66,7 +65,7 @@ KernelThread::KernelThread(void* (*thread_start)(void*), void* data,
 /*----------------------------------------------------------------------------*/
 KernelThread::~KernelThread()
 {
-	//dprintf("Deleting thread %u (det:%d)\n", m_id, m_detached);
+	//printf("[ THREAD %u ] R.I.P. (detached:%S)\n", m_id, m_detached ? "YES":"NO" );
 	Scheduler::instance().returnId(m_id);
 }
 /*----------------------------------------------------------------------------*/
@@ -77,7 +76,6 @@ int KernelThread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
 
 	if ( (new_thread == NULL) || (new_thread->status() != INITIALIZED) ) {
 		delete new_thread;
-		dprintf("Thread creation unsuccessfull, thread deleted.\n");
 		return ENOMEM;
 	}
 //	dprintf("Getting ID.\n");

@@ -50,7 +50,8 @@ class Thread: public ListInsertable<Thread>,
 
 public:
 	static const int DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
-	
+
+	static Thread* getCurrent();
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
@@ -66,20 +67,23 @@ public:
 	 * @brief Possible states of threads
 	 */
 	enum Status {
-		UNITIALIZED, INITIALIZED, READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED, JOINING
+		UNINITIALIZED, INITIALIZED, READY, RUNNING, KILLED, WAITING, BLOCKED, FINISHED, JOINING
 	};
 	
-	/*! if stack was sucessfully allocated, it is freed here */
+	/*! @brief If stack was sucessfully allocated, it is freed here */
 	virtual ~Thread();
 
-	/*! this will be run in the separate thread, includes some management */
+	/*! @brief This will be run in the separate thread, includes some management */
 	virtual void run() = 0;
-	
+
+	/*! Suspend thread for the given time, no status is set */
+	void alarm( const Time& alarm_time );
+
 	/*! @brief new thread entry point */
 	void start() { run(); };
 
 	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
-	void yield() const;
+	void yield();
 
 	/*! @brief Puts Thread back into the running queue */
 	void wakeup() const;
@@ -105,12 +109,12 @@ public:
 	/*! @brief Surrenders processing time for given time
 	 * @param sec number of seconds to sleep
 	 */
-	void sleep(const unsigned int sec);
+	void sleep(const uint sec);
 
 	/*! @brief Microsec brother of sleep()
 	 * @param usec number of microseconds to sleep
 	 */
-	void usleep(const unsigned int usec);
+	void usleep(const uint usec);
 
 	/*! @brief Conversion to thread_t type.
 	 * @return thread_t identifier of this thread
@@ -127,7 +131,7 @@ public:
 	 * @retval EOK this thread was suspended and successfully awoken on 
 	 * others ending
 	 */
-	int join(Thread* other);
+	int join(Thread* other, bool timed = false);
 
 	int joinTimeout(Thread* other, const uint usec);
 	/*! @brief Sets my thread_t identifier */
