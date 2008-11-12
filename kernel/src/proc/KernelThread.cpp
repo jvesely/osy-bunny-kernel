@@ -65,7 +65,7 @@ KernelThread::KernelThread(void* (*thread_start)(void*), void* data,
 /*----------------------------------------------------------------------------*/
 KernelThread::~KernelThread()
 {
-	printf("[ THREAD %u ] R.I.P. (detached:%S)\n", m_id, m_detached ? "YES":"NO" );
+	//printf("[ THREAD %u ] R.I.P. (detached:%S)\n", m_id, m_detached ? "YES":"NO" );
 	Scheduler::instance().returnId(m_id);
 }
 /*----------------------------------------------------------------------------*/
