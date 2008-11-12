@@ -249,7 +249,8 @@ int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
 /*----------------------------------------------------------------------------*/
 thread_t thread_get_current()
 {
-	return Scheduler::instance().activeThread()->id();
+	return Thread::getCurrent()->id();
+	//Scheduler::instance().activeThread()->id();
 }
 /*----------------------------------------------------------------------------*/
 int thread_join(thread_t thr)
@@ -278,7 +279,8 @@ int thread_detach(thread_t thread)
 		|| thr->follower()) 
 		return EINVAL;
 	if (thr->detach()) return EOK;
-	return EOTHER;
+	assert(false);
+	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 void thread_sleep(const unsigned int sec)
@@ -315,7 +317,6 @@ int thread_kill(thread_t thr)
 	InterruptDisabler inter;
 	Thread* thread = Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
-	dprintf("Killing thread %p\n", thread);
 	thread->kill();
 	return EOK;
 }

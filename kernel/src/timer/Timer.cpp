@@ -36,72 +36,89 @@
 #include "Kernel.h"
 #include "InterruptDisabler.h"
 
+//#define TIMER_DEBUG
+
+#ifndef TIMER_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+  printf("[ TIMER_DEBUG ]: "); \
+  printf(ARGS);
+#endif
+
 /*----------------------------------------------------------------------------*/
 void Timer::plan(Thread* thread, const Time& time)
 {
-	ASSERT(thread);
+	ASSERT (thread);
+	
+	/* Mangling with shared structure that can be used during interupts
+	 * requires posponing them
+	 */
 	InterruptDisabler inter;
-	Time planned = (Time::getCurrent() + time);
-//	dprintf("Inserting into heap %d(%p).\n", thread->id(), thread);
-	thread->removeFromHeap(); //just in case it is already planned
-/*		dprintf("Inserted into heap %d(%d) to run on %x,%u and now is %x,%u.\n",
-		thread->id(), m_heap.size(), planned.secs(), planned.usecs(),
-		Time::getCurrent().secs(), planned.usecs() );
-	// */
-	if (thread->status() != Thread::RUNNING){
-	//	dprintf("Planning %d by %d\n", thread->id(), Scheduler::instance().activeThread()->id());
-		/*dprintf("Planned for time %x,%u now is %x,%u\n", 
-			thread->key().secs(), thread->key().usecs(), Time::getCurrent().secs(), Time::getCurrent().usecs()); // */
+
+	/* It is higly probable that this thread was already planned so 
+	 * we'd better remove it first.
+	 */
+	thread->removeFromHeap();
+
+	if (thread->status() != Thread::RUNNING) {
+		PRINT_DEBUG ("Planning thread wakeup for thread %u.\n", thread->id());
 		Scheduler::instance().dequeue(thread);
-		//dprintf("DONE\n");
-	} else thread->removeFromHeap();
+	}
+
+	/* Convert relative time to abslute and insert into time heap. */
+	Time planned = (Time::getCurrent() + time);
+	PRINT_DEBUG ("Planning thread %u for the time: %u,%u.\n",
+		thread->id(), planned.secs(), planned.usecs());
 	thread->insertIntoHeap(&m_heap, planned);
 
-	//Time now;
-	if ( thread == static_cast<Thread*>(m_heap.topItem()) )
+	/* if the newest event is sooner than the former it is needed to replan interupts */
+	if ( thread == static_cast<Thread*>(m_heap.topItem()) ) {
+		PRINT_DEBUG ("Replanning interupt.\n");
 		Kernel::instance().setTimeInterrupt(thread->key());
-	//if (thr)
-	//	now = thr->key();
-	//else
-	//	now = Time();
-//	dprintf("Nearest event: %p, time: %x\n", m_heap.topItem(), static_cast<Thread*>(m_heap.topItem())->key().secs() );
-
-	
-
+	}
 }
 /*----------------------------------------------------------------------------*/
 void Timer::interupt()
 {
-	//dprintf("Handling interrupt....%d\n", m_heap.size());
+	
+
+	/* We need to know about replanning as we need to do it as the last thing */
 	bool nextThread = false;
+
 	Time now = Time::getCurrent();
+	PRINT_DEBUG ("Handling interupt in time %u, %u.\n", now.secs(), now.usecs());
+	
 	Thread * thr = NULL;
+
+	/* While there are events that are due execute them */
 	while ( (thr = static_cast<Thread*>(m_heap.topItem())) && (thr->key() < now) )
 	{
+		/* removing the top */
 		thr->removeFromHeap();
-//		dprintf("On the TOP of heap was: %p %u\n", thr, thr->id());
-/*		dprintf("Planned event was %u : %x,%u and now is %x,%u\n",
-			thr->id(),
-			thr->key().secs(), thr->key().usecs(), now.secs(), now.usecs()); // */
+
 		if ( thr->status() == Thread::RUNNING ) {
-//			dprintf("Thread was RUNNING.\n");
-			printf("[ TIMER ] Timer to replan\n");
+			/* Current thread might have only requested recheduling */
+			PRINT_DEBUG ("Timer to replan.\n");
 			nextThread = true;
 		} else {
-		//	dprintf("Thread status was: %d\n", thr->status());
-			if (thr->status() != Thread::READY)
-				Scheduler::instance().enqueue(thr);
+			/* Other threadd might have only requested waking up */
+			ASSERT (thr->status() != Thread::READY);
+			PRINT_DEBUG ("Waking thread %u.\n");
+			Scheduler::instance().enqueue(thr);
 		}
 	}
+
+	/* Get the next event */
 	thr = static_cast<Thread*>(m_heap.topItem());
-	if (thr) {
-		Kernel::instance().setTimeInterrupt(thr->key());
-	} else
-		Kernel::instance().setTimeInterrupt(Time());
 
+	Time nextEvent = thr ? thr->key() : Time();
+	PRINT_DEBUG ("Next event in %u,%u.\n", nextEvent.secs(), nextEvent.usecs());
+	Kernel::instance().setTimeInterrupt(nextEvent);
 
-	//dprintf("Nearest event: %p, time: %x now:%x\n", m_heap.topItem(), static_cast<Thread*>(m_heap.topItem())->key().secs(), Time::getCurrent().secs() );
-
-	if (nextThread)
+	/* Rescheduling was requested */
+	if (nextThread) {
+		PRINT_DEBUG ("Thread switching was due.\n");
 		Scheduler::instance().switchThread();
+	}
 }

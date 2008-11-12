@@ -35,7 +35,7 @@
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 
-#define SCHEDULER_DEBUG
+//#define SCHEDULER_DEBUG
 
 #ifndef SCHEDULER_DEBUG
 #define PRINT_DEBUG(...)
@@ -52,7 +52,7 @@ Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 	
 	/* reserve thread_t 0 to be out of the reach for other threads */
 	m_threadMap.insert(0, NULL);
-	
+
 	/* idle thread must be created successfully */
 	ASSERT (m_idle->status() == Thread::INITIALIZED);
 }
@@ -109,20 +109,21 @@ void Scheduler::switchThread()
 	if (!m_activeThreadList.size()) {
 		PRINT_DEBUG("Nothing to do switching to the idle thread.\n");
 		m_currentThread = m_idle;
-	}
-
-	/* if the running thread is not the first thread in the list 
-	 * (i.e is not in the list at all), then skip rotating and just plan
-	 * the first thread
-	 */
-	if (m_currentThread != m_activeThreadList.getFront()) {
-		PRINT_DEBUG("Active thread was lost skipping rotation.\n");
-		m_currentThread = m_activeThreadList.getFront();
 	} else {
-		PRINT_DEBUG("Rotating queue.\n");
-		m_currentThread = *m_activeThreadList.rotate();
-	}
 
+		/* if the running thread is not the first thread in the list 
+		 * (i.e is not in the list at all), then skip rotating and just plan
+		 * the first thread.
+		 */
+		if (m_currentThread != m_activeThreadList.getFront()) {
+			PRINT_DEBUG("Active thread is not the first in the queue skipping rotation.\n");
+			m_currentThread = m_activeThreadList.getFront();
+		} else {
+			PRINT_DEBUG("Rotating queue.\n");
+			m_currentThread = *m_activeThreadList.rotate();
+		}
+	}
+	
 	/* no more threads can be scheduled => shutdown */
 	if (m_threadCount == 0) {
 			assert(m_activeThreadList.size() == 0);
@@ -138,9 +139,9 @@ void Scheduler::switchThread()
 
 	/* plan it's switch before it's run */
 	if (m_currentThread != m_idle) {
-		Timer::instance().plan(m_currentThread, Time(0, DEFAULT_QUANTUM) );
 		PRINT_DEBUG("Planning preemptive strike for thread %u.\n",
 			m_currentThread->id());
+		Timer::instance().plan( m_currentThread, Time(0, DEFAULT_QUANTUM) );
 	}
 
 	/* the actual context switch */

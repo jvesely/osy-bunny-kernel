@@ -45,11 +45,23 @@ void* test(void*)
 //	Processor::msim_stop();
 
 	thread_t thread1;
-	thread_t thread2;
-	thread_t thread3;
+//	thread_t thread2;
+//	thread_t thread3;
 	thread_create(&thread1, test1, NULL, 0);
-	thread_create(&thread2, test1, NULL, 0);
-	thread_create(&thread3, test1, NULL, 0);
+//	thread_create(&thread2, test1, NULL, 0);
+//	thread_create(&thread3, test1, NULL, 0);
+	thread_detach(thread_get_current());
+	thread_join_timeout( thread1, 100 );
+	printf("After join timeout.\n");
+	thread_kill( thread1 );
+	printf("After kill.\n");
+	thread_join( thread1 );
+	return NULL;
+	thread_yield();
+	while (true) {
+		thread_wakeup( thread1 );
+		thread_sleep(1);
+	}
 
 	return NULL;
 // */
@@ -91,14 +103,14 @@ void* test(void*)
 
 void* test1(void*)
 {
-	while (true){
+	thread_sleep(1);
+
+	//while (true){
 		printf("Test...%d\n", thread_get_current());
-		for (int i = 1; i < 80000; ++i) {
-			i = i + 5 + 5 - 10;
-			printf("");
-		}
-//
-	}
+//		thread_sleep(1);
+//		thread_usleep(1000000);
+//		thread_suspend();
+//	}
 	return NULL;
 }
 
