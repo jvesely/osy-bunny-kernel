@@ -43,7 +43,7 @@ void* test(void*)
 	#endif
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
-  
+
 	thread_t thread1;
 	thread_t thread2;
 	thread_t thread3;
@@ -93,15 +93,12 @@ void* test1(void*)
 {
 	while (true){
 		printf("Test...%d\n", thread_get_current());
-		thread_usleep(900000);
-//		for (int i = 1; i < 4000000; ++i) ;
+		for (int i = 1; i < 80000; ++i) {
+			i = i + 5 + 5 - 10;
+			printf("");
+		}
+//
 	}
 	return NULL;
 }
 
-void* test2(void*)
-{
-	while (true)
-		printf("Test...\n");
-	return NULL;
-}

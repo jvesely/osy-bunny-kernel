@@ -35,7 +35,7 @@
 
 #pragma once
 
-//#include "api.h"
+#include "api.h"
 
 template <class T, int Children> class Heap;
 

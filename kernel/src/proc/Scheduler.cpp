@@ -35,25 +35,47 @@
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 
+#define SCHEDULER_DEBUG
+
+#ifndef SCHEDULER_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+	printf("[ SCHEDULER_DEBUG ]: "); \
+	printf(ARGS);
+#endif
+
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
-	m_idle = new IdleThread(); // small stack should be enough
-	//bool success = m_idle->isOK(); */
-	m_idle->setId(0);
+	/* create idle thread */
+	m_idle = new IdleThread();
+	
+	/* reserve thread_t 0 to be out of the reach for other threads */
 	m_threadMap.insert(0, NULL);
-	assert(m_idle->status() == Thread::INITIALIZED && m_idle->id() == 0); // must have idle thread
-	dprintf("Idle thread at address %p.\n", m_idle);
+	
+	/* idle thread must be created successfully */
+	ASSERT (m_idle->status() == Thread::INITIALIZED);
 }
 /*----------------------------------------------------------------------------*/
-thread_t Scheduler::getId(Thread* newThread)
+thread_t Scheduler::getId( Thread* newThread )
 {
-	//ostrich stuff, there shall always be free id
+	/* there has to be free id becasue if all were occupied, than
+	 * the system would have thread at every byt of adressable memory,
+	 * but the next variable and the parameter take up 8 bytes 
+	 * (and even more is used by the rest of the kernel), there must be a free id
+	 */
 	thread_t id = m_nextThread++;
+
+	/* if it is taken repeat */
 	while (m_threadMap.insert(id, newThread) == EINVAL) {
-		//find free id
+		PRINT_DEBUG("ID %u already in use getting new one.\n", id);
 		id = m_nextThread++;
 	}
+
+	/* set the id to the thread */
 	newThread->setId(id);
+
+	/* count this thread as active */
 	++m_threadCount;
 
 	return id;
@@ -61,87 +83,108 @@ thread_t Scheduler::getId(Thread* newThread)
 /*----------------------------------------------------------------------------*/
 void Scheduler::switchThread()
 {
-	//disable interrupts
+	/* disable interrupts, when mangling with scheduling queue */
 	InterruptDisabler interrupts;
-
-//	void* DUMMYSTACK = (void*)0xF00;
+	
+	/* check and delete if current thread was detached and has ended */
 	if (   m_currentThread 
-			&& m_currentThread->detached() 
-			&& (  m_currentThread->status() == Thread::KILLED 
-				 || m_currentThread->status() == Thread::FINISHED   )) {
+		&& m_currentThread->detached() 
+		&& ( m_currentThread->status() == Thread::KILLED 
+		  || m_currentThread->status() == Thread::FINISHED )) {
+		PRINT_DEBUG("Detached thread has ended...deleting: %u.\n", m_currentThread->id());
 		delete m_currentThread;
 		m_currentThread = NULL;
 	}
 
-	void** old_stack = (m_currentThread?m_currentThread->stackTop():NULL);
-//	m_currentThread->setStatus(Thread::READY);
-//	m_currentThread = m_activeThreadList.getFront();
-//	dprintf("Next thread %x.\n", m_currentThread);
+	/* old_stack points to the old thread stackpointerr, 
+	 * if it's NULL saving of the context is skipped
+	 */
+	void** old_stack = (m_currentThread ? m_currentThread->stackTop() : NULL);
+
+	/* change status if it remains in the queue */
 	if (m_currentThread->status() == Thread::RUNNING)
 		m_currentThread->setStatus(Thread::READY);
 
+	/* nothing to run */
 	if (!m_activeThreadList.size()) {
+		PRINT_DEBUG("Nothing to do switching to the idle thread.\n");
 		m_currentThread = m_idle;
-		//dprintf("Nothing to do (waiting for %d threads) switching to the idle thread.\n", m_threadCount);
-	} else {
-		if (m_currentThread != m_activeThreadList.getFront()) {
-			m_currentThread = m_activeThreadList.getFront();
-		} else
-			m_currentThread = *m_activeThreadList.rotate();
-		//dprintf("Running thread %d of %d(%d).\n",m_currentThread->id(), m_threadCount, m_activeThreadList.size());
 	}
-	
+
+	/* if the running thread is not the first thread in the list 
+	 * (i.e is not in the list at all), then skip rotating and just plan
+	 * the first thread
+	 */
+	if (m_currentThread != m_activeThreadList.getFront()) {
+		PRINT_DEBUG("Active thread was lost skipping rotation.\n");
+		m_currentThread = m_activeThreadList.getFront();
+	} else {
+		PRINT_DEBUG("Rotating queue.\n");
+		m_currentThread = *m_activeThreadList.rotate();
+	}
+
+	/* no more threads can be scheduled => shutdown */
 	if (m_threadCount == 0) {
 			assert(m_activeThreadList.size() == 0);
-			dprintf("No more active threads, shutting down.\n");
+			printf("[ KERNEL SHUTDOWN ] No more active threads, shutting down.\n");
 			Kernel::halt();
 	}
+	
+	PRINT_DEBUG("New active thread will be: %u.\n", m_currentThread->id());
 
+	/* set running on the chosen thread */
 	m_currentThread->setStatus(Thread::RUNNING);
 	void** new_stack = m_currentThread->stackTop();
-	//dprintf("Switching stacks %x,%x\n", old_stack, new_stack);
-	if (old_stack != new_stack)
-		Processor::switch_cpu_context(old_stack, new_stack);
-	
-//	dprintf("Running thread %p %u (idle = %p)\n", m_currentThread, m_currentThread->id(), m_idle);
 
+	/* plan it's switch before it's run */
 	if (m_currentThread != m_idle) {
 		Timer::instance().plan(m_currentThread, Time(0, DEFAULT_QUANTUM) );
+		PRINT_DEBUG("Planning preemptive strike for thread %u.\n",
+			m_currentThread->id());
 	}
-	
+
+	/* the actual context switch */
+	if (old_stack != new_stack) {
+		PRINT_DEBUG("Switching stacks.\n");
+		Processor::switch_cpu_context(old_stack, new_stack);
+	}
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::enqueue(Thread * thread)
 {
+	/* disable interupts as all sheduling queue mangling functions */
 	InterruptDisabler interrupts;
-	
-//	dprintf("Scheduling thread %u(%u).\n", thread->id(), m_activeThreadList.size());
 
+	/* all threads in the queue can be scheduled to run so their status
+	 * should be ready
+	 */
 	thread->append(&m_activeThreadList);
+	PRINT_DEBUG("Enqueued thread: %d.\n", thread->id());
 	thread->setStatus(Thread::READY);
 	
-	//dprintf("Scheduled thread %u to run.\n", thread->id());
-	
+	/* if the idle thread is running and other thread became ready,
+	 * idle thread is planned for switch as soon as possible
+	 */
 	if (m_currentThread == m_idle){
-//		dprintf("IDLE PLAN\n");
-		Timer::instance().plan(m_idle, Time(0, DEFAULT_QUANTUM));
+		PRINT_DEBUG("Ending IDLE thread reign.\n");
+		Timer::instance().plan(m_idle, Time(0, 1));
 	}
 	
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::dequeue(Thread* thread)
 {
+	/* queue mangling needs interupts disabled */
 	InterruptDisabler interrupts;
-	//dprintf("Dequeueing thread %d of %d\n", thread->id(), m_threadCount);
+
 	thread->remove();
+	PRINT_DEBUG("Removing thread %u.\n", thread->id());
 
-
+	/* Decrease active threa count if it is never to be run again */
 	if ( (thread->status() == Thread::KILLED)
 		|| (thread->status() == Thread::FINISHED) ) {
-		//dprintf("Decreasing thread count...(%d)\n", thread->status());
-		thread->removeFromHeap();
-		--m_threadCount; // remove dead
+		PRINT_DEBUG("Decreasing thread count.\n");
+		--m_threadCount;
 	}
-	//dprintf("Thread %d dequeued (%d active remain).\n", thread->id(), m_threadCount);
 }
 /*----------------------------------------------------------------------------*/

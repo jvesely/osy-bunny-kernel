@@ -66,6 +66,7 @@ Thread::Thread( unative_t flags, uint stackSize):
 /*----------------------------------------------------------------------------*/
 void Thread::yield() const
 {
+	printf("[ THREAD %d ] Called yield.\n", m_id);
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
@@ -206,7 +207,8 @@ void Thread::kill()
 		assert(m_follower->m_status == JOINING);
 		Scheduler::instance().enqueue(m_follower);
 	}
-	
+
+	removeFromHeap();
 	
 //	dprintf("Oficially dead getting off the list.\n");
 	Scheduler::instance().dequeue(this);

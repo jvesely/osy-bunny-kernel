@@ -85,6 +85,7 @@ void Timer::interupt()
 			thr->key().secs(), thr->key().usecs(), now.secs(), now.usecs()); // */
 		if ( thr->status() == Thread::RUNNING ) {
 //			dprintf("Thread was RUNNING.\n");
+			printf("[ TIMER ] Timer to replan\n");
 			nextThread = true;
 		} else {
 		//	dprintf("Thread status was: %d\n", thr->status());
