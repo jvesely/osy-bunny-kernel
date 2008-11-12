@@ -239,12 +239,12 @@ int Thread::join( Thread * thread, bool timed )
 /*----------------------------------------------------------------------------*/
 void Thread::block()
 {
-	Scheduler::instance().enqueue( this );
+	Scheduler::instance().dequeue( this );
 }
 /*----------------------------------------------------------------------------*/
 void Thread::resume()
 {
-	Scheduler::instance().dequeue( this );
+	Scheduler::instance().enqueue( this );
 }
 /*----------------------------------------------------------------------------*/
 void Thread::kill()
