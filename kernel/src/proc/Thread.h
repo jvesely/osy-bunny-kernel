@@ -133,8 +133,21 @@ public:
 	 */
 	int join(Thread* other, bool timed = false);
 
+	/*! @brief Timed version of join.
+	 *
+	 * If the thread other is still running after timeout.
+	 * @return is same as join adding ETIMEDOUT, if the time is up and other
+	 * thread is still running.
+	 */
 	int joinTimeout(Thread* other, const uint usec);
-	/*! @brief Sets my thread_t identifier */
+
+	/*! @brief Removes thread from the scheduling queue */
+	void block();
+	
+	/*! @brief Resumes thread to the scheduling queue */
+	void resume();
+
+	/*! @brief Sets my thread_t identifier. */
 	inline void setId(thread_t id) { m_id = id; };
 
 	/*! @brief Pointer to the pointer to the stacktop
