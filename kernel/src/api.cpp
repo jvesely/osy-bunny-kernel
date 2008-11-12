@@ -76,6 +76,9 @@ ssize_t gets(char* str, const size_t len)
  */
 size_t print_udecimal( uint32_t number)
 {
+	/* too many digits for the reverting algorithm */
+	if ( number > ( (uint)(-1) / 10 ))
+		return print_udecimal( number / 10) + putc( number % 10 + '0');
 	uint32_t reverse;
 	int size;
 	size_t count = 0;
@@ -110,11 +113,11 @@ size_t print_decimal(const int32_t number)
  * @param number number to be printed
  * @return number of printed hexadigits
  */
-size_t print_hexa(uint32_t number)
+size_t print_hexa(uint32_t number, bool align)
 {
 	puts("0x");
 	size_t count = 2;
-	if(number == 0)
+	if(number == 0 && !align)
 		return putc('0') + count;
 	size_t size;
 	uint32_t reverse;
@@ -123,6 +126,8 @@ size_t print_hexa(uint32_t number)
 		reverse += number % 16;
 		number /= 16;
 	}
+	for (uint i = 8; align && i > size ; --i)
+			count += putc('0');
 	int res;
 	for(;size;--size,reverse/=16)
 		if((res = reverse % 16) >= 10)
@@ -147,6 +152,7 @@ size_t print_hexa(uint32_t number)
  */
 size_t vprintk(const char * format, va_list args)
 {
+	bool align = false;
 	size_t count = 0;
 	while (*format){
 		if (*format == '%'){
@@ -165,7 +171,9 @@ size_t vprintk(const char * format, va_list args)
 									++format;
 									break;
 				case 'p':
-				case 'x': count += print_hexa(va_arg(args, uint32_t));
+									align = true;
+				case 'x': count += print_hexa(va_arg(args, uint32_t), align);
+									align = false;
 									++format;
 									break;
 				default:
@@ -201,21 +209,21 @@ void kpanic(void** context, const char* format, ...){
 
 	Context* registers = (Context*)*context;
 	printf("Register DUMP: %p\n", *context );
-	printf("\t 0 %x\t\tat %x\t\tv0 %x\tv1 %x\ta0 %x\n", registers->zero, 
+	printf("   0 %p\tat %p\tv0 %p\tv1 %p\ta0 %p\n", registers->zero, 
 		registers->at, registers->v0, registers->v1, registers->a0 );
-	printf("\ta1 %x\t\ta2 %x\t\ta3 %x\tt0 %x\tt1 %x\n", registers->a1, registers->a2,
+	printf("  a1 %p\ta2 %p\ta3 %p\tt0 %p\tt1 %p\n", registers->a1, registers->a2,
 		registers->a3, registers->t0, registers->t1 );
-	printf("\tt2 %x\t\tt3 %x\t\tt4 %x\tt5 %x\tt6 %x\n", registers->t2, registers->t3,
+	printf("  t2 %p\tt3 %p\tt4 %p\tt5 %p\tt6 %p\n", registers->t2, registers->t3,
 		registers->t4, registers->t5, registers->t6 );
-	printf("\tt7 %x\t\ts0 %x\t\ts1 %x\ts2 %x\ts3 %x\n", registers->t7, registers->s0,
+	printf("  t7 %p\ts0 %p\ts1 %p\ts2 %p\ts3 %p\n", registers->t7, registers->s0,
 		registers->s1, registers->s2, registers->s3 );
-	printf("\ts4 %x\t\ts5 %x\t\ts6 %x\ts7 %x\tt8 %x\n", registers->s4, registers->s5,
+	printf("  s4 %p\ts5 %p\ts6 %p\ts7 %p\tt8 %p\n", registers->s4, registers->s5,
 		registers->s6, registers->s7, registers->t8 );
-	printf("\tt9 %x\t\tk0 %x\t\tk1 %x\tgp %x\tsp %x\n", registers->t9, registers->k0,
+	printf("  t9 %p\tk0 %p\tk1 %p\tgp %p\tsp %p\n", registers->t9, registers->k0,
 		registers->k1, registers->gp, registers->sp );
-	printf("\tfp %x\t\tra %x\t\tepc %x\tlo %x\thi %x\n", registers->fp, registers->ra,
+	printf("  fp %p\tra %p\tepc %p\tlo %p\thi %p\n", registers->fp, registers->ra,
 		registers->epc, registers->lo, registers->hi );
-	printf("\tcause %x\t\tbadva %x\tstatus %x\n", registers->cause,	registers->badva, registers->status);
+	printf("  cause %p\tbadva %p\tstatus %p\n", registers->cause,	registers->badva, registers->status);
 
 	printf("Kernel PANIC: ");
 	if (!format) return;
