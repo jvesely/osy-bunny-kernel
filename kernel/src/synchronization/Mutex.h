@@ -25,13 +25,11 @@
 
 /*!
  * @file 
- * @brief Declaration and definition of two wrapper classes on mutex locks providing
+ * @brief Declaration and definition of a wrapper class on mutex locks providing
  * object oriented API.
  *
  * Mutex class holds one mutex lock and provides interface (member functions)
  * to lock() and unlock() it.
- * MutexLocker locks the mutex lock (given in constructor) on construction
- * and unlocks it on destruction (eg stack unwinding).
  */
 
 #pragma once
@@ -69,50 +67,6 @@ public:
 
 private:
 	/** The lock. */
-	mutex m_mutex;
-};
-
-/* --------------------------------------------------------------------- */
-
-/**
- * @class MutexLocker Mutex.h "Mutex.h"
- * @brief Mutex locking class used for locking a Mutex in a block.
- *
- * MutexLocker locks the mutex lock (given in constructor) on construction
- * and unlocks it on destruction (eg stack unwinding). Should be used as a
- * local variable (allocated on stack) to make the destructor do the work
- * automatically on function end. The member functions are defined as inline
- * functions.
- */
-class MutexLocker {
-public:
-	/**
-	 * Constructor locks the mutex lock given in parameter.
-	 *
-	 * @param mutex The lock passed by reference.
-	 */
-	inline MutexLocker(Mutex& mutex): m_mutex(mutex) {
-		m_mutex.lock();
-	}
-
-	/**
-	 * Desctructor which unlocks the lock given in the constructor.
-	 */
-	inline ~MutexLocker() {
-		m_mutex.unlock();
-	}
-
-private:
-	/** The reference to lock from the constructor. */
-	Mutex& m_mutex;
-
-	/** Deny copy-constructor. */
-	MutexLocker(const MutexLocker&);
-	
-	/** Deny assignment. */
-	MutexLocker& operator=(const MutexLocker&);
-
-	/** Deny creation on heap, because it is useless for this class. */
-	void* operator new(unsigned int);
+	mutex_t m_mutex;
 };
 
