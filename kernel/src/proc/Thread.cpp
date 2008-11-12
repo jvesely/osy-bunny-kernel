@@ -237,6 +237,16 @@ int Thread::join( Thread * thread, bool timed )
 	return ETIMEDOUT;
 }
 /*----------------------------------------------------------------------------*/
+void Thread::block()
+{
+	Scheduler::instance().enqueue( this );
+}
+/*----------------------------------------------------------------------------*/
+void Thread::resume()
+{
+	Scheduler::instance().dequeue( this );
+}
+/*----------------------------------------------------------------------------*/
 void Thread::kill()
 {
 	InterruptDisabler inter;
