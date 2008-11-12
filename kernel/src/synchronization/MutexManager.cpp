@@ -29,7 +29,7 @@
  *
  * MutexManager is a singleton class providing interface to init, lock, unlock and
  * destroy mutex locks. It manages the mutex struct and the waiting lists for the
- * locked mutexes. It dequeues/enques the threads in Scheduler.
+ * locked mutexes..
  */
 
 #include "MutexManager.h"
@@ -37,11 +37,9 @@
 #include "cpp.h"
 #include "Kernel.h"
 #include "InterruptDisabler.h"
-#include "proc/Scheduler.h"
 #include "proc/Thread.h"
 #include "structures/List.h"
 #include "timer/Time.h"
-#include "timer/Timer.h"
 
 //#define DEBUG_MUTEX
 //#define DEBUG_MUTEX_ACTIONS
@@ -62,7 +60,7 @@ void MutexManager::mutex_init(mutex_t *mtx) {
 
 #ifdef DEBUG_MUTEX_ACTIONS
 	printf("[MUTEX] Init on mutex %p from thread %u.\n",
-		mtx, Scheduler::instance().activeThread()->id());
+		mtx, Thread::getCurrent()->id());
 #endif
 }
 
@@ -76,21 +74,21 @@ void MutexManager::mutex_destroy(mutex_t *mtx) {
 
 #ifdef DEBUG_MUTEX
 	// check if being unlocked by the locking thread
-	if (mtx->locked && mtx->locked != Scheduler::instance().activeThread()->id()) {
+	if (mtx->locked && mtx->locked != Thread::getCurrent()->id()) {
 		panic("Lock at %x being destroyed by thread %u while still locked by thread %u!\n",
-			mtx, Scheduler::instance().activeThread()->id(), mtx->locked);
+			mtx, Thread::getCurrent()->id(), mtx->locked);
 	}
 #endif
 
 	// if there is a waiting list created, check if empty and remove it or panic if not empty
 	if (((ThreadList *)mtx->waitingList)->size() != 0) {
 		panic("Lock at %x being destroyed by thread %u while there are still locked threads waiting for it!\n",
-			mtx, Scheduler::instance().activeThread()->id());
+			mtx, Thread::getCurrent()->id());
 	}
 
 #ifdef DEBUG_MUTEX_ACTIONS
 	printf("[MUTEX] Destroy on mutex %p from thread %u.\n",
-		mtx, Scheduler::instance().activeThread()->id());
+		mtx, Thread::getCurrent()->id());
 #endif
 }
 
@@ -102,20 +100,20 @@ void MutexManager::mutex_lock(mutex_t *mtx) {
 
 #ifdef DEBUG_MUTEX_ACTIONS
 	printf("[MUTEX] Lock on mutex %p from thread %u. Waitinglist size before lock: %u.\n",
-		mtx, Scheduler::instance().activeThread()->id(), ((ThreadList *)mtx->waitingList)->size());
+		mtx, Thread::getCurrent()->id(), ((ThreadList *)mtx->waitingList)->size());
 #endif
 
 	// disable interrupts
 	InterruptDisabler lock;
 
 	// get the current thread info
-	Thread* thread = Scheduler::instance().activeThread();
+	Thread* thread = Thread::getCurrent();
 
 	if (mtx->locked != 0) {
-		// if mutex locked already
-		// remove from timer's heap
+		// if mutex is locked already
+		// remove it from the timer's heap
 		thread->removeFromHeap();
-		// unschedule and put the thread to mutex's waiting list
+		// put the thread to mutex's waiting list (this will unschedule it)
 		thread->append((ThreadList *)mtx->waitingList); 
 		// set the thread state to blocked
 		thread->setStatus(Thread::BLOCKED);
@@ -128,7 +126,7 @@ void MutexManager::mutex_lock(mutex_t *mtx) {
 
 #ifdef DEBUG_MUTEX_ACTIONS
 	printf("[MUTEX] Lock on mutex %p from thread %u. Waitinglist size after lock: %u.\n",
-		mtx, Scheduler::instance().activeThread()->id(), ((ThreadList *)mtx->waitingList)->size());
+		mtx, Thread::getCurrent()->id(), ((ThreadList *)mtx->waitingList)->size());
 #endif
 }
 
@@ -140,14 +138,14 @@ int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
 
 #ifdef DEBUG_MUTEX_ACTIONS
 	printf("[MUTEX] Timed lock called on mutex %p from thread %u, locked for %u. Waitinglist size before lock: %u.\n",
-		mtx, Scheduler::instance().activeThread()->id(), mtx->locked, ((ThreadList *)mtx->waitingList)->size());
+		mtx, Thread::getCurrent()->id(), mtx->locked, ((ThreadList *)mtx->waitingList)->size());
 #endif
 
 	// disable interrupts
 	InterruptDisabler lock;
 
 	// get the current thread info
-	Thread* thread = Scheduler::instance().activeThread();
+	Thread* thread = Thread::getCurrent();
 
 	if (!mtx->locked) {
 		// if mutex not locked, just store the locking thread's id
@@ -165,8 +163,8 @@ int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
 
 	// if you got here, you are willing to sleep
 	// plan to wake up after usec
-	Timer::instance().plan(thread, Time(0, usec));
-	// unschedule and put the thread to mutex's waiting list
+	thread->alarm(Time(0, usec));
+	// put the thread to mutex's waiting list (this will unschedule it)
 	thread->append((ThreadList *)mtx->waitingList); 
 	// set the thread state to blocked
 	thread->setStatus(Thread::BLOCKED);
@@ -186,7 +184,7 @@ void MutexManager::mutex_unlock(mutex_t *mtx) {
 
 #ifdef DEBUG_MUTEX_ACTIONS
 	printf("[MUTEX] Unlock on mutex %p from thread %u. Waitinglist size before unlock: %u.\n",
-		mtx, Scheduler::instance().activeThread()->id(), ((ThreadList *)mtx->waitingList)->size());
+		mtx, Thread::getCurrent()->id(), ((ThreadList *)mtx->waitingList)->size());
 #endif
 
 	// disable interrupts
@@ -194,9 +192,9 @@ void MutexManager::mutex_unlock(mutex_t *mtx) {
 
 #ifdef DEBUG_MUTEX
 	// check if being unlocked by the locking thread
-	if (mtx->locked != Scheduler::instance().activeThread()->id()) {
+	if (mtx->locked != Thread::getCurrent()->id()) {
 		panic("Lock at %x being unlocked by thread %u while still locked by thread %u!\n",
-			mtx, Scheduler::instance().activeThread()->id(), mtx->locked);
+			mtx, Thread::getCurrent()->id(), mtx->locked);
 	}
 #endif
 
@@ -208,7 +206,7 @@ void MutexManager::mutex_unlock(mutex_t *mtx) {
 		// remove from timer's heap (in case of timed lock)
 		thread->removeFromHeap();
 		// enqueue the thread in Scheduler
-		Scheduler::instance().enqueue(thread);
+		thread->resume();
 	} else {
 		// if no waiting threads, just unlock
 		mtx->locked = 0;
@@ -216,7 +214,7 @@ void MutexManager::mutex_unlock(mutex_t *mtx) {
 
 #ifdef DEBUG_MUTEX_ACTIONS
 	printf("[MUTEX] Unlock on mutex %p from thread %u. Waitinglist size after unlock: %u.\n",
-		mtx, Scheduler::instance().activeThread()->id(), ((ThreadList *)mtx->waitingList)->size());
+		mtx, Thread::getCurrent()->id(), ((ThreadList *)mtx->waitingList)->size());
 #endif
 }
 
