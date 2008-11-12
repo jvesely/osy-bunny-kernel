@@ -35,8 +35,8 @@
 #include <Kernel.h>
 #include <proc/Scheduler.h>
 #include <structures/List.h>
-#include <mutex/Mutex.h>
-#include <Semaphore.h>
+#include <synchronization/Mutex.h>
+#include <synchronization/Semaphore.h>
 #include <timer/Time.h>
 #include <timer/ClassTimer.h>
 
