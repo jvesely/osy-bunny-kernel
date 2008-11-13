@@ -29,6 +29,7 @@
  *
  * Contains some member functions' implementations both public and private.
  */
+
 #include "Scheduler.h"
 #include "Kernel.h"
 #include "KernelThread.h"
@@ -131,7 +132,7 @@ void Scheduler::switchThread()
 			Kernel::halt();
 	}
 	
-	PRINT_DEBUG("New active thread will be: %u.\n", m_currentThread->id());
+	PRINT_DEBUG ("New active thread will be: %u.\n", m_currentThread->id());
 
 	/* set running on the chosen thread */
 	m_currentThread->setStatus(Thread::RUNNING);
@@ -139,16 +140,16 @@ void Scheduler::switchThread()
 
 	/* plan it's switch before it's run */
 	if (m_currentThread != m_idle) {
-		PRINT_DEBUG("Planning preemptive strike for thread %u.\n",
+		PRINT_DEBUG ("Planning preemptive strike for thread %u.\n",
 			m_currentThread->id());
-		Timer::instance().plan( m_currentThread, Time(0, DEFAULT_QUANTUM) );
+			Timer::instance().plan( m_currentThread, Time(0, DEFAULT_QUANTUM) );
 	}
 
 	/* the actual context switch */
 	if (old_stack != new_stack) {
-		PRINT_DEBUG("Switching stacks.\n");
+		PRINT_DEBUG ("Switching stacks.\n");
 		Processor::switch_cpu_context(old_stack, new_stack);
-	}
+	} 
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::enqueue(Thread * thread)
@@ -160,15 +161,15 @@ void Scheduler::enqueue(Thread * thread)
 	 * should be ready
 	 */
 	thread->append(&m_activeThreadList);
-	PRINT_DEBUG("Enqueued thread: %d.\n", thread->id());
-	thread->setStatus(Thread::READY);
+	PRINT_DEBUG ("Enqueued thread: %d.\n", thread->id());
+	thread->setStatus( Thread::READY );
 	
 	/* if the idle thread is running and other thread became ready,
 	 * idle thread is planned for switch as soon as possible
 	 */
-	if (m_currentThread == m_idle){
+	if (m_currentThread == m_idle && m_activeThreadList.size() == 1) {
 		PRINT_DEBUG("Ending IDLE thread reign.\n");
-		Timer::instance().plan(m_idle, Time(0, 1));
+		Timer::instance().plan( m_idle, Time(0, 1) );
 	}
 	
 }
