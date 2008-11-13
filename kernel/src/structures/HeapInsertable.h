@@ -122,7 +122,7 @@ public:
 	void removeFromHeap();
 
 	/*! @brief Returns the heap it is inserted into as a const pointer. */
-	const Heap<T*, Children>* heap() const { return m_owner };
+	const Heap<T*, Children>* heap() const { return m_owner; };
 
 private:
 	/*! @brief Pointer to the heap where it's inserted. */
