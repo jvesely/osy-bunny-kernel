@@ -40,9 +40,9 @@ TimerManager::TimerManager():
 		m_mySemaphore( 0 )
 {
 	//printk( "TimerManager ctor\n" );//debug
-	//printk( "timer size: %d \n", sizeof( ClassTimer ) );
+	printk( "timer size: %d \n", sizeof( ClassTimer ) );
 	m_lastEvent.setTime( 0, 0 );
-	Scheduler::instance().getId(this);
+	//Scheduler::instance().getId(this);
 	Scheduler::instance().enqueue( this );
 
 	//printk("TimerManager ctor OK\n");
@@ -59,14 +59,15 @@ void TimerManager::deactivateEvent( ClassTimer * tmr )
 	tmr->setToStopped();//is not started any more
 
 	//removing from structure
-	/// \todo heap once
-	ListItem<ClassTimer*> * tmrItem = tmr->getEventStruct();
+	//ListItem<ClassTimer*> * tmrItem = tmr->getEventStruct();
 
-	assert( tmrItem != NULL );//this should not happen, because tmr is initialised(and started)
-	assert( m_activeEvents.size() > 0 );
+	//assert( tmrItem != NULL );//this should not happen, because tmr is initialised(and started)
+	//assert( m_activeEvents.size() > 0 );
+	assert( m_hactiveEvents.size() > 0);//or equivalent - to be done
 
-	//removing
-	m_activeEvents.remove( tmrItem );
+	//removing from event structure
+	//m_activeEvents.remove( tmrItem );
+	tmr->removeFromHeap();
 }
 //------------------------------------------------------------------------------
 void TimerManager::makeReady(ClassTimer * tmr)
@@ -81,14 +82,16 @@ void TimerManager::makeReady(ClassTimer * tmr)
 	tmr->setToReady();
 
 	//removing from active
-	ListItem<ClassTimer*> * tmrItem = tmr->getEventStruct();
-	assert( tmrItem != NULL );//this should not happen, because tmr is initialised(and started)
-	assert( m_activeEvents.size() > 0 );
-	m_activeEvents.remove( tmrItem );
+	//ListItem<ClassTimer*> * tmrItem = tmr->getEventStruct();
+	//assert( tmrItem != NULL );//this should not happen, because tmr is initialised(and started)
+	//assert( m_activeEvents.size() > 0 );
+	assert( m_hactiveEvents.size() > 0);
+	//m_activeEvents.remove( tmrItem );
+	tmr->removeFromHeap();
 
 	//inserting into ready
-	m_readyEvents.pushBack(tmrItem);
-
+	//m_readyEvents.pushBack(tmrItem);
+	tmr->insertIntoHeap(&m_hreadyEvents,Time(0,0));
 }
 
 //------------------------------------------------------------------------------
@@ -104,10 +107,12 @@ void TimerManager::executeEvent( ClassTimer * tmr )
 	tmr->setToStopped();
 
 	//removing from ready events
-	ListItem<ClassTimer*> * tmrItem = tmr->getEventStruct();
-	assert( tmrItem != NULL );//this should not happen, because tmr is initialised
-	assert( m_readyEvents.size() > 0 );
-	m_readyEvents.remove( tmrItem );
+	//ListItem<ClassTimer*> * tmrItem = tmr->getEventStruct();
+	//assert( tmrItem != NULL );//this should not happen, because tmr is initialised
+	//assert( m_readyEvents.size() > 0 );
+	assert( m_hreadyEvents.size() > 0);//or equivalent - to be done
+	//m_readyEvents.remove( tmrItem );
+	tmr->removeFromHeap();
 
 	//executing
 	tmr->handler();
@@ -151,36 +156,32 @@ void TimerManager::startEvent( ClassTimer * tmr )
 	Time currentTime = Time::getCurrentTime();
 
 	//init listItem
-	ListItem<ClassTimer*> *tmrItem = tmr->getEventStruct();
-	ListItem<ClassTimer*> *afterItem = m_activeEvents.begin().getItem();
+	//ListItem<ClassTimer*> *tmrItem = tmr->getEventStruct();
+	//ListItem<ClassTimer*> *afterItem = m_activeEvents.begin().getItem();
 
-	assert( tmrItem != NULL );
-
+	//assert( tmrItem != NULL );
 	tmr->setAbsTime( currentTime + tmr->getDelay() );
 	//insert listItem: increasing order
 	// this routine will not be needed once there is a heap structure
-	///\todo heap
-	while ( ( afterItem != NULL ) && ( isLater( tmr, afterItem->getData() ) ) )
+	/*while ( ( afterItem != NULL ) && ( isLater( tmr, afterItem->getData() ) ) )
 	{
 		afterItem = afterItem->next();
-	}
-
+	}*/
 
 	//now either afterItem==NULL or tmr is before afterItem
-	List<ClassTimer*>::Iterator it = m_activeEvents.insert( afterItem, tmrItem );//insertbefore
+	//List<ClassTimer*>::Iterator it = m_activeEvents.insert( afterItem, tmrItem );//insertbefore
+
+	tmr->insertIntoHeap(&m_hactiveEvents,tmr->getAbsTime());
 
 	//now it is ready to be se
 	tmr->setToStarted();
 
 
-	if ( it == m_activeEvents.begin() )
+	if ( /*it == m_activeEvents.begin()*/ tmr == m_hactiveEvents.topItem() )
 	{//is earliest - change nearest time interrupt
-		//mySemaphore++;
-		//thread_wakeup(id());
 		//printk( "starting event: unlocking structure and waking up timer thread\n" );
 		m_timerMutex.unlock();//this is only a workround.
 		//we need to replace semaphore completely by locked variable
-		//Scheduler::instance().enqueue( this );
 		m_mySemaphore++;
 	}else{
 		//printk( "starting event: unlocking structure\n" );
@@ -196,7 +197,7 @@ void TimerManager::run()
 	Time timeout( 0, 0 );
 	Time currentTime;
 	ClassTimer * event;
-	List<ClassTimer*>::Iterator eventIt;
+	//List<ClassTimer*>::Iterator eventIt;
 
 
 	while ( true ){
@@ -204,7 +205,7 @@ void TimerManager::run()
 		m_timerMutex.lock();
 
 		//printk("timerManager Thread locked\n");
-		if ( m_activeEvents.empty() ){
+		if ( m_hactiveEvents.size() == 0 ){
 			timeout.setTime( 0, 0 );
 			//printk("timerManager no events now\n");
 		}else{
@@ -214,33 +215,42 @@ void TimerManager::run()
 
 			//resolving what should be done
 			while (
-			    ( ( eventIt = m_activeEvents.begin() ) != m_activeEvents.end() )	//there are some events and eventIt = begin()
-			    &&	( isLater( ( *eventIt )->getAbsTime(), m_lastEvent ) ) 		//is after last timer event
-			    &&	( !isLater( ( *eventIt )->getAbsTime(), currentTime ) ) )	//is before or equal to current time
+			    //( ( eventIt = m_activeEvents.begin() ) != m_activeEvents.end() )	//there are some events and eventIt = begin()
+			    ( (event = (ClassTimer*) m_hactiveEvents.topItem()) != NULL )//get from structure and check whether something in structure
+			    //&&	( isLater( ( *eventIt )->getAbsTime(), m_lastEvent ) ) 		//is after last timer event
+			    &&	( isLater( event->getAbsTime(), m_lastEvent ) ) 		//is after last timer event
+			    //&&	( !isLater( ( *eventIt )->getAbsTime(), currentTime ) ) )	//is before or equal to current time
+			    &&	( !isLater( event->getAbsTime(), currentTime ) ) )	//is before or equal to current time
 			{
 				//printk("timerManager handling event \n");
 
-				event = ( *eventIt );
+				//event = ( *eventIt ); //list implementation
 
 				//printk("m_last  = %d:%d \n", m_lastEvent.getSecs(), m_lastEvent.getUsecs());
 				//printk("event   = %d:%d \n",event->getAbsTime().getSecs(),event->getAbsTime().getUsecs());
 				//printk("current = %d:%d \n", currentTime.getSecs(),currentTime.getUsecs()) ;
 				//if ( event->getTmrThis() == NULL ) printk( "event has null tmrThis!!!\n" );
-				//event->handler();
+
+				//ClassTimer * event2 = (ClassTimer*) m_hactiveEvents.topItem();//debug
+				//if(event == NULL) printk("This is bad!!!\n");
+				//printk("event2   = %d:%d \n",event2->getAbsTime().getSecs(),event2->getAbsTime().getUsecs());
+
 				//change state of event to ready
 				makeReady(event);
 
-						//set last event (or at least 'current' time)
+				//set last event (or at least 'current' time)
 				currentTime = Time::getCurrentTime();
-				m_lastEvent = currentTime;
 			}
 		}
+		m_lastEvent = currentTime;
 		m_timerMutex.unlock();
 
 		//executing ready to be done events
-		while (( eventIt = m_readyEvents.begin() ) != m_readyEvents.end() )
+		//while (( eventIt = m_readyEvents.begin() ) != m_readyEvents.end() )
+		while (m_hreadyEvents.size() > 0 )
 		{
-			event = ( *eventIt );
+			//event = ( *eventIt );
+			event = (ClassTimer*)m_hreadyEvents.topItem();
 			//set state from ready to initialised
 			executeEvent(event);
 		}
@@ -248,10 +258,12 @@ void TimerManager::run()
 		//plan nearest event
 		currentTime = Time::getCurrentTime();
 		m_timerMutex.lock();
-		if ( ! m_activeEvents.empty() )//there are events
+		//if ( ! m_activeEvents.empty() )//there are events
+		if ( m_hactiveEvents.size() > 0 )//there are events
 		{
 			//printk("timerManager preparing new event\n");
-			m_nearest = m_activeEvents.getFront()->getAbsTime();
+			//m_nearest = m_activeEvents.getFront()->getAbsTime();
+			m_nearest = ((ClassTimer*)m_hactiveEvents.topItem())->getAbsTime();
 			timeout = m_nearest - currentTime;
 		}else{//no events
 			//printk("timerManager all events done\n");

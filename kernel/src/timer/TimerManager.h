@@ -35,12 +35,14 @@
 #include <Kernel.h>
 #include <proc/Scheduler.h>
 #include <structures/List.h>
+#include <structures/Heap.h>
 #include <synchronization/Mutex.h>
 #include <synchronization/Semaphore.h>
 #include <timer/Time.h>
 #include <timer/ClassTimer.h>
 
 
+typedef Heap<ClassTimer*,4> eventHeap;
 
 /** @brief class handling timed events
 *
@@ -79,6 +81,10 @@ public:
 	*	it is deinitialized as well (this operation is safe).\n
 	*	Function is NULL safe.
 	*	@note does not wake up this thread
+	*
+	*	In event state semantics, correctly changes state TIMER_STARTED to
+	*	TIMER_INITIALISED, if timer was started and then from state TIMER_INITIALISED
+	*	to uninitialised state.
 	*/
 	void destroyTimer(ClassTimer * tmr);
 
@@ -95,6 +101,25 @@ public:
 	*	wakeup.
 	*/
 	void run();
+
+	/** @brief a is later than b
+	*
+	*	compares times accoding to m_lastEvent
+	*	Time is later than another, if it should occur from current time later than other,
+	*	including unsigned int owerflow. That means:\n
+	*	if time is greater or equal(>=) current time and other time is less(<)
+	*	if time is greater than other time and both are greater or less than current time
+	*/
+	inline bool isLater(const Time &a,const Time &b);
+
+	/** @brief tmr event a is later than tmr event b
+	*
+	*	calls isLater for absolut time of events
+	*/
+	inline bool isLater(ClassTimer * tmr1, ClassTimer * tmr2){
+		return isLater(tmr1->getAbsTime(),tmr2->getAbsTime());
+	}
+
 
 
 protected:
@@ -136,29 +161,6 @@ protected:
 	*/
 	void makeReady(ClassTimer * tmr);
 
-	/** @brief a is later than b
-	*
-	*	compares times accoding to m_lastEvent//current time.
-	*	Time is later than another, if it should occur from current time later than other,
-	*	including unsigned int owerflow. That means:\n
-	*	if time is greater or equal(>=) current time and other time is less(<)
-	*	if time is greater than other time and both are greater or less than current time
-	*/
-	inline bool isLater(const Time &a,const Time &b){
-		Time currentTime = m_lastEvent;//Time::getCurrentTime();
-		if((a>=currentTime)&&(b<currentTime)) return false;
-		if((a<currentTime)&&(b>=currentTime)) return true;
-		return a>b;
-	}
-
-	/** @brief tmr event a is later than tmr event b
-	*
-	*	calls isLater for absolut time of events
-	*/
-	inline bool isLater(ClassTimer * tmr1, ClassTimer * tmr2){
-		return isLater(tmr1->getAbsTime(),tmr2->getAbsTime());
-	}
-
 	/** @brief event structure lock
 	*
 	*	Locks access to active events list and m_nearest.
@@ -177,14 +179,17 @@ protected:
 	*	Events are inserted (and sometimes removed - see destroyTimer) by other threads,
 	*	removed by this thread when they are executed.
 	*/
-	List<ClassTimer*> m_activeEvents;
+	//List<ClassTimer*> m_activeEvents;
+	eventHeap m_hactiveEvents;
+
 
 	/** @brief structure holding ready-to-be-executed events
 	*
 	*	Events in this list have already occured, but have not been executed yet.
 	*	They are ready to be executed.
 	*/
-	List<ClassTimer*> m_readyEvents;
+	//List<ClassTimer*> m_readyEvents;
+	eventHeap m_hreadyEvents;
 
 
 	/** @brief time of last event
@@ -200,9 +205,15 @@ protected:
 	*/
 	Time m_nearest;
 
+
 };
 
 
 
-
+inline bool TimerManager::isLater(const Time &a,const Time &b){
+	Time currentTime = m_lastEvent;//Time::getCurrentTime();
+	if((a>=currentTime)&&(b<currentTime)) return false;
+	if((a<currentTime)&&(b>=currentTime)) return true;
+	return a>b;
+}
 

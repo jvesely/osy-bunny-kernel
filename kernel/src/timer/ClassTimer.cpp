@@ -34,21 +34,33 @@
 
 
 #include <timer/ClassTimer.h>
+#include <timer/TimerManager.h>
+#include <cpp.h>
+
+//------------------------------------------------------------------------------
+ClassTimer::ClassTimer()
+{
+	//m_eventStruct.setData( this );
+	m_state = 0;
+	m_delay.setTime( 0, 0 );
+}
 
 //------------------------------------------------------------------------------
 int ClassTimer::init( timer * tmr, const unsigned int usec,
                       void ( *handler )( struct timer *, void * ), void *data )
 {
 	//printk("ClassTimer::init \n");
+	(ClassTimer*) (new ((void*)this) ClassTimer());
+
 	if ( handler == NULL ) return EINVAL;
 	m_delay.setTime( 0, usec );
 	m_handler = handler;
 	m_data = data;
 	m_tmrThis = tmr;
-	m_eventStruct.setData( this );
+	//m_eventStruct.setData( this );
 	//abs time not yet to be set
-	m_eventStruct.setNext(NULL);
-	m_eventStruct.setPrev(NULL);
+	//m_eventStruct.setNext(NULL);
+	//m_eventStruct.setPrev(NULL);
 	m_state = TIMER_INITIALISED;
 	//if(m_tmrThis == NULL) printk("classtimer: tmrThis is null!!!\n");//debug
 	return EOK;
@@ -63,3 +75,24 @@ void ClassTimer::deinit()
 	m_data = NULL;
 	m_state = 0;
 }
+//------------------------------------------------------------------------------
+
+bool ClassTimer::operator < (const HeapItem<ClassTimer*, 4>& other) const
+{
+	return TimerManager::instance().isLater(((ClassTimer*)(&other))->getAbsTime(), getAbsTime());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -34,7 +34,12 @@
 
 //------------------------------------------------------------------------------
 /** @brief time respresentation
-*	both seconds and microseconds
+*	Stores both seconds and microseconds,count of microseconst is less than a
+*	million
+*
+*	Use of implicit operator = and copy constructor is safe and implicit
+*	implementation is sufficient.
+*
 */
 class Time
 {
@@ -57,27 +62,13 @@ public:
 		setTime( sec, usec );
 	}
 
-	/** @brief no brief comment
-	*
-	*	though this is not needed (because implicit copy ctor would now do the same),
-	*	it is here (to make clear that it is correctly implemented)
-	*	is safe against incorrect input time
-	*	calls setTime (normalizes time, so that usec part is less than million)
+	/*  Time(const Time & time)
+	*	implicit implementation is sufficient and safe
 	*/
-	inline Time( const Time & time ){
-		setTime( time.getSecs(), time.getUsecs() );
-	}
 
-	/** @brief
-	*
-	*	copies seconds and microsecond value of time
-	*	calls setTime (normalizes time, so that usec part is less than million)
-	*	@return *this const
+	/*	operator =
+	*	implicit implementation is sufficient and safe
 	*/
-	inline const Time & operator = ( const Time & time ){
-		setTime( time.getSecs(), time.getUsecs() );
-		return *this;
-	}
 
 	/** @brief
 	*
@@ -85,7 +76,7 @@ public:
 	*	@return *this const
 	*/
 	inline const Time & operator += ( const Time & time ){
-		setTime( time.getSecs() + m_secs, time.getUsecs() + m_usecs );
+		setTime( time.m_secs + m_secs, time.m_usecs + m_usecs );
 		return *this;
 	}
 
@@ -96,14 +87,7 @@ public:
 	*	greater than original *this time.
 	*	@return *this const
 	*/
-	inline const Time & operator -= ( const Time & time ){
-		if ( m_usecs < time.getUsecs() ){
-			setTime( m_secs - time.getSecs() - 1, ( MILLION + m_usecs ) - time.getUsecs() );
-		}else{
-			setTime( m_secs - time.getSecs() , m_usecs - time.getUsecs() );
-		}
-		return *this;
-	}
+	inline const Time & operator -= ( const Time & time );
 
 	/** @brief
 	*
@@ -196,12 +180,7 @@ public:
 	*	Each component is substracted separately and then they are normalized.
 	*	@note Implementation uses Time& operator -= (const Time& other);
 	*/
-	Time operator - ( const Time & time ) const
-	{
-		Time result( m_secs, m_usecs );
-		result -= time;
-		return result;
-	};
+	inline Time operator - ( const Time & time ) const;
 
 	/** @brief Gets timestamp part. */
 	inline uint secs() const { return m_secs; }
@@ -229,9 +208,7 @@ public:
 	* Given time should not differ from actual time by more than 1 second.
 	*	wrapper for getCurrentTime()
 	*/
-	inline static Time getCurrent(){
-		return getCurrentTime();
-	}
+	inline static Time getCurrent(){return getCurrentTime();}
 
 protected:
 	/** @brief corrects time
@@ -252,6 +229,23 @@ protected:
 };
 
 
+inline const Time & Time::operator -= ( const Time & time )
+{
+	if ( m_usecs < time.getUsecs() ){
+		setTime( m_secs - time.m_secs - 1, ( MILLION + m_usecs ) - time.m_usecs );
+	}else{
+		setTime( m_secs - time.m_secs , m_usecs - time.m_usecs );
+	}
+	return *this;
+}
+
+
+inline Time Time::operator - ( const Time & time ) const
+{
+	Time result( m_secs, m_usecs );
+	result -= time;
+	return result;
+};
 
 //------------------------------------------------------------------------------
 

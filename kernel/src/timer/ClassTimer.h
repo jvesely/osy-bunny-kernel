@@ -32,12 +32,10 @@
 
 #pragma once
 #include <structures/List.h>
+#include <structures/HeapInsertable.h>
 #include <timer/Time.h>
 
 
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
 struct timer;
 
 /** @brief class representing timer
@@ -47,9 +45,17 @@ struct timer;
 *	constains ListItem<ClassTimer> with pointer to this(if initialised)\n
 *	(should once be inherited from HeapInsertable class)
 */
-class ClassTimer
+class ClassTimer : public HeapInsertable<ClassTimer,Time,4>
 {
 public:
+
+	/** @brief initializes values
+	*
+	*	State will be zero, as well as delay.
+	*	Does not initialize timer!
+	*/
+	ClassTimer();
+
 
 	/** @brief magic value indicating initialised timer
 	*
@@ -132,9 +138,9 @@ public:
 	*	This class is to be child of class List/HeapInsertable, then this function will
 	*	have no sense.
 	*/
-	ListItem<ClassTimer*> * getEventStruct(){
+	/*ListItem<ClassTimer*> * getEventStruct(){
 		return &m_eventStruct;
-	}
+	}*/
 
 	/** @brief calls event handler
 	*
@@ -154,6 +160,13 @@ public:
 	inline timer * getTmrThis(){
 		return m_tmrThis;
 	}
+
+	/** @brief event time comparator
+	*
+	*	Calls TimerManager::isLater function to compare this and other time.
+	*/
+	virtual bool operator < (const HeapItem<ClassTimer*, 4>& other) const;
+
 
 protected:
 	/** @brief deinitialisator, invalidates object
@@ -210,10 +223,6 @@ protected:
 		m_absTime = time;
 	}
 
-	/** @brief forbidden ctor
-	*/
-	ClassTimer();
-
 	/** @brief forbidden operator =	*/
 	void operator = (const ClassTimer & other){}
 
@@ -252,7 +261,7 @@ protected:
 	*		any data structure.\n
 	*	If timer is started, should be connected to structure of planned timer events.
 	*/
-	ListItem<ClassTimer*> m_eventStruct;
+	//ListItem<ClassTimer*> m_eventStruct;
 
 	/** @brief pointer to timer struct containing this*/
 	timer * m_tmrThis;
@@ -264,14 +273,28 @@ protected:
 //------------------------------------------------------------------------------
 /** @brief convertor from struct timer to ClassTimer
 */
-inline ClassTimer * tmr2Tmr(timer * tmr){
+inline ClassTimer * tmr2Tmr(timer * tmr)
+{
 	return (ClassTimer*)tmr;
 };
 
 /** @brief dereference of converted pointer to struct timer
 */
-inline ClassTimer & drftmr(timer * tmr){
+inline ClassTimer & drftmr(timer * tmr)
+{
 	return *(tmr2Tmr(tmr));
 };
+
+
+
+
+
+
+
+
+
+
+
+
 //------------------------------------------------------------------------------
 
