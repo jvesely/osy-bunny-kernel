@@ -52,24 +52,21 @@ void Timer::plan(Thread* thread, const Time& time)
 	ASSERT (thread);
 	
 	/* Mangling with shared structure that can be used during interupts
-	 * requires posponing them
+	 * requires posptoning them
 	 */
 	InterruptDisabler inter;
 
 	/* It is higly probable that this thread was already planned so 
 	 * we'd better remove it first.
 	 */
-	thread->removeFromHeap();
-
-	if (thread->status() != Thread::RUNNING) {
-		PRINT_DEBUG ("Planning thread wakeup for thread %u.\n", thread->id());
-		Scheduler::instance().dequeue(thread);
-	}
+	//thread->removeFromHeap();
 
 	/* Convert relative time to abslute and insert into time heap. */
 	Time planned = (Time::getCurrent() + time);
-	PRINT_DEBUG ("Planning thread %u for the time: %u,%u.\n",
-		thread->id(), planned.secs(), planned.usecs());
+
+	PRINT_DEBUG ("Pending events: %u and planning thread %u for the time: %u,%u.\n",
+		m_heap.size(), thread->id(), planned.secs(), planned.usecs());
+
 	thread->insertIntoHeap(&m_heap, planned);
 
 	/* if the newest event is sooner than the former it is needed to replan interupts */
@@ -77,17 +74,19 @@ void Timer::plan(Thread* thread, const Time& time)
 		PRINT_DEBUG ("Replanning interupt.\n");
 		Kernel::instance().setTimeInterrupt(thread->key());
 	}
+
+	PRINT_DEBUG ("Pending events: %u.\n", m_heap.size());
 }
 /*----------------------------------------------------------------------------*/
 void Timer::interupt()
 {
 	
-
 	/* We need to know about replanning as we need to do it as the last thing */
 	bool nextThread = false;
 
 	Time now = Time::getCurrent();
-	PRINT_DEBUG ("Handling interupt in time %u, %u.\n", now.secs(), now.usecs());
+	PRINT_DEBUG ("Handling interupt in time %u, %u, pending events: %u.\n", 
+		now.secs(), now.usecs(), m_heap.size());
 	
 	Thread * thr = NULL;
 
@@ -96,6 +95,8 @@ void Timer::interupt()
 	{
 		/* removing the top */
 		thr->removeFromHeap();
+		
+		PRINT_DEBUG ("Removing thread %u from the heap.\n", thr->id());
 
 		if ( thr->status() == Thread::RUNNING ) {
 			/* Current thread might have only requested recheduling */
@@ -104,8 +105,8 @@ void Timer::interupt()
 		} else {
 			/* Other threadd might have only requested waking up */
 			ASSERT (thr->status() != Thread::READY);
-			PRINT_DEBUG ("Waking thread %u.\n");
-			Scheduler::instance().enqueue(thr);
+			PRINT_DEBUG ("Waking thread %u.\n", thr->id());
+			thr->resume();
 		}
 	}
 
@@ -113,6 +114,7 @@ void Timer::interupt()
 	thr = static_cast<Thread*>(m_heap.topItem());
 
 	Time nextEvent = thr ? thr->key() : Time();
+
 	PRINT_DEBUG ("Next event in %u,%u.\n", nextEvent.secs(), nextEvent.usecs());
 	Kernel::instance().setTimeInterrupt(nextEvent);
 

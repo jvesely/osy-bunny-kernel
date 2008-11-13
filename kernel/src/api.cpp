@@ -252,27 +252,26 @@ int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
 {	
 	InterruptDisabler inter;
-	return KernelThread::create(thread_ptr, thread_start, data, flags);
+	return KernelThread::create( thread_ptr, thread_start, data, flags );
 }
 /*----------------------------------------------------------------------------*/
 thread_t thread_get_current()
 {
 	return Thread::getCurrent()->id();
-	//Scheduler::instance().activeThread()->id();
 }
 /*----------------------------------------------------------------------------*/
 int thread_join(thread_t thr)
 {
 	InterruptDisabler inter;
 	Thread* thread = Scheduler::instance().thread(thr);
-	return Scheduler::instance().activeThread()->join(thread);
+	return Thread::getCurrent()->join(thread);
 }
 /*----------------------------------------------------------------------------*/
 int thread_join_timeout(thread_t thr, const uint usec)
 {
 	InterruptDisabler inter;
 	Thread* thread = Scheduler::instance().thread(thr);
-	return Scheduler::instance().activeThread()->joinTimeout(thread, usec);
+	return Thread::getCurrent()->joinTimeout(thread, usec);
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach(thread_t thread)
@@ -284,8 +283,11 @@ int thread_detach(thread_t thread)
 		|| thr->status() == Thread::FINISHED
 		|| thr->status() == Thread::KILLED
 		|| thr->status() == Thread::JOINING
-		|| thr->follower()) 
+		|| thr->follower())
+	{ 
 		return EINVAL;
+	}
+
 	if (thr->detach()) return EOK;
 	assert(false);
 	return EOK;
@@ -293,22 +295,22 @@ int thread_detach(thread_t thread)
 /*----------------------------------------------------------------------------*/
 void thread_sleep(const unsigned int sec)
 {
-	Scheduler::instance().activeThread()->sleep(sec);
+	Thread::getCurrent()->sleep(sec);
 }
 /*----------------------------------------------------------------------------*/
 void thread_usleep(const unsigned int usec)
 {
-	Scheduler::instance().activeThread()->usleep(usec);
+	Thread::getCurrent()->usleep(usec);
 }
 /*----------------------------------------------------------------------------*/
 void thread_yield()
 {
-	Scheduler::instance().activeThread()->yield();
+	Thread::getCurrent()->yield();
 }
 /*----------------------------------------------------------------------------*/
 void thread_suspend()
 {
-	Scheduler::instance().activeThread()->suspend();
+	Thread::getCurrent()->suspend();
 }
 /*----------------------------------------------------------------------------*/
 int thread_wakeup(thread_t thr)

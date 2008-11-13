@@ -45,11 +45,10 @@ void KernelThread::run()
 	
 	if (m_follower) {
 		assert(m_follower->status() == JOINING);
-		Scheduler::instance().enqueue(m_follower);
+		m_follower->resume();
 	}
 
-	removeFromHeap(); //no more plans for me
-	Scheduler::instance().dequeue(this);
+	block();
 	Scheduler::instance().switchThread();
 	
 	printf("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);

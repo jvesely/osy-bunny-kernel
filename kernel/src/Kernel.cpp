@@ -152,7 +152,7 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
 			printf("Exception: Address error exception. THREAD KILLED\n");
-			Scheduler::instance().activeThread()->kill();
+			Thread::getCurrent()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
 			if (!(reason & CAUSE_BD_MASK) ) {
@@ -168,7 +168,7 @@ void Kernel::handle(Processor::Context* registers)
 			panic("Exception: Coprocessor unusable.\n");
 		case CAUSE_EXCCODE_RI:
 			printf("Exception: Address error exception. THREAD KILLED\n");
-			Scheduler::instance().activeThread()->kill();
+			Thread::getCurrent()->kill();
 			panic("Exception: Reserved Instruction.\n");
 		case CAUSE_EXCCODE_IBE:
 		case CAUSE_EXCCODE_DBE:

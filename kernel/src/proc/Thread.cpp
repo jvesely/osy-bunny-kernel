@@ -91,7 +91,11 @@ void Thread::yield()
 {
 	InterruptDisabler inter;
 //	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
-	removeFromHeap();
+
+	/* voluntary yield should remove me from the Timer */
+	if (m_status == RUNNING)
+		removeFromHeap();
+
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
@@ -99,6 +103,8 @@ void Thread::alarm(const Time& alarm_time)
 {
 	InterruptDisabler interrupts;
 	
+	removeFromHeap();
+
 	/* Plan self for enqueueing in proper time */
 	Timer::instance().plan( this, alarm_time );
 	
@@ -144,23 +150,19 @@ void Thread::suspend()
 
 	PRINT_DEBUG ("Thread %u suspended.\n", m_id);
 
-	/* remove my rescheduling timer */
-	removeFromHeap();
-
-	/* take me from the Scheduler queue */
-	Scheduler::instance().dequeue(this);
+	block();
 
 	/* surrender processor */
 	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
-void Thread::wakeup() const
+void Thread::wakeup()
 {
 	/* only WAITING threads can be artifiacially woken */
 	assert(m_status == WAITING);
 
 	PRINT_DEBUG ("Thread %u awaken.\n", m_id);
-	Scheduler::instance().enqueue(const_cast<Thread*>(this));
+	resume();
 }
 /*----------------------------------------------------------------------------*/
 int Thread::joinTimeout( Thread* thread, const uint usec )
@@ -194,12 +196,14 @@ int Thread::join( Thread * thread, bool timed )
 	if (thread->status() == KILLED) {
 		PRINT_DEBUG ("Thread %u joined KILLED thread %u.\n", m_id, thread->m_id);
 		delete thread;
+		if (timed) removeFromHeap();
 		return EKILLED;
 	}
 
 	/* Joining finished thread */
 	if (thread->status() == FINISHED) {
 		PRINT_DEBUG ("Thread %u joined FINISHED thread %u.\n", m_id, thread->m_id);
+		if (timed) removeFromHeap();
 		delete thread;
 		return EOK;
 	}
@@ -210,8 +214,7 @@ int Thread::join( Thread * thread, bool timed )
 	
 	if (!timed) {
 		/* No more action for me until thread is dead. */
-		Scheduler::instance().dequeue(this);
-		removeFromHeap();
+		block();
 	}
 
 	Scheduler::instance().switchThread();
@@ -222,9 +225,10 @@ int Thread::join( Thread * thread, bool timed )
 		ASSERT ( (thread->m_status == FINISHED) || (thread->m_status == KILLED) );
 		PRINT_DEBUG ("Thread %u joined thread %u.\n", m_id, thread->m_id);
 		delete thread;
-		Scheduler::instance().enqueue(this);
-		if (timed)
-			removeFromHeap();
+		resume();
+		if (timed) {
+			PRINT_DEBUG ("Thread %u timed join ended with join on thread %u.\n", m_id, thread->m_id);
+		}
 		return EOK;
 	}
 	
@@ -239,11 +243,21 @@ int Thread::join( Thread * thread, bool timed )
 /*----------------------------------------------------------------------------*/
 void Thread::block()
 {
+	/* accessing both timer and scheduling queue */
+	InterruptDisabler inter;
+
+	PRINT_DEBUG ("Thread %u removing from both scheduler and timer.\n", m_id);
+	removeFromHeap();
 	Scheduler::instance().dequeue( this );
 }
 /*----------------------------------------------------------------------------*/
 void Thread::resume()
 {
+	/* accessing both timer and scheduling queue */
+	InterruptDisabler inter;
+
+	PRINT_DEBUG ("Thread %u resuming to scheduling queue.\n", m_id);
+	removeFromHeap();
 	Scheduler::instance().enqueue( this );
 }
 /*----------------------------------------------------------------------------*/
@@ -252,7 +266,7 @@ void Thread::kill()
 	InterruptDisabler inter;
 	
 	/* only running threads other than  myself can be killed */
-	if ( m_status != READY  && m_status != BLOCKED ) {
+	if ( m_status != READY  && m_status != BLOCKED && m_status != RUNNING) {
 		PRINT_DEBUG ("Thread %u cannot be killed its status is %u\n", m_id, m_status);
 		return;
 	}
@@ -264,16 +278,18 @@ void Thread::kill()
 		/* if i had a follower than wake him up */	
 		ASSERT (m_follower->m_status == JOINING);
 		ASSERT (!m_detached);
-		Scheduler::instance().enqueue(m_follower);
+		m_follower->resume();
 	}
 
 	PRINT_DEBUG ("Thread %u killed (detached: %s).\n", m_id, m_detached ? "YES" : "NO");
-	
-	removeFromHeap();
-	Scheduler::instance().dequeue(this);
+
+	block();
 
 	/* detached threadds should be removed immediately after they finish execution*/
 	if (m_detached) delete this;
+	
+	if (Thread::getCurrent() == this)
+		yield();
 }
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()

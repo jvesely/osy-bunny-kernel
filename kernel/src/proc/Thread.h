@@ -86,7 +86,7 @@ public:
 	void yield();
 
 	/*! @brief Puts Thread back into the running queue */
-	void wakeup() const;
+	void wakeup();
 
 	/*! @brief Takes Thread of the running queue */
 	void suspend();
