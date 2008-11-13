@@ -196,14 +196,14 @@ int Thread::join( Thread * thread, bool timed )
 	if (thread->status() == KILLED) {
 		PRINT_DEBUG ("Thread %u joined KILLED thread %u.\n", m_id, thread->m_id);
 		delete thread;
-		if (timed) removeFromHeap();
+		if (timed) resume();
 		return EKILLED;
 	}
 
 	/* Joining finished thread */
 	if (thread->status() == FINISHED) {
 		PRINT_DEBUG ("Thread %u joined FINISHED thread %u.\n", m_id, thread->m_id);
-		if (timed) removeFromHeap();
+		if (timed) resume();
 		delete thread;
 		return EOK;
 	}
