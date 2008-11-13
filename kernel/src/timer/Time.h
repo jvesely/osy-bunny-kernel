@@ -32,14 +32,6 @@
 #pragma once
 #include <api.h>
 
-/** @brief million*/
-//const int MILLION = 1000000;
-
-/** @brief max seconds in unsigned int microseconds
-*	maxint-1 / 1000000
-*/
-//const unsigned int MAX_USEC_SECS = 4294;
-
 //------------------------------------------------------------------------------
 /** @brief time respresentation
 *	both seconds and microseconds
@@ -51,131 +43,136 @@ public:
 	static const int MILLION = 1000000;
 
 	/** @brief max seconds in unsigned int microseconds
-	 *	maxint-1 / 1000000
-	 */
+	*
+	*	maxint-1 / 1000000. Is not maxint, to ensure that
+	*	MAX_USEC_SECS * MILLION + 999999 < maxint
+	*/
 	static const uint MAX_USEC_SECS = -2 / MILLION;
 
-	/** @brief parametrised ctor
-	*	default time is 0seconds, 0 microSecs
+	/** @brief no brief comment
+	*
+	*	default time is 0 seconds, 0 microSecs
 	*/
-	inline Time(unsigned int sec = 0, unsigned int usec = 0){
-		setTime(sec,usec);
+	inline Time( unsigned int sec = 0, unsigned int usec = 0 ){
+		setTime( sec, usec );
 	}
 
-	/** @brief copy ctor
+	/** @brief no brief comment
+	*
 	*	though this is not needed (because implicit copy ctor would now do the same),
-		it is here (to make clear that it is correctly implemented)
+	*	it is here (to make clear that it is correctly implemented)
 	*	is safe against incorrect input time
 	*	calls setTime (normalizes time, so that usec part is less than million)
 	*/
-	inline Time(const Time & time){
-		setTime(time.getSecs(),time.getUsecs());
+	inline Time( const Time & time ){
+		setTime( time.getSecs(), time.getUsecs() );
 	}
 
-	/** @brief operator =
+	/** @brief
+	*
 	*	copies seconds and microsecond value of time
 	*	calls setTime (normalizes time, so that usec part is less than million)
 	*	@return *this const
 	*/
-	inline const Time & operator = (const Time & time){
-		setTime(time.getSecs(),time.getUsecs());
+	inline const Time & operator = ( const Time & time ){
+		setTime( time.getSecs(), time.getUsecs() );
 		return *this;
 	}
 
-	/** @brief operator +=
+	/** @brief
+	*
 	*	calls setTime (normalizes time, so that usec part is less than million)
 	*	@return *this const
 	*/
-	inline const Time & operator += (const Time & time){
-		setTime(time.getSecs()+m_secs,time.getUsecs()+m_usecs);
+	inline const Time & operator += ( const Time & time ){
+		setTime( time.getSecs() + m_secs, time.getUsecs() + m_usecs );
 		return *this;
 	}
 
-	/** @brief operator -=
+	/** @brief
+	*
 	*	calls setTime (normalizes time, so that usec part is less than million)
 	*	@note Due to usage of unsigned types may the result of this operation be
 	*	greater than original *this time.
 	*	@return *this const
 	*/
-	inline const Time & operator -= (const Time & time){
-		if(m_usecs < time.getUsecs()){
-			setTime(m_secs - time.getSecs() - 1,(MILLION + m_usecs) - time.getUsecs());
+	inline const Time & operator -= ( const Time & time ){
+		if ( m_usecs < time.getUsecs() ){
+			setTime( m_secs - time.getSecs() - 1, ( MILLION + m_usecs ) - time.getUsecs() );
 		}else{
-			setTime(m_secs - time.getSecs() ,m_usecs - time.getUsecs());
+			setTime( m_secs - time.getSecs() , m_usecs - time.getUsecs() );
 		}
 		return *this;
 	}
 
-	/** @brief operator ==
+	/** @brief
+	*
 	*	compares Time values
 	*	Times are equal if both their timestamp (seconds) parts and their
 	*	useconds parts are equal.
 	*/
-	inline bool operator == (const Time & time) const{
-		return ((time.getSecs()==m_secs)&&(time.getUsecs() == m_usecs));
+	inline bool operator == ( const Time & time ) const{
+		return ( ( time.getSecs() == m_secs ) && ( time.getUsecs() == m_usecs ) );
 	}
 
-	/** @brief operator !=
+	/** @brief
+	*
 	*	Times are equal if both their timestamp (seconds) parts and their
 	*	useconds parts are equal.
 	*	function is wrapper for !(operator==)
 	*/
-	inline bool operator != (const Time & time) const{
-		return !(operator == (time));
+	inline bool operator != ( const Time & time ) const{
+		return !( operator == ( time ) );
 	}
 
-	/** @brief Returns true if this is less than other,
-	*	otherwise returns false.
+	/** @brief
 	*
 	*	Time is less than other if either timestamp (seconds) is smaller
 	*	than other's, or timestamp parts are equal and useconds part is less
 	*	than other's.
 	*/
-	inline bool operator < (const Time& other) const {
-		return (m_secs < other.m_secs)
-				|| ( (m_secs  == other.m_secs) && (m_usecs <  other.m_usecs) );
+	inline bool operator < ( const Time& other ) const {
+		return ( m_secs < other.m_secs )
+		       || ( ( m_secs  == other.m_secs ) && ( m_usecs <  other.m_usecs ) );
 	}
 
 
-	/** @brief Returns true if this is greater than other
-	*  otherwise returns false.
+	/** @brief
 	*
 	*	Time is less than other if either timestamp (seconds) is smaller
 	*	than other's, or timestamp parts are equal and useconds part is less
 	*	than other's.
 	*	@note Implementation uses bool operator < (const Time& other) const ;
 	*/
-	inline bool operator > (const Time& other) const
-		{	return other < *this;	}
+	inline bool operator > ( const Time& other ) const
+	{	return other < *this;	}
 
-	/** @brief Returns true if this is greater than or equals other
-	*	otherwise returns false.
+	/** @brief
 	*
 	*	Time is greater than or equals other if either timestamp (seconds) is
 	*	greater than or equals other's, or timestamp parts are equal and
 	*	useconds part is greater than or equals other's.
 	*	@note Implementation uses bool operator < (const Time& other) const;
 	*/
-	bool operator >=(const Time & other) const
-		{	return !(operator<(other));	}
+	bool operator >=( const Time & other ) const
+	{	return !( operator<( other ) );	}
 
-	/** @brief Returns true if this is less than or equals other
-	*	otherwise returns false.
+	/** @brief
 	*
-	*	Time is less than or equals  other if either timestamp (seconds) is
+	*	Time is less than or equals other if either timestamp (seconds) is
 	*	less than or equals other's, or timestamp parts are equal and
 	*	useconds part is greater than or equals other's.
 	*	@note Implementation uses bool operator > (const Time& other) const;
 	*/
-	bool operator <=(const Time & time) const
-		{	return !(operator>(time)); }
+	bool operator <=( const Time & other ) const
+	{	return !( operator>( other ) ); }
 
 	/** @brief set time to values
 	*
 	*	normalizes time, so that microsecs part is less than million. I usec parameter is greater
 	*	than million, seconds part is increased
 	*/
-	inline void setTime(unsigned int sec, unsigned int usec){
+	inline void setTime( unsigned int sec, unsigned int usec ){
 		m_secs = sec;
 		m_usecs = usec;
 		correctTime();
@@ -187,9 +184,9 @@ public:
 	*	@note Implementation uses Time& operator += (const Time& other);
 	*/
 
-	Time operator + (const Time & time) const
+	Time operator + ( const Time & time ) const
 	{
-		Time result(m_secs,m_usecs);
+		Time result( m_secs, m_usecs );
 		result += time;
 		return result;
 	};
@@ -199,9 +196,9 @@ public:
 	*	Each component is substracted separately and then they are normalized.
 	*	@note Implementation uses Time& operator -= (const Time& other);
 	*/
-	Time operator - (const Time & time) const
+	Time operator - ( const Time & time ) const
 	{
-		Time result(m_secs,m_usecs);
+		Time result( m_secs, m_usecs );
 		result -= time;
 		return result;
 	};
@@ -242,8 +239,8 @@ protected:
 	*	Ensures that microsecond part of time is less than million
 	*/
 	inline void correctTime(){
-		m_secs = m_secs + (m_usecs / MILLION);
-		m_usecs = m_usecs%MILLION;
+		m_secs = m_secs + ( m_usecs / MILLION );
+		m_usecs = m_usecs % MILLION;
 	}
 
 	/** @brief seconds time

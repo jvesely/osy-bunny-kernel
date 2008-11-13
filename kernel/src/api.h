@@ -310,7 +310,7 @@ void mutex_unlock(struct mutex *mtx);
 *	struct which allocates space required for ClassTimer
 */
 struct timer{
-	unsigned char data[44];//44 should be size of ClassTimer
+	unsigned char data[48];//48 is actual size of ClassTimer
 };
 
 
