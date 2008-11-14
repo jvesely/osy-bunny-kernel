@@ -90,6 +90,16 @@ public:
 	bool bit(const size_t pos, const bool value);
 
 	/**
+	 * Set or clear more bits in a row. The bit position is counted from 0.
+	 *
+	 * @param from The position from where to start setting or clearing bits.
+	 * @param count The number of bits we want to set (including the starting bit).
+	 * @param value Whether we are setting or clearing the bits. True is to set and false is to clear the bits.
+	 * @return Whether the operation was successful.
+	 */
+	bool bits(const size_t from, size_t count, const bool value);
+
+	/**
 	 * Query how many bits are clear after the given position. The bit position is counted from 0.
 	 *
 	 * @param from The position from where to start counting zeros.
@@ -99,14 +109,12 @@ public:
 	size_t empty(const size_t from, size_t enough = 0) const;
 
 	/**
-	 * Set or clear more bits in a row. The bit position is counted from 0.
+	 * Query how many bits are set after the given position. The bit position is counted from 0.
 	 *
-	 * @param from The position from where to start setting or clearing bits.
-	 * @param count The number of bits we want to set (including the starting bit).
-	 * @param value Whether we are setting or clearing the bits. True is to set and false is to clear the bits.
-	 * @return Whether the operation was successful.
+	 * @param from The position from where to start counting ones (set bits).
+	 * @return The number of taken (set) bits from the given position (including the positions bit).
 	 */
-	bool bits(const size_t from, size_t count, const bool value);
+	size_t full(const size_t from) const;
 
 protected:
 
@@ -148,4 +156,39 @@ inline size_t Bitset::getContainerSize(const size_t size) {
 inline bool Bitset::bit(const size_t pos) const {
 	return *(m_begin + (pos / Bitset::BITS)) & (Bitset::HEAD >> (pos & Bitset::MOD_MASK));
 }
+
+/* --------------------------------------------------------------------- *
+ * Example usage:
+ *
+ * #include "structures/Bitset.h"
+ * 
+ * 
+ * Bitset b(NULL, 100);
+ * size_t res = 0;
+ * 
+ * b.bits(5, 20, true);
+ * 
+ * res = b.empty(0);
+ * printf("5 res: %d\n", res);
+ * 
+ * res = b.empty(5);
+ * printf("0 res: %d\n", res);
+ * 
+ * res = b.full(5);
+ * printf("20 res: %d\n", res);
+ * 
+ * res = b.full(10);
+ * printf("15 res: %d\n", res);
+ * 
+ * res = b.full(24);
+ * printf("1 res: %d\n", res);
+ * 
+ * res = b.full(25);
+ * printf("0 res: %d\n", res);
+ * 
+ * res = b.empty(25);
+ * printf("75 res: %d\n", res);
+ *
+ * --------------------------------------------------------------------- */
+
 

@@ -90,6 +90,65 @@ bool Bitset::bit(const size_t pos, const bool value) {
 
 /* --------------------------------------------------------------------- */
 
+bool Bitset::bits(const size_t from, size_t count, const bool value) {
+	// check range
+	if ((from + count > m_size) || (count == 0)) return false;
+
+	size_t modulo = from & Bitset::MOD_MASK;
+	unative_t* ptr = m_begin + (from / Bitset::BITS);
+
+	// if count is in the same native type (no iteration necessary)
+	if (count < (Bitset::BITS - modulo)) {
+		// creating the special mask
+		size_t shift = Bitset::BITS - count;
+		unative_t mask = (Bitset::MASK >> shift) << (shift - modulo);
+		if (value) {
+			// setting the bits
+			*ptr |= mask;
+		} else {
+			// clearing the bits
+			*ptr &= ~mask;
+		}
+	} else {
+		// setting and clearing bits in the whole native type
+		if (value) {
+			// setting bits
+
+			// first part
+			*ptr |= Bitset::MASK >> modulo;
+			++ptr;
+			count -= Bitset::BITS - modulo;
+			// middle
+			while (count > Bitset::BITS) {
+				*ptr |= Bitset::MASK;
+				++ptr;
+				count -= Bitset::BITS;
+			}
+			// last part
+			*ptr |= Bitset::MASK << (Bitset::BITS - count);
+		} else {
+			// clearing bits
+
+			// first part
+			*ptr &= modulo ? (Bitset::MASK << (Bitset::BITS - modulo)) : 0;
+			++ptr;
+			count -= Bitset::BITS - modulo;
+			// middle
+			while (count >= Bitset::BITS) {
+				*ptr &= 0;
+				++ptr;
+				count -= Bitset::BITS;
+			}
+			// last part
+			*ptr &= Bitset::MASK >> count;
+		}
+	}
+
+	return true;
+}
+
+/* --------------------------------------------------------------------- */
+
 size_t Bitset::empty(const size_t from, size_t enough) const {
 	// check range
 	if (from >= m_size) return 0;
@@ -99,7 +158,7 @@ size_t Bitset::empty(const size_t from, size_t enough) const {
 		enough = m_size;
 	}
 
-	// initialize result
+	// initialize the result
 	size_t res = 0;
 	// mask used to cycle trough the bits of native type
 	unative_t mask = Bitset::HEAD;
@@ -218,60 +277,58 @@ size_t Bitset::empty(const size_t from, size_t enough) const {
 
 /* --------------------------------------------------------------------- */
 
-bool Bitset::bits(const size_t from, size_t count, const bool value) {
+size_t Bitset::full(const size_t from) const {
 	// check range
-	if ((from + count > m_size) || (count == 0)) return false;
+	if (from >= m_size) return 0;
 
-	size_t modulo = from & Bitset::MOD_MASK;
+	// initialize the result
+	size_t res = 0;
+	// the pointer to the byte which contains the bit on position 'from'
 	unative_t* ptr = m_begin + (from / Bitset::BITS);
+	// the position in the byte from where to start the check
+	const uint8_t bit = from & Bitset::MOD_MASK;
 
-	// if count is in the same native type (no iteration necessary)
-	if (count < (Bitset::BITS - modulo)) {
-		// creating the special mask
-		size_t shift = Bitset::BITS - count;
-		unative_t mask = (Bitset::MASK >> shift) << (shift - modulo);
-		if (value) {
-			// setting the bits
-			*ptr |= mask;
-		} else {
-			// clearing the bits
-			*ptr &= ~mask;
+	// mask used to cycle trough the bits of native type
+	unative_t mask = Bitset::HEAD;
+	// shift the mask to fit in the first element
+	mask >>= bit;
+
+	size_t count = Bitset::BITS;
+
+	// if the  first element is the last one
+	if (ptr >= (m_begin + m_elements - 1)) {
+		count = ((m_size & Bitset::MOD_MASK) == 0)
+			? Bitset::BITS - bit
+			: (m_size & Bitset::MOD_MASK) - bit;
+	}
+
+	while (true) {
+		// if ptr is behind our container
+		if (ptr > (m_begin + m_elements - 1)) break;
+
+		while (mask) {
+			if (((*ptr & mask) == 0) || (count == 0)) {
+				// we found a cleared bit, return the result
+				return res;
+			}
+			mask >>= 1;
+			++res;
+			--count;
 		}
-	} else {
-		// setting and clearing bits in the whole native type
-		if (value) {
-			// setting bits
 
-			// first part
-			*ptr |= Bitset::MASK >> modulo;
-			++ptr;
-			count -= Bitset::BITS - modulo;
-			// middle
-			while (count > Bitset::BITS) {
-				*ptr |= Bitset::MASK;
-				++ptr;
-				count -= Bitset::BITS;
-			}
-			// last part
-			*ptr |= Bitset::MASK << (Bitset::BITS - count);
+		mask = Bitset::HEAD;
+		++ptr;
+
+		// on the end of container
+		if (ptr == (m_begin + m_elements - 1)) {
+			count = ((m_size & Bitset::MOD_MASK) == 0)
+				? Bitset::BITS
+				: (m_size & Bitset::MOD_MASK);
 		} else {
-			// clearing bits
-
-			// first part
-			*ptr &= modulo ? (Bitset::MASK << (Bitset::BITS - modulo)) : 0;
-			++ptr;
-			count -= Bitset::BITS - modulo;
-			// middle
-			while (count >= Bitset::BITS) {
-				*ptr &= 0;
-				++ptr;
-				count -= Bitset::BITS;
-			}
-			// last part
-			*ptr &= Bitset::MASK >> count;
+			count = Bitset::BITS;
 		}
 	}
 
-	return true;
+	return res;
 }
 
