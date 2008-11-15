@@ -111,8 +111,9 @@ void MutexManager::mutex_lock(mutex_t *mtx) {
 
 	if (mtx->locked != 0) {
 		// if mutex is locked already
-		// put the thread to mutex's waiting list (this will unschedule it)
+		// block the thread (this will remove it from the timer's heap and the scheduler)
 		thread->block();
+		// put the thread to mutex's waiting list (this will unschedule it)
 		thread->append((ThreadList *)mtx->waitingList); 
 		// set the thread state to blocked
 		thread->setStatus(Thread::BLOCKED);
@@ -202,7 +203,8 @@ void MutexManager::mutex_unlock(mutex_t *mtx) {
 		Thread* thread = ((ThreadList *)mtx->waitingList)->getFront();
 		// lock the mutex with new id
 		mtx->locked = thread->id();
-		// enqueue the thread in Scheduler
+		// remove from timer's heap (in case of timed lock)
+		// and enqueue the thread in Scheduler
 		thread->resume();
 	} else {
 		// if no waiting threads, just unlock

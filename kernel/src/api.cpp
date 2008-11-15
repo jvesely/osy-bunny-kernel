@@ -232,7 +232,7 @@ void kpanic(void** context, const char* format, ...){
 	va_start(args, format);
 	vprintk(format, args);
 	va_end(args);
-	
+
 	Kernel::instance().stop();
 	Kernel::instance().block();
 
@@ -250,7 +250,7 @@ void free(void* ptr)
 /*----------------------------------------------------------------------------*/
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
-{	
+{
 	InterruptDisabler inter;
 	return KernelThread::create( thread_ptr, thread_start, data, flags );
 }
@@ -278,8 +278,8 @@ int thread_detach(thread_t thread)
 {
 	InterruptDisabler inter;
 	Thread* thr = Scheduler::instance().thread(thread);
-	if (!thr 
-		|| thr->detached() 
+	if (!thr
+		|| thr->detached()
 		|| thr->status() == Thread::FINISHED
 		|| thr->status() == Thread::KILLED
 		|| thr->status() == Thread::JOINING
@@ -334,7 +334,7 @@ void* memcpy( void* dest, const void* src, size_t count )
 {
 	char* dstc = (char*) dest;
 	char* srcc = (char*) src;
-	
+
 	while (count--) {
 			*dstc++ = *srcc++;
 	}
@@ -382,14 +382,12 @@ int timer_init( struct timer *tmr, const unsigned int usec,
 //------------------------------------------------------------------------------
 void timer_start(struct timer *tmr)
 {
-	//timermanager instance call startEvent(tmr2Tmr(tmr));
 	TimerManager::instance().startEvent(tmr2Tmr(tmr));
 }
 
 //------------------------------------------------------------------------------
 void timer_destroy(struct timer *tmr)
 {
-	//timermanager instance call destroyTimer(tmr2Tmr(tmr));
 	TimerManager::instance().destroyTimer(tmr2Tmr(tmr));
 }
 

@@ -61,7 +61,7 @@
  * MyClass* my_item = new MyClass;
  * int key = 5;
  * 
- * my_item->insertIntoHeap(m_heap, key)
+ * my_item->insertIntoHeap(&m_heap, key)
  * my_item->removeFromHeap();
  *
  * @endcode
@@ -121,9 +121,12 @@ public:
 	 */
 	void removeFromHeap();
 
+	/*! @brief Returns the heap it is inserted into as a const pointer. */
+	const Heap<T*, Children>* heap() const { return m_owner; };
+
 private:
 	/*! @brief Pointer to the heap where it's inserted. */
-	Heap<T*, Children> *m_owner;
+	Heap<T*, Children>* m_owner;
 
 	/*! @brief The key of this item, used for heap operations. */
 	Key m_key;
@@ -155,7 +158,6 @@ bool HeapInsertable<T, Key, Children>::operator<(
 template <class T, typename Key, int Children>
 void HeapInsertable<T, Key, Children>::insertIntoHeap(Heap<T*, Children>* heap, const Key &key)
 {
-	assert(!m_owner);
 	if (!m_owner) {
 		m_key = key;
 		(m_owner = heap)->insert(this);
