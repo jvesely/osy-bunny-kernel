@@ -25,19 +25,20 @@
 
 /*!
  * @file 
- * @brief Semaphore implementation.
- * @see Atomic data type.
+ * @brief Semaphore declaration and implementation of the inline member functions.
  *
  * Semaphore is a common synchronization technique using a counter, which
  * can be incremented or decremented. It never drops under zero and if
  * who will want to decrement under zero will be blocked till the counter
  * is not more than zero.
- * Largely inspired by atomic_t from Kalisto kernel, great thanks.
  */
 
 #pragma once
 
 #include "types.h"
+#include "InterruptDisabler.h"
+#include "proc/Thread.h"
+#include "timer/Time.h"
 
 /**
  * @class Semaphore Semaphore.h "Semaphore.h"
@@ -47,17 +48,23 @@
  * can be incremented or decremented. It never drops under zero and if
  * who will want to decrement under zero will be blocked till the counter
  * is not more than zero.
- * Largely inspired by atomic_t from Kalisto kernel, great thanks.
  */
 class Semaphore {
 public:
 
 	/**
-	 * Constructor of semaphore initializes the semaphore to the given value.
+	 * Constructor of Semaphore initializes the semaphore to the given value.
 	 *
-	 * @param value The initial value of the semaphore.
+	 * @param value The initial value of the semaphore counter.
 	 */
-	inline Semaphore(unative_t value): m_value(value) {}
+	inline Semaphore(unative_t value): m_counter(value) {}
+
+	/**
+	 * While destructing the Semaphore object, check if there are no other
+	 * threads waiting for it. If somebody is still locked on this semaphore,
+	 * panic.
+	 */
+	inline ~Semaphore();
 
 	/**
 	 * Get the value of the semaphore counter. Using the fact, that reading
@@ -69,53 +76,20 @@ public:
 	inline unative_t get() const;
 
 	/**
-	 * Prefix increment operator is used to lift up the semaphore. It could be faster
-	 * than up().
-	 */
-	inline void operator++ ();
-
-	/**
-	 * Postfix increment operator is wrapper to the prefix increment operator.
-	 */
-	inline void operator++ (int);
-
-	/**
-	 * Prefix decrement operator is used to push down the semaphore by one.
-	 * If the semaphore value is zero, this call blocks, till its not lifted up
-	 * by someone else.
-	 */
-	inline void operator-- ();
-
-	/**
-	 * Postfix decrement operator is wrapper to the prefix decrement operator..
-	 */
-	inline void operator-- (int);
-
-	/**
 	 * Lift up the semaphore.
 	 *
 	 * @param number The value to lift.
 	 * @return The atomic variable with its new value by reference.
 	 */
-	inline void operator+= (const unative_t number);
+	void up(const unative_t number);
 
 	/**
-	 * Push down the semaphore. If the semaphore value is zero, this call blocks,
+	 * Push down the semaphore. If the semaphore counter is zero, this call blocks,
 	 * till its not lifted up by someone else.
 	 *
 	 * @param number The value to substract from the semaphore.
 	 */
-	inline void operator-= (const unative_t number);
-
-	/**
-	 * Wrapper to operator +=.
-	 */
-	inline void up(const unative_t number);
-
-	/**
-	 * Wrapper to operator -=.
-	 */
-	inline void down(const unative_t number);
+	void down(const unative_t number);
 
 	/**
 	 * Not finished timeout semaphore lock!
@@ -124,14 +98,38 @@ public:
 	 *
 	 * @param usec Timelimit in microseconds for trying to lock the semaphore.
 	 */
-	inline int downTimeout(const unative_t number, const unsigned int usec);
+	int downTimeout(const unative_t number, const Time time);
+
+	/**
+	 * Postfix increment operator is used to lift up the semaphore by one (wrapper
+	 * to the up() member function.
+	 *
+	 * @note The operator doesn't return reference to the object itself, because
+	 * nesting calls to semaphore doesn't guarante atomicity and order. If you
+	 * don't like this behaviour, just use up(1).
+	 */
+	inline void operator++ (int);
+
+	/**
+	 * Postfix decrement operator is used to push down the semaphore by one (wrapper
+	 * to the down() member function. If semaphore counter is zero, this call blocks
+	 * till semaphore is not lifted up by someone else.
+	 *
+	 * @note The operator doesn't return reference to the object itself, because
+	 * nesting calls to semaphore doesn't guarante atomicity and order. If you
+	 * don't like this behaviour, just use down(1).
+	 */
+	inline void operator-- (int);
 
 private:
 	/**
 	 * Variable holding the value of the Semaphore counter. Its size is native for the
 	 * CPU (registers and memory).
 	 */
-	volatile unative_t m_value;
+	volatile unative_t m_counter;
+
+	/** The list of blocked (waiting) threads on this semaphore. */
+	ThreadList waitingList;
 
 	/** Deny copy-constructor. */
 	Semaphore(Semaphore&);
@@ -143,127 +141,29 @@ private:
 
 /* --------------------------------------------------------------------- */
 
-inline unative_t Semaphore::get() const {
-	return m_value;
+inline Semaphore::~Semaphore() {
+	// if the waiting list is not empty, panic
+	if (waitingList.size() != 0) {
+		panic("Semaphore at %x being destroyed by thread %u while there are still locked threads waiting for it!\n",
+			this, Thread::getCurrent()->id());
+	}
 }
 
 /* --------------------------------------------------------------------- */
 
-inline void Semaphore::operator++ () {
-	register native_t temp;
-
-	asm volatile (
-		".set push\n"
-		".set noreorder\n"
-
-		"1:\n"
-		"  ll %[temp], %[value]\n"
-		"  addiu %[temp], %[temp], 1\n"
-		"  sc %[temp], %[value]\n"
-		"  beqz %[temp], 1b\n"
-		"  nop\n"
-
-		".set pop\n"
-		: [temp] "=&r" (temp), [value] "+m" (m_value)
-		:
-		: "memory"
-	);
+inline unative_t Semaphore::get() const {
+	return m_counter;
 }
+
+/* --------------------------------------------------------------------- */
 
 inline void Semaphore::operator++ (int) {
-	this->operator++();
+	up(1);
 }
 
 /* --------------------------------------------------------------------- */
-
-inline void Semaphore::operator-- () {
-	register unative_t temp;
-
-	asm volatile (
-		".set push\n"
-		".set noreorder\n"
-
-		"1:\n"
-		"  ll %[temp], %[value]\n"
-		"  subu %[temp], %[temp], 1\n"
-		"  bltz %[temp], 1b\n"
-		"  nop\n"
-		"  sc %[temp], %[value]\n"
-		"  beqz %[temp], 1b\n"
-		"  nop\n"
-
-		".set pop\n"
-		: [temp] "=&r" (temp), [value] "+m" (m_value)
-		:
-		: "memory"
-	);
-}
 
 inline void Semaphore::operator-- (int) {
-	this->operator--();
-}
-
-/* --------------------------------------------------------------------- */
-
-inline void Semaphore::operator+= (const unative_t number) {
-	register unative_t temp;
-
-	asm volatile (
-		".set push\n"
-		".set noreorder\n"
-
-		"1:\n"
-		"  ll %[temp], %[value]\n"
-		"  addu %[temp], %[temp], %[number]\n"
-		"  sc %[temp], %[value]\n"
-		"  beqz %[temp], 1b\n"
-		"  nop\n"
-
-		".set pop\n"
-		: [temp] "=&r" (temp), [value] "+m" (m_value)
-		: [number] "Ir" (number)
-		: "memory"
-	);
-}
-
-/* --------------------------------------------------------------------- */
-
-inline void Semaphore::operator-= (const unative_t number) {
-	register unative_t temp;
-
-	asm volatile (
-		".set push\n"
-		".set noreorder\n"
-
-		"1:\n"
-		"  ll %[temp], %[value]\n"
-		"  subu %[temp], %[temp], %[number]\n"
-		"  bltz %[temp], 1b\n"
-		"  nop\n"
-		"  sc %[temp], %[value]\n"
-		"  beqz %[temp], 1b\n"
-		"  nop\n"
-
-		".set pop\n"
-		: [temp] "=&r" (temp), [value] "+m" (m_value)
-		: [number] "Ir" (number)
-		: "memory"
-	);
-}
-
-/* --------------------------------------------------------------------- */
-
-inline void Semaphore::up(const unative_t number) {
-	this->operator+=(number);
-}
-
-inline void Semaphore::down(const unative_t number) {
-	this->operator-=(number);
-}
-
-/* --------------------------------------------------------------------- */
-
-inline int Semaphore::downTimeout(const unative_t number, const unsigned int usec) {
-	return ETIMEDOUT;
+	down(1);
 }
 

@@ -30,8 +30,10 @@
  * Functions from api.h and helper functions are implemented here.
  */
 #include "api.h"
+#include "cpp.h"
 #include "Kernel.h"
 #include "synchronization/MutexManager.h"
+#include "synchronization/Semaphore.h"
 #include "InterruptDisabler.h"
 
 //timer includes
@@ -41,6 +43,8 @@
 #define va_start __builtin_va_start
 #define va_end __builtin_va_end
 #define va_arg __builtin_va_arg
+
+
 /*----------------------------------------------------------------------------*/
 size_t putc(const char c)
 {
@@ -399,4 +403,28 @@ int timer_pending(struct timer *tmr)
 	return (int) drftmr(tmr).pending();
 }
 
+/*----------------------------------------------------------------------------*/
+
+void semaphore_init(semaphore_t* s, unsigned int num) {
+	ASSERT(sizeof(semaphore_t) >= sizeof(Semaphore));
+	new (s) Semaphore(num);
+}
+
+void semaphore_destroy(semaphore_t* s) {
+	((Semaphore *)s)->~Semaphore();
+}
+
+void semaphore_up(semaphore_t* s, unsigned int num) {
+	((Semaphore *)s)->up(num);
+}
+
+void semaphore_down(semaphore_t* s, unsigned int num) {
+	((Semaphore *)s)->down(num);
+}
+
+int semaphore_down_timeout(semaphore_t* s, unsigned int num, unsigned int usec) {
+	return ((Semaphore *)s)->downTimeout(num, Time(0, usec));
+}
+
+/*----------------------------------------------------------------------------*/
 

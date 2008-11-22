@@ -346,6 +346,20 @@ void timer_destroy(struct timer *tmr);
 int timer_pending(struct timer *tmr);
 
 
+/* --------------------------------------------------------------------- */
+/* ----------------------   SEMAPHORE   -------------------------------- */
+/* --------------------------------------------------------------------- */
+
+typedef struct semaphore_t {
+	char payload[20];
+} semaphore_t;
+
+void semaphore_init(semaphore_t* s, unsigned int num);
+void semaphore_destroy(semaphore_t* s);
+void semaphore_up(semaphore_t* s, unsigned int num);
+void semaphore_down(semaphore_t* s, unsigned int num);
+int semaphore_down_timeout(semaphore_t* s, unsigned int num, unsigned int usec);
+
 #ifdef __cplusplus
 }
 #endif

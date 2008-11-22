@@ -44,8 +44,6 @@
 //#define DEBUG_MUTEX
 //#define DEBUG_MUTEX_ACTIONS
 
-typedef List<Thread *> ThreadList;
-
 void MutexManager::mutex_init(mutex_t *mtx) {
 	ASSERT(mtx != NULL);
 	if (!mtx) return;

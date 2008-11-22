@@ -43,6 +43,23 @@
 /*
  * Conditional wait on mutex with verbose output.
  */
+#define cond_wait_semaphore_verbose(cond, mutex, counter)	\
+{							\
+	semaphore_down (& mutex, 1);				\
+	while ((cond)) {				\
+		printk ("  %d threads ...\n", counter);	\
+		semaphore_up (& mutex, 1);			\
+		thread_sleep (1);			\
+		semaphore_down (& mutex, 1);			\
+	};						\
+							\
+	printk ("  %d threads ...\n", counter);		\
+	semaphore_up (& mutex, 1);				\
+}
+
+/*
+ * Conditional wait on mutex with verbose output.
+ */
 #define cond_wait_mutex_verbose(cond, mutex, counter)	\
 {							\
 	mutex_lock (& mutex);				\
@@ -84,6 +101,19 @@
 
 #define dec_var_mutex(var, mutex)			\
 	sub_var_mutex (1, var, mutex)
+
+/*
+ * semaphore protected substraction/decrement of a variable.
+ */
+#define sub_var_semaphore(val, var, mutex)			\
+{							\
+	semaphore_up (& mutex, 1);				\
+	var -= val;					\
+	semaphore_up (& mutex, 1);				\
+}
+
+#define dec_var_semaphore(var, mutex)			\
+	sub_var_semaphore (1, var, mutex)
 
 
 /*
