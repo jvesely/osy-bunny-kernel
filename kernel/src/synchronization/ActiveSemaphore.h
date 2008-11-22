@@ -72,9 +72,8 @@ public:
 	 * Lift up the semaphore.
 	 *
 	 * @param number The value to lift.
-	 * @return The atomic variable with its new value by reference.
 	 */
-	inline void up(const unative_t number);
+	inline void up(const unative_t number = 1);
 
 	/**
 	 * Push down the semaphore. If the semaphore value is zero, this call blocks,
@@ -82,13 +81,13 @@ public:
 	 *
 	 * @param number The value to substract from the semaphore.
 	 */
-	inline void down(const unative_t number);
+	inline void down(const unative_t number = 1);
 
 	/**
 	 * Postfix increment operator is used to lift up the semaphore by one.
 	 *
 	 * @note The operator doesn't return reference to the object itself, because
-	 * nesting calls to semaphore doesn't guarante atomicity and order. If you
+	 * nesting calls to semaphore doesn't guarante atomicity. If you
 	 * don't like this behaviour, just use up(1).
 	 */
 	inline void operator++ (int);
@@ -99,7 +98,7 @@ public:
 	 * lifted up by someone else.
 	 *
 	 * @note The operator doesn't return reference to the object itself, because
-	 * nesting calls to semaphore doesn't guarante atomicity and order. If you
+	 * nesting calls to semaphore doesn't guarante atomicity. If you
 	 * don't like this behaviour, just use down(1).
 	 */
 	inline void operator-- (int);

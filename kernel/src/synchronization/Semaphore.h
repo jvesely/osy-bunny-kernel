@@ -78,35 +78,36 @@ public:
 	/**
 	 * Lift up the semaphore.
 	 *
-	 * @param number The value to lift.
-	 * @return The atomic variable with its new value by reference.
+	 * @param number The value to lift (default is 1).
 	 */
-	void up(const unative_t number);
+	void up(const unative_t number = 1);
 
 	/**
 	 * Push down the semaphore. If the semaphore counter is zero, this call blocks,
 	 * till its not lifted up by someone else.
 	 *
-	 * @param number The value to substract from the semaphore.
+	 * @param number The value to substract from the semaphore (default is 1).
 	 */
-	void down(const unative_t number);
+	void down(const unative_t number = 1);
 
 	/**
 	 * Not finished timeout semaphore lock!
 	 * Lock the semaphore (push it down), but don't let it take more
 	 * than the given timelimit in microseconds.
 	 *
-	 * @param usec Timelimit in microseconds for trying to lock the semaphore.
+	 * @param number The value to substract from the semaphore (default is 1).
+	 * @param time Timelimit for trying to lock the semaphore (default is 0).
 	 */
-	int downTimeout(const unative_t number, const Time time);
+	int downTimeout(const unative_t number = 1, const Time time = Time(0, 0));
 
 	/**
 	 * Postfix increment operator is used to lift up the semaphore by one (wrapper
 	 * to the up() member function.
 	 *
 	 * @note The operator doesn't return reference to the object itself, because
-	 * nesting calls to semaphore doesn't guarante atomicity and order. If you
-	 * don't like this behaviour, just use up(1).
+	 * nesting calls to Semaphore doesn't guarante atomicity, copying is denied
+	 * and it is even a wrapper to a void function. If you don't like this
+	 * behaviour, just use up(1).
 	 */
 	inline void operator++ (int);
 
@@ -116,8 +117,9 @@ public:
 	 * till semaphore is not lifted up by someone else.
 	 *
 	 * @note The operator doesn't return reference to the object itself, because
-	 * nesting calls to semaphore doesn't guarante atomicity and order. If you
-	 * don't like this behaviour, just use down(1).
+	 * nesting calls to Semaphore doesn't guarante atomicity, copying is denied
+	 * and it is even a wrapper to a void function. If you don't like this
+	 * behaviour, just use up(1).
 	 */
 	inline void operator-- (int);
 
