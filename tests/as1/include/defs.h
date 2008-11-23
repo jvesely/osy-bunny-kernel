@@ -43,23 +43,6 @@
 /*
  * Conditional wait on mutex with verbose output.
  */
-#define cond_wait_semaphore_verbose(cond, mutex, counter)	\
-{							\
-	semaphore_down (& mutex, 1);				\
-	while ((cond)) {				\
-		printk ("  %d threads ...\n", counter);	\
-		semaphore_up (& mutex, 1);			\
-		thread_sleep (1);			\
-		semaphore_down (& mutex, 1);			\
-	};						\
-							\
-	printk ("  %d threads ...\n", counter);		\
-	semaphore_up (& mutex, 1);				\
-}
-
-/*
- * Conditional wait on mutex with verbose output.
- */
 #define cond_wait_mutex_verbose(cond, mutex, counter)	\
 {							\
 	mutex_lock (& mutex);				\
@@ -72,6 +55,40 @@
 							\
 	printk ("  %d threads ...\n", counter);		\
 	mutex_unlock (& mutex);				\
+}
+
+/*
+ * Conditional wait on spinlock with verbose output.
+ */
+#define cond_wait_spinlock_verbose(cond, spinlock, counter)	\
+{							\
+	spinlock_lock (& spinlock);				\
+	while ((cond)) {				\
+		printk ("  %d threads ...\n", counter);	\
+		spinlock_unlock (& spinlock);			\
+		thread_sleep (1);			\
+		spinlock_lock (& spinlock);			\
+	};						\
+							\
+	printk ("  %d threads ...\n", counter);		\
+	spinlock_unlock (& spinlock);				\
+}
+
+/*
+ * Conditional wait on semaphore with verbose output.
+ */
+#define cond_wait_semaphore_verbose(cond, mutex, counter)	\
+{							\
+	semaphore_down (& mutex, 1);				\
+	while ((cond)) {				\
+		printk ("  %d threads ...\n", counter);	\
+		semaphore_up (& mutex, 1);			\
+		thread_sleep (1);			\
+		semaphore_down (& mutex, 1);			\
+	};						\
+							\
+	printk ("  %d threads ...\n", counter);		\
+	semaphore_up (& mutex, 1);				\
 }
 
 
@@ -101,6 +118,19 @@
 
 #define dec_var_mutex(var, mutex)			\
 	sub_var_mutex (1, var, mutex)
+
+/*
+ * Spinlock protected substraction/decrement of a variable.
+ */
+#define sub_var_spinlock(val, var, spinlock)			\
+{							\
+	spinlock_lock (& spinlock);				\
+	var -= val;					\
+	spinlock_unlock (& spinlock);				\
+}
+
+#define dec_var_spinlock(var, spinlock)			\
+	sub_var_spinlock (1, var, spinlock)
 
 /*
  * semaphore protected substraction/decrement of a variable.

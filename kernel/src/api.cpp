@@ -34,6 +34,7 @@
 #include "Kernel.h"
 #include "synchronization/MutexManager.h"
 #include "synchronization/Semaphore.h"
+#include "synchronization/Spinlock.h"
 #include "InterruptDisabler.h"
 
 //timer includes
@@ -424,6 +425,25 @@ void semaphore_down(semaphore_t* s, unsigned int num) {
 
 int semaphore_down_timeout(semaphore_t* s, unsigned int num, unsigned int usec) {
 	return ((Semaphore *)s)->downTimeout(num, Time(0, usec));
+}
+
+/*----------------------------------------------------------------------------*/
+
+void spinlock_init(spinlock_t* s) {
+	ASSERT(sizeof(spinlock_t) >= sizeof(Spinlock));
+	new (s) Spinlock();
+}
+
+void spinlock_destroy(spinlock_t* s) {
+	((Spinlock *)s)->~Spinlock();
+}
+
+void spinlock_lock(spinlock_t* s) {
+	((Spinlock *)s)->lock();
+}
+
+void spinlock_unlock(spinlock_t* s) {
+	((Spinlock *)s)->unlock();
 }
 
 /*----------------------------------------------------------------------------*/

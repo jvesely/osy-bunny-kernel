@@ -45,7 +45,7 @@
  * @param value The new value, we want to place in the variable.
  * @return The old value of variable.
  */
-inline native_t swap(native_t& variable, native_t value) {
+inline native_t swap(volatile native_t& variable, native_t value) {
 	register unative_t temp;
 
 	asm volatile (

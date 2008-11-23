@@ -27,6 +27,11 @@
  * @file 
  * @brief Spinlock implementation.
  *
+ * Spinlock is a form of fast binary semaphore (mutex lock) with a very small
+ * overhead. Waiting for a locked spinlock is active or with yield(), so it
+ * is usefull if we expect the waiting time to be very little. There is no
+ * waiting list, so the threads remains in the Scheduler. The implementation
+ * is with atomic swap() (exchange) operation written in assembler.
  */
 
 #pragma once
@@ -34,23 +39,44 @@
 #include "asm/atomic.h"
 #include "proc/Scheduler.h"
 
+/**
+ * @class Spinlock Spinlock.h "Spinlock.h"
+ * @brief Spinlock is a fast binary semaphore (mutex with no owner checks).
+ *
+ * Spinlock with interface (member functions) to lock() and unlock() it. All
+ * member functions are defined as inline.
+ * Spinlock is a form of fast binary semaphore (mutex lock) with a very small
+ * overhead. Waiting for a locked spinlock is active or with yield(), so it
+ * is usefull if we expect the waiting time to be very little. There is no
+ * waiting list, so the threads remains in the Scheduler. The implementation
+ * is with atomic swap() (exchange) operation written in assembler.
+ */
 class Spinlock
 {
 public:
-	Spinlock(): m_locked(0), m_ieStatus(~STATUS_IE_MASK) {}
+	/** After construction is the spinlock unlocked. */
+	Spinlock(): m_locked(0) {}
 
+	/**
+	 * Lock the spinlock with active or passive waiting, depending on the
+	 * processor count. The decision is done by compile-time depending on MULTICPU
+	 * define, so there is no runtime overhead.
+	 */
 	inline void lock();
 
+	/** Unlock the spinlock. */
 	inline void unlock();
 
+	/** Lock the spinlock with active waiting. Useful on multiprocessor machines. */
 	inline void lockActive();
 
+	/** Lock the spinlock with passive waiting in the Scheduling queue (semiactive). */
 	inline void lockYield();
 
 private:
 	/**
-	 * Variable holding the value of the Spinlock. Its size is native for the
-	 * CPU (registers and memory).
+	 * Variable holding the state of the Spinlock. Its size is native for the
+	 * CPU (registers and memory). 1 means locked and 0 means unlocked.
 	 */
 	volatile native_t m_locked;
 
@@ -64,15 +90,18 @@ private:
 
 /* --------------------------------------------------------------------- */
 
-inline void Spinlock::lock()
-{
-	m_ieStatus = Processor::save_and_disable_interrupts();
+inline void Spinlock::lock() {
+#ifdef MULTICPU
+	lockActive();
+#else
+	lockYield();
+#endif
 }
 
 /* --------------------------------------------------------------------- */
 
 inline void Spinlock::unlock() {
-	swap(lock, 0);
+	swap(m_locked, 0);
 }
 
 /* --------------------------------------------------------------------- */
@@ -84,8 +113,8 @@ inline void Spinlock::lockActive() {
 /* --------------------------------------------------------------------- */
 
 inline void Spinlock::lockYield() {
-	while (swap(m_lock, 1)) {
-		Scheduler::instance().switchThread();
+	while (swap(m_locked, 1)) {
+		Thread::getCurrent()->yield();
 	}
 }
 
