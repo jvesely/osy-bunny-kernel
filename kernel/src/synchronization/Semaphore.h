@@ -91,9 +91,8 @@ public:
 	void down(const unative_t number = 1);
 
 	/**
-	 * Not finished timeout semaphore lock!
-	 * Lock the semaphore (push it down), but don't let it take more
-	 * than the given timelimit in microseconds.
+	 * Try to lock the semaphore (push it down), but don't let it take more
+	 * than the given timelimit.
 	 *
 	 * @param number The value to substract from the semaphore (default is 1).
 	 * @param time Timelimit for trying to lock the semaphore (default is 0).
@@ -102,7 +101,7 @@ public:
 
 	/**
 	 * Postfix increment operator is used to lift up the semaphore by one (wrapper
-	 * to the up() member function.
+	 * to the up() member function).
 	 *
 	 * @note The operator doesn't return reference to the object itself, because
 	 * nesting calls to Semaphore doesn't guarante atomicity, copying is denied
@@ -113,7 +112,7 @@ public:
 
 	/**
 	 * Postfix decrement operator is used to push down the semaphore by one (wrapper
-	 * to the down() member function. If semaphore counter is zero, this call blocks
+	 * to the down() member function). If semaphore counter is zero, this call blocks
 	 * till semaphore is not lifted up by someone else.
 	 *
 	 * @note The operator doesn't return reference to the object itself, because
