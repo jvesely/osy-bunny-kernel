@@ -36,6 +36,7 @@
 
 #include <api.h>
 #include "Singleton.h"
+#include "timer/Time.h"
 
 /**
  * @class MutexManager MutexManager.h "MutexManager.h"
@@ -70,12 +71,23 @@ public:
 	void mutex_lock(mutex_t *mtx);
 
 	/**
-	 * Lock the given mutex, but don't let it take more than the given timelimit in microseconds.
+	 * Lock the given mutex, but don't let it take more than the given timelimit in microseconds
+	 * (wrapper to the mutex_lock_timeout() which takes Time as argument for timelimit.
 	 *
 	 * @param mtx Mutex to lock within time limit.
 	 * @param usec Timelimit in microseconds for trying to lock the mutex.
+	 * @return EOK on success (we locked the lock) and ETIMEDOUT if failed to lock it.
 	 */
-	int mutex_lock_timeout(mutex_t *mtx, const unsigned int usec);
+	inline int mutex_lock_timeout(mutex_t *mtx, const unsigned int usec);
+
+	/**
+	 * Lock the given mutex, but don't let it take more than the given timelimit.
+	 *
+	 * @param mtx Mutex to lock within time limit.
+	 * @param usec Timelimit for trying to lock the mutex.
+	 * @return EOK on success (we locked the lock) and ETIMEDOUT if failed to lock it.
+	 */
+	int mutex_lock_timeout(mutex_t *mtx, const Time time);
 
 	/**
 	 * Unlock the mutex.
@@ -85,4 +97,10 @@ public:
 	void mutex_unlock(mutex_t *mtx);
 
 };
+
+/* --------------------------------------------------------------------- */
+
+inline int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
+	return mutex_lock_timeout(mtx, Time(0, usec));
+}
 

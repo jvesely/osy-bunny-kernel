@@ -130,7 +130,7 @@ void MutexManager::mutex_lock(mutex_t *mtx) {
 
 /* --------------------------------------------------------------------- */
 
-int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
+int MutexManager::mutex_lock_timeout(mutex_t *mtx, const Time time) {
 	ASSERT(mtx != NULL);
 	if (!mtx) return ETIMEDOUT;
 
@@ -151,8 +151,8 @@ int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
 		return EOK;
 	}
 
-	// if the sleep is 0 microsecs, just return the lock state (like trylock)
-	if (usec == 0) {
+	// if the sleep is 0, just return the lock state (like trylock)
+	if ((time.getSecs() == 0) && (time.getUsecs() == 0)) {
 		return ETIMEDOUT;
 	}
 
@@ -160,8 +160,8 @@ int MutexManager::mutex_lock_timeout(mutex_t *mtx, const unsigned int usec) {
 	thread_t locked = mtx->locked;
 
 	// if you got here, you are willing to sleep
-	// plan to wake up after usec
-	thread->alarm(Time(0, usec));
+	// plan to wake up after given time
+	thread->alarm(time);
 	// put the thread to mutex's waiting list (this will unschedule it)
 	thread->append((ThreadList *)mtx->waitingList); 
 	// set the thread state to blocked
