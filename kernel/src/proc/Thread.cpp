@@ -93,8 +93,9 @@ void Thread::yield()
 //	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
 
 	/* voluntary yield should remove me from the Timer */
-	if (m_status == RUNNING)
+	if (m_status == RUNNING) {
 		removeFromHeap();
+	}
 
 	Scheduler::instance().switchThread();
 }

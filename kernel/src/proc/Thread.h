@@ -200,3 +200,6 @@ private:
 
 template class ListInsertable<Thread>; 
 template class HeapInsertable<Thread, Time, 4>;
+
+typedef List<Thread *> ThreadList;
+

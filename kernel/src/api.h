@@ -346,6 +346,41 @@ void timer_destroy(struct timer *tmr);
 int timer_pending(struct timer *tmr);
 
 
+/* --------------------------------------------------------------------- */
+/* ----------------------   SEMAPHORE   -------------------------------- */
+/* --------------------------------------------------------------------- */
+
+/**
+ * @struct semaphore_t api.h "api.h"
+ * @brief Semaphore class placeholder for C code.
+ */
+typedef struct semaphore_t {
+	char payload[20];
+} semaphore_t;
+
+void semaphore_init(semaphore_t* s, unsigned int num);
+void semaphore_destroy(semaphore_t* s);
+void semaphore_up(semaphore_t* s, unsigned int num);
+void semaphore_down(semaphore_t* s, unsigned int num);
+int semaphore_down_timeout(semaphore_t* s, unsigned int num, unsigned int usec);
+
+/* --------------------------------------------------------------------- */
+/* ----------------------    SPINLOCK   -------------------------------- */
+/* --------------------------------------------------------------------- */
+
+/**
+ * @struct spinlock_t api.h "api.h"
+ * @brief Spinlock class placeholder for C code.
+ */
+typedef struct spinlock_t {
+	char payload[4];
+} spinlock_t;
+
+void spinlock_init(spinlock_t* s);
+void spinlock_destroy(spinlock_t* s);
+void spinlock_lock(spinlock_t* s);
+void spinlock_unlock(spinlock_t* s);
+
 #ifdef __cplusplus
 }
 #endif

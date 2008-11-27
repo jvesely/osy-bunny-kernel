@@ -35,6 +35,8 @@
 #pragma once
 
 #include "api.h"
+#include "timer/Time.h"
+#include "synchronization/MutexManager.h"
 
 /**
  * @class Mutex Mutex.h "Mutex.h"
@@ -58,6 +60,16 @@ public:
 	/** Lock the mutex. */
 	inline void lock() {
 		mutex_lock(&m_mutex);
+	}
+
+	/**
+	 * Lock the mutex within a timelimit.
+	 *
+	 * @param time Timelimit for trying to lock the mutex.
+	 * @return EOK on success (we locked the lock) and ETIMEDOUT if failed to lock it.
+	 */
+	inline int lockTimeout(const Time time) {
+		return MutexManager::instance().mutex_lock_timeout(&m_mutex, time);
 	}
 
 	/** Unlock the mutex. */

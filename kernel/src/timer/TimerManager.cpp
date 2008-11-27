@@ -279,11 +279,7 @@ void TimerManager::run()
 			//wait to nearest event or till somebody adds and event
 			//printk("timerManager waiting with time\n");
 			//actually still not working
-			if ( timeout.getSecs() > Time::MAX_USEC_SECS ){
-				m_mySemaphore.downTimeout( 1, Time::MAX_USEC_SECS*Time::MILLION );//will wait max allowed time
-			}else{
-				m_mySemaphore.downTimeout( 1, timeout.getSecs()*Time::MILLION + timeout.getUsecs() );
-			}
+			m_mySemaphore.downTimeout( 1, timeout );
 		}
 	}
 }
