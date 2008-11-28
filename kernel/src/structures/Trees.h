@@ -25,11 +25,9 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Various tree types.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Template typedefs overrides for trees.
  */
 #pragma once
 
@@ -37,10 +35,16 @@
 #include "BinaryNode.h"
 #include "SplayBinaryNode.h"
 
+/*! 
+ * struct Trees Trees.h "structures/Trees.h"
+ * @brief Typedefs for different types of trees.
+ */
 template<typename T>
 struct Trees
 {
-	  typedef Tree< BinaryNode<T> > BinaryTree;
-	  typedef Tree< SplayBinaryNode<T> > SplayTree;
+	/*! See Tree and BinaryNode documentation for details. */
+	typedef Tree< BinaryNode<T> > BinaryTree;
+	/*! See Tree and SplayBinaryNode documentation for details. */
+	typedef Tree< SplayBinaryNode<T> > SplayTree;
 };
 
