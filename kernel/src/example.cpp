@@ -32,15 +32,36 @@
 
 #include "api.h"
 
+#include "structures/Trees.h"
+
 extern "C" void* test1(void*);
 extern "C" void* test2(void*);
 
+template class Tree<SplayBinaryNode<int> >;
+
 void* test(void*)
 {
+
+	Trees<int>::SplayTree tree;
+
+	tree.insert(5);
+  tree.insert(7);
+  tree.insert(3);
+  tree.insert(4);
+  tree.insert(8);
+  tree.insert(6);
+
+	printf( "Inserting done and count is: %u\n", tree.count());
+	BinaryNode<int>* node = tree.findItem(4);
+	tree.remove(5);
+	delete node;
+	printf( "After remove and delete count %u\n", tree.count());
+
 	#ifdef KERNEL_TEST
 		run_test();
 		return NULL;
 	#endif
+
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
 
@@ -51,7 +72,7 @@ void* test(void*)
 //	thread_create(&thread2, test1, NULL, 0);
 //	thread_create(&thread3, test1, NULL, 0);
 	thread_detach(thread_get_current());
-	thread_join_timeout( thread1, 100 );
+	thread_join_timeout( thread1, 1000000 );
 	printf("After join timeout.\n");
 	thread_kill( thread1 );
 	printf("After kill.\n");
