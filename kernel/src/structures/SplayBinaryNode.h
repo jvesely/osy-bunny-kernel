@@ -25,42 +25,59 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Class SplayBinaryNode.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Template class SplayBinaryNode declaration and implementation.
  */
 #pragma once
 
 #include "BinaryNode.h"
 
+/*!
+ * @class SplayBinaryNode SplayBinaryNode.h "structures/SplayBinaryNode.h"
+ * @brief Node in binary splay tree.
+ *
+ * Template class:
+ * @param T Type of the stored data.
+ *
+ * Most of the member functions inherited from BinaryNode are fine, only find
+ * function needs to do the splaying after successful find.
+ */
 template <typename T>
 class SplayBinaryNode: public BinaryNode<T>
 {
 public:
+	/*! @brief Creates BinaryNode predecessor. */
 	SplayBinaryNode( const T& data, Tree< SplayBinaryNode<T> >* tree = NULL )
 		: BinaryNode<T>( data, (Tree< BinaryNode<T> >*) tree ){};
 
+	/*! @brief Finds Node in the subtree.
+	 * @param other Node to find.
+	 * @return Pointer to the found Node on success, NULL otherwise.
+	 *
+	 * Same as BinaryNode searching, except that it splays the found Node
+	 * to the top. This should speed up repetetive requests.
+	 */
 	SplayBinaryNode<T>* subtreeFindNode( const SplayBinaryNode<T>& other);
 
 protected:
+	/*! Rotates to the very top. */
 	void splay();
 
 	friend class Tree< SplayBinaryNode<T> >;
-
 };
 
-/*****************************
- * DEFINITIONS
- *****************************/
-
 /*----------------------------------------------------------------------------*/
+/* DEFINITIONS ---------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
 template <typename T>
 SplayBinaryNode<T>* SplayBinaryNode<T>::subtreeFindNode( const SplayBinaryNode<T>& other)
 {
+	/* find first */
 	SplayBinaryNode<T>* found = (SplayBinaryNode<T>*) BinaryNode<T>::subtreeFindNode( other );
 	
+	/* if it's there move it up */
 	if (found)
 		found->splay();
 	

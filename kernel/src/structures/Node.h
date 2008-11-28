@@ -45,7 +45,7 @@ class Node
 {
 
 public:
-	/*! @brief assign myself to the tree */
+	/*! @brief Makes me think I'm part of the Tree "tree".  */
 	Node( Tree< Node > * tree): m_myTree( tree ){};
 
 	virtual ~Node(){};
