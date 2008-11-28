@@ -25,33 +25,53 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Class Node.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Class Node decalaration and implementation.
  */
 
 #pragma once
 
 #include "Tree.h"
 
+/*!
+ * @class Node Node.h "structures/Node.h"
+ * @brief Predecessor for all Nodes.
+ *
+ * Iplements functions that needs to access private members of the Tree.
+ */
+
 class Node
 {
 
 public:
+	/*! @brief assign myself to the tree */
 	Node( Tree< Node > * tree): m_myTree( tree ){};
+
 	virtual ~Node(){};
 
 protected:
 	Node( const Node& other );
 	Node operator = ( const Node& other );
 
+	/*!
+	 * @brief Gets reference to the root of the current Tree.
+	 *
+	 * @return Reference to the tree's root.
+	 * Node must be inserted in the tree for this function to work correctly.
+	 */
 	Node*& treeRoot()
 		{ ASSERT (m_myTree); return m_myTree->m_root; };
 
+	/*!
+	 * @brief Gets reference to the tree's Node count.
+	 * 
+	 * @return Reference to the count.
+	 * Node must be inserted in the tree for this function to work correctly.
+	 */
 	uint& treeCount()
 		{ ASSERT (m_myTree); return m_myTree->m_count; };
-	
+
+	/*! Here I belong */
 	Tree <Node>* m_myTree;
 };

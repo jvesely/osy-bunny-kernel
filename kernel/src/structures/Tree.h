@@ -249,7 +249,7 @@ bool Tree<MyNode>::remove( const MyNode& item )
 }
 /*----------------------------------------------------------------------------*/
 template <class MyNode>
-void Tree<MyNode>::remove( MyNode* itemptr )
+bool Tree<MyNode>::remove( MyNode* itemptr )
 {
 	/* if it's not here just return */
 	if ( !contains(itemptr) )
