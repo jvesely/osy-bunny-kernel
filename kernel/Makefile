@@ -3,7 +3,7 @@
 #
 
 #use all paths
-VPATH = $(shell find src -type d | grep src)
+VPATH = $(shell find src -type d | grep src | grep -v \.svn)
 VPATH += ../common/
 
 CC = $(shell which mipsel-linux-gnu-gcc)
@@ -46,6 +46,7 @@ OBJS += $(shell find src -name "*.cpp" -o -name "*.S" -o -name "*.c")
 ifneq ($(KERNEL_TEST),)
 	OBJS += $(KERNEL_TEST)
 	CPPFLAGS += -DKERNEL_TEST
+	VPATH += $(dir ../$(KERNEL_TEST))
 endif
 
 # Define DEBUG_MUTEX for mutex5 test
@@ -68,13 +69,8 @@ $(BIN_DIR)/$(KERNEL_RAW): depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 	@echo -e "$(COL_WHITE)Linking kernel RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJS)$(COL_END)"
 	@$(LD) $(LDFLAGS) -T $(INC_DIR)/$(LDS_FILE) -Map $(BIN_DIR)/$(KERNEL_MAP) -o $@ $(OBJS)
 
-.PHONY: $(OBJ_DIR)/test.o
 -include Makefile.depend
 .SUFFIXES:
-
-$(OBJ_DIR)/test.o: ../$(KERNEL_TEST)
-	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_VIOLET)$< $(COL_END)"
-	@$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o : %.cpp
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_BLUE)$< $(COL_END)"
@@ -92,7 +88,7 @@ $(OBJ_DIR)/%.o : %.S
 
 
 ### Dependencies ###
-DEPEND = find $(SRC_DIR) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
+DEPEND = find $(SRC_DIR) ../$(KERNEL_TEST) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
 .PHONY: depend
 depend:
 	@$(DEPEND) > Makefile.depend
