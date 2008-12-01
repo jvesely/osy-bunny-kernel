@@ -49,7 +49,7 @@ void Allocator::setup(const uintptr_t from, const size_t length)
 	uintptr_t end = alignDown(from + length, ALIGMENT);
 	uintptr_t start = alignUp(from, ALIGMENT);
 
-	PRINT_DEBUG(" Testing initiail memory chunk: %p to %p.\n", start, end);
+	PRINT_DEBUG(" Testing initial memory chunk: %p to %p.\n", start, end);
 
 	//test first
 	*(uint8_t*)(end - sizeof(MAGIC)) = MAGIC;
@@ -103,6 +103,7 @@ void* Allocator::getMemory(size_t size) const
 	InterruptDisabler interrupts;
 
 	PRINT_DEBUG ("Requested memory of size: %d B, aligning to %d\n", size, alignUp(size, ALIGMENT) );
+
 	size = alignUp(size, ALIGMENT);
 	void * res = NULL;
 	if (size > (m_end - m_start)) return res;
@@ -111,7 +112,7 @@ void* Allocator::getMemory(size_t size) const
 	const size_t real_size = size + sizeof(BlockHeader) + sizeof(BlockFooter);
 
 	while (res == NULL && ( (uintptr_t)header < m_end) ) {
-		PRINT_DEBUG ("Testing block at %p, size %d\n", header, header->size);
+		PRINT_DEBUG ("Testing block at %p, size %d %s\n", header, header->size, header->free ? "FREE" : "USED" );
 		if (header->free && (header->size >= size) ) { // first fit
 			res = (void*)(header + 1);
 			PRINT_DEBUG ("Found free block at %p, size %d\n", header, header->size );
@@ -122,7 +123,7 @@ void* Allocator::getMemory(size_t size) const
 				break;
 			} else {
 				// split
-				PRINT_DEBUG ("Blocksize (%u) is bigger than requested size (%u), splitting", header->size, size);
+				PRINT_DEBUG ("Blocksize (%u) is bigger than requested size (%u), splitting.\n", header->size, size);
 				const size_t cut_off = header->size + sizeof(BlockHeader) + sizeof(BlockFooter) - real_size;
 
 				//unused rest
