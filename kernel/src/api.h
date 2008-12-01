@@ -91,18 +91,18 @@ int getc_try();
  * @param len number of chars to be read if no \\n is encountered.
  * @return number of chars filled into buffer str
  */
-ssize_t gets(char * str, const size_t len);
+ssize_t gets( char* str, const size_t len );
 
 /*! @brief Allocates block of size size on the heap.
  *	@param size requested size of the block.
  *	@return pointer to the allocated block, NULL on failure
  */
-void * malloc(const size_t size);
+void* malloc( const size_t size );
 
 /*! @brief Returns no longer needed block back to the heap.
  * @param ptr pointer to the block
  */
-void free (const void * ptr);
+void free( const void* ptr );
 
 /*! assert and ASSERT are the same thing. */
 #define assert ASSERT

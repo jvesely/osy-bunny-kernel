@@ -243,14 +243,14 @@ void kpanic(void** context, const char* format, ...){
 
 }
 /*----------------------------------------------------------------------------*/
-void* malloc (size_t size)
+void* malloc( size_t size )
 {
-	return Kernel::instance().malloc(size);
+	return Kernel::instance().malloc( size );
 }
 /*----------------------------------------------------------------------------*/
-void free(void* ptr)
+void free( const void* ptr )
 {
-	Kernel::instance().free(ptr);
+	Kernel::instance().free( ptr );
 }
 /*----------------------------------------------------------------------------*/
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),

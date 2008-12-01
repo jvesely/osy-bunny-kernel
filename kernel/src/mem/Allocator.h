@@ -82,7 +82,7 @@ public:
 	 * (if there are any), checks whether address is from given chunk 
 	 * @param address of the returned block
 	 */
-	void freeMemory(void* address) const;
+	void freeMemory(const void* address) const;
 
 	bool check();
 
