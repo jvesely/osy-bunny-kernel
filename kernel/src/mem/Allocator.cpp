@@ -127,7 +127,7 @@ void* Allocator::getMemory(size_t size) const
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-void Allocator::freeMemory(void* address) const
+void Allocator::freeMemory( const void* address ) const
 {
 	if ( ((uintptr_t)address <= m_start) 
 		|| ((uintptr_t)address > m_end) ) return; // not my heap

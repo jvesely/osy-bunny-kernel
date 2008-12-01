@@ -126,14 +126,11 @@ size_t Kernel::getPhysicalMemorySize(){
 /*----------------------------------------------------------------------------*/
 void* Kernel::malloc(const size_t size) const
 {
-	InterruptDisabler inter;  // should be replaced by mutex
-	void * ret = m_alloc.getMemory(size);
-	return ret;
+	return m_alloc.getMemory(size);
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::free(void * address) const
+void Kernel::free(const void * address) const
 {
-  InterruptDisabler inter; //should be replaced by mutex
 	m_alloc.freeMemory(address);
 }
 /*----------------------------------------------------------------------------*/

@@ -90,12 +90,12 @@ public:
 	 * @param size requested size
 	 * @return adress to the block of given size, NULL on failure
 	 */
-	void* malloc(size_t size) const;
+	void* malloc( size_t size ) const;
 
 	/*! @brief Kernel heap free.
 	 * @param address adress of the returned block
 	 */
-	void free(void* address) const;
+	void free( const void* address ) const;
 
 	void handle(Processor::Context* registers);
 
