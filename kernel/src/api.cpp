@@ -256,8 +256,10 @@ void free( const void* ptr )
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
 {
-	InterruptDisabler inter;
-	return KernelThread::create( thread_ptr, thread_start, data, flags );
+	if (KernelThread::create( thread_ptr, thread_start, data, flags ))
+		return EOK;
+	else
+		return ENOMEM;
 }
 /*----------------------------------------------------------------------------*/
 thread_t thread_get_current()

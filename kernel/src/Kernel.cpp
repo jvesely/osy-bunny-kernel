@@ -90,12 +90,12 @@ void Kernel::run()
 	m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
 	
 	Timer::instance();
-	
+
+	//init and run the main thread
 	thread_t mainThread;
-	thread_create(&mainThread, test, NULL, 0);
-//	m_alloc.check();
-	Scheduler::instance().switchThread();
-	dprintf("Should never reach this.\n");
+	KernelThread::create(&mainThread, test, NULL, 0)->switchTo();
+	
+	panic("Should never reach this.\n");
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){

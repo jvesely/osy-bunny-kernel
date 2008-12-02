@@ -121,6 +121,7 @@ void Timer::interupt()
 	/* Rescheduling was requested */
 	if (nextThread) {
 		PRINT_DEBUG ("Thread switching was due.\n");
-		Scheduler::instance().switchThread();
+		Thread::getCurrent()->yield();
+//		Scheduler::instance().switchThread();
 	}
 }

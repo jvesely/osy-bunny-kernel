@@ -48,7 +48,7 @@ public:
 	/*! At the end it returns used id to the Scheduler */
 	~KernelThread();
 
-	static int create(thread_t* thread_ptr, void* (*thread_start)(void*),
+	static Thread* create(thread_t* thread_ptr, void* (*thread_start)(void*),
 	  void* data = NULL, const unsigned int flags = 0);
 	
 	/*! this will be run in the separate thread, includes some management */

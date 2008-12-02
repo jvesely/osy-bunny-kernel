@@ -52,6 +52,9 @@ public:
 	static const int DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
 
 	static Thread* getCurrent();
+	
+	static Thread* getNext();
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
@@ -81,6 +84,8 @@ public:
 
 	/*! @brief new thread entry point */
 	void start() { run(); };
+
+	void switchTo();
 
 	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
 	void yield();

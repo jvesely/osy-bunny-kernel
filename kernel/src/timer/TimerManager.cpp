@@ -43,7 +43,8 @@ TimerManager::TimerManager():
 	printk( "timer size: %d \n", sizeof( ClassTimer ) );
 	m_lastEvent.setTime( 0, 0 );
 	//Scheduler::instance().getId(this);
-	Scheduler::instance().enqueue( this );
+	//Scheduler::instance().enqueue( this );
+	resume();
 
 	//printk("TimerManager ctor OK\n");
 }
