@@ -42,21 +42,6 @@ template class Tree<SplayBinaryNode<int> >;
 void* test(void*)
 {
 
-	Trees<int>::SplayTree tree;
-
-	tree.insert(5);
-  tree.insert(7);
-  tree.insert(3);
-  tree.insert(4);
-  tree.insert(8);
-  tree.insert(6);
-
-	printf( "Inserting done and count is: %u\n", tree.count());
-	BinaryNode<int>* node = tree.findItem(4);
-	tree.remove(5);
-	delete node;
-	printf( "After remove and delete count %u\n", tree.count());
-
 	#ifdef KERNEL_TEST
 		run_test();
 		return NULL;
