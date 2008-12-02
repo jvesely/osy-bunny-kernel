@@ -55,6 +55,8 @@ public:
 	
 	static Thread* getNext();
 
+	static Thread* fromId( thread_t );
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.

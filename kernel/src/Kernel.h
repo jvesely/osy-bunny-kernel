@@ -36,9 +36,9 @@
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
 #include "mem/Allocator.h"
-#include "proc/Scheduler.h"
+//#include "proc/Scheduler.h"
 
-/*! symbol speciefied in linker script */
+/*! symbol specified in linker script */
 extern uint32_t _kernel_end;
 
 /*!
@@ -66,7 +66,7 @@ public:
 	/*! @return pool of Listitems used by threads in scheduler and mutex */
 //	inline ItemPool& pool() { return m_pool; };
 
-	inline Scheduler& scheduler() { return Scheduler::instance(); };
+//	inline Scheduler& scheduler() { return Scheduler::instance(); };
 
 	inline const RTC& clock() { return m_clock; };
 

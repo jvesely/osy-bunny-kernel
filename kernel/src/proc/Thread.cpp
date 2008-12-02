@@ -32,6 +32,7 @@
 
 #include "Thread.h"
 #include "Kernel.h"
+#include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "timer/Timer.h"
@@ -55,6 +56,11 @@ Thread* Thread::getCurrent()
 Thread* Thread::getNext()
 {
 	return Scheduler::instance().nextThread();
+}
+/*----------------------------------------------------------------------------*/
+Thread* Thread::fromId(thread_t id)
+{
+	return Scheduler::instance().thread( id );
 }
 /*----------------------------------------------------------------------------*/
 Thread::Thread( unative_t flags, uint stackSize):

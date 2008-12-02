@@ -48,7 +48,6 @@ typedef HashMap<thread_t, Thread*> ThreadMap;
 
 class Scheduler: public Singleton<Scheduler>
 {
-public:
 //	static const Time DEFAULT_QUANTUM;
 
 	/*! @brief Converts identifier to pointer 
@@ -57,8 +56,6 @@ public:
 	 */
 	Thread* thread(thread_t thread)
 		{ return m_threadMap.exists(thread)?m_threadMap.at(thread):NULL; };
-
-private:	
 
 	/*! @brief Adds new thread, generates id for it and makes it READY
 	 * @param newThread thread to be added

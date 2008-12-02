@@ -30,6 +30,7 @@
  * File contains Kernel class implementation.
  */
 #include "Kernel.h"
+#include "proc/KernelThread.h"
 #include "api.h"
 #include "devices.h"
 #include "tools.h"

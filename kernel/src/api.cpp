@@ -270,21 +270,24 @@ thread_t thread_get_current()
 int thread_join(thread_t thr)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	return Thread::getCurrent()->join(thread);
 }
 /*----------------------------------------------------------------------------*/
 int thread_join_timeout(thread_t thr, const uint usec)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	return Thread::getCurrent()->joinTimeout(thread, usec);
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach(thread_t thread)
 {
 	InterruptDisabler inter;
-	Thread* thr = Scheduler::instance().thread(thread);
+	Thread* thr = Thread::fromId( thread );
+	//Scheduler::instance().thread(thread);
 	if (!thr
 		|| thr->detached()
 		|| thr->status() == Thread::FINISHED
@@ -322,7 +325,8 @@ void thread_suspend()
 int thread_wakeup(thread_t thr)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
 	thread->wakeup();
 	return EOK;
@@ -331,7 +335,8 @@ int thread_wakeup(thread_t thr)
 int thread_kill(thread_t thr)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
 	thread->kill();
 	return EOK;
