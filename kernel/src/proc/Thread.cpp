@@ -119,7 +119,7 @@ void Thread::switchTo()
 
 	if (this != Scheduler::instance().m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
-			m_currentThread->id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
+			getCurrent()->id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
 		Timer::instance().plan( this, DEFAULT_QUANTUM );
 	}
 
@@ -129,10 +129,11 @@ void Thread::switchTo()
 void Thread::yield()
 {
 	InterruptDisabler inter;
-//	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
+	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
 
 	/* voluntary yield should remove me from the Timer */
 	if (m_status == RUNNING) {
+		PRINT_DEBUG ("Removed from heap drueing yield. (%u)\n", m_id);
 		removeFromHeap();
 	}
 	
@@ -177,6 +178,11 @@ void Thread::sleep(const uint sec)
 void Thread::usleep( const uint usec )
 {
 	PRINT_DEBUG ("Thread %u went sleeping for %u microseconds.\n", m_id, usec);
+	
+	alarm( Time(0, usec));
+	m_status = BLOCKED;
+	yield();
+	return;
 
 	/* If it's to long time to sleep then block */
 	if (usec >= RTC::SECOND)

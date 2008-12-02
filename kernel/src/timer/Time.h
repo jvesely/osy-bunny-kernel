@@ -220,7 +220,7 @@ public:
 		ASSERT (m_usecs < MILLION);
 		ASSERT (other.m_usecs < MILLION);
 	
-		Time result( m_secs, m_usecs );
+		Time result( *this );
 		result -= other;
 		return result;
 	};
