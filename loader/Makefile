@@ -50,7 +50,7 @@ $(BIN_DIR)/$(LOADER_BIN): $(BIN_DIR)/$(LOADER_RAW)
 	@$(OBJCOPY) -O binary  $< $@
 
 $(BIN_DIR)/$(LOADER_RAW): $(COMMON_DIR)/$(LDS_FILE) $(OBJ_DIR)/$(OBJ)
-	@echo -e "$(COL_WHITE)Linking kernel RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJ_DIR)/$(OBJ)$(COL_END)"
+	@echo -e "$(COL_WHITE)Linking loader RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJ_DIR)/$(OBJ)$(COL_END)"
 	@$(LD) $(LD_FLAGS) -T $(COMMON_DIR)/$(LDS_FILE) -Map $(BIN_DIR)/$(LOADER_MAP) -o $@ $(OBJ_DIR)/$(OBJ)
 
 $(OBJ_DIR)/%.o : %.S 

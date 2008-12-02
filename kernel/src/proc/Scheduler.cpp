@@ -46,6 +46,8 @@
 	printf(ARGS);
 #endif
 
+//const Time Scheduler::DEFAULT_QUANTUM(0, 20000);
+/*----------------------------------------------------------------------------*/
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
 	/* create idle thread */
@@ -82,75 +84,94 @@ thread_t Scheduler::getId( Thread* newThread )
 	return id;
 }
 /*----------------------------------------------------------------------------*/
-void Scheduler::switchThread()
+Thread* Scheduler::nextThread()
 {
 	/* disable interrupts, when mangling with scheduling queue */
-	InterruptDisabler interrupts;
+  InterruptDisabler interrupts;
+
+	if (m_activeThreadList.size() == 0 && m_threadCount > 0) {
+		/* nothing to run but there arees till threads present */
+		PRINT_DEBUG ("Next thread will be the idle thread.\n");
+		return m_idle;
+	}
+
+	if (m_threadCount == 0) {
+			/* Only timerManager might be running */
+			ASSERT (m_activeThreadList.size() <= 1);
+			PRINT_DEBUG ("No more threads to run.\n");
+			return NULL;
+	}
 	
-	/* check and delete if current thread was detached and has ended */
+	/* if the running thread is not the first thread in the list 
+	 * (is not in the list at all), then skip rotating and just plan
+	 * the first thread.
+	 */
+	if (m_currentThread != m_activeThreadList.getFront()) {
+		PRINT_DEBUG ("Active thread is not the first in the queue skipping rotation.\n");
+		return m_activeThreadList.getFront();
+	} else {
+	//	PRINT_DEBUG ("Rotating queue.\n");
+		return *m_activeThreadList.rotate();
+	}
+	
+
+}
+/*----------------------------------------------------------------------------*/
+/*
+void Scheduler::switchThread()
+{
+	ASSERT (false);
+	*//* disable interrupts, when mangling with scheduling queue *//*
+	InterruptDisabler interrupts;
+
+	static const Time DEFAULT_QUANTUM(0, 20000);
+	
+	*//* check and delete if current thread was detached and has ended *//*
 	if (   m_currentThread 
 		&& m_currentThread->detached() 
 		&& ( m_currentThread->status() == Thread::KILLED 
 		  || m_currentThread->status() == Thread::FINISHED )) {
-		PRINT_DEBUG("Detached thread has ended...deleting: %u.\n", m_currentThread->id());
+		PRINT_DEBUG ("Detached thread has ended...deleting: %u.\n", m_currentThread->id());
 		delete m_currentThread;
 		m_currentThread = NULL;
 	}
 
-	/* old_stack points to the old thread stackpointerr, 
+	*//* old_stack points to the old thread stackpointerr, 
 	 * if it's NULL saving of the context is skipped
-	 */
+	 *//*
 	void** old_stack = (m_currentThread ? m_currentThread->stackTop() : NULL);
 
-	/* change status if it remains in the queue */
+	*//* change status if it remains in the queue *//*
 	if (m_currentThread->status() == Thread::RUNNING)
 		m_currentThread->setStatus(Thread::READY);
-
-	/* nothing to run */
-	if (!m_activeThreadList.size()) {
-		PRINT_DEBUG("Nothing to do switching to the idle thread.\n");
-		m_currentThread = m_idle;
-	} else {
-
-		/* if the running thread is not the first thread in the list 
-		 * (i.e is not in the list at all), then skip rotating and just plan
-		 * the first thread.
-		 */
-		if (m_currentThread != m_activeThreadList.getFront()) {
-			PRINT_DEBUG("Active thread is not the first in the queue skipping rotation.\n");
-			m_currentThread = m_activeThreadList.getFront();
-		} else {
-			PRINT_DEBUG("Rotating queue.\n");
-			m_currentThread = *m_activeThreadList.rotate();
-		}
-	}
 	
-	/* no more threads can be scheduled => shutdown */
-	if (m_threadCount == 0) {
-			assert(m_activeThreadList.size() == 0);
+	m_currentThread = nextThread();
+	
+	*//* no more threads can be scheduled => shutdown *//*
+	if (!m_currentThread) {
 			printf("[ KERNEL SHUTDOWN ] No more active threads, shutting down.\n");
 			Kernel::halt();
 	}
 	
 	PRINT_DEBUG ("New active thread will be: %u.\n", m_currentThread->id());
 
-	/* set running on the chosen thread */
+	*//* set running on the chosen thread *//*
 	m_currentThread->setStatus(Thread::RUNNING);
 	void** new_stack = m_currentThread->stackTop();
 
-	/* plan it's switch before it's run */
+	*//* plan it's switch before it's run *//*
 	if (m_currentThread != m_idle) {
-		PRINT_DEBUG ("Planning preemptive strike for thread %u.\n",
-			m_currentThread->id());
-			Timer::instance().plan( m_currentThread, Time(0, DEFAULT_QUANTUM) );
+		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
+			m_currentThread->id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
+			Timer::instance().plan( m_currentThread, DEFAULT_QUANTUM );
 	}
 
-	/* the actual context switch */
+	*//* the actual context switch *//*
 	if (old_stack != new_stack) {
 		PRINT_DEBUG ("Switching stacks.\n");
 		Processor::switch_cpu_context(old_stack, new_stack);
 	} 
-}
+}*/
 /*----------------------------------------------------------------------------*/
 void Scheduler::enqueue(Thread * thread)
 {

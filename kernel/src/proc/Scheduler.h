@@ -43,10 +43,12 @@
  * Schedules threads and thread queue of active threads, can suspend, wakeup
  * switch kill and join
  */
+
+typedef HashMap<thread_t, Thread*> ThreadMap; 
+
 class Scheduler: public Singleton<Scheduler>
 {
-public:
-	static const int DEFAULT_QUANTUM = 20000; /*!< 20 msec */
+//	static const Time DEFAULT_QUANTUM;
 
 	/*! @brief Converts identifier to pointer 
 	 * @param thread id to be converted
@@ -54,7 +56,7 @@ public:
 	 */
 	Thread* thread(thread_t thread)
 		{ return m_threadMap.exists(thread)?m_threadMap.at(thread):NULL; };
-	
+
 	/*! @brief Adds new thread, generates id for it and makes it READY
 	 * @param newThread thread to be added
 	 * @result id of the new thread
@@ -77,19 +79,20 @@ public:
 	/*! @brief Gets pointer to current thread.
 	 * @return Pointer to structure representing running thread.
 	 */
-	inline Thread* activeThread()
+	inline Thread* currentThread() const
 		{ return m_currentThread; };
+	
+	Thread* nextThread();
 
 	/*! @brief Rescheduling member function.
 	 *
 	 * Saves context of the running thread on its stack and loads context 
 	 * of the next thread in queue.
 	 */
-	void switchThread();
+	//void switchThread();
 
-private:
 	/*! Planning queue */
-	List<Thread*> m_activeThreadList;
+	ThreadList m_activeThreadList;
 
 	/*! Conversion table thread_t -> Thread* */
 	HashMap<thread_t, Thread*> m_threadMap;
@@ -109,5 +112,8 @@ private:
 	Scheduler();
 	
 	friend class Singleton<Scheduler>;
+	friend class Thread;
+	friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
+
 };
 

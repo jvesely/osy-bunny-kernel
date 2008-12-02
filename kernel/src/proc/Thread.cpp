@@ -32,6 +32,7 @@
 
 #include "Thread.h"
 #include "Kernel.h"
+#include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "timer/Timer.h"
@@ -49,7 +50,17 @@
 
 Thread* Thread::getCurrent()
 {
-	return Scheduler::instance().activeThread();
+	return Scheduler::instance().currentThread();
+}
+/*----------------------------------------------------------------------------*/
+Thread* Thread::getNext()
+{
+	return Scheduler::instance().nextThread();
+}
+/*----------------------------------------------------------------------------*/
+Thread* Thread::fromId(thread_t id)
+{
+	return Scheduler::instance().thread( id );
 }
 /*----------------------------------------------------------------------------*/
 Thread::Thread( unative_t flags, uint stackSize):
@@ -87,17 +98,54 @@ Thread::Thread( unative_t flags, uint stackSize):
 	m_status = INITIALIZED;
 }
 /*----------------------------------------------------------------------------*/
+void Thread::switchTo()
+{
+	InterruptDisabler interrupts;
+		
+	static const Time DEFAULT_QUANTUM(0, 20000);
+
+	Thread* old_thread = getCurrent();
+	//Scheduler::instance().currentThread();
+
+	void** old_stack = old_thread ? &old_thread->m_stackTop : NULL;
+	void** new_stack = &m_stackTop;
+
+	if (old_thread->status() == RUNNING)
+		old_thread->setStatus( READY );
+
+	setStatus( RUNNING );
+
+	Scheduler::instance().m_currentThread = this;
+
+	if (this != Scheduler::instance().m_idle) {
+		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
+			getCurrent()->id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
+		Timer::instance().plan( this, DEFAULT_QUANTUM );
+	}
+
+	Processor::switch_cpu_context(old_stack, new_stack);
+}
+/*----------------------------------------------------------------------------*/
 void Thread::yield()
 {
 	InterruptDisabler inter;
-//	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
+	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
 
 	/* voluntary yield should remove me from the Timer */
 	if (m_status == RUNNING) {
+		PRINT_DEBUG ("Removed from heap drueing yield. (%u)\n", m_id);
 		removeFromHeap();
 	}
+	
+	Thread* next = getNext();
+	if (!next) {
+		PRINT_DEBUG ("Last thread (%u) finished shutting down.\n");
+		Kernel::halt();
+	} else {
+		next->switchTo();
+	}
 
-	Scheduler::instance().switchThread();
+//	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::alarm(const Time& alarm_time)
@@ -113,7 +161,7 @@ void Thread::alarm(const Time& alarm_time)
 	Scheduler::instance().dequeue( this );
 }
 /*----------------------------------------------------------------------------*/
-void Thread::sleep(const uint sec)
+void Thread::sleep( const Time& interval)
 {
 	/* make me blocked. Difference from waiting is that blocked threads cannot be
 	 * waken by thread_wakeup
@@ -122,23 +170,8 @@ void Thread::sleep(const uint sec)
 
 	PRINT_DEBUG ("Thread %u went sleeping for %u seconds.\n", m_id, sec);
 
-	alarm( Time(sec, 0) );
-	Scheduler::instance().switchThread();
-}
-/*----------------------------------------------------------------------------*/
-void Thread::usleep( const uint usec )
-{
-	PRINT_DEBUG ("Thread %u went sleeping for %u microseconds.\n", m_id, usec);
-
-	/* If it's to long time to sleep then block */
-	if (usec >= RTC::SECOND)
-		sleep(usec / RTC::SECOND);
-
-	Time end_time = Time::getCurrent() + Time(0, usec % RTC::SECOND);	
-
-	while (Time::getCurrent() < end_time) {
-		yield();
-	}
+	alarm( interval );
+	yield();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::suspend()
@@ -154,7 +187,8 @@ void Thread::suspend()
 	block();
 
 	/* surrender processor */
-	Scheduler::instance().switchThread();
+	yield();
+//	Scheduler::instance().switchThread();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::wakeup()
@@ -184,7 +218,7 @@ int Thread::join( Thread * thread, bool timed )
 	
 	/* Initial check */
 	if (!thread                                          /* no such thread */
-		|| thread == Scheduler::instance().activeThread()  /* it's me */
+		|| thread == this                                  /* it's me */
 		|| thread->detached()                              /* detached thread */
 		|| thread->follower()                              /* already waited for */
 	) {
@@ -218,9 +252,11 @@ int Thread::join( Thread * thread, bool timed )
 		block();
 	}
 
-	Scheduler::instance().switchThread();
+  yield();
 
-	/* Woken byb the death of the thread (either timed or untimed) */
+//	Scheduler::instance().switchThread();
+
+	/* Woken by the death of the thread (either timed or untimed) */
 	if (!timed || (thread->m_status == FINISHED) || (thread->m_status == KILLED))	
 	{
 		ASSERT ( (thread->m_status == FINISHED) || (thread->m_status == KILLED) );
@@ -298,5 +334,8 @@ Thread::~Thread()
 	//dprintf("Deleting thread %u (det:%d)\n", m_id, m_detached);
 	PRINT_DEBUG ("Thread %u erased from the world.\n", m_id);
 	Kernel::instance().free(m_stack);
+	if ( m_id ) {
+		Scheduler::instance().returnId( m_id );
+	}
 }
 

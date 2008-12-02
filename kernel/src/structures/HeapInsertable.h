@@ -158,10 +158,10 @@ bool HeapInsertable<T, Key, Children>::operator<(
 template <class T, typename Key, int Children>
 void HeapInsertable<T, Key, Children>::insertIntoHeap(Heap<T*, Children>* heap, const Key &key)
 {
-	if (!m_owner) {
+	ASSERT (!m_owner) 
 		m_key = key;
 		(m_owner = heap)->insert(this);
-	}
+	
 }
 
 /*---------------------------------------------------------------------------*/

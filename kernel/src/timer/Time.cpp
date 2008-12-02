@@ -32,7 +32,7 @@
  * at least people can understand it.
  */
 
-#include "timer/Time.h"
+#include "Time.h"
 #include "Kernel.h"
 
 Time Time::getCurrentTime()

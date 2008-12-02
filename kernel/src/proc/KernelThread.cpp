@@ -32,6 +32,7 @@
 
 #include "KernelThread.h"
 #include "Kernel.h"
+#include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "api.h"
@@ -49,10 +50,10 @@ void KernelThread::run()
 	}
 
 	block();
-	Scheduler::instance().switchThread();
+	yield();
+//	Scheduler::instance().switchThread();
 	
-	printf("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);
-	assert(false);
+	panic("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);
 }
 /*----------------------------------------------------------------------------*/
 KernelThread::KernelThread(void* (*thread_start)(void*), void* data, 
@@ -65,22 +66,22 @@ KernelThread::KernelThread(void* (*thread_start)(void*), void* data,
 KernelThread::~KernelThread()
 {
 	//printf("[ THREAD %u ] R.I.P. (detached:%S)\n", m_id, m_detached ? "YES":"NO" );
-	Scheduler::instance().returnId(m_id);
+//	Scheduler::instance().returnId(m_id);
 }
 /*----------------------------------------------------------------------------*/
-int KernelThread::create(thread_t* thread_ptr, void* (*thread_start)(void*),
-  void* thread_data, const unsigned int thread_flags)
+Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags )
 {
 	Thread* new_thread = new KernelThread(thread_start, thread_data, thread_flags);
 
 	if ( (new_thread == NULL) || (new_thread->status() != INITIALIZED) ) {
 		delete new_thread;
-		return ENOMEM;
+		return NULL;
 	}
 //	dprintf("Getting ID.\n");
 	*thread_ptr = Scheduler::instance().getId(new_thread);
 //	dprintf("Thread %d(%p) created, now enqueue.\n", new_thread->id(), new_thread);
-	Scheduler::instance().enqueue(new_thread);
+	new_thread->resume();
+//	Scheduler::instance().enqueue(new_thread);
 //	dprintf("Enqueued and leaving.\n");
-	return EOK;
+	return new_thread;
 }

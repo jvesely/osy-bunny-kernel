@@ -30,6 +30,7 @@
  * File contains Kernel class implementation.
  */
 #include "Kernel.h"
+#include "proc/KernelThread.h"
 #include "api.h"
 #include "devices.h"
 #include "tools.h"
@@ -90,12 +91,12 @@ void Kernel::run()
 	m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
 	
 	Timer::instance();
-	
+
+	//init and run the main thread
 	thread_t mainThread;
-	thread_create(&mainThread, test, NULL, 0);
-//	m_alloc.check();
-	Scheduler::instance().switchThread();
-	dprintf("Should never reach this.\n");
+	KernelThread::create(&mainThread, test, NULL, 0)->switchTo();
+	
+	panic("Should never reach this.\n");
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){
@@ -184,10 +185,8 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 //		Processor::msim_stop();
 	}
 	if (registers->cause & CAUSE_IP7_MASK) {//timer interrupt
-//		dprintf("Timer interrupt: %x.\n", reg_read_count());
 		reg_write_cause(0);
 		Timer::instance().interupt();
-//		Scheduler::instance().activeThread()->yield();
 	} 
 
 }
@@ -197,14 +196,17 @@ void Kernel::setTimeInterrupt(const Time& time)
 	using namespace Processor;
 	InterruptDisabler interrupts;
 
-	
-	Time relative = time - Time::getCurrent();
+	Time now = Time::getCurrent();
+	if ( time < now )
+		now = time;
+	Time relative = time - now;
 
 	const unative_t current = reg_read_count();
 	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();
 
-	const unative_t planned = (time.secs())
-		?	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
+	const unative_t planned = (time.usecs() || time.secs())
+		?	
+	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
 		: current;
 
 		

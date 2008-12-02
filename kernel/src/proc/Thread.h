@@ -52,6 +52,11 @@ public:
 	static const int DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
 
 	static Thread* getCurrent();
+	
+	static Thread* getNext();
+
+	static Thread* fromId( thread_t );
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
@@ -82,6 +87,8 @@ public:
 	/*! @brief new thread entry point */
 	void start() { run(); };
 
+	void switchTo();
+
 	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
 	void yield();
 
@@ -109,12 +116,7 @@ public:
 	/*! @brief Surrenders processing time for given time
 	 * @param sec number of seconds to sleep
 	 */
-	void sleep(const uint sec);
-
-	/*! @brief Microsec brother of sleep()
-	 * @param usec number of microseconds to sleep
-	 */
-	void usleep(const uint usec);
+	void sleep(const Time& interval);
 
 	/*! @brief Conversion to thread_t type.
 	 * @return thread_t identifier of this thread

@@ -256,8 +256,10 @@ void free( const void* ptr )
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
   void* data, const unsigned int flags)
 {
-	InterruptDisabler inter;
-	return KernelThread::create( thread_ptr, thread_start, data, flags );
+	if (KernelThread::create( thread_ptr, thread_start, data, flags ))
+		return EOK;
+	else
+		return ENOMEM;
 }
 /*----------------------------------------------------------------------------*/
 thread_t thread_get_current()
@@ -268,21 +270,24 @@ thread_t thread_get_current()
 int thread_join(thread_t thr)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	return Thread::getCurrent()->join(thread);
 }
 /*----------------------------------------------------------------------------*/
 int thread_join_timeout(thread_t thr, const uint usec)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	return Thread::getCurrent()->joinTimeout(thread, usec);
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach(thread_t thread)
 {
 	InterruptDisabler inter;
-	Thread* thr = Scheduler::instance().thread(thread);
+	Thread* thr = Thread::fromId( thread );
+	//Scheduler::instance().thread(thread);
 	if (!thr
 		|| thr->detached()
 		|| thr->status() == Thread::FINISHED
@@ -300,12 +305,12 @@ int thread_detach(thread_t thread)
 /*----------------------------------------------------------------------------*/
 void thread_sleep(const unsigned int sec)
 {
-	Thread::getCurrent()->sleep(sec);
+	Thread::getCurrent()->sleep( Time(sec, 0) );
 }
 /*----------------------------------------------------------------------------*/
 void thread_usleep(const unsigned int usec)
 {
-	Thread::getCurrent()->usleep(usec);
+	Thread::getCurrent()->sleep( Time(0, usec) );
 }
 /*----------------------------------------------------------------------------*/
 void thread_yield()
@@ -321,7 +326,8 @@ void thread_suspend()
 int thread_wakeup(thread_t thr)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
 	thread->wakeup();
 	return EOK;
@@ -330,7 +336,8 @@ int thread_wakeup(thread_t thr)
 int thread_kill(thread_t thr)
 {
 	InterruptDisabler inter;
-	Thread* thread = Scheduler::instance().thread(thr);
+	Thread* thread = Thread::fromId( thr );
+	//Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
 	thread->kill();
 	return EOK;

@@ -30,12 +30,13 @@
  * Class Time storing time in both seconds and microseconds
  */
 #pragma once
-#include <api.h>
+
+#include "api.h"
 
 //------------------------------------------------------------------------------
 /** @brief time respresentation
-*	Stores both seconds and microseconds,count of microseconst is less than a
-*	million
+*	Stores both seconds and microseconds, count of microseconds is less than one
+*	million.
 *
 *	Use of implicit operator = and copy constructor is safe and implicit
 *	implementation is sufficient.
@@ -45,7 +46,7 @@ class Time
 {
 public:
 	/** @brief million*/
-	static const int MILLION = 1000000;
+	static const uint MILLION = 1000000;
 
 	/** @brief max seconds in unsigned int microseconds
 	*
@@ -58,7 +59,8 @@ public:
 	*
 	*	default time is 0 seconds, 0 microSecs
 	*/
-	inline Time( unsigned int sec = 0, unsigned int usec = 0 ){
+	inline Time( uint sec = 0, uint usec = 0 ) 
+	{
 		setTime( sec, usec );
 	}
 
@@ -75,8 +77,11 @@ public:
 	*	calls setTime (normalizes time, so that usec part is less than million)
 	*	@return *this const
 	*/
-	inline const Time & operator += ( const Time & time ){
-		setTime( time.m_secs + m_secs, time.m_usecs + m_usecs );
+	inline const Time& operator += ( const Time& other ) {
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+
+		setTime( other.m_secs + m_secs, other.m_usecs + m_usecs );
 		return *this;
 	}
 
@@ -87,16 +92,26 @@ public:
 	*	greater than original *this time.
 	*	@return *this const
 	*/
-	inline const Time & operator -= ( const Time & time );
+	inline const Time& operator -= ( const Time& other )
+	{
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
 
+		setTime( (m_secs - other.m_secs) - 1, (MILLION + m_usecs) - other.m_usecs );
+		return *this;
+	}
 	/** @brief
 	*
 	*	compares Time values
 	*	Times are equal if both their timestamp (seconds) parts and their
 	*	useconds parts are equal.
 	*/
-	inline bool operator == ( const Time & time ) const{
-		return ( ( time.getSecs() == m_secs ) && ( time.getUsecs() == m_usecs ) );
+	inline bool operator == ( const Time& other ) const
+	{
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+
+		return ( (m_secs == other.m_secs) && (m_usecs == other.m_usecs) );
 	}
 
 	/** @brief
@@ -105,8 +120,11 @@ public:
 	*	useconds parts are equal.
 	*	function is wrapper for !(operator==)
 	*/
-	inline bool operator != ( const Time & time ) const{
-		return !( operator == ( time ) );
+	inline bool operator != ( const Time& other ) const {
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+
+		return !( operator == ( other ) );
 	}
 
 	/** @brief
@@ -116,10 +134,12 @@ public:
 	*	than other's.
 	*/
 	inline bool operator < ( const Time& other ) const {
-		return ( m_secs < other.m_secs )
-		       || ( ( m_secs  == other.m_secs ) && ( m_usecs <  other.m_usecs ) );
-	}
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
 
+		return ( m_secs < other.m_secs )
+	      || ( ( m_secs  == other.m_secs ) && ( m_usecs <  other.m_usecs ) );
+	}
 
 	/** @brief
 	*
@@ -128,8 +148,12 @@ public:
 	*	than other's.
 	*	@note Implementation uses bool operator < (const Time& other) const ;
 	*/
-	inline bool operator > ( const Time& other ) const
-	{	return other < *this;	}
+	inline bool operator > ( const Time& other ) const {
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+
+		return other < *this;	
+	}
 
 	/** @brief
 	*
@@ -138,8 +162,12 @@ public:
 	*	useconds part is greater than or equals other's.
 	*	@note Implementation uses bool operator < (const Time& other) const;
 	*/
-	bool operator >=( const Time & other ) const
-	{	return !( operator<( other ) );	}
+	bool operator >= ( const Time& other ) const {
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+
+		return !( operator < ( other ) );
+	}
 
 	/** @brief
 	*
@@ -148,30 +176,37 @@ public:
 	*	useconds part is greater than or equals other's.
 	*	@note Implementation uses bool operator > (const Time& other) const;
 	*/
-	bool operator <=( const Time & other ) const
-	{	return !( operator>( other ) ); }
+	bool operator <= ( const Time& other ) const {
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+
+		return !(other < *this);
+	}
 
 	/** @brief set time to values
 	*
-	*	normalizes time, so that microsecs part is less than million. I usec parameter is greater
-	*	than million, seconds part is increased
+	*	normalizes time, so that microsecs part is less than million.
+	*	If usec parameter is greater than million, seconds part is increased.
 	*/
-	inline void setTime( unsigned int sec, unsigned int usec ){
+	inline void setTime( uint sec, uint usec ){
 		m_secs = sec;
 		m_usecs = usec;
 		correctTime();
 	}
 
-	/** @brief Returns new time that is sum of this Time and other Time.
+	/** @brief Returns new time that is sum of this Time and the other Time.
 	*
 	*	Each component is added separately and then they are normalized.
 	*	@note Implementation uses Time& operator += (const Time& other);
 	*/
 
-	Time operator + ( const Time & time ) const
+	Time operator + ( const Time& other ) const
 	{
-		Time result( m_secs, m_usecs );
-		result += time;
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+		
+		Time result( *this );
+		result += other;
 		return result;
 	};
 
@@ -180,7 +215,15 @@ public:
 	*	Each component is substracted separately and then they are normalized.
 	*	@note Implementation uses Time& operator -= (const Time& other);
 	*/
-	inline Time operator - ( const Time & time ) const;
+	inline Time operator - ( const Time& other ) const
+	{
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+	
+		Time result( *this );
+		result -= other;
+		return result;
+	};
 
 	/** @brief Gets timestamp part. */
 	inline uint secs() const { return m_secs; }
@@ -189,10 +232,10 @@ public:
 	inline uint usecs() const { return m_usecs; }
 
 	/** @brief Gets timestamp part. wrapper for usecs*/
-	inline unsigned int getSecs() const{return secs();}
+	inline uint getSecs() const { return secs(); }
 
 	/** @brief Gets useconds part. wrapper for secs*/
-	inline unsigned int getUsecs() const{return usecs();}
+	inline uint getUsecs() const { return usecs(); }
 
 	/** @brief Gets current time.
 	 *
@@ -208,45 +251,40 @@ public:
 	* Given time should not differ from actual time by more than 1 second.
 	*	wrapper for getCurrentTime()
 	*/
-	inline static Time getCurrent(){return getCurrentTime();}
+	inline static Time getCurrent() { return getCurrentTime(); }
 
 protected:
 	/** @brief corrects time
 	*
 	*	Ensures that microsecond part of time is less than million
 	*/
-	inline void correctTime(){
+	inline void correctTime()
+	{
 		m_secs = m_secs + ( m_usecs / MILLION );
 		m_usecs = m_usecs % MILLION;
 	}
 
-	/** @brief seconds time
-	*/
-	unsigned int m_secs;
-	/** @brief microseconds time
-	*/
-	unsigned int m_usecs;
+	/** @brief seconds time */
+	uint m_secs;
+
+	/** @brief microseconds time */
+	uint m_usecs;
 };
 
-
-inline const Time & Time::operator -= ( const Time & time )
+/*----------------------------------------------------------------------------*/
+/* DEFINITIONS ---------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*inline const Time& Time::operator -= ( const Time& other )
 {
-	if ( m_usecs < time.getUsecs() ){
-		setTime( m_secs - time.m_secs - 1, ( MILLION + m_usecs ) - time.m_usecs );
-	}else{
-		setTime( m_secs - time.m_secs , m_usecs - time.m_usecs );
-	}
+//	if ( m_usecs < time.m_usecs ) {
+		ASSERT (m_usecs < MILLION);
+		ASSERT (other.m_usecs < MILLION);
+		setTime( (m_secs - other.m_secs) - 1, (MILLION + m_usecs) - time.m_usecs );
+//	} else {
+//		setTime( m_secs - time.m_secs, m_usecs - time.m_usecs );
+//	}
 	return *this;
-}
-
-
-inline Time Time::operator - ( const Time & time ) const
-{
-	Time result( m_secs, m_usecs );
-	result -= time;
-	return result;
-};
-
+}*/
 //------------------------------------------------------------------------------
 
 
