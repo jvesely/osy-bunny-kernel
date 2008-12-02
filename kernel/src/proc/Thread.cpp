@@ -161,7 +161,7 @@ void Thread::alarm(const Time& alarm_time)
 	Scheduler::instance().dequeue( this );
 }
 /*----------------------------------------------------------------------------*/
-void Thread::sleep(const uint sec)
+void Thread::sleep( const Time& interval)
 {
 	/* make me blocked. Difference from waiting is that blocked threads cannot be
 	 * waken by thread_wakeup
@@ -170,29 +170,8 @@ void Thread::sleep(const uint sec)
 
 	PRINT_DEBUG ("Thread %u went sleeping for %u seconds.\n", m_id, sec);
 
-	alarm( Time(sec, 0) );
+	alarm( interval );
 	yield();
-//	Scheduler::instance().switchThread();
-}
-/*----------------------------------------------------------------------------*/
-void Thread::usleep( const uint usec )
-{
-	PRINT_DEBUG ("Thread %u went sleeping for %u microseconds.\n", m_id, usec);
-	
-	alarm( Time(0, usec));
-	m_status = BLOCKED;
-	yield();
-	return;
-
-	/* If it's to long time to sleep then block */
-	if (usec >= RTC::SECOND)
-		sleep(usec / RTC::SECOND);
-
-	Time end_time = Time::getCurrent() + Time(0, usec % RTC::SECOND);	
-
-	while (Time::getCurrent() < end_time) {
-		yield();
-	}
 }
 /*----------------------------------------------------------------------------*/
 void Thread::suspend()

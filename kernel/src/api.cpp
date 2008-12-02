@@ -304,12 +304,12 @@ int thread_detach(thread_t thread)
 /*----------------------------------------------------------------------------*/
 void thread_sleep(const unsigned int sec)
 {
-	Thread::getCurrent()->sleep(sec);
+	Thread::getCurrent()->sleep( Time(sec, 0) );
 }
 /*----------------------------------------------------------------------------*/
 void thread_usleep(const unsigned int usec)
 {
-	Thread::getCurrent()->usleep(usec);
+	Thread::getCurrent()->sleep( Time(0, usec) );
 }
 /*----------------------------------------------------------------------------*/
 void thread_yield()

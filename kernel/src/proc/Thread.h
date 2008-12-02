@@ -116,12 +116,7 @@ public:
 	/*! @brief Surrenders processing time for given time
 	 * @param sec number of seconds to sleep
 	 */
-	void sleep(const uint sec);
-
-	/*! @brief Microsec brother of sleep()
-	 * @param usec number of microseconds to sleep
-	 */
-	void usleep(const uint usec);
+	void sleep(const Time& interval);
 
 	/*! @brief Conversion to thread_t type.
 	 * @return thread_t identifier of this thread
