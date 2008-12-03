@@ -44,7 +44,7 @@
 class Allocator {
 	/*! @struct BlockHeader Allocator.h "mem/Allocator.h"
 	 * @brief Header of memory blocks keeps availability, 
-	 * size and some magic 
+	 * size and some magic. 
 	 */
 	struct BlockHeader {
 		bool free;  /*!< availability */
@@ -52,14 +52,15 @@ class Allocator {
 		uint32_t magic; /*!< magic bytes for detecting corruption */
 	};
 	/*! @struct BlockFooter Allocator.h "mem/Allocator.h"
-	 * @brief Footer of memory blocks keeps magic and size 
+	 * @brief Footer of memory blocks keeps magic and size.
 	 */
 	struct BlockFooter {
 		uint32_t magic; /*!< magic bytes for detecting corruption */
 		size_t size;	/*!< size of the block */
 	};
+
 public:
-	/*! @brief initializes given chunk 
+	/*! @brief Initializes given chunk. 
 	 *
 	 * Initializes heap on given chunk of memory.
 	 * Creates one big free block.
@@ -68,22 +69,24 @@ public:
 	 */
 	void setup(const uintptr_t from, const size_t length);
 
-	/*! @brief returns free block of size >= amount 
+	/*! @brief Allocates free block of size >= amount.
 	 *
-	 * Tries to find first big enough free block (first fit)
+	 * Tries to find first big enough free block (first fit).
+	 * State of the memory in the returned block is undefined.
 	 * @param amount size of requested block
 	 * @return pointer to allocated block, NULL on failure
 	 */
 	void* getMemory(const size_t amount) const;
 
-	/*! @brief returns used block to the heap 
+	/*! @brief Returns used block to the heap.
 	 *
 	 * Marks Block as free and merges it with adjecent free blocks 
-	 * (if there are any), checks whether address is from given chunk 
+	 * (if there are any), checks whether address is from given chunk.
 	 * @param address of the returned block
 	 */
 	void freeMemory(const void* address) const;
 
+	/*! @brief Checks the status of all (used and free) blocks. */
 	bool check();
 
 private:
@@ -103,13 +106,13 @@ private:
 	 * Creates header and footer structures representing block. 
 	 * Sets size and MAGIC.
 	 * @param start start of the block
-	 * @size of the block (including header and footer)
-	 * @free availability of the block
+	 * @param size of the block (including header and footer)
+	 * @param free availability of the block
 	 */
 	void createBlock(
 		const uintptr_t start, const size_t size, const bool free )  const;
 
-	/*! @brief checks state of the block.
+	/*! @brief Checks the state of the block.
 	 *
 	 * Checks whether header size == footer size, and MAGIC in both structures.
 	 * @param start pointer to the block
@@ -117,22 +120,22 @@ private:
 	 */
 	bool checkBlock(const uintptr_t start) const;
 
-	/*! aligns adress to nearest bigger 4byte block.
+	/*! @brief Aligns address to nearest bigger block.
 	 * @param address address to be aligned
-	 * @param align align amount
+	 * @param factor align amount should be power of 2
 	 * @return aligned address
 	 */
 	static inline unsigned int alignUp(
-		const unsigned int number, const unsigned int factor)
-		{ return  (number + (factor - 1) ) & ~(factor - 1); };
+		const unsigned int address, const unsigned int factor)
+		{ return  (address + (factor - 1) ) & ~(factor - 1); };
 
-	/*! aligns address to nearest smaller 4byte block 
+	/*! @brief Aligns address to nearest smaller block 
 	 * @param address address to be aligned
-	 * @param align align amount
+	 * @param factor align amount should be power of 2
 	 * @return aligned address
 	 */
 	static inline unsigned int alignDown(
-		const unsigned int number, const unsigned int factor)
-		{ return number & ~(factor - 1); }
+		const unsigned int address, const unsigned int factor)
+		{ return address & ~(factor - 1); }
 
 };

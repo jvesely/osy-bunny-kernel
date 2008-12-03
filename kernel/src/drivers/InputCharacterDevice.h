@@ -39,30 +39,31 @@
  * @class InputCharacterDevice InputCharacterDevice.h "drivers/InputCharacterDevice.h"
  * @brief Buffered character input class.
  *
- * class reads character from given address and stores them in the buffer.
+ * Class reads character from given address and stores them in the buffer.
  * It needs to take kick in the form of insert metho to do that.
  */
 class InputCharacterDevice
 {
 public:
-	/*! constructor sets the reading address */
+	/*! @brief Constructor sets the reading address */
 	InputCharacterDevice(char * address):m_inputAddress(address){};
 
-	/*! reads one stored char from the buffer */
+	/*! @brief Reads one stored char from the buffer */
 	inline char getChar() { return m_buffer.get(); };
 	
-	/*! outputs buffer size */
+	/*! @brief Outputs buffer size */
 	inline size_t size() const { return BUFF_SIZE; };
 
-	/*! outputs current buffer usege */
+	/*! @brief Outputs current buffer usege */
 	inline size_t count() const { return m_buffer.count(); };
 
-	/*! kick to read value from input and put it to the buffer */
+	/*! @brief Kick to read value from input and put it to the buffer */
 	inline size_t insert() {	return m_buffer.insert(*m_inputAddress);	};
+
 protected:
 	/*! device address */
 	char * m_inputAddress;
 
-	/*! buffer */
+	/*! buffer of the read characters */
 	Buffer<char, BUFF_SIZE> m_buffer;
 };

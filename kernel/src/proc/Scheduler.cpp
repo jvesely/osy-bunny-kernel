@@ -113,70 +113,14 @@ Thread* Scheduler::nextThread()
 	//	PRINT_DEBUG ("Rotating queue.\n");
 		return *m_activeThreadList.rotate();
 	}
-	
-
 }
-/*----------------------------------------------------------------------------*/
-/*
-void Scheduler::switchThread()
-{
-	ASSERT (false);
-	*//* disable interrupts, when mangling with scheduling queue *//*
-	InterruptDisabler interrupts;
-
-	static const Time DEFAULT_QUANTUM(0, 20000);
-	
-	*//* check and delete if current thread was detached and has ended *//*
-	if (   m_currentThread 
-		&& m_currentThread->detached() 
-		&& ( m_currentThread->status() == Thread::KILLED 
-		  || m_currentThread->status() == Thread::FINISHED )) {
-		PRINT_DEBUG ("Detached thread has ended...deleting: %u.\n", m_currentThread->id());
-		delete m_currentThread;
-		m_currentThread = NULL;
-	}
-
-	*//* old_stack points to the old thread stackpointerr, 
-	 * if it's NULL saving of the context is skipped
-	 *//*
-	void** old_stack = (m_currentThread ? m_currentThread->stackTop() : NULL);
-
-	*//* change status if it remains in the queue *//*
-	if (m_currentThread->status() == Thread::RUNNING)
-		m_currentThread->setStatus(Thread::READY);
-	
-	m_currentThread = nextThread();
-	
-	*//* no more threads can be scheduled => shutdown *//*
-	if (!m_currentThread) {
-			printf("[ KERNEL SHUTDOWN ] No more active threads, shutting down.\n");
-			Kernel::halt();
-	}
-	
-	PRINT_DEBUG ("New active thread will be: %u.\n", m_currentThread->id());
-
-	*//* set running on the chosen thread *//*
-	m_currentThread->setStatus(Thread::RUNNING);
-	void** new_stack = m_currentThread->stackTop();
-
-	*//* plan it's switch before it's run *//*
-	if (m_currentThread != m_idle) {
-		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
-			m_currentThread->id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
-			Timer::instance().plan( m_currentThread, DEFAULT_QUANTUM );
-	}
-
-	*//* the actual context switch *//*
-	if (old_stack != new_stack) {
-		PRINT_DEBUG ("Switching stacks.\n");
-		Processor::switch_cpu_context(old_stack, new_stack);
-	} 
-}*/
 /*----------------------------------------------------------------------------*/
 void Scheduler::enqueue(Thread * thread)
 {
 	/* disable interupts as all sheduling queue mangling functions */
 	InterruptDisabler interrupts;
+
+	ASSERT (thread);
 
 	/* all threads in the queue can be scheduled to run so their status
 	 * should be ready
@@ -190,7 +134,7 @@ void Scheduler::enqueue(Thread * thread)
 	 */
 	if (m_currentThread == m_idle && m_activeThreadList.size() == 1) {
 		PRINT_DEBUG("Ending IDLE thread reign.\n");
-		Timer::instance().plan( m_idle, Time(0, 1) );
+		thread->switchTo();
 	}
 	
 }

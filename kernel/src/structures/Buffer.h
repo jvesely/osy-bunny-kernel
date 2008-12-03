@@ -46,10 +46,10 @@ template<typename T, int SIZE>
 class Buffer
 {
 public:
-	/*! constructor zeros indexes and count */
+	/*! @brief Constructor zeros indexes and count. */
 	inline Buffer():m_head(0), m_tail(0), m_count(0) {};
 
-	/*! inserts item into internal array
+	/*! @brief Inserts item into internal array
 	 * @param item item to be inserted
 	 * @return number of items inserted (0/1)
 	 */
@@ -61,42 +61,52 @@ public:
 		++m_count;
 //		dprintf("Inserted \"%c\" on position %d count is now %d.\n", item, m_tail, m_count);	
 		m_tail = (m_tail + 1) % SIZE;
-		assert(m_count <= SIZE);
+		ASSERT (m_count <= SIZE);
 		return 1;
 	};
 
-	/*! reads the first item in the buffer without removing it.
+	/*! @brief Reads the first item in the buffer without removing it.
 	 * Should only be called on non-empty buffer.
-	 * @return const refernce to the first item.
+	 * @return Const refernce to the first item, undefined if
+	 * there is no such item.
 	 */
 	inline const T& readFirst() const
 	/* expects non-empty buffer, needs to be checked before using it */
 	{
-		assert(m_count > 0);
+		ASSERT (m_count > 0);
 		return m_buffer[m_head];
 	};
-	
+
+	/*! @brief Reads the last item in the buffer without removing it.
+   * Should only be called on non-empty buffer.
+   * @return Const refernce to the last item, undefined if
+   * there is no such item.
+   */
 	inline const T& readLast() const
 	{
-		assert(m_count > 0);
+		ASSERT (m_count > 0);
 		return m_buffer[m_tail - 1];
 	}
 
-	/*! reads and removes te first item from the array.
+	/*! @brief Reads and removes the first item from the array.
 	 * Should only be called on non-empty buffer.
-	 * @return first item in the array
+	 * Destructor is not called on the item, it will be overwritten
+	 * when it's place is required.
+	 * @return Copy of the first item in the array.
 	 */
 	inline T get()
 	/* expects non-empty buffer, needs to be checked before using */
 	{
-		assert(m_count > 0);
+		ASSERT (m_count > 0);
 		T value =  m_buffer[m_head++];
 		m_head %= SIZE;
 		--m_count;
 		return value;
 	};
 
-	/*! @return number of items in the buffer */
+	/*! @brief Gets number of items stored.
+	 * @return Number of items in the buffer 
+	 */
 	inline size_t count() const	{ return m_count;	};
 
 private:

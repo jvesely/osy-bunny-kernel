@@ -57,10 +57,11 @@ public:
 	 */
 	void plan(Thread* thread, const Time& time);
 
-	/*! @brief Singal that some events might be due. 
+	/*! @brief Signals that some events might be due. 
+	 *
 	 * Takes the thread and acts according to it's status:
 	 *		RUNNING threads are switched (at the end of processing)
-	 *		other threads are enqueued to the running queue
+	 *		other threads are enqueued to the running queue.
 	 */
 	void interupt();
 

@@ -109,7 +109,7 @@ void Timer::interupt()
 			nextThread = true;
 			thr->removeFromHeap();
 		} else {
-			/* Other threadd might have only requested waking up */
+			/* Other thread might have only requested waking up */
 			ASSERT (thr->status() != Thread::READY);
 			PRINT_DEBUG ("Waking thread %u.\n", thr->id());
 			thr->resume();

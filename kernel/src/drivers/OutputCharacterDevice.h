@@ -42,18 +42,18 @@
 class OutputCharacterDevice
 {
 public:
-	/*! constructor sets writing address 
+	/*! @brief Constructor sets writing address.
 	 * @param add writing address
 	 */
 	OutputCharacterDevice(char * add):m_outputAddress(add){};
 
-	/*! method prints given char 
+	/*! @brief Prints given char on the associated device.
 	 * @param c character to print
 	 * @return number of chars printed (0/1)
 	 */
 	inline size_t outputChar(char c) const { *m_outputAddress = c; return 1; };
 
 protected:
-	/*! writing address */
+	/*! @brief writing address */
 	char * m_outputAddress;
 };

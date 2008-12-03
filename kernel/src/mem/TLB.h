@@ -42,11 +42,14 @@
 class TLB
 {
 public:
-	/*! @brief contructor should reset the tlb 
+	/*! @brief Prepares the TLB, by @a flushing it. */
+	TLB(){ flush(); }
+
+	/*! @brief Removes all entries from the TLB
 	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
 	 * Inspired by Kalisto
 	 */
-	TLB();
+	void flush();
 
 	/*! @brief setMapping inserts record into TLB.
 	 *

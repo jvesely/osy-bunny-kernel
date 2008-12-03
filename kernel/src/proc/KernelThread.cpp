@@ -56,18 +56,10 @@ void KernelThread::run()
 	panic("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);
 }
 /*----------------------------------------------------------------------------*/
-KernelThread::KernelThread(void* (*thread_start)(void*), void* data, 
-	unative_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE):
+KernelThread::KernelThread( void* (*thread_start)(void*), void* data, 
+	unative_t flags, uint stackSize ):
 	Thread(flags, stackSize), m_runFunc(thread_start), m_runData(data)
-{
-//	dprintf("Creating Kernel Thread %p\n", this);
-}
-/*----------------------------------------------------------------------------*/
-KernelThread::~KernelThread()
-{
-	//printf("[ THREAD %u ] R.I.P. (detached:%S)\n", m_id, m_detached ? "YES":"NO" );
-//	Scheduler::instance().returnId(m_id);
-}
+{}
 /*----------------------------------------------------------------------------*/
 Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags )
 {

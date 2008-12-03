@@ -86,7 +86,7 @@ int getc_try();
 
 /*! gets tries to read multiple chars from the device buffer.
  * If len is 0 returns EINVAL. Reads from the buffer until '\n'
- * is read or len characters were read. \0 is always put at the end.
+ * is read or len characters were read. \\0 is always put at the end.
  * @param str pointer to the buffer to be filled.
  * @param len number of chars to be read if no \\n is encountered.
  * @return number of chars filled into buffer str

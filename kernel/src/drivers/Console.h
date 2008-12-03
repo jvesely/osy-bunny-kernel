@@ -46,23 +46,36 @@
 class Console:public OutputCharacterDevice, public InputCharacterDevice
 {
 public:
-	/*! Initializes parent classes for input and output */
+	/*! @brief Initializes parent classes for input and output. */
 	Console(char* outAddress = NULL, char* inAddress = NULL):
 		OutputCharacterDevice(outAddress),
 		InputCharacterDevice(inAddress) {};
 	
-	/*! Prints string on associated device
+	/*! @brief Prints string on associated device.
 	 * @param str pointer to the first char
 	 * @return number of printed chars
 	 */
 	size_t outputString(const char* str) const;
 
+	/*! @brief Gets next character in the buffer. (BLOCKING)
+	 * @return Read character
+	 */
 	char readChar();
-	
+
+	/*! @brief Reads and stores multiple chars from the input.
+	 * @param str Place to store the characters.
+	 * @param len Maximum number of characters to store, including ending \\0.
+	 * @return Number of read characters
+	 */
 	ssize_t readString(char* str, const size_t len);
 
+	/*! @brief Handles keyboard interrupts.
+	 *
+	 * Fills the buffer, wakes the threads.
+	 */
 	void interrupt();
 
 private:
-	List<Thread*> m_waitList;
+	/*! @brief List of threads wating for input */
+	ThreadList m_waitList;
 };

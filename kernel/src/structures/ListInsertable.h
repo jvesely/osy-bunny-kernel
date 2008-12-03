@@ -88,7 +88,7 @@ template <class T>
 inline void ListInsertable<T>::append( List<T*>* list )
 {
 	remove();
-	assert(!m_myList);
+	ASSERT (!m_myList);
 	m_myList = list;
 
 	m_myList->pushBack(this);
@@ -97,11 +97,11 @@ inline void ListInsertable<T>::append( List<T*>* list )
 template <class T>
 inline void ListInsertable<T>::prepend( List<T*>* list )
 {
-	assert(list);
+	ASSERT (list);
 	remove();
-	assert(!m_myList);
+	ASSERT (!m_myList);
 	m_myList = list;
-	m_myList->pushFront(this);
+	m_myList->pushFront( this );
 }
 /*----------------------------------------------------------------------------*/
 template <class T>
@@ -109,7 +109,7 @@ inline void ListInsertable<T>::remove()
 {
 	if (!m_myList)
 		return;
-	m_myList->removeFind(static_cast<T*>(this));
+	m_myList->remove( static_cast<T*>(this) );
 	m_myList = NULL;
 }
 /*----------------------------------------------------------------------------*/

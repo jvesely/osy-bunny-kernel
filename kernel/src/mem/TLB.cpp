@@ -34,7 +34,7 @@
 #include "api.h"
 
 /*----------------------------------------------------------------------------*/
-TLB::TLB(){
+void TLB::flush(){
 /* Entry is written from EntryHI, EntryL00, EntryL01
  * and position is in Index
  */
