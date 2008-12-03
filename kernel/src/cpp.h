@@ -31,6 +31,8 @@
  * for CPP.
  */
 
+#pragma once
+
 // placement new
 inline void* operator new(unsigned int, void* place) {
 	ASSERT(place); //TODO: check block size
