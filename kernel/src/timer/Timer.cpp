@@ -113,9 +113,6 @@ void Timer::interupt()
 			ASSERT (thr->status() != Thread::READY);
 			PRINT_DEBUG ("Waking thread %u.\n", thr->id());
 			thr->resume();
-			if (Thread::getCurrent()->id() == 0) { //idle thread is running
-				nextThread = true;
-			}
 		}
 	}
 

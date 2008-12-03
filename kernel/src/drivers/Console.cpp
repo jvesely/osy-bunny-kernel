@@ -31,7 +31,17 @@
 
 #include "Console.h"
 #include "Kernel.h"
-/*----------------------------------------------------------------------------*/
+
+//#define CONSOLE_DEBUG
+
+#ifndef CONSOLE_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+  printf("[ CONSOLE_DEBUG ]: "); \
+  printf(ARGS);
+#endif
+
 size_t Console::outputString(const char* str) const
 {
 	const char *  it = str; /* fly through the string */
@@ -80,10 +90,13 @@ void Console::interrupt()
 	/* read character */
 	insert();
 
+	PRINT_DEBUG ("Console interrupt, waiting threads: %u\n", m_waitList.size());
+
 	/* there is someone waiting for this char */
 	if (m_waitList.size()) {
 		Thread * thr = m_waitList.getFront();
-		assert(thr->status() == Thread::BLOCKED);
+		PRINT_DEBUG ("Unblocking thread %u.\n", thr->id());
+		ASSERT (thr->status() == Thread::BLOCKED);
 		/* resume normal operation */
 		thr->resume();
 	}

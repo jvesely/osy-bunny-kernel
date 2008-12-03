@@ -131,12 +131,12 @@ void Scheduler::enqueue(Thread * thread)
 	
 	/* if the idle thread is running and other thread became ready,
 	 * idle thread is planned for switch as soon as possible
-	 *//*
+	 */
 	if (m_currentThread == m_idle && m_activeThreadList.size() == 1) {
 		PRINT_DEBUG("Ending IDLE thread reign.\n");
 		thread->switchTo();
 	}
-	*/
+	
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::dequeue(Thread* thread)
