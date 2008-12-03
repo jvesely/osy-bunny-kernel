@@ -47,7 +47,7 @@ public:
 	static const unsigned int SECOND = 1000000;    /*!< usecs in 1 sec  */
 	static const unsigned int MILLI_SECOND = 1000;  /*!< usecs in 1 msec */
 
-	/*! @brief asumes rtc device on given address 
+	/*! @brief Assignes device address.
 	 *
 	 * @param address addres from which time could be read
 	 */
@@ -59,7 +59,7 @@ public:
 	inline unsigned int time() const 
 		{	return m_timeAddress ? (*m_timeAddress) : 0; };
 
-	/*! @brief get usec part of the time 
+	/*! @brief Gets microseconds part of the time.
 	 * @return const usec part of the time
 	 */
 	inline unsigned int usec() const

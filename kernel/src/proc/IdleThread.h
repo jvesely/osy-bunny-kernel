@@ -49,10 +49,10 @@ public:
 	void run() { asm volatile (" wait "); };
 
 private:
-	/*! @brief Nothing is done so smaller stack is eneough */
+	/*! @brief Nothing is done so smaller stack is enough. */
 	static const uint IDLE_STACK_SIZE = 1024;
 
-	/*! @brief Send just flags and changed stack size */
+	/*! @brief Send just flags and changed stack size. */
 	IdleThread():Thread(0, IDLE_STACK_SIZE) {}; 
 	
 	friend class Scheduler;

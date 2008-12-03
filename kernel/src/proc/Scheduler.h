@@ -62,16 +62,18 @@ class Scheduler: public Singleton<Scheduler>
 	 */
 	thread_t getId( Thread* newThread );
 
+	/*! @brief Maked thread id available for use again.
+	 * @param id thread_t id to free
+	 */
 	inline void returnId( thread_t id )
 		{ m_threadMap.erase( id ); };
 
-	/*! @brief Removes thread from scheduling queue (ONLY).
-	 *
-	 * To actually suspend you need to call yeild after this.
-	 */
+	/*! @brief Removes thread from scheduling queue (ONLY). */
 	void dequeue( Thread* thread );
 	
-	/*! Enqueue Thread* to the scheduling queue */
+	/*! @brief Enqueues Thread* to the scheduling queue.
+	 * @note If IdleThread was running context is switched to the enqueued thread.
+	 */
 	void enqueue( Thread* thread );
 
 	
@@ -80,15 +82,11 @@ class Scheduler: public Singleton<Scheduler>
 	 */
 	inline Thread* currentThread() const
 		{ return m_currentThread; };
-	
-	Thread* nextThread();
 
-	/*! @brief Rescheduling member function.
-	 *
-	 * Saves context of the running thread on its stack and loads context 
-	 * of the next thread in queue.
+	/*! @brief Chooses the next thread to run.
+	 * @return Pointer to the Thrad class holding the next thread.
 	 */
-	//void switchThread();
+	Thread* nextThread();
 
 	/*! Planning queue */
 	ThreadList m_activeThreadList;
@@ -102,8 +100,10 @@ class Scheduler: public Singleton<Scheduler>
 	/*! Thread id generating helper. Increases avery time thread is added. */
 	thread_t m_nextThread;
 
+	/*! Number of active threads */
 	uint m_threadCount;
 
+	/*! @brief Thread that runs when no one else will. */
 	IdleThread* m_idle;
 	
 	/*! @brief Just sets current thread to NULL, creates Idle thread */

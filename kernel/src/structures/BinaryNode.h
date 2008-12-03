@@ -69,7 +69,7 @@ public:
 
 	/*!
 	 * @brief Gets data reference.
-	 * @retrun Reference to the stored data.
+	 * @return Reference to the stored data.
 	 * Data should not be changed, as it may result in breaking the 
 	 * Node order in the tree.
 	 */
@@ -155,7 +155,7 @@ protected:
 
 	/*! @brief Tests if the Node is the left son of its parent.
 	 * @return @a true if the Node has parent and parent.left is the Node, 
-	 * @false otherrwise.
+	 * @a false otherwise.
 	 */
 	bool isLeftSon() const;
 

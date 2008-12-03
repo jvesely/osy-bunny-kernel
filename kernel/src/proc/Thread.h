@@ -140,8 +140,8 @@ public:
 	 */
 	bool detach();
 	
-	/*! @brief Surrenders processing time for given time
-	 * @param sec number of seconds to sleep
+	/*! @brief Surrenders processing time for given time.
+	 * @param interval Time interval to sleep
 	 */
 	void sleep(const Time& interval);
 

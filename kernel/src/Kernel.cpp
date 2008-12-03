@@ -102,7 +102,6 @@ void Kernel::run()
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){
-	return 8 * 1024 * 1024;
 	printf("Probing memory range...");
 	const uint32_t MAGIC = 0xDEADBEEF;
 	
@@ -125,6 +124,7 @@ size_t Kernel::getPhysicalMemorySize(){
 		point += range; //add
 	}
 	printk("OK\n");
+	m_tlb.flush();
 	return size;
 }
 /*----------------------------------------------------------------------------*/

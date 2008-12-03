@@ -116,6 +116,7 @@ size_t print_decimal(const int32_t number)
 /*----------------------------------------------------------------------------*/
 /*! prints number as unsigned hexadecimal
  * @param number number to be printed
+ * @param align set to @a true to ouput leading zeros
  * @return number of printed hexadigits
  */
 size_t print_hexa(uint32_t number, bool align)
@@ -377,8 +378,8 @@ void mutex_unlock(struct mutex *mtx) {
 int timer_init( struct timer *tmr, const unsigned int usec,
 				void (*handler)(struct timer *, void *), void *data)
 {
-	if(!tmr) return EINVAL;
-	return drftmr(tmr).init(tmr,usec,handler,data);
+	if (!tmr) return EINVAL;
+	return drftmr(tmr).init(tmr, usec, handler, data);
 }
 
 //------------------------------------------------------------------------------

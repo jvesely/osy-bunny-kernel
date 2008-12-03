@@ -45,18 +45,21 @@ class KernelThread: public Thread
 {
 
 public:
-	/*! At the end it returns used id to the Scheduler */
-	~KernelThread();
-
+	
+	/*! @brief Creates thread using given paramters.
+	 *
+	 * Ensures that the thread is correctly created, in case of error
+	 * is the all the work rolled back.
+	 */
 	static Thread* create(thread_t* thread_ptr, void* (*thread_start)(void*),
 	  void* data = NULL, const unsigned int flags = 0);
 	
-	/*! this will be run in the separate thread, includes some management */
+	/*! @brief Will be run in the separate thread, includes some management. */
 	void run();
 
 protected:
-	void* (*m_runFunc)(void*); /*!< I'm supposed to run this */
-	void* m_runData; /*!< runFunc expects this */
+	void* (*m_runFunc)(void*); /*!< @brief I'm supposed to run this. */
+	void* m_runData; /*!< @brief runFunc expects this. */
 
 
 
@@ -71,6 +74,6 @@ private:
 	 * @param stackSize size of stack that will be available to this thread
 	 * @param flags ignored param :)
 	 */
-	KernelThread(	void* (*func)(void*), void* data, unative_t flags, unsigned int stackSize);
+	KernelThread(	void* (*func)(void*), void* data, unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE );
 	friend class Scheduler;
 };

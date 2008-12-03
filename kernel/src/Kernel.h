@@ -52,7 +52,7 @@ class Kernel:public Singleton<Kernel>
 
 public:
 	/*! 
-	 * @brief Main member function.
+	 * @brief Bootstrap code member function.
 	 *
 	 * This function should never return from it's call. I initializes all stuff
 	 * that needs initializing, except that which is already initialized and
@@ -60,29 +60,35 @@ public:
 	 */
 	void run();
 
-	/*! @return Console IO device */
+	/*!
+	 * @brief Gets current I/O device.
+	 * @return Console I/O device.
+	 */
 	inline Console& console() { return m_console; };
 
-	/*! @return pool of Listitems used by threads in scheduler and mutex */
-//	inline ItemPool& pool() { return m_pool; };
-
-//	inline Scheduler& scheduler() { return Scheduler::instance(); };
-
+	/*!
+	 * @brief Gets current clock device.
+	 * @return RTC class device.
+	 */
 	inline const RTC& clock() { return m_clock; };
 
-	/*! getter for physicalMemorySize */
+	/*! 
+	 * @brief Gets detected physicalMemorySize.
+	 * @return Size of availale RAM.
+	 */
 	inline size_t physicalMemorySize() const 
 		{ return m_physicalMemorySize; };
 
-	/*! just a msim wrapper */
+	/*! @brief Stops execution, returns control to msim. */
 	static inline void stop() { Processor::msim_stop(); };
-
+	
+	/*! @brief Stops execution, shuts down msim. */
 	static inline void halt() { Processor::msim_halt(); };
 
-	/*! another msim wrapper */
+	/*! @brief Dumps registers of the active processor. */
 	static inline void regDump() { Processor::msim_reg_dump(); };
 
-	/*! block processor by falling in infinite loog */
+	/*! @brief Blocks processor by falling in infinite loop. */
 	static inline void block() 
 		{ Processor::save_and_disable_interrupts(); while(true) ;; };
 
@@ -96,10 +102,19 @@ public:
 	 * @param address adress of the returned block
 	 */
 	void free( const void* address ) const;
-
+	
+	/*!
+	 * @brief Exception handling member function.
+	 * @param registers pointer to the stored registers at the time
+	 * when exception occured.
+	 */
 	void handle(Processor::Context* registers);
 
+	/*! @brief Sets interrupt on given time or sooner.
+	 * @param time Desired time of interrupt
+	 */
 	void setTimeInterrupt( const Time& time );
+
 private:
 	/*! kernel heap manager */	
 	Allocator m_alloc;
@@ -116,6 +131,7 @@ private:
 	/*! TLB managing */
 	TLB m_tlb;
 
+	/*! converting constant */
 	uint m_timeToTicks;
 
 	/*! @brief Detects accessible memory.
@@ -124,13 +140,17 @@ private:
 	 * @return size of detected memory.
 	 */
 	size_t getPhysicalMemorySize();
-	
+
+	/*! @brief Interrupt hanling member function.
+	 * @param registers pointer to the stored registers at the time
+	 * when interrupt occured.
+	 */
 	void handleInterrupts(Processor::Context* registers);
 
-	/*! @brief initialize structures
+	/*! @brief Initializes structures.
 	 *
-	 * reset status register to turn on useg mapping
-	 * sets clock and console
+	 * Resets status register to turn on useg mapping.
+	 * Sets clock and console addresses.
 	 */
 	Kernel();
 
