@@ -94,12 +94,15 @@ void Kernel::run()
 
 	//init and run the main thread
 	thread_t mainThread;
-	KernelThread::create(&mainThread, test, NULL, 0)->switchTo();
+	Thread* main = KernelThread::create(&mainThread, test, NULL, 0);
+	ASSERT (main);
+	main->switchTo();
 	
 	panic("Should never reach this.\n");
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){
+	return 8 * 1024 * 1024;
 	printf("Probing memory range...");
 	const uint32_t MAGIC = 0xDEADBEEF;
 	
@@ -110,7 +113,7 @@ size_t Kernel::getPhysicalMemorySize(){
 	volatile uint32_t * point = front;
 
 
-	while(true) {
+	while (true) {
 		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M);
 	//	dprintf( "Mapped %x to %x range = %d kB.\n", front, point, (range * sizeof(uint32_t)/1024) );
 		
@@ -147,6 +150,9 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_SYS:
 			panic("Syscall.\n");
 			break;
+		case CAUSE_EXCCODE_TLBL:
+		case CAUSE_EXCCODE_TLBS:
+			panic("TLB Exception.\n");
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
 			printf("Exception: Address error exception. THREAD KILLED\n");

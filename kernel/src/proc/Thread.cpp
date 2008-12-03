@@ -105,18 +105,18 @@ void Thread::switchTo()
 	static const Time DEFAULT_QUANTUM(0, 20000);
 
 	Thread* old_thread = getCurrent();
-	
-	if ( (old_thread->status() == KILLED || old_thread->status() == FINISHED)
+
+	if ( old_thread && (old_thread->status() == KILLED || old_thread->status() == FINISHED)
 		&& old_thread->m_detached)
 	{
 		delete old_thread;
 		old_thread = NULL;
 	}
-
+	
 	void** old_stack = old_thread ? &old_thread->m_stackTop : NULL;
 	void** new_stack = &m_stackTop;
 
-	if (old_thread->status() == RUNNING)
+	if (old_thread && old_thread->status() == RUNNING)
 		old_thread->setStatus( READY );
 
 	setStatus( RUNNING );
