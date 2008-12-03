@@ -38,10 +38,9 @@
 #include "structures/HashMap.h"
 
 /*! @class Scheduler Scheduler.h "proc/Scheduler.h"
- * @brief Thread handling class.
+ * @brief Stores and handles active threads.
  *
- * Schedules threads and thread queue of active threads, can suspend, wakeup
- * switch kill and join
+ * Stores active thread and decides who is next to run.
  */
 
 typedef HashMap<thread_t, Thread*> ThreadMap; 
@@ -54,26 +53,26 @@ class Scheduler: public Singleton<Scheduler>
 	 * @param thread id to be converted
 	 * @return pointer to Thread class, NULL on failure
 	 */
-	Thread* thread(thread_t thread)
-		{ return m_threadMap.exists(thread)?m_threadMap.at(thread):NULL; };
+	Thread* thread( thread_t thread )
+		{ return m_threadMap.exists( thread ) ? m_threadMap.at( thread ) : NULL; };
 
 	/*! @brief Adds new thread, generates id for it and makes it READY
 	 * @param newThread thread to be added
 	 * @result id of the new thread
 	 */
-	thread_t getId(Thread* newThread);
+	thread_t getId( Thread* newThread );
 
-	inline void returnId(thread_t id)
-		{ m_threadMap.erase(id); };
+	inline void returnId( thread_t id )
+		{ m_threadMap.erase( id ); };
 
 	/*! @brief Removes thread from scheduling queue (ONLY).
 	 *
 	 * To actually suspend you need to call yeild after this.
 	 */
-	void dequeue(Thread * thread);
+	void dequeue( Thread* thread );
 	
 	/*! Enqueue Thread* to the scheduling queue */
-	void enqueue(Thread * thread);
+	void enqueue( Thread* thread );
 
 	
 	/*! @brief Gets pointer to current thread.
@@ -95,7 +94,7 @@ class Scheduler: public Singleton<Scheduler>
 	ThreadList m_activeThreadList;
 
 	/*! Conversion table thread_t -> Thread* */
-	HashMap<thread_t, Thread*> m_threadMap;
+	ThreadMap m_threadMap;
 
 	/*! Currently running thread */
 	Thread* m_currentThread;
@@ -103,10 +102,9 @@ class Scheduler: public Singleton<Scheduler>
 	/*! Thread id generating helper. Increases avery time thread is added. */
 	thread_t m_nextThread;
 
-	unsigned int m_threadCount;
+	uint m_threadCount;
 
 	IdleThread* m_idle;
-
 	
 	/*! @brief Just sets current thread to NULL, creates Idle thread */
 	Scheduler();

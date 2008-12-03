@@ -159,9 +159,9 @@ size_t vprintk(const char * format, va_list args)
 {
 	bool align = false;
 	size_t count = 0;
-	while (*format){
-		if (*format == '%'){
-			switch (*(format+1)){
+	while (*format) {
+		if (*format == '%') {
+			switch (*(format + 1)) {
 				case 'c': count += putc(va_arg(args, int));
 									++format;
 									break;
@@ -271,38 +271,26 @@ int thread_join(thread_t thr)
 {
 	InterruptDisabler inter;
 	Thread* thread = Thread::fromId( thr );
-	//Scheduler::instance().thread(thr);
-	return Thread::getCurrent()->join(thread);
+	return Thread::getCurrent()->join( thread );
 }
 /*----------------------------------------------------------------------------*/
 int thread_join_timeout(thread_t thr, const uint usec)
 {
 	InterruptDisabler inter;
 	Thread* thread = Thread::fromId( thr );
-	//Scheduler::instance().thread(thr);
-	return Thread::getCurrent()->joinTimeout(thread, usec);
+	return Thread::getCurrent()->joinTimeout( thread, usec );
 }
 /*----------------------------------------------------------------------------*/
-int thread_detach(thread_t thread)
+int thread_detach( thread_t thr )
 {
 	InterruptDisabler inter;
-	Thread* thr = Thread::fromId( thread );
-	//Scheduler::instance().thread(thread);
-	if (!thr
-		|| thr->detached()
-		|| thr->status() == Thread::FINISHED
-		|| thr->status() == Thread::KILLED
-		|| thr->status() == Thread::JOINING
-		|| thr->follower()) { 
-		return EINVAL;
-	}
-
-	if (thr->detach()) return EOK;
-	assert(false);
-	return EOK;
+	Thread* thread = Thread::fromId( thr );
+	
+	if (thread && thread->detach()) return EOK;
+	return EINVAL;
 }
 /*----------------------------------------------------------------------------*/
-void thread_sleep(const unsigned int sec)
+void thread_sleep( const unsigned int sec )
 {
 	Thread::getCurrent()->sleep( Time(sec, 0) );
 }
@@ -325,9 +313,10 @@ void thread_suspend()
 int thread_wakeup(thread_t thr)
 {
 	InterruptDisabler inter;
+	
 	Thread* thread = Thread::fromId( thr );
-	//Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
+	
 	thread->wakeup();
 	return EOK;
 }
@@ -335,9 +324,10 @@ int thread_wakeup(thread_t thr)
 int thread_kill(thread_t thr)
 {
 	InterruptDisabler inter;
+	
 	Thread* thread = Thread::fromId( thr );
-	//Scheduler::instance().thread(thr);
 	if (!thread) return EINVAL;
+	
 	thread->kill();
 	return EOK;
 }

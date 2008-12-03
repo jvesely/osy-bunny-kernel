@@ -51,10 +51,32 @@ class Thread: public ListInsertable<Thread>,
 public:
 	static const int DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
 
+	/*!
+	 * @brief Gets currently running thread.
+	 *
+	 * @return Pointer to the Thread that si currently beeing executed,
+	 * 	@a NULL if no such Threadd exists.
+	 * Wrapper for Scheduler member function.
+	 */
 	static Thread* getCurrent();
-	
+
+	/*!
+	 * @brief Selects the thread that is next to run.
+	 *
+	 * @return Pointer to the Thread that is next to be run.
+	 * Wrapper for Scheduler member function. Repeated calls of this function
+	 * will give different results even wihtout rescheduling.
+	 */
 	static Thread* getNext();
 
+	/*! 
+	 * @brief Converts thread_t to Thread*.
+	 *
+	 * @param id to convert.
+	 * @return Pointer to the thread associated with given id, if such exists
+	 * 	NULL if no such Thread exists.
+	 * Wrapper for Scheduler memeber function.
+	 */
 	static Thread* fromId( thread_t );
 
 	/*! @brief Contructs Thread usinng the given parameters.
@@ -87,6 +109,11 @@ public:
 	/*! @brief new thread entry point */
 	void start() { run(); };
 
+	/*! @brief Rescheduling member function.
+	 *
+	 * Saves context of the currentThread() on its stack 
+	 * and loads new context from the Threads stack.
+	 */
 	void switchTo();
 
 	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
@@ -111,7 +138,7 @@ public:
 	/*! @brief Sets state to detached
 	 * @return new detached state (true)
 	 */
-	inline bool detach() { return m_detached = true; }
+	bool detach();
 	
 	/*! @brief Surrenders processing time for given time
 	 * @param sec number of seconds to sleep
@@ -133,7 +160,7 @@ public:
 	 * @retval EOK this thread was suspended and successfully awoken on 
 	 * others ending
 	 */
-	int join(Thread* other, bool timed = false);
+	int join( Thread* other, bool timed = false );
 
 	/*! @brief Timed version of join.
 	 *
@@ -141,7 +168,7 @@ public:
 	 * @return is same as join adding ETIMEDOUT, if the time is up and other
 	 * thread is still running.
 	 */
-	int joinTimeout(Thread* other, const uint usec);
+	int joinTimeout( Thread* other, const uint usec );
 
 	/*! @brief Removes thread from the scheduling queue */
 	void block();
@@ -150,22 +177,7 @@ public:
 	void resume();
 
 	/*! @brief Sets my thread_t identifier. */
-	inline void setId(thread_t id) { m_id = id; };
-
-	/*! @brief Pointer to the pointer to the stacktop
-	 * @return pointer that store stacktop pointer address
-	 */
-	inline void** stackTop() { return &m_stackTop; };
-
-	/*! @brief Follower is the Thread waiting for me.
-	 * @return pointer to the thread waiting for my end
-	 */
-	inline Thread* follower() const { return m_follower; };
-
-	/*! @brief Sets follower.
-	 * @param follower new follower
-	 */
-	inline void setFollower(Thread* follower) { m_follower = follower; };
+	inline void setId( thread_t id ) { m_id = id; };
 
 	/*! @brief Gets current thread status.
 	 * @return current status
@@ -177,17 +189,15 @@ public:
 	 * Used during thread switching, mutex locking, waiting,....
 	 * @param status new status
 	 */
-	inline void setStatus(Status status) { m_status = status; };
+	inline void setStatus( Status status ) { m_status = status; };
 	
-	/*! @brief prepare stack and set initialized */
+	/*! @brief Prepares stack and sets status to initialized. */
 	Thread();
 
 protected:
 	void* m_stack;	          /*!< that's my stack */
 	void* m_stackTop;	        /*!< top of my stack */
 	unsigned int m_stackSize; /*!< size of my stack */
-
-
 
 	bool m_detached;	/*!< detached flag */
 	Status m_status;	/*!< my status */
