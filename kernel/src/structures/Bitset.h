@@ -112,9 +112,12 @@ public:
 	 * Query how many bits are set after the given position. The bit position is counted from 0.
 	 *
 	 * @param from The position from where to start counting ones (set bits).
+	 * @param enough The number of bits that is enough. Use it to get results faster.
 	 * @return The number of taken (set) bits from the given position (including the positions bit).
+	 *
+	 * @todo enough not implemented yet, still slower as empty
 	 */
-	size_t full(const size_t from) const;
+	size_t full(const size_t from, size_t enough = 0) const;
 
 protected:
 

@@ -196,7 +196,7 @@ size_t Bitset::empty(const size_t from, size_t enough) const {
 			}
 		}
 
-		// return the result
+		// finally return the result (if the first checked element contains 1)
 		return (res > enough) ? enough : res;
 	} else {
 		// if the first checked element was full of zeros
@@ -277,9 +277,14 @@ size_t Bitset::empty(const size_t from, size_t enough) const {
 
 /* --------------------------------------------------------------------- */
 
-size_t Bitset::full(const size_t from) const {
+size_t Bitset::full(const size_t from, size_t enough) const {
 	// check range
 	if (from >= m_size) return 0;
+
+	// if using default parameter for enough, set it to maximal possible
+	if (enough == 0) {
+		enough = m_size;
+	}
 
 	// initialize the result
 	size_t res = 0;
@@ -309,7 +314,7 @@ size_t Bitset::full(const size_t from) const {
 		while (mask) {
 			if (((*ptr & mask) == 0) || (count == 0)) {
 				// we found a cleared bit, return the result
-				return res;
+				return (res > enough) ? enough : res;
 			}
 			mask >>= 1;
 			++res;
@@ -329,6 +334,6 @@ size_t Bitset::full(const size_t from) const {
 		}
 	}
 
-	return res;
+	return (res > enough) ? enough : res;
 }
 
