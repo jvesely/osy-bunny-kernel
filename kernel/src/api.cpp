@@ -403,25 +403,29 @@ int timer_pending(struct timer *tmr)
 
 /*----------------------------------------------------------------------------*/
 
-void semaphore_init(semaphore_t* s, unsigned int num) {
+void sem_init(semaphore_t* s, const int value) {
 	ASSERT(sizeof(semaphore_t) >= sizeof(Semaphore));
-	new (s) Semaphore(num);
+	new (s) Semaphore((const unsigned int)value);
 }
 
-void semaphore_destroy(semaphore_t* s) {
+void sem_destroy(semaphore_t* s) {
 	((Semaphore *)s)->~Semaphore();
 }
 
-void semaphore_up(semaphore_t* s, unsigned int num) {
-	((Semaphore *)s)->up(num);
+int sem_get_value(semaphore_t* s) {
+	return ((Semaphore *)s)->get();
 }
 
-void semaphore_down(semaphore_t* s, unsigned int num) {
-	((Semaphore *)s)->down(num);
+void sem_up(semaphore_t* s) {
+	((Semaphore *)s)->up();
 }
 
-int semaphore_down_timeout(semaphore_t* s, unsigned int num, unsigned int usec) {
-	return ((Semaphore *)s)->downTimeout(num, Time(0, usec));
+void sem_down(semaphore_t* s) {
+	((Semaphore *)s)->down();
+}
+
+int sem_down_timeout(semaphore_t* s, const unsigned int usec) {
+	return ((Semaphore *)s)->downTimeout(1, Time(0, usec));
 }
 
 /*----------------------------------------------------------------------------*/
