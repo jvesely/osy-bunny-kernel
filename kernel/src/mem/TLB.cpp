@@ -106,14 +106,22 @@ void TLB::clearAsid( const byte asid )
 void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Processor::PageSize page_size )
 {
 	using namespace Processor;
-	reg_write_entryhi ((virtual_address & VPN2_MASK) | 0xff); // set address, ASID = 0xff
+
+	InterruptDisabler interrupts;
 
 	reg_write_index( 0 );
-	reg_write_pagemask( PAGE_4K );
+	reg_write_pagemask( pages[page_size].mask << PAGE_MASK_SHIFT );
 
-	unative_t reg_addr_value =  (physical_address & PFN_ADDR_MASK) | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | ENTRY_LO_GLOBAL_MASK;
+	unative_t page        = addrToPage( virtual_address,  page_size);
+	unative_t frame       = addrToPage( physical_address, page_size);
+
+	reg_write_entryhi (((page << VPN2_SHIFT) & VPN2_MASK) | 0xff); // set address, ASID = 0xff
+
+
+	unative_t reg_addr_value =
+		((frame << PFN_SHIFT) & PFN_ADDR_MASK) | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | ENTRY_LO_GLOBAL_MASK;
 	
-	if (virtual_address & (ENTRY_HI_EVEN_4K) ) {
+	if ( isEven(page, page_size) ) {
 		reg_write_entrylo0( ENTRY_LO_GLOBAL_MASK );
 		reg_write_entrylo1( reg_addr_value );
 	} else {
@@ -171,7 +179,7 @@ void TLB::setMapping(
 	reg_write_entrylo0( global_flag );
 	reg_write_entrylo1( global_flag );
 
-	reg_write_entryhi( (page & VPN2_MASK) | asid ); // set address, ASID = asid
+	reg_write_entryhi( ((page << VPN2_SHIFT) & VPN2_MASK) | asid ); // set address, ASID = asid
 
 	/* try find mapping */
 	TLB_probe();

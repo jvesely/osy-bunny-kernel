@@ -72,23 +72,16 @@ static const unative_t CPU_REVISION_SHIFT = 4; /*!< half byte */
 static const unative_t CPU_REVISION_MASK = 0xf; /*!< lower hlaf of byte */
 
 static const unative_t PAGE_MASK_SHIFT = 13; /*!< lower 13 bits should be zeros */
-static const unative_t ASID_MASK = 0x000000ff; /*!< lower 8 bits */
-static const unative_t VPN2_MASK = 0xffffe000; /*!< upper 19 bits */
-static const unative_t PFN_SHIFT = 6; /*!< lower 6 bits contains flags */
+static const unative_t ASID_MASK  = 0x000000ff; /*!< lower 8 bits */
+static const unative_t VPN2_SHIFT = 12;
+static const unative_t VPN2_MASK  = 0xffffe000; /*!< upper 19 bits */
+static const unative_t PFN_SHIFT  = 6; /*!< lower 6 bits contains flags */
 static const unative_t PFN_ADDR_MASK = (0xffffff << PFN_SHIFT); /*!< bits 6-30*/
 
 static const unative_t PROBE_FAILURE        = 0x80000000; /*!< highest bit */
 static const unative_t ENTRY_LO_VALID_MASK  = 0x00000002; /*!< second bit */
 static const unative_t ENTRY_LO_DIRTY_MASK  = 0x00000004; /*!< third bit */
 static const unative_t ENTRY_LO_GLOBAL_MASK = 0x00000001;
-
-static const unative_t ENTRY_HI_EVEN_4K   = 1 << 12;
-static const unative_t ENTRY_HI_EVEN_16K  = 1 << 14;
-static const unative_t ENTRY_HI_EVEN_64K  = 1 << 16;
-static const unative_t ENTRY_HI_EVEN_256K = 1 << 18;
-static const unative_t ENTRY_HI_EVEN_1M   = 1 << 20;
-static const unative_t ENTRY_HI_EVEN_4M   = 1 << 22;
-static const unative_t ENTRY_HI_EVEN_16M  = 1 << 24;
 
 static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
 
