@@ -32,42 +32,111 @@
  */
 #include "TLB.h"
 #include "api.h"
+#include "InterruptDisabler.h"
+
+#define TLB_DEBUG
+
+#ifndef TLB_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+  printf("[ TLB_DEBUG ]: "); \
+  printf(ARGS);
+#endif
 
 /*----------------------------------------------------------------------------*/
-void TLB::flush(){
-/* Entry is written from EntryHI, EntryL00, EntryL01
- * and position is in Index
- */
+TLB::TLB()
+{
+	flush();
+
+	m_asidMap[0] = NULL;
+	m_asidMap[ASID_COUNT -1] = NULL;
+	for ( byte i = 1; i < ASID_COUNT - 1; ++i) {
+		m_asidMap[i] = NULL;
+		m_freeAsids.append( i );
+	}
+}
+/*----------------------------------------------------------------------------*/
+void TLB::flush()
+{
+	/* Entry is written from EntryHI, EntryL00, EntryL01
+ 	 * and position is in Index
+   */
 	using namespace Processor;
+	InterruptDisabler interrupts;
 
 	/* size of page does not really matter at the beginning */
-	reg_write_pagemask(PAGE_4K);
+	reg_write_pagemask( PAGE_4K );
 
 	/* map all to 0, stores pairs */
-	reg_write_entrylo0(0);
-	reg_write_entrylo1(0);
+	reg_write_entrylo0( 0 );
+	reg_write_entrylo1( 0 );
 
 	/* mask is ff */
-	reg_write_entryhi (ASID_MASK);
+	reg_write_entryhi ( 0xff );
 
 	/* copy to all */
-	for(unsigned int i = 0; i < ENTRY_COUNT; ++i){
-		reg_write_index(i);
+	for (uint i = 0; i < ENTRY_COUNT; ++i) {
+		reg_write_index( i );
 		TLB_write_index();
 	}
+}
+/*----------------------------------------------------------------------------*/
+void TLB::clearAsid( const byte asid )
+{
+	InterruptDisabler interrupts;
 
+	using namespace Processor;
+
+  for (uint i = 0; i < ENTRY_COUNT; ++i) {
+    reg_write_index( i );
+		TLB_read();	
+		if ((reg_read_entryhi() & ASID_MASK) == asid) {
+			reg_write_entryhi ( 0xff );
+			reg_write_pagemask( PAGE_4K );
+    	TLB_write_index();
+		}
+  }	
+}
+/*----------------------------------------------------------------------------*/
+byte TLB::getAsid()
+{
+	if (m_freeAsids.count())
+		return m_freeAsids.getFirst();
+	
+	/* 0 and 255 are reserved */
+	byte asid = (Processor::reg_read_count() % 254) +1;
+
+	/* take asid from someone */
+	// here thre should be taking asid from vmm
+	
+	/* clear tlb of the old entries */
+	clearAsid( asid );
+	return asid;
+}
+/*----------------------------------------------------------------------------*/
+void TLB::returnAsid( const byte asid )
+{
+	clearAsid( asid );
+	m_freeAsids.append( asid );
+	m_asidMap[asid] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 void TLB::setMapping(
 	const uintptr_t virtAddr,	
 	const uintptr_t physAddr,	
-	const Processor::PageSize pageSize
+	const Processor::PageSize pageSize,
+	const byte asid
 	) 
 {
 	using namespace Processor;
-	//dprintf("Mapping %x to %x\n", virtAddr, physAddr);
+	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
+		virtAddr & VPN2_MASK & ~(pageSize >> 1), virtAddr, 
+		physAddr & ~(pageSize >> 1) & VPN2_MASK, physAddr, pageSize, asid);
 	reg_write_pagemask (pageSize); //set the right pageSize
-	reg_write_entryhi (virtAddr & VPN2_MASK & ~pageSize); // set address, ASID = 0
+
+
+	reg_write_entryhi ((virtAddr & VPN2_MASK & ~pageSize) | asid ); // set address, ASID = 0
 
 	/* try find mapping */
 	TLB_probe();
@@ -94,7 +163,7 @@ void TLB::setMapping(
 	const unative_t reg_addr_value = ( physAddr & ~(pageSize>>1) & PFN_ADDR_MASK) >> PFN_SHIFT;
 
 	/* choose left/right in the pair, allow writing(Dirty) and set valid */
-	if (! (virtAddr & VPN2_MASK & (1 << (MASK_SHIFT - 1) ) )) { //  ends with 1 or 0
+	if (! (virtAddr & VPN2_MASK & (1 << (PAGE_MASK_SHIFT - 1) ) )) { //  ends with 1 or 0
 		/* left/first */
 		reg_write_entrylo0(reg_addr_value | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK);
 	} else {

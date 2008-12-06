@@ -53,7 +53,7 @@ public:
 	 * @param item item to be inserted
 	 * @return number of items inserted (0/1)
 	 */
-	size_t insert(const T& item)
+	size_t append(const T& item)
 	{
 		if (m_count == SIZE) // buffer is full
 			return 0;
@@ -89,13 +89,13 @@ public:
 	}
 
 	/*! @brief Reads and removes the first item from the array.
-	 * Should only be called on non-empty buffer.
+	 * 
 	 * Destructor is not called on the item, it will be overwritten
 	 * when it's place is required.
 	 * @return Copy of the first item in the array.
+	 * @note Function expects non-empty buffer, needs to be checked before using.
 	 */
-	inline T get()
-	/* expects non-empty buffer, needs to be checked before using */
+	inline T getFirst()
 	{
 		ASSERT (m_count > 0);
 		T value =  m_buffer[m_head++];
@@ -104,6 +104,21 @@ public:
 		return value;
 	};
 
+	/*! @brief Reads and removes the last item from the array.
+	 * 
+	 * Destructor is not called on the item, it will be overwritten
+	 * when it's place is required.
+	 * @return Copy of the last item in the array.
+	 * @note Function expects non-empty buffer, needs to be checked before using.
+	 */
+	inline T getLast()
+	{
+		ASSERT (m_count > 0);
+		T value =  m_buffer[m_tail--];
+		m_tail = (m_tail + SIZE) % SIZE;
+		--m_count;
+		return value;
+	};
 	/*! @brief Gets number of items stored.
 	 * @return Number of items in the buffer 
 	 */

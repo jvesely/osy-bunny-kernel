@@ -49,7 +49,8 @@ public:
 	InputCharacterDevice(char * address):m_inputAddress(address){};
 
 	/*! @brief Reads one stored char from the buffer */
-	inline char getChar() { return m_buffer.get(); };
+	inline char getChar() 
+		{ ASSERT (m_buffer.count()); return m_buffer.getFirst(); };
 	
 	/*! @brief Outputs buffer size */
 	inline size_t size() const { return BUFF_SIZE; };
@@ -58,7 +59,7 @@ public:
 	inline size_t count() const { return m_buffer.count(); };
 
 	/*! @brief Kick to read value from input and put it to the buffer */
-	inline size_t insert() {	return m_buffer.insert(*m_inputAddress);	};
+	inline size_t insert() {	return m_buffer.append( *m_inputAddress );	};
 
 protected:
 	/*! device address */

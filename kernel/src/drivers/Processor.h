@@ -71,9 +71,9 @@ static const unative_t CPU_IMPLEMENTATION_SHIFT = 8; /*!< upper  byte */
 static const unative_t CPU_REVISION_SHIFT = 4; /*!< half byte */
 static const unative_t CPU_REVISION_MASK = 0xf; /*!< lower hlaf of byte */
 
-static const unative_t MASK_SHIFT = 13; /*!< lower 13 bits should be zeros */
-static const unative_t ASID_MASK = 0x00001fff; /*!< lower 13 bits */
-static const unative_t VPN2_MASK = 0x01ffe000; /*!< upper 19 bits */
+static const unative_t PAGE_MASK_SHIFT = 13; /*!< lower 13 bits should be zeros */
+static const unative_t ASID_MASK = 0x000000ff; /*!< lower 8 bits */
+static const unative_t VPN2_MASK = 0xffffe000; /*!< upper 19 bits */
 static const unative_t PFN_SHIFT = 6; /*!< lower 6 bits contains flags */
 static const unative_t PFN_ADDR_MASK = (0xffffff << PFN_SHIFT); /*!< bits 6-30*/
 
@@ -86,12 +86,12 @@ static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
 /*! reverted bit usage mask in TLB according to page size */
 enum PageSize{
 	PAGE_4K   = 0x000, 	             /*!< all bits used */
-	PAGE_16K  = 0x003 << MASK_SHIFT, /*!< ignore lower  2 bits (of 24) */
-	PAGE_64K  = 0x00f << MASK_SHIFT, /*!< ignore lower  4 bits (of 24) */
-	PAGE_256K = 0x03f << MASK_SHIFT, /*!< ignore lower  6 bits (of 24) */
-	PAGE_1M   = 0x0ff << MASK_SHIFT, /*!< ignore lower  8 bits (of 24) */
-	PAGE_4M   = 0x3ff << MASK_SHIFT, /*!< ignore lower 10 bits (of 24) */
-	PAGE_16M  = 0xfff << MASK_SHIFT  /*!< ignore lower 12 bits (of 24) */
+	PAGE_16K  = 0x003 << PAGE_MASK_SHIFT, /*!< ignore lower  2 bits (of 24) */
+	PAGE_64K  = 0x00f << PAGE_MASK_SHIFT, /*!< ignore lower  4 bits (of 24) */
+	PAGE_256K = 0x03f << PAGE_MASK_SHIFT, /*!< ignore lower  6 bits (of 24) */
+	PAGE_1M   = 0x0ff << PAGE_MASK_SHIFT, /*!< ignore lower  8 bits (of 24) */
+	PAGE_4M   = 0x3ff << PAGE_MASK_SHIFT, /*!< ignore lower 10 bits (of 24) */
+	PAGE_16M  = 0xfff << PAGE_MASK_SHIFT  /*!< ignore lower 12 bits (of 24) */
 
 };
 
@@ -115,6 +115,8 @@ inline unative_t reg_read_pagemask()	{ return read_register(5); }
 inline unative_t reg_read_badvaddr()  { return read_register(8); }
 /*! named register read wrapper */
 inline unative_t reg_read_count()     { return read_register(9); }
+/*! named register read wrapper */
+inline unative_t reg_read_entryhi()   { return read_register(10); }
 /*! named register read wrapper */
 inline unative_t reg_read_compare()   { return read_register(11); }
 /*! named register read wrapper */

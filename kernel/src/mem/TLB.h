@@ -31,6 +31,7 @@
  */
 #pragma once
 #include "drivers/Processor.h"
+#include "structures/Buffer.h"
 
 /*!
  * @class TLB mem/TLB.h "mem/TLB.h"
@@ -42,8 +43,11 @@
 class TLB
 {
 public:
+
+	static const uint ASID_COUNT = 256;
+
 	/*! @brief Prepares the TLB, by @a flushing it. */
-	TLB(){ flush(); }
+	TLB();
 
 	/*! @brief Removes all entries from the TLB
 	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
@@ -58,10 +62,24 @@ public:
 	 * @param virtualAddress this will be sirtual part of the mapping pair
 	 * @param physicalAddress here it should map to
 	 * @param pageSize will use page of this size
+	 * @param asid create entry using this ASID
 	 */
 	void setMapping(
 		const uintptr_t virtualAddress, 
 		const uintptr_t physicalAddress, 
-		const Processor::PageSize pageSize
+		const Processor::PageSize pageSize,
+		const byte asid
 		);
+
+	void clearAsid( const byte asid );
+
+	byte getAsid();
+
+	void returnAsid( const byte asid );
+
+private:
+
+	Buffer<byte, ASID_COUNT> m_freeAsids;
+	void* m_asidMap[ASID_COUNT];
+	
 };

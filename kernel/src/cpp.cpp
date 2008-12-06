@@ -31,7 +31,7 @@
  * exit funtion.
  */
 
-#include "Kernel.h"
+#include "api.h"
 
 extern "C"
 {
@@ -47,6 +47,6 @@ extern "C"
 }
 
 void* operator new(unsigned int size) { return malloc(size); };
-void operator delete (void* p) { Kernel::instance().free(p); };
+void operator delete (void* p) { free(p); };
 void* operator new[](unsigned int size) { return malloc(size); };
-void operator delete[] (void* p) { Kernel::instance().free(p); };
+void operator delete[] (void* p) { free(p); };
