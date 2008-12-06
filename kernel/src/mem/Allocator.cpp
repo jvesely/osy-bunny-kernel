@@ -49,7 +49,7 @@ void Allocator::setup(const uintptr_t from, const size_t length)
 	uintptr_t end = alignDown(from + length, ALIGMENT);
 	uintptr_t start = alignUp(from, ALIGMENT);
 
-	PRINT_DEBUG(" Testing initial memory chunk: %p to %p.\n", start, end);
+	PRINT_DEBUG ("Testing initial memory chunk: %p to %p.\n", start, end);
 
 	//test first
 	*(uint8_t*)(end - sizeof(MAGIC)) = MAGIC;
@@ -67,7 +67,7 @@ void Allocator::createBlock(
 	const uintptr_t start, const size_t size, const bool free
 ) const
 {
-	PRINT_DEBUG( "Creating block from %p of size %u : %s\n", start, size, free?"free":"used" );
+	PRINT_DEBUG ("Creating block from %p of size %u : %s\n", start, size, free?"free":"used" );
 	ASSERT (start >= m_start);
 	ASSERT ( (start + size) <= m_end);
 	// test aligment

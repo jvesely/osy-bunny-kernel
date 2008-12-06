@@ -71,27 +71,48 @@ static const unative_t CPU_IMPLEMENTATION_SHIFT = 8; /*!< upper  byte */
 static const unative_t CPU_REVISION_SHIFT = 4; /*!< half byte */
 static const unative_t CPU_REVISION_MASK = 0xf; /*!< lower hlaf of byte */
 
-static const unative_t MASK_SHIFT = 13; /*!< lower 13 bits should be zeros */
-static const unative_t ASID_MASK = 0x00001fff; /*!< lower 13 bits */
-static const unative_t VPN2_MASK = 0x01ffe000; /*!< upper 19 bits */
-static const unative_t PFN_SHIFT = 6; /*!< lower 6 bits contains flags */
+static const unative_t PAGE_MASK_SHIFT = 13; /*!< lower 13 bits should be zeros */
+static const unative_t ASID_MASK  = 0x000000ff; /*!< lower 8 bits */
+static const unative_t VPN2_SHIFT = 12;
+static const unative_t VPN2_MASK  = 0xffffe000; /*!< upper 19 bits */
+static const unative_t PFN_SHIFT  = 6; /*!< lower 6 bits contains flags */
 static const unative_t PFN_ADDR_MASK = (0xffffff << PFN_SHIFT); /*!< bits 6-30*/
 
-static const unative_t PROBE_FAILURE = 0x80000000; /*!< highest bit */
-static const unative_t ENTRY_LO_VALID_MASK = 0x00000002; /*!< second bit */
-static const unative_t ENTRY_LO_DIRTY_MASK = 0x00000004; /*!< third bit */
+static const unative_t PROBE_FAILURE        = 0x80000000; /*!< highest bit */
+static const unative_t ENTRY_LO_VALID_MASK  = 0x00000002; /*!< second bit */
+static const unative_t ENTRY_LO_DIRTY_MASK  = 0x00000004; /*!< third bit */
+static const unative_t ENTRY_LO_GLOBAL_MASK = 0x00000001;
 
 static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
 
+/*! @struct Page Processor.h "drivers/Processor.h"
+ * @brief Stores information about page size.
+ */
+struct Page {
+	uint size;      /*!< @brief Size of the page */
+	uint shift;     /*!< @brief Position of the lowest valid bit in an address. */
+	unative_t mask; /*!< @brief Inverse mask of the used bit for upper 20 bits */
+};
+
+static const Page pages[8] = {
+	{ 0x0001000, 12, 0x000 },        /*!<   4KB */
+	{ 0x0004000, 14, 0x003 },        /*!<  16KB */
+	{ 0x0010000, 16, 0x00f },        /*!<  64KB */
+	{ 0x0040000, 18, 0x03f },        /*!< 256KB */
+	{ 0x0100000, 20, 0x0ff },        /*!<   1MB */
+	{ 0x0400000, 22, 0x3ff },        /*!<   4MB */
+	{ 0x1000000, 24, 0xfff }
+};
+
 /*! reverted bit usage mask in TLB according to page size */
-enum PageSize{
-	PAGE_4K   = 0x000, 	             /*!< all bits used */
-	PAGE_16K  = 0x003 << MASK_SHIFT, /*!< ignore lower  2 bits (of 24) */
-	PAGE_64K  = 0x00f << MASK_SHIFT, /*!< ignore lower  4 bits (of 24) */
-	PAGE_256K = 0x03f << MASK_SHIFT, /*!< ignore lower  6 bits (of 24) */
-	PAGE_1M   = 0x0ff << MASK_SHIFT, /*!< ignore lower  8 bits (of 24) */
-	PAGE_4M   = 0x3ff << MASK_SHIFT, /*!< ignore lower 10 bits (of 24) */
-	PAGE_16M  = 0xfff << MASK_SHIFT  /*!< ignore lower 12 bits (of 24) */
+enum PageSize {
+	PAGE_4K,//   = 0x000, 	                  /*!< all bits used */
+	PAGE_16K,//  = 0x003 << PAGE_MASK_SHIFT, /*!< bits 14,13 */
+	PAGE_64K,//  = 0x00f << PAGE_MASK_SHIFT, /*!< bits 16-13 */
+	PAGE_256K,// = 0x03f << PAGE_MASK_SHIFT, /*!< bits 18-13 */
+	PAGE_1M,//   = 0x0ff << PAGE_MASK_SHIFT, /*!< bits 20-13 */
+	PAGE_4M,//   = 0x3ff << PAGE_MASK_SHIFT, /*!< bits 22-13 */
+	PAGE_16M//  = 0xfff << PAGE_MASK_SHIFT  /*!< bits 24-13 */
 
 };
 
@@ -110,11 +131,15 @@ inline void TLB_probe() { asm volatile ("tlbp\n"); }
 /*! named register read wrapper */
 inline unative_t reg_read_index()     { return read_register(0); }
 /*! named register read wrapper */
+inline unative_t reg_read_random()    { return read_register(1); }
+/*! named register read wrapper */
 inline unative_t reg_read_pagemask()	{ return read_register(5); }
 /*! named register read wrapper */
 inline unative_t reg_read_badvaddr()  { return read_register(8); }
 /*! named register read wrapper */
 inline unative_t reg_read_count()     { return read_register(9); }
+/*! named register read wrapper */
+inline unative_t reg_read_entryhi()   { return read_register(10); }
 /*! named register read wrapper */
 inline unative_t reg_read_compare()   { return read_register(11); }
 /*! named register read wrapper */

@@ -31,6 +31,7 @@
  */
 #pragma once
 #include "drivers/Processor.h"
+#include "structures/Buffer.h"
 
 /*!
  * @class TLB mem/TLB.h "mem/TLB.h"
@@ -42,8 +43,63 @@
 class TLB
 {
 public:
+
+	static const uint ASID_COUNT = 256;
+
 	/*! @brief Prepares the TLB, by @a flushing it. */
-	TLB(){ flush(); }
+	TLB();
+
+
+	/*! @brief Creates mapping from virtual to physical memory in the TLB..
+	 *
+	 * Given virtual address will map onto given physical address using
+	 * requested page size and asid.
+	 * @param virtual_address The page conatining this virtual address will be
+	 * 	mapped.
+	 * @param physical_address The frame containing this physical address will be 
+	 * 	the destination.
+	 * @param page_size Use page of this size.
+	 * @param asid Create entry using this ASID.
+	 * @param global Say true if you wish to make the mapping accessible to all.
+	 */
+	void setMapping(
+		const uintptr_t virtual_address, 
+		const uintptr_t physical_address, 
+		const Processor::PageSize page_size,
+		const byte asid,
+		const bool global = false
+		);
+
+	/*!
+	 * @brief Clears all entries with the corresponding ASID from the TLB.
+	 * @param asid ASID to clear.
+	 */
+	void clearAsid( const byte asid );
+
+	/*! 
+	 * @brief Gets free ASID to use.
+	 * @return Free ASID.
+	 * If all ASIDs are used one (random) is confiscated and reused.
+	 */
+	byte getAsid();
+
+	/*!
+	 * @brief Sets @a asid as free.
+	 * @param asid ASID to free.
+	 */
+	void returnAsid( const byte asid );
+
+	/*!
+	 * @brief Maps page with the location of hardware devices.
+	 * @param physical_address start of the frame in which 
+	 * 	the devices are present.
+	 * @param virtual_address start of the page to which the devices are mapped.
+	 * @param page_size Size of the used page/frame.
+	 */
+	void mapDevices( uintptr_t physical_address, uintptr_t virtual_address,
+		Processor::PageSize page_size );
+
+private:
 
 	/*! @brief Removes all entries from the TLB
 	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
@@ -51,17 +107,28 @@ public:
 	 */
 	void flush();
 
-	/*! @brief setMapping inserts record into TLB.
-	 *
-	 * Given virtual address will map onto given physical address using
-	 * request page size.
-	 * @param virtualAddress this will be sirtual part of the mapping pair
-	 * @param physicalAddress here it should map to
-	 * @param pageSize will use page of this size
+	/*!
+	 * @brief Gets page(or frame)	number of the given address.
+	 * @param address Address to convert.
+	 * @param page_size Size of pages to use.
+	 * @return Returns upper 20 bits of the starting address of the page.
 	 */
-	void setMapping(
-		const uintptr_t virtualAddress, 
-		const uintptr_t physicalAddress, 
-		const Processor::PageSize pageSize
-		);
+	inline unative_t addrToPage( uintptr_t address, Processor::PageSize page_size )
+		{ return address >> Processor::pages[Processor::PAGE_4K].shift & ~Processor::pages[page_size].mask; }
+
+	/*!
+	 * @brief Checks if page number represents even or odd page.
+	 * @param page first 20 bits of the page starting address.
+	 * @param page_size Size of the page.
+	 * @return  @a true if page number is even, @a false otherwise.
+	 */
+	inline bool isEven( unative_t page, Processor::PageSize page_size )
+		{ return !((page >> (Processor::pages[page_size].shift - Processor::pages[Processor::PAGE_4K].shift)) & 1); }
+
+	/*! @brief Stores asids that could be assigned to VMM. */
+	Buffer<byte, ASID_COUNT> m_freeAsids;
+
+	/*! @brief Map of Assigned ASIDs. */
+	void* m_asidMap[ASID_COUNT];
+	
 };

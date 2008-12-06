@@ -58,6 +58,9 @@ extern void* test(void*);
 void Kernel::run()
 {
 	using namespace Processor;
+
+	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
+
 	printf("HELLO WORLD!\n%s\n", BUNNY_STR );
 	const unative_t cpu_type = reg_read_prid();
 	printf("Running on MIPS R%d revision %d.%d \n", 
@@ -114,7 +117,7 @@ size_t Kernel::getPhysicalMemorySize(){
 
 
 	while (true) {
-		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M);
+		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, 0);
 	//	dprintf( "Mapped %x to %x range = %d kB.\n", front, point, (range * sizeof(uint32_t)/1024) );
 		
 		(*front) = MAGIC; //write
@@ -125,7 +128,7 @@ size_t Kernel::getPhysicalMemorySize(){
 		point += range; //add
 	}
 	printk("OK\n");
-	m_tlb.flush();
+	m_tlb.clearAsid( 0 );
 	return size;
 }
 /*----------------------------------------------------------------------------*/
@@ -187,11 +190,12 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 {
 	using namespace Processor;
 	InterruptDisabler inter;
+	
 	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
 		m_console.interrupt();
-//		Processor::msim_stop();
 	}
-	if (registers->cause & CAUSE_IP7_MASK) {//timer interrupt
+
+	if (registers->cause & CAUSE_IP7_MASK) { //timer interrupt
 		reg_write_cause(0);
 		Timer::instance().interupt();
 	} 
