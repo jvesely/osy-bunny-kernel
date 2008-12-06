@@ -32,20 +32,22 @@
  */
 
 
-#define ADDR_PREFIX_MASK 	0xe0000000	/*! upper 3 bits */
-#define ADDR_OFFSET_MASK 	0x1fffffff	/*! lower 29 bits */
+#define ADDR_PREFIX_MASK 	0xe0000000	/*!< upper 3 bits */
+#define ADDR_OFFSET_MASK 	0x1fffffff	/*!< lower 29 bits */
 
-#define ADDR_PREFIX_KSEG0	(0x80000000)	/*! 2GB */
-#define ADDR_PREFIX_KSEG1	(0xA0000000)	/*! 2.5GB */
-#define ADDR_PREFIX_KSSEG (0xC0000000)  /*! 3GB */
-#define ADDR_PREFIX_KSEG3 (0xE0000000)  /*! 3.5GB */
+#define ADDR_PREFIX_KSEG0	(0x80000000)	/*!< 2.0 GB */
+#define ADDR_PREFIX_KSEG1	(0xA0000000)	/*!< 2.5 GB */
+#define ADDR_PREFIX_KSSEG (0xC0000000)  /*!< 3.0 GB */
+#define ADDR_PREFIX_KSEG3 (0xE0000000)  /*!< 3.5 GB */
 
 #define ADDR_OFFSET(addr)	( (addr) & ADDR_OFFSET_MASK ) /*! take the offset */
 
-/*! replace offset by kseg0 offset */
+/*! replace prefix by kseg0 prefix */
 #define ADDR_TO_KSEG0(addr)	( (addr & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG0 )
-/*! replace offset by kseg1 offset */
+/*! replace prefix by kseg1 prefix */
 #define ADDR_TO_KSEG1(addr) ( (addr & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG1 )
+/*! remove prefix (move to useg) */
+#define ADDR_TO_USEG(addr)  ( (addr & ADDR_OFFSET_MASK)
 
 
 /* Entry points (jumps to C++ code) */

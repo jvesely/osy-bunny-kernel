@@ -98,7 +98,7 @@ bool Bitset::bits(const size_t from, size_t count, const bool value) {
 	unative_t* ptr = m_begin + (from / Bitset::BITS);
 
 	// if count is in the same native type (no iteration necessary)
-	if (count < (Bitset::BITS - modulo)) {
+	if (count <= (Bitset::BITS - modulo)) {
 		// creating the special mask
 		size_t shift = Bitset::BITS - count;
 		unative_t mask = (Bitset::MASK >> shift) << (shift - modulo);
