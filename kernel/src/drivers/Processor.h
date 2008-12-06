@@ -92,15 +92,31 @@ static const unative_t ENTRY_HI_EVEN_16M  = 1 << 24;
 
 static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
 
+struct Page {
+	uint size;
+	uint shift;
+	unative_t mask;
+};
+
+static const Page pages[8] = {
+	{ 0x0001000, 12, 0x000 },        /*!<   4KB */
+	{ 0x0004000, 14, 0x003 },        /*!<  16KB */
+	{ 0x0010000, 16, 0x00f },        /*!<  64KB */
+	{ 0x0040000, 18, 0x03f },        /*!< 256KB */
+	{ 0x0100000, 20, 0x0ff },        /*!<   1MB */
+	{ 0x0400000, 22, 0x3ff },        /*!<   4MB */
+	{ 0x1000000, 24, 0xfff }
+};
+
 /*! reverted bit usage mask in TLB according to page size */
 enum PageSize {
-	PAGE_4K   = 0x000, 	                  /*!< all bits used */
-	PAGE_16K  = 0x003 << PAGE_MASK_SHIFT, /*!< bits 14,13 */
-	PAGE_64K  = 0x00f << PAGE_MASK_SHIFT, /*!< bits 16-13 */
-	PAGE_256K = 0x03f << PAGE_MASK_SHIFT, /*!< bits 18-13 */
-	PAGE_1M   = 0x0ff << PAGE_MASK_SHIFT, /*!< bits 20-13 */
-	PAGE_4M   = 0x3ff << PAGE_MASK_SHIFT, /*!< bits 22-13 */
-	PAGE_16M  = 0xfff << PAGE_MASK_SHIFT  /*!< bits 24-13 */
+	PAGE_4K,//   = 0x000, 	                  /*!< all bits used */
+	PAGE_16K,//  = 0x003 << PAGE_MASK_SHIFT, /*!< bits 14,13 */
+	PAGE_64K,//  = 0x00f << PAGE_MASK_SHIFT, /*!< bits 16-13 */
+	PAGE_256K,// = 0x03f << PAGE_MASK_SHIFT, /*!< bits 18-13 */
+	PAGE_1M,//   = 0x0ff << PAGE_MASK_SHIFT, /*!< bits 20-13 */
+	PAGE_4M,//   = 0x3ff << PAGE_MASK_SHIFT, /*!< bits 22-13 */
+	PAGE_16M//  = 0xfff << PAGE_MASK_SHIFT  /*!< bits 24-13 */
 
 };
 
@@ -118,6 +134,8 @@ inline void TLB_probe() { asm volatile ("tlbp\n"); }
 
 /*! named register read wrapper */
 inline unative_t reg_read_index()     { return read_register(0); }
+/*! named register read wrapper */
+inline unative_t reg_read_random()    { return read_register(1); }
 /*! named register read wrapper */
 inline unative_t reg_read_pagemask()	{ return read_register(5); }
 /*! named register read wrapper */

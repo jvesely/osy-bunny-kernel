@@ -74,7 +74,7 @@ public:
 	void returnAsid( const byte asid );
 
 	void mapDevices( uintptr_t physical_address, uintptr_t virtual_address,
-		uint frame_count );
+		Processor::PageSize page_size );
 
 private:
 
@@ -84,8 +84,11 @@ private:
 	 */
 	void flush();
 
-	inline unative_t addrToPage(uintptr_t address, Processor::PageSize pageSize)
-		{ return (address & ~(pageSize >> 1)) >> 12; }
+	inline unative_t addrToPage( uintptr_t address, Processor::PageSize page_size )
+		{ return address >> Processor::pages[Processor::PAGE_4K].shift & ~Processor::pages[page_size].mask; }
+	
+	inline bool isEven( unative_t page, Processor::PageSize page_size )
+		{ return !((page >> (Processor::pages[page_size].shift - Processor::pages[Processor::PAGE_4K].shift)) & 1); }
 
 	Buffer<byte, ASID_COUNT> m_freeAsids;
 	void* m_asidMap[ASID_COUNT];

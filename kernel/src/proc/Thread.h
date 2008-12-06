@@ -36,6 +36,9 @@
 #include "structures/ListInsertable.h"
 #include "structures/HeapInsertable.h"
 #include "timer/Time.h"
+
+#define THREAD_HEAP_CHILDREN 4
+
 /*!
  * @class Thread Thread.h "proc/Thread.h"
  * @brief Thread class.
@@ -45,7 +48,7 @@
  * necessary to inherit this class and reimplment this member function.
  */
 class Thread: public ListInsertable<Thread>,
-              public HeapInsertable<Thread, Time, 4>
+              public HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>
 {
 
 public:
@@ -211,7 +214,7 @@ private:
 };
 
 template class ListInsertable<Thread>; 
-template class HeapInsertable<Thread, Time, 4>;
+template class HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>;
 
 typedef List<Thread *> ThreadList;
 

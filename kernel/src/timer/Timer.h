@@ -37,7 +37,6 @@
 #include "Singleton.h"
 #include "timer/Time.h"
 
-#define TIMER_CHILDREN 4
 
 /*! class Timer Timer.h "timer/Timer.h"
  * @brief Timer class keeps truck of sleeping threads that wish to be awaken 
@@ -67,5 +66,5 @@ public:
 
 private:
 	/*! @brief Event heap */
-	Heap<Thread*, TIMER_CHILDREN> m_heap;
+	Heap<Thread*, THREAD_HEAP_CHILDREN> m_heap;
 };

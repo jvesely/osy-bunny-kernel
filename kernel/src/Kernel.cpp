@@ -59,9 +59,7 @@ void Kernel::run()
 {
 	using namespace Processor;
 
-//	m_tlb.setMapping( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K, 0xff, 0,true);
-	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, 1);
-	stop();
+	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
 	printf("HELLO WORLD!\n%s\n", BUNNY_STR );
 	const unative_t cpu_type = reg_read_prid();
@@ -129,7 +127,6 @@ size_t Kernel::getPhysicalMemorySize(){
 		point += range; //add
 	}
 	printk("OK\n");
-	stop();
 	m_tlb.clearAsid( 0 );
 	return size;
 }

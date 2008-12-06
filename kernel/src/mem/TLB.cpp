@@ -103,8 +103,7 @@ void TLB::clearAsid( const byte asid )
   }	
 }
 /*----------------------------------------------------------------------------*/
-void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address,
-	uint frame_count )
+void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Processor::PageSize page_size )
 {
 	using namespace Processor;
 	reg_write_entryhi ((virtual_address & VPN2_MASK) | 0xff); // set address, ASID = 0xff
@@ -160,13 +159,14 @@ void TLB::setMapping(
 {
 	using namespace Processor;
 
-	unative_t page  = addrToPage( virtAddr, pageSize);
-	unative_t frame = addrToPage( physAddr, pageSize);
+	unative_t page        = addrToPage( virtAddr, pageSize);
+	unative_t frame       = addrToPage( physAddr, pageSize);
+	unative_t page_mask   = pages[pageSize].mask << PAGE_MASK_SHIFT;
 	unative_t global_flag = global ? ENTRY_LO_GLOBAL_MASK : 0;
 
 	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
 		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
-	reg_write_pagemask (pageSize); //set the right pageSize
+	reg_write_pagemask (page_mask); //set the right pageSize
 
 	reg_write_entrylo0( global_flag );
 	reg_write_entrylo1( global_flag );
@@ -191,7 +191,7 @@ void TLB::setMapping(
 			reg_write_entrylo0( global_flag );
 			reg_write_entrylo1( global_flag );
 			/* set the right pageSize */
-			reg_write_pagemask (pageSize); 
+			reg_write_pagemask (page_mask); 
 		}
 	} 
 
@@ -201,19 +201,23 @@ void TLB::setMapping(
 
 
 	/* choose left/right in the pair, allow writing(Dirty) and set valid */
-	if (! (page & 1) ) { //  ends with 1 or 0
+	if ( isEven(page, pageSize) ) { //  ends with 1 or 0
 		/* left/first */
 		reg_write_entrylo0( reg_addr_value );
+		PRINT_DEBUG ("Writing left entry.\n");
 	} else {
 		/* right/second */
 		reg_write_entrylo1( reg_addr_value );
+		PRINT_DEBUG ("Writing right entry.\n");
 	}
 	
 	if (hit) {
 		/* rewrite/update conflicting */
 		TLB_write_index();
-	}else{
+		PRINT_DEBUG ("Rewriting existing at position %u.\n", reg_read_index());
+	} else {
 		/* rewrite random as there was no previous */
 		TLB_write_random();
+		PRINT_DEBUG ("Adding entry at position.\n");
 	}
 }
