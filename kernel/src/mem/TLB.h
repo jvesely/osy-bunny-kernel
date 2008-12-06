@@ -125,9 +125,21 @@ private:
 	inline bool isEven( unative_t page, Processor::PageSize page_size )
 		{ return !((page >> (Processor::pages[page_size].shift - Processor::pages[Processor::PAGE_4K].shift)) & 1); }
 
+	/*!
+	 * @brief Turns frame number and flags into registry value.
+	 * @param frame Frame number to write.
+	 * @param flags Flags to add
+	 * @return registry Lo value to store in TLB.
+	 */
 	inline unative_t frameToPFN( unative_t frame, byte flags)
 		{ return ((frame << Processor::PFN_SHIFT) & Processor::PFN_ADDR_MASK) | flags; }
 
+	/*!
+   * @brief Turns page number and flags into registry value.
+   * @param page Page number to write.
+   * @param asid ASID to use.
+   * @return registry Hi value to store in TLB.
+   */
 	inline unative_t pageToVPN2( unative_t page, byte asid)
 		{ return ((page << Processor::VPN2_SHIFT) & Processor::VPN2_MASK) | asid; }
 
