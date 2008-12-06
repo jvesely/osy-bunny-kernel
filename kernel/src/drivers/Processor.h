@@ -92,10 +92,13 @@ static const unative_t ENTRY_HI_EVEN_16M  = 1 << 24;
 
 static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
 
+/*! @struct Page Processor.h "drivers/Processor.h"
+ * @brief Stores information about page size.
+ */
 struct Page {
-	uint size;
-	uint shift;
-	unative_t mask;
+	uint size;      /*!< @brief Size of the page */
+	uint shift;     /*!< @brief Position of the lowest valid bit in an address. */
+	unative_t mask; /*!< @brief Inverse mask of the used bit for upper 20 bits */
 };
 
 static const Page pages[8] = {

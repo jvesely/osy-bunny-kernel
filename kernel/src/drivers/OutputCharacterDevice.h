@@ -34,7 +34,7 @@
 
 #include "types.h"
 
-/*! @class OutputCharacterDevice drivers/OutputCharacterDevice "drivers/OutputCharacterDevice"
+/*! @class OutputCharacterDevice OutputCharacterDevice.h "drivers/OutputCharacterDevice"
  * @brief Unbuffered output character class.
  *
  * class writes given chars to specified adress belonging to the device

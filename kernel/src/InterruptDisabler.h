@@ -32,7 +32,7 @@
 #pragma once
 #include "drivers/Processor.h"
 /*!
- * @class InterruptDisabler InterruptDisabler. "InterruptDisabler.h"
+ * @class InterruptDisabler InterruptDisabler.h "InterruptDisabler.h"
  * @brief Convience class used for disabling and reenabling interrupts.
  *
  * Class has private operator new so it can be only allocated on stack.
