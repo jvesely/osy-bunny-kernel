@@ -125,6 +125,12 @@ private:
 	inline bool isEven( unative_t page, Processor::PageSize page_size )
 		{ return !((page >> (Processor::pages[page_size].shift - Processor::pages[Processor::PAGE_4K].shift)) & 1); }
 
+	inline unative_t frameToPFN( unative_t frame, byte flags)
+		{ return ((frame << Processor::PFN_SHIFT) & Processor::PFN_ADDR_MASK) | flags; }
+
+	inline unative_t pageToVPN2( unative_t page, byte asid)
+		{ return ((page << Processor::VPN2_SHIFT) & Processor::VPN2_MASK) | asid; }
+
 	/*! @brief Stores asids that could be assigned to VMM. */
 	Buffer<byte, ASID_COUNT> m_freeAsids;
 
