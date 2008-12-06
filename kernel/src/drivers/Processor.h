@@ -77,21 +77,30 @@ static const unative_t VPN2_MASK = 0xffffe000; /*!< upper 19 bits */
 static const unative_t PFN_SHIFT = 6; /*!< lower 6 bits contains flags */
 static const unative_t PFN_ADDR_MASK = (0xffffff << PFN_SHIFT); /*!< bits 6-30*/
 
-static const unative_t PROBE_FAILURE = 0x80000000; /*!< highest bit */
-static const unative_t ENTRY_LO_VALID_MASK = 0x00000002; /*!< second bit */
-static const unative_t ENTRY_LO_DIRTY_MASK = 0x00000004; /*!< third bit */
+static const unative_t PROBE_FAILURE        = 0x80000000; /*!< highest bit */
+static const unative_t ENTRY_LO_VALID_MASK  = 0x00000002; /*!< second bit */
+static const unative_t ENTRY_LO_DIRTY_MASK  = 0x00000004; /*!< third bit */
+static const unative_t ENTRY_LO_GLOBAL_MASK = 0x00000001;
+
+static const unative_t ENTRY_HI_EVEN_4K   = 1 << 12;
+static const unative_t ENTRY_HI_EVEN_16K  = 1 << 14;
+static const unative_t ENTRY_HI_EVEN_64K  = 1 << 16;
+static const unative_t ENTRY_HI_EVEN_256K = 1 << 18;
+static const unative_t ENTRY_HI_EVEN_1M   = 1 << 20;
+static const unative_t ENTRY_HI_EVEN_4M   = 1 << 22;
+static const unative_t ENTRY_HI_EVEN_16M  = 1 << 24;
 
 static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
 
 /*! reverted bit usage mask in TLB according to page size */
-enum PageSize{
-	PAGE_4K   = 0x000, 	             /*!< all bits used */
-	PAGE_16K  = 0x003 << PAGE_MASK_SHIFT, /*!< ignore lower  2 bits (of 24) */
-	PAGE_64K  = 0x00f << PAGE_MASK_SHIFT, /*!< ignore lower  4 bits (of 24) */
-	PAGE_256K = 0x03f << PAGE_MASK_SHIFT, /*!< ignore lower  6 bits (of 24) */
-	PAGE_1M   = 0x0ff << PAGE_MASK_SHIFT, /*!< ignore lower  8 bits (of 24) */
-	PAGE_4M   = 0x3ff << PAGE_MASK_SHIFT, /*!< ignore lower 10 bits (of 24) */
-	PAGE_16M  = 0xfff << PAGE_MASK_SHIFT  /*!< ignore lower 12 bits (of 24) */
+enum PageSize {
+	PAGE_4K   = 0x000, 	                  /*!< all bits used */
+	PAGE_16K  = 0x003 << PAGE_MASK_SHIFT, /*!< bits 14,13 */
+	PAGE_64K  = 0x00f << PAGE_MASK_SHIFT, /*!< bits 16-13 */
+	PAGE_256K = 0x03f << PAGE_MASK_SHIFT, /*!< bits 18-13 */
+	PAGE_1M   = 0x0ff << PAGE_MASK_SHIFT, /*!< bits 20-13 */
+	PAGE_4M   = 0x3ff << PAGE_MASK_SHIFT, /*!< bits 22-13 */
+	PAGE_16M  = 0xfff << PAGE_MASK_SHIFT  /*!< bits 24-13 */
 
 };
 

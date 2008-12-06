@@ -59,6 +59,9 @@ void Kernel::run()
 {
 	using namespace Processor;
 
+	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, 1);
+
+
 	printf("HELLO WORLD!\n%s\n", BUNNY_STR );
 	const unative_t cpu_type = reg_read_prid();
 	printf("Running on MIPS R%d revision %d.%d \n", 
@@ -125,7 +128,7 @@ size_t Kernel::getPhysicalMemorySize(){
 		point += range; //add
 	}
 	printk("OK\n");
-	m_tlb.flush();
+	m_tlb.clearAsid( 0 );
 	return size;
 }
 /*----------------------------------------------------------------------------*/

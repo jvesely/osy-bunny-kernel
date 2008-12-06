@@ -33,12 +33,14 @@
 #pragma once
 #include "types.h"
 
+#define DEVICES_MAP_START 0xFFFFFFF0
+
 /*! simple character output */
-#define CHARACTER_OUTPUT_ADDRESS (char*)(0x90000000)
+#define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
 
 /*! keyboard */
-#define CHARACTER_INPUT_ADDRESS (char*)(0x90000004)
+#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFF4)
 #define CHARACTER_INPUT_INTERUPT 1
 
 /*! rtc */
-#define CLOCK (uint32_t*)(0x90000008)
+#define CLOCK (uint32_t*)(0xFFFFFFF8)

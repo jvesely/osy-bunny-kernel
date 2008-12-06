@@ -49,11 +49,6 @@ public:
 	/*! @brief Prepares the TLB, by @a flushing it. */
 	TLB();
 
-	/*! @brief Removes all entries from the TLB
-	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
-	 * Inspired by Kalisto
-	 */
-	void flush();
 
 	/*! @brief setMapping inserts record into TLB.
 	 *
@@ -68,7 +63,8 @@ public:
 		const uintptr_t virtualAddress, 
 		const uintptr_t physicalAddress, 
 		const Processor::PageSize pageSize,
-		const byte asid
+		const byte asid,
+		const bool global = false
 		);
 
 	void clearAsid( const byte asid );
@@ -77,7 +73,19 @@ public:
 
 	void returnAsid( const byte asid );
 
+	void mapDevices( uintptr_t physical_address, uintptr_t virtual_address,
+		uint frame_count );
+
 private:
+
+	/*! @brief Removes all entries from the TLB
+	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
+	 * Inspired by Kalisto
+	 */
+	void flush();
+
+	inline unative_t addrToPage(uintptr_t address, Processor::PageSize pageSize)
+		{ return (address & ~(pageSize >> 1)) >> 12; }
 
 	Buffer<byte, ASID_COUNT> m_freeAsids;
 	void* m_asidMap[ASID_COUNT];

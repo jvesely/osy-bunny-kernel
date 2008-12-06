@@ -34,7 +34,7 @@
 #include "api.h"
 #include "InterruptDisabler.h"
 
-#define TLB_DEBUG
+//#define TLB_DEBUG
 
 #ifndef TLB_DEBUG
 #define PRINT_DEBUG(...)
@@ -86,6 +86,8 @@ void TLB::clearAsid( const byte asid )
 {
 	InterruptDisabler interrupts;
 
+	ASSERT (asid < 255);
+
 	using namespace Processor;
 
   for (uint i = 0; i < ENTRY_COUNT; ++i) {
@@ -94,9 +96,35 @@ void TLB::clearAsid( const byte asid )
 		if ((reg_read_entryhi() & ASID_MASK) == asid) {
 			reg_write_entryhi ( 0xff );
 			reg_write_pagemask( PAGE_4K );
+			reg_write_entrylo0( 0 );
+			reg_write_entrylo1( 0 );
     	TLB_write_index();
 		}
   }	
+}
+/*----------------------------------------------------------------------------*/
+void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address,
+	uint frame_count )
+{
+	using namespace Processor;
+	reg_write_entryhi ((virtual_address & VPN2_MASK) | 0xff); // set address, ASID = 0xff
+
+	reg_write_index( 0 );
+	reg_write_pagemask( PAGE_4K );
+
+	unative_t reg_addr_value =  (physical_address & PFN_ADDR_MASK) | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | ENTRY_LO_GLOBAL_MASK;
+	
+	if (virtual_address & (ENTRY_HI_EVEN_4K) ) {
+		reg_write_entrylo0( ENTRY_LO_GLOBAL_MASK );
+		reg_write_entrylo1( reg_addr_value );
+	} else {
+		reg_write_entrylo0( ENTRY_LO_GLOBAL_MASK );
+    reg_write_entrylo1( reg_addr_value );
+	}
+
+	TLB_write_index();
+	reg_write_wired( 1 );
+	
 }
 /*----------------------------------------------------------------------------*/
 byte TLB::getAsid()
@@ -126,17 +154,23 @@ void TLB::setMapping(
 	const uintptr_t virtAddr,	
 	const uintptr_t physAddr,	
 	const Processor::PageSize pageSize,
-	const byte asid
+	const byte asid,
+	bool global
 	) 
 {
 	using namespace Processor;
+
+	unative_t page  = addrToPage( virtAddr, pageSize);
+	unative_t frame = addrToPage( physAddr, pageSize);
+
 	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
-		virtAddr & VPN2_MASK & ~(pageSize >> 1), virtAddr, 
-		physAddr & ~(pageSize >> 1) & VPN2_MASK, physAddr, pageSize, asid);
+		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
 	reg_write_pagemask (pageSize); //set the right pageSize
 
+	reg_write_entrylo0( 0 );
+	reg_write_entrylo1( 0 );
 
-	reg_write_entryhi ((virtAddr & VPN2_MASK & ~pageSize) | asid ); // set address, ASID = 0
+	reg_write_entryhi( (page & VPN2_MASK) | asid ); // set address, ASID = asid
 
 	/* try find mapping */
 	TLB_probe();
@@ -146,29 +180,32 @@ void TLB::setMapping(
 
 	/* check the hit */
 	const bool hit = !(index & PROBE_FAILURE);
+	
 
 	if (hit) {
 		/* there is such entry */
 		TLB_read();
 		if (reg_read_pagemask() != (unative_t)pageSize){
 			/* page size mismatch =>  invalidate */
-			reg_write_entrylo0(0);
-			reg_write_entrylo1(0);
+			reg_write_entrylo0( 0 );
+			reg_write_entrylo1( 0 );
 			/* set the right pageSize */
 			reg_write_pagemask (pageSize); 
 		}
-	}
+	} 
 
 	/* construct PFN from given address */
-	const unative_t reg_addr_value = ( physAddr & ~(pageSize>>1) & PFN_ADDR_MASK) >> PFN_SHIFT;
+	const unative_t reg_addr_value = 
+		((frame << PFN_SHIFT) & PFN_ADDR_MASK) | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK;
+
 
 	/* choose left/right in the pair, allow writing(Dirty) and set valid */
 	if (! (virtAddr & VPN2_MASK & (1 << (PAGE_MASK_SHIFT - 1) ) )) { //  ends with 1 or 0
 		/* left/first */
-		reg_write_entrylo0(reg_addr_value | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK);
+		reg_write_entrylo0( reg_addr_value );
 	} else {
 		/* right/second */
-		reg_write_entrylo1(reg_addr_value | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK);
+		reg_write_entrylo1( reg_addr_value );
 	}
 	
 	if (hit) {
