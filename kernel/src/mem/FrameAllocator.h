@@ -136,7 +136,7 @@ public:
 	uint frameAlloc( void** address, const size_t count, 
 		const uint frame_size, const uint flags );
 
-	/*
+	/*!
 	 * @brief Tries to allocate @a count frames of size @a frame_size inside
 	 * the KSEG segment physical address space (0 - 512 MB).
 	 *
@@ -163,7 +163,7 @@ public:
 	uint allocateAtKuseg( 
 		void** address, const uint count, const uint frame_size );
 
-	/*
+	/*!
 	 * @brief Tries to allocate @a count frames of size @a frame_size at
 	 * the given address.
 	 *
