@@ -40,7 +40,7 @@
 template <class T, int Children> class Heap;
 
 /*! 
- * @class HeapItem HeapItem "structures/HeapItem.h"
+ * @class HeapItem HeapItem.h "structures/HeapItem.h"
  * @brief This class represents one item in Heap.
  *
  * Template class:

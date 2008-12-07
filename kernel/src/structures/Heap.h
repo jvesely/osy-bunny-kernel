@@ -40,7 +40,7 @@
 #include "HeapItem.h"
 
 /*! 
- * @class Heap Heap "structures/Heap.h"
+ * @class Heap Heap.h "structures/Heap.h"
  * @brief Implementation of a d-ary dynamic min-heap.
  * 
  * Template class:

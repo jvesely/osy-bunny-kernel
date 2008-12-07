@@ -36,6 +36,7 @@
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
+#include "mem/FrameAllocator.h"
 
 /*! This is our great bunny :) */
 const char * BUNNY_STR =
@@ -49,6 +50,8 @@ const char * BUNNY_STR =
      __\\ \" \" /__\n\
 jgs (____/^\\____)\n";
 
+
+
 Kernel::Kernel() :
 	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK) {
 	Processor::reg_write_status(0);
@@ -57,7 +60,7 @@ extern void* test(void*);
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
-	using namespace Processor;
+	using namespace Processor; 
 
 	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
@@ -89,11 +92,28 @@ void Kernel::run()
 	// detect memory
 	m_physicalMemorySize = getPhysicalMemorySize();
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
-	
+
 	// setup allocator
-	m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
+	//m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
 	
 	Timer::instance();
+	
+	// init frame allocator
+	// its address space will end 5 MB before the end of physical memory
+	uintptr_t end = MyFrameAllocator::instance().init( 
+		m_physicalMemorySize - 0x500000, (uintptr_t)&_kernel_end);
+	printf("Frame allocator initialized: %s\n", 
+		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
+
+	dprintf("Frame allocator ends on address: %x\n", end);
+
+	// setup allocator
+	m_alloc.setup(ADDR_PREFIX_KSEG0 + m_physicalMemorySize - 0x500000, 0x500000); 
+		/* last 5 MB in the physical memory */
+
+	// BEWARE!!! as for now - mallocator and frame allocator should not 
+	// operate on the same address space, as you may rewrite some data
+	// by writing to the physical address got from the frame allocator
 
 	//init and run the main thread
 	thread_t mainThread;

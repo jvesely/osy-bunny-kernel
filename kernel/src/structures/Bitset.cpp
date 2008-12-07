@@ -69,6 +69,9 @@ Bitset::Bitset(const void* place, const size_t size) {
 	while (elements-- > 0) {
 		*begin++ = 0;
 	}
+
+	dprintf("Created bitset in place %x, %d elements long, having %d bits\n",
+		(uint)place, m_elements, m_size);
 }
 
 /* --------------------------------------------------------------------- */

@@ -49,6 +49,7 @@
 /*! remove prefix (move to useg) */
 #define ADDR_TO_USEG(addr)  ( (addr & ADDR_OFFSET_MASK)
 
+#define ADDR_SIZE_KSEG0 (ADDR_PREFIX_KSEG1 - ADDR_PREFIX_KSEG0)	/*! 0.5 GB */
 
 /* Entry points (jumps to C++ code) */
 
