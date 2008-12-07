@@ -16,6 +16,7 @@
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
  *   @version $Id$
+
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -44,12 +45,11 @@
 	printf(ARGS);
 #endif
 
-#include "../structures/Bitset.h"
-#include "../types.h"
-#include "../cpp.h"
-#include "../tools.h"
-//#include "../api.h"
-#include "../../../common/address.h"
+#include "structures/Bitset.h"
+#include "types.h"
+#include "cpp.h"
+#include "tools.h"
+#include "../../common/address.h"
 #include "flags.h"
 #include "InterruptDisabler.h"
 
@@ -63,20 +63,12 @@
  * @param N Determines how many frame sizes will be supported. Should be an
  * integer from range 1..7. 
  *
- * @todo change init() function to distinguish between KSEG0 memory and other 
- *
- * @todo is combination of VF_VA_USER and VF_AT_KUSEG, etc. possible? 
- * if yes, change the allocateAtAddress() function
- * --SHOULD BE DONE--
- * (what if user wants to allocate on the border between KSEG and KUSEG?
+ * @todo what if user wants to allocate on the border between KSEG and KUSEG?
  * 
  * @todo add function to check the whole bitmap if the used frames of 
  * different levels are properly set
  *
  * @todo setting parents as used may end before it reaches largest frames!!
- *
- * @todo !!IMPORTANT!! When setting frames as used, decrease count of free
- * frames only when the frame was free before.
  */
 template <int N>
 class FrameAllocator: public Singleton< FrameAllocator<N> >
@@ -104,10 +96,10 @@ public:
 	uintptr_t init( size_t memory_size, const size_t kernel_end );
 
 	/*!
-	 * @brief Tries to find and allocate @a count frames of size @a frame_size 
+	 * @brief Tries to allocate @a count frames of size @a frame_size 
 	 * due to bit flags set in @a flags parameter.
 	 *
-	 * @param address Pointer to an integer where the <b>physicall address</b> 
+	 * @param address Pointer to a pointer where the <b>physicall address</b> 
 	 * of the allocated block will be saved. If VF_VA_USER flag is set, 
 	 * the function will try to allocate the memory on this address.
 	 * @param count Count of subsequent frames requested by user to be allocated.
@@ -144,40 +136,73 @@ public:
 	uint frameAlloc( void** address, const size_t count, 
 		const uint frame_size, const uint flags );
 
+	/*
+	 * @brief Tries to allocate @a count frames of size @a frame_size inside
+	 * the KSEG segment physical address space (0 - 512 MB).
+	 *
+	 * @param address Pointer to a pointer where the <b>physicall address</b> 
+	 * of the allocated block will be saved.
+	 * @param count Count of subsequent frames requested by user to be allocated.
+	 * @param frame_size Size of the frames requested by user to be allocated.
+	 *
+	 * @note Use this function to avoid using flags in function frameAlloc().
+	 * 
+	 * @retval @a count in case the allocation was successful. In this case
+	 * @a *address holds physical address of start of the allocated block 
+	 * of frames.
+	 * @retval Count of largest block of subsequent free frames of size 
+	 * @a frame_size in case the allocation was not successful. @a @address 
+	 * will be the physical address of this block.
+	 */
 	uint allocateAtKseg0( 
 		void** address, const uint count, const uint frame_size );
 
 	/*!
-	 * @note Not done!!!
+	 * @note Not functional yet, do not use!!!
 	 */
 	uint allocateAtKuseg( 
 		void** address, const uint count, const uint frame_size );
 
+	/*
+	 * @brief Tries to allocate @a count frames of size @a frame_size at
+	 * the given address.
+	 *
+	 * @param address Pointer to a pointer where the allocated frames should 
+	 * start.
+	 * @param count Count of subsequent frames requested by user to be allocated.
+	 * @param frame_size Size of the frames requested by user to be allocated.
+	 *
+	 * @note Use this function to avoid using flags in function frameAlloc().
+	 * 
+	 * @retval @a count in case the allocation was successful. 
+	 * @retval Count of largest block of subsequent free frames of size 
+	 * @a frame_size in case the allocation was not successful.
+	 */
 	uint allocateAtAddress( 
 		const void* address, const uint count, const uint frame_size );
 
 	/*! 
-	 * @brief Frees the memory previously allocated using FrameAllocator::alloc().
+	 * @brief Frees the memory previously allocated using frameAlloc(),
+	 * allocateAtKseg0(), allocateAtKuseg() or allocateAtAddress().
 	 *
 	 * @param address Physical address of the block of frames to be freed.
 	 * @param count Count of subsequent frames to be freed.
 	 * @param frame_size Size of the frames to be freed.
 	 *
 	 * @retval True if the deallocation was successful and the frames were freed.
-	 * @retval False in case the address is not within the memory address range, 
-	 * the address is not aligned at the start of a frame of size @a frame_size, 
+	 * @retval False in case the address is not within the memory address range,
+	 * the address is not aligned at the start of a frame of size @a frame_size,
 	 * not all of the frames were allocated, or @a count is 0.
 	 */
 	bool frameFree( const void* address, const size_t count, 
 		const uint frame_size );
 
-	/*! @brief Returns the state of the frame allocator. Always use this function
-	 * to check if FrameAllocator was initialized successfully, before calling
-	 * alloc() or free().
+	/*! 
+	 * @brief Returns the state of the frame allocator. Always use this 
+	 * function to check if FrameAllocator was initialized successfully, 
+	 * before calling frameAlloc() or frameFree().
 	 */
 	inline bool isInitialized() { return m_initialized; }
-
-	inline void checkStructures() { printFreeKseg(); printFreeKuseg(); }
 
 	// constants are set in such a way, that if flags == 0
 	// then fralloc will find the place where to allocate and it will find it
@@ -199,7 +224,7 @@ private:
 	/*! @brief Next frame size = FRAME_STEP * This frame size */
 	static const uint FRAME_STEP = 4;
 
-	static const uint KSEG0_SIZE = /*0x20000000;*/ 0x2000000;	// 32 MB
+	static const uint KSEG0_SIZE = ADDR_SIZE_KSEG0;	// 512 MB
 	
 	enum AddressType { KERNEL, ALL };
 
@@ -293,6 +318,12 @@ private:
 	inline unsigned int alignUp(
 		const unsigned int address, const unsigned int factor)
 		{ return  (address + (factor - 1) ) & ~(factor - 1); };
+
+	/*!
+	 * @brief If the symbol FRALLOC_DEBUG is defined, this function prints out
+	 * the state of the internal structures of the frame allocator.
+	 */
+	inline void checkStructures() { printFreeKseg(); printFreeKuseg(); }
 
 	Bitset* m_buddyMapKseg;
 	Bitset* m_buddyMapKuseg;
@@ -396,6 +427,7 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 		offsetKseg(frame_size) = 0;
 		offsetKuseg(frame_size) = 0;
 		offsetKusegInAll(frame_size) = 0;
+
 	}
 
 	// for used frame sizes, the largest frames will start on offset 0
@@ -409,6 +441,7 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 	uint kseg_size = min(memory_size, KSEG0_SIZE);
 	uint kuseg_size = memory_size;
 
+
 	for ( frame_size = m_maxFrameSize; 
 	      frame_size >= MIN_FRAME_SIZE; 
 		  frame_size /= FRAME_STEP) {
@@ -419,7 +452,6 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 		
 		uint frames_kseg = kseg_size / frame_size;
 		uint frames_kuseg = kuseg_size / frame_size;
-
 		
 		PRINT_DEBUG(
 			"The KSEG map for frame size %u will have %u items at offset %u\n", 
@@ -428,8 +460,10 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 			"The KUSEG map for frame size %u will have %u items at offset %u\n", 
 			frame_size, frames_kuseg, total_buddy_frames_kuseg);
 		PRINT_DEBUG(
+
 			"The KUSEG map, KUSEG part for frame size %u will have %u items at offset %u\n", 
 			frame_size, frames_kuseg - frames_kseg, total_buddy_frames_kuseg + frames_kseg);
+
 		
 		// set count of free frames on this level
 		freeFramesKseg(frame_size) = frames_kseg;
@@ -439,6 +473,7 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 		offsetKseg(frame_size) = total_buddy_frames_kseg;
 		offsetKuseg(frame_size) = total_buddy_frames_kuseg;
 		offsetKusegInAll(frame_size) = total_buddy_frames_kuseg + frames_kseg;
+
 
 		total_buddy_frames_kseg += frames_kseg;
 		total_buddy_frames_kuseg += frames_kuseg;
@@ -450,6 +485,7 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 	offsetKseg(frame_size) = total_buddy_frames_kseg;
 	offsetKuseg(frame_size) = total_buddy_frames_kuseg;
 	offsetKusegInAll(frame_size) = total_buddy_frames_kuseg;
+
 
 	PRINT_DEBUG("The whole KSEG buddy map will have %u items\n", 
 		total_buddy_frames_kseg);
@@ -464,6 +500,7 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 	                     Bitset(pos + sizeof(Bitset), total_buddy_frames_kseg));
 	// after the casts, it's guaranteed to be a valid pointer
 	pos += (sizeof(Bitset) + Bitset::getContainerSize(total_buddy_frames_kseg));
+
 
 	position = static_cast<void*>(pos);
 	m_buddyMapKuseg = static_cast<Bitset*>(new (position) 
@@ -940,6 +977,7 @@ void FrameAllocator<N>::setFramesAsUsedKseg(
 	--------------------------------------------------------------------------*/
 
 	PRINT_DEBUG("Setting %u frames of size %u as used in maps KSEG and KUSEG\n", 
+
 			count, frame_size);
 
 	uint local_offset = global_offset - offsetKseg(frame_size);
@@ -952,10 +990,13 @@ void FrameAllocator<N>::setFramesAsUsedKseg(
 	freeFramesKseg(frame_size) -= count;
 	// determine the offset of the same frames in Kuseg map
 	uint offset_in_kuseg = offsetKuseg(frame_size) + local_offset;
+
 	// and mark them as well
 	m_buddyMapKuseg->bits(offset_in_kuseg, count, true);
+
 	// decrease the count of free frames saved
 	freeFramesKuseg(frame_size) -= count;
+
 
 	/*--------------------------------------------------------------------------
 	  Mark all their "children" and "children of their children", etc.
@@ -981,6 +1022,7 @@ void FrameAllocator<N>::setFramesAsUsedKseg(
 
 		freeFramesKseg(fr_size) -= cnt;
 		freeFramesKuseg(fr_size) -= cnt;
+
 
 		local_offset *= 4;
 	}
@@ -1036,8 +1078,10 @@ void FrameAllocator<N>::setFramesAsUsedKseg(
 		printf("Last offset of KSEG map: %u\n", m_theEndKseg);
 		printf("Last offset of KUSEG map: %u\n", m_theEndKuseg);*/
 		ASSERT(m_buddyMapKseg->bit(offsetKseg(fr_size) + first_parent)
+
 			   == m_buddyMapKuseg->bit(offsetKuseg(fr_size) + first_parent)
 			   );
+
 		/*PRINT_DEBUG("Last parent:\n");
 		PRINT_DEBUG("\tIndex in KSEG map: %u:\n", 
 			offsetKseg(fr_size) + last_parent);
@@ -1048,8 +1092,10 @@ void FrameAllocator<N>::setFramesAsUsedKseg(
 		printf("Last parent's offset in KSEG map: %u\n", 
 			offsetKuseg(fr_size) + last_parent);*/
 		ASSERT(m_buddyMapKseg->bit(offsetKseg(fr_size) + last_parent)
+
 			   == m_buddyMapKuseg->bit(offsetKuseg(fr_size) + last_parent)
 			   );
+
 
 		uint new_used = cnt;
 
@@ -1066,22 +1112,27 @@ void FrameAllocator<N>::setFramesAsUsedKseg(
 		m_buddyMapKseg->bits(
 			offsetKseg(fr_size) + first_parent, cnt, true);
 		PRINT_DEBUG("Setting %u frames from offset %u as used in KUSEG map\n",
+
 			cnt, offsetKuseg(fr_size) + first_parent);
 		m_buddyMapKuseg->bits(
 			offsetKuseg(fr_size) + first_parent, cnt, true);
+
 		
 //#ifdef FRALLOC_DEBUG
 		for (uint i = 0; i < cnt; ++i) {
+
 			ASSERT(m_buddyMapKseg->bit(offsetKseg(fr_size) + first_parent + i)
 			   == m_buddyMapKuseg->bit(offsetKuseg(fr_size) + first_parent + i)
 			   );
 		}
+
 //#endif
 
 		
 
 		freeFramesKseg(fr_size) -= new_used;
 		freeFramesKuseg(fr_size) -= new_used;
+
 
 		local_offset /= 4;
 	}
@@ -1099,6 +1150,7 @@ void FrameAllocator<N>::setFramesAsUsedKuseg(
 
 	  TODO: reduce the count of free frames in the KUSEG part of KUSEG map
 	  (count - count_kseg)
+
 	--------------------------------------------------------------------------*/
 
 	PRINT_DEBUG("Setting %u frames of size %u as used in map KUSEG\n", 
@@ -1471,21 +1523,19 @@ uint FrameAllocator<N>::allocateAtKuseg(
 template <int N>
 uint FrameAllocator<N>::allocateAtAddress( const void* address, 
 	const uint count, const uint frame_size )
+
 {
 	InterruptDisabler interrupts;
 
 	// check if the given address is in the proper range:
 	// starts in KSEG
 	/*ASSERT(!(atKseg0 && ((uintptr_t)address > ADDR_SIZE_KSEG0)));*/
-
 	// ends in KSEG
 	/*ASSERT(atKseg0
 	       && ( ((uintptr_t)address + count * frame_size) <= ADDR_SIZE_KSEG0 ));*/
 
-
 	// or starts in KUSEG
 	/*ASSERT(!(!atKseg0 && ((uintptr_t)address < ADDR_SIZE_KSEG0) ));*/
-
 
 	// check if there is enough free frames
 	// we must check it in the whole memory map, not only the KSEG0 map
@@ -1562,6 +1612,7 @@ void FrameAllocator<N>::printFreeKuseg() const
 	PRINT_DEBUG("Checking the buddy bitmap for KUSEG...\n");
 
 	PRINT_DEBUG("Free frames in whole memory:\n");
+
 	// check the buddy map
 	for (uint i = MIN_FRAME_SIZE; i <= m_maxFrameSize; i *= FRAME_STEP) {
 		uint free = 0;
@@ -1571,12 +1622,14 @@ void FrameAllocator<N>::printFreeKuseg() const
 			free += !m_buddyMapKuseg->bit(j);
 
 		PRINT_DEBUG("%u empty frames of size %u in whole memory\n", 
+
 			free,
 			i
 		);
 	}
 
 	PRINT_DEBUG("Free frames in the KUSEG segment:\n");
+
 	for (uint i = MIN_FRAME_SIZE; i <= m_maxFrameSize; i *= FRAME_STEP) {
 		uint free = 0;
 		for (uint j = m_buddyInfoKuseg[hash(i, HASH_RANGE)][2]; 
@@ -1589,6 +1642,7 @@ void FrameAllocator<N>::printFreeKuseg() const
 			i
 		);
 	}
+
 
 	PRINT_DEBUG("Checking the hash map for KUSEG...\n");
 
