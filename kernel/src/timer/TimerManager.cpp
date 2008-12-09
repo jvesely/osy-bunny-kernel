@@ -40,7 +40,7 @@ TimerManager::TimerManager():
 		m_mySemaphore( 0 )
 {
 	//printk( "TimerManager ctor\n" );//debug
-	printk( "timer size: %d \n", sizeof( ClassTimer ) );
+	//printk( "timer size: %x \n", sizeof( ClassTimer ) );
 	m_lastEvent.setTime( 0, 0 );
 	//Scheduler::instance().getId(this);
 	//Scheduler::instance().enqueue( this );

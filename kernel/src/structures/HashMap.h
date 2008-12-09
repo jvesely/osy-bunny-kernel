@@ -33,7 +33,7 @@
 #pragma once
 #include <api.h>
 #include <structures/List.h>
-
+#include <structures/Pair.h>
 
 
 
@@ -45,38 +45,6 @@ const int eAlreadyExists = -2;
 
 /** internal error enomem - not used right now (ENOMEM is now sufficient)*/
 const int eNoMemory = -1;
-
-
-/** @brief pair of key and data, used in Map or HashMap
-*	requires copy ctor of both types and == operator of KeyType
-*	is only basic encapsulation of key and data into one entity
-**/
-template <typename KeyType, typename DataType> class Pair
-{
-public:
-	/**	@brief ctor with values	*/
-	inline Pair ( const KeyType & key , const DataType & value ) : first ( key ), second ( value ) {};
-
-	/** @brief operator ==
-	*	compares only keys
-	*/
-	inline bool operator == ( const Pair<KeyType, DataType> & item ) const {return first == item.first;}
-
-	/** @brief operator !=
-	*	compares only keys
-	*/
-	inline bool operator != ( const Pair<KeyType, DataType> & item ) const {return !operator== ( item );}
-
-//these are public also in STL pair, so they are left to public
-	/** @brief key value */
-	KeyType first;
-
-	/** @brief data */
-	DataType second;
-};
-
-
-
 
 
 /** @brief hash map
