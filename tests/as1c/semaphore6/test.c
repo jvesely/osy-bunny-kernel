@@ -34,25 +34,25 @@ run_test (void)
 
 	// init
 	success = 1;
-	semaphore_init (& mtx, 2);
-	semaphore_down (& mtx, 1);
+	sem_init (& mtx, 1);
+	sem_down (& mtx);
 
 
 	/*
 	 * Test the timeouts.
 	 */
 	printk ("Try to lock semaphore for (approx.) 2 seconds...\n");
-	result = semaphore_down_timeout (& mtx, 2, MTX_TIMEOUT_MS * 1000);
+	result = sem_down_timeout (& mtx, MTX_TIMEOUT_MS * 1000);
 	success = (result == ETIMEDOUT) ? success : 0;
 
 	printk ("Try to lock mutex for (approx.) 4 seconds...\n");
-	result = semaphore_down_timeout (& mtx, 3, 2 * MTX_TIMEOUT_MS * 1000);
+	result = sem_down_timeout (& mtx, 2 * MTX_TIMEOUT_MS * 1000);
 	success = (result == ETIMEDOUT) ? success : 0;
 
 
 	// clean up
-	semaphore_up (& mtx, 1);
-	semaphore_destroy (& mtx);
+	sem_up (& mtx);
+	sem_destroy (& mtx);
 
 	// print the result
 	if (success)
