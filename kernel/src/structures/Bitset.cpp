@@ -70,13 +70,14 @@ Bitset::Bitset(const void* place, const size_t size) {
 		*begin++ = 0;
 	}
 
-	dprintf("Created bitset in place %x, %d elements long, having %d bits\n",
-		(uint)place, m_elements, m_size);
+	/*dprintf("Created bitset in place %x, %d elements long, having %d bits\n",
+		(uint)place, m_elements, m_size);*/
 }
 
 /* --------------------------------------------------------------------- */
 
 bool Bitset::bit(const size_t pos, const bool value) {
+	/*dprintf("bit() started...\n");*/
 	// check range
 	if (pos >= m_size) return false;
 
@@ -87,7 +88,7 @@ bool Bitset::bit(const size_t pos, const bool value) {
 		// clear the bit
 		m_begin[pos / Bitset::BITS] &= ~(Bitset::HEAD >> (pos & Bitset::MOD_MASK));
 	}
-
+	/*dprintf("bit() ended...\n");*/
 	return true;
 }
 
@@ -153,6 +154,8 @@ bool Bitset::bits(const size_t from, size_t count, const bool value) {
 /* --------------------------------------------------------------------- */
 
 size_t Bitset::empty(const size_t from, size_t enough) const {
+	/*dprintf("Bitset pointer: %p\n", m_begin);*/
+	
 	// check range
 	if (from >= m_size) return 0;
 
@@ -283,6 +286,7 @@ size_t Bitset::empty(const size_t from, size_t enough) const {
 size_t Bitset::full(const size_t from, size_t enough) const {
 	// check range
 	if (from >= m_size) return 0;
+	/*dprintf("full() started...\n");*/
 
 	// if using default parameter for enough, set it to maximal possible
 	if (enough == 0) {
@@ -311,6 +315,7 @@ size_t Bitset::full(const size_t from, size_t enough) const {
 	}
 
 	while (true) {
+		/*dprintf("next loop...\n");*/
 		// if ptr is behind our container
 		if (ptr > (m_begin + m_elements - 1)) break;
 

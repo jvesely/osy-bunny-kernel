@@ -33,6 +33,8 @@
  */
 
 #include "tools.h"
+#include "drivers/Processor.h"
+
 unsigned int roundUp(unsigned int number, unsigned int factor)
 {
 	return ((number + factor - 1) / factor) * factor;
@@ -43,4 +45,7 @@ unsigned int roundDown(unsigned int number, unsigned int factor)
 	return (number / factor) * factor;
 }
 /*----------------------------------------------------------------------------*/
-
+uint rand()
+{
+	return Processor::reg_read_count() * Processor::reg_read_random();
+}

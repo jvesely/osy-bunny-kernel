@@ -212,6 +212,7 @@ HeapItem<T, Children>* HeapItem<T, Children>::insertChild(
 		child->m_previous = lastChild();
 		HeapItem<T, Children> *next_parent = m_follower->insertChild( child );
 		ASSERT(next_parent == m_follower);
+		next_parent = NULL;	// just to be used when NDEBUG is defined
 		return m_follower;
 	}
 

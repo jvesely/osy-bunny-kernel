@@ -93,19 +93,18 @@ void Kernel::run()
 	m_physicalMemorySize = getPhysicalMemorySize();
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
 
-	// setup allocator
-	//m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
+	//dprintf("Kernel ends on address %p\n", &_kernel_end);
 
 	Timer::instance();
 
 	// init frame allocator
 	// its address space will end 5 MB before the end of physical memory
-	uintptr_t end = MyFrameAllocator::instance().init(
+	ASSERT(m_physicalMemorySize > 0x500000);
+	MyFrameAllocator::instance().init( 
 		m_physicalMemorySize - 0x500000, (uintptr_t)&_kernel_end);
-	printf("Frame allocator initialized: %s\n",
-		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
-
-	dprintf("Frame allocator ends on address: %x\n", end);
+	/*printf("Frame allocator initialized: %s\n",
+		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );*/
+	ASSERT(MyFrameAllocator::instance().isInitialized());
 
 	// setup allocator
 	//m_alloc.setup(ADDR_PREFIX_KSEG0 + m_physicalMemorySize - 0x500000, 0x500000);
