@@ -41,13 +41,32 @@
 
 //------------------------------------------------------------------------------
 //debug reports
-
+//all debug messsages
 //#define ALLOCATOR_DEBUG_ALL
 
-#ifndef ALLOCATOR_DEBUG_ALL
+//debug messages for dividing block
+//#define ALLOCATOR_DEBUG_DIVIDE
+
+//debug messages for frame allocation
+//#define ALLOCATOR_DEBUG_FRAME
 
 //debug messages about free frame-allocated memory
 //#define ALLOCATOR_DEBUG_FREE
+
+//debug messages for joining blocks
+//#define ALLOCATOR_DEBUG_JOIN
+
+//other debug messages
+//#define ALLOCATOR_DEBUG_OTHER
+
+//information about size
+//#define ALLOCATOR_DEBUG_SIZE
+
+//debug messages about used allocation strategy
+//#define ALLOCATOR_DEBUG_STRATEGY
+
+#ifndef ALLOCATOR_DEBUG_ALL
+
 #ifndef ALLOCATOR_DEBUG_FREE
 #define PRINT_DEBUG_FREE(...)
 #else
@@ -56,8 +75,6 @@
 	printf(ARGS);
 #endif
 
-//debug messages for frame allocation
-//#define ALLOCATOR_DEBUG_FRAME
 #ifndef ALLOCATOR_DEBUG_FRAME
 #define PRINT_DEBUG_FRAME(...)
 #else
@@ -66,8 +83,6 @@
 	printf(ARGS);
 #endif
 
-//debug messages for joining blocks
-//#define ALLOCATOR_DEBUG_JOIN
 #ifndef ALLOCATOR_DEBUG_JOIN
 #define PRINT_DEBUG_JOIN(...)
 #else
@@ -76,8 +91,6 @@
 	printf(ARGS);
 #endif
 
-//debug messages for dividing block
-//#define ALLOCATOR_DEBUG_DIVIDE
 #ifndef ALLOCATOR_DEBUG_DIVIDE
 #define PRINT_DEBUG_DIVIDE(...)
 #else
@@ -86,8 +99,6 @@
 	printf(ARGS);
 #endif
 
-//debug messages about used allocation strategy
-//#define ALLOCATOR_DEBUG_STRATEGY
 #ifndef ALLOCATOR_DEBUG_STRATEGY
 #define PRINT_DEBUG_STRATEGY(...)
 #else
@@ -96,8 +107,6 @@
 	printf(ARGS);
 #endif
 
-//information about size
-//#define ALLOCATOR_DEBUG_SIZE
 #ifndef ALLOCATOR_DEBUG_SIZE
 #define PRINT_DEBUG_SIZE(...)
 #else
@@ -106,8 +115,6 @@
 	printf(ARGS);
 #endif
 
-//other debug messages
-//#define ALLOCATOR_DEBUG_OTHER
 #ifndef ALLOCATOR_DEBUG_OTHER
 #define PRINT_DEBUG_OTHER(...)
 #else
@@ -133,6 +140,10 @@
 #define PRINT_DEBUG_FRAME(ARGS...) \
   printf("[ ALLOCATOR_DEBUG_FRAME ]: "); \
   printf(ARGS);
+
+#define PRINT_DEBUG_SIZE(ARGS...) \
+	printf("[ ALLOCATOR_DEBUG_SIZE ]: "); \
+	printf(ARGS);
 
 #define PRINT_DEBUG_STRATEGY(ARGS...) \
   printf("[ ALLOCATOR_DEBUG_STRATEGY ]: "); \
@@ -380,6 +391,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::createBlock(
 	backBorder->setSize(size);
 	//setting resultant block
 	PRINT_DEBUG_FRAME("init block with real size %x \n", realSize);
+	result->setUndefined();
 	initBlock(result, realSize, true);
 	assert(result->isFree());
 	return result;
@@ -509,6 +521,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::divideBlock(
 
 	//creating 2nd block
 	BlockHeader * newHeader = (BlockHeader*)((uintptr_t)header + realSize);
+	newHeader->setUndefined();
 	initBlock(newHeader, header->size() - realSize, free2);
 
 	//setting 1st block

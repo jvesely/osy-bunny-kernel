@@ -60,7 +60,7 @@ extern void* test(void*);
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
-	using namespace Processor; 
+	using namespace Processor;
 
 	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
@@ -116,12 +116,12 @@ void Kernel::run()
 	Thread* main = KernelThread::create(&mainThread, test, NULL, 0);
 	ASSERT (main);
 	main->switchTo();
-	
+
 	panic("Should never reach this.\n");
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(){
-	return 8 * 1024 * 1024;
+	//return 8 * 1024 * 1024;
 	printf("Probing memory range...");
 	const uint32_t MAGIC = 0xDEADBEEF;
 
@@ -206,7 +206,7 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 {
 	using namespace Processor;
 	InterruptDisabler inter;
-	
+
 	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
 		m_console.interrupt();
 	}
@@ -214,7 +214,7 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 	if (registers->cause & CAUSE_IP7_MASK) { //timer interrupt
 		reg_write_cause(0);
 		Timer::instance().interupt();
-	} 
+	}
 
 }
 /*----------------------------------------------------------------------------*/
@@ -232,7 +232,7 @@ void Kernel::setTimeInterrupt(const Time& time)
 	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();
 
 	const unative_t planned = (time.usecs() || time.secs())
-		?	
+		?
 	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
 		: current;
 
