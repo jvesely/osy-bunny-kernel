@@ -33,5 +33,10 @@
  */
 
 #pragma once
-unsigned int roundUp(unsigned int number, unsigned int factor);
-unsigned int roundDown(unsigned int number, unsigned int factor);
+
+#include "types.h"
+
+uint roundUp( uint number, uint factor);
+uint roundDown( uint number, uint factor);
+
+uint rand();
