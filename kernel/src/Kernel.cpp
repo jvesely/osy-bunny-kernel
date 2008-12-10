@@ -57,6 +57,8 @@ Kernel::Kernel() :
 	Processor::reg_write_status(0);
 }
 extern void* test(void*);
+
+extern unative_t COUNT_CPU;
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
@@ -65,6 +67,9 @@ void Kernel::run()
 	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
 	printf("HELLO WORLD!\n%s\n", BUNNY_STR );
+
+	printf("Running on %d processors\n", COUNT_CPU);
+
 	const unative_t cpu_type = reg_read_prid();
 	printf("Running on MIPS R%d revision %d.%d \n",
 	        cpu_type >> CPU_IMPLEMENTATION_SHIFT,
@@ -99,17 +104,15 @@ void Kernel::run()
 	Timer::instance();
 
 	// init frame allocator
-	// its address space will end 5 MB before the end of physical memory
+	uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
+//	printf("Kernel ends at: %p.\n", &_kernel_end );
+//	printf("Stacks(%x) end at: %p.\n", total_stacks, (uintptr_t)&_kernel_end + total_stacks);
 	uintptr_t end = MyFrameAllocator::instance().init(
-		m_physicalMemorySize - 0x500000, (uintptr_t)&_kernel_end);
-	printf("Frame allocator initialized: %s\n",
-		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
+		m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
+//	printf("Frame allocator initialized: %s\n",
+//		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
 
 	dprintf("Frame allocator ends on address: %x\n", end);
-
-	// setup allocator
-	//m_alloc.setup(ADDR_PREFIX_KSEG0 + m_physicalMemorySize - 0x500000, 0x500000);
-		/* last 5 MB in the physical memory */
 
 	//init and run the main thread
 	thread_t mainThread;

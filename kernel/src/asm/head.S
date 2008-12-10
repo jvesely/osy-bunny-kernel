@@ -172,11 +172,38 @@ exception_general:
 .ent   start
 
 start:
-	/* Set the statically allocated stack. */
-	la $sp, ADDR_TO_KSEG0 (KERNEL_STATIC_STACK_TOP) 
-
+	
+	la    $t0, COUNT_CPU
+9:
+	ll    $t1, ($t0)
+	addi  $t2, $t1, 1
+	sc    $t2, ($t0)
+	beqz  $t2, 9b
+	nop
+	
 	/* Set the global pointer to the kernel segment. */
 	la $gp, ADDR_TO_KSEG0 (0) 
+
+	/* set the right stack */
+	la    $t2, KERNEL_STATIC_STACK_SIZE
+	multu $t1, $t2
+	nop
+	mflo  $t0
+	addi  $t3, $t0, KERNEL_STATIC_STACK_SIZE
+	la    $t4, _kernel_end
+	add   $sp, $t4, $t3
+
+
+	beqz  $t1, 8f
+	nop
+	wait
+8:
+	
+	/* Set the statically allocated stack. */
+/*	la $sp, ADDR_TO_KSEG0 (KERNEL_STATIC_STACK_TOP) */
+
+	
+
 
 	/* Continue in compiled C code. */
 	jal wrapped_start

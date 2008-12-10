@@ -35,6 +35,8 @@
 #include "Kernel.h"
 #include "api.h"
 
+volatile unative_t COUNT_CPU;
+
 /*! bootstrap entry point */
 void wrapped_start(void)
 {

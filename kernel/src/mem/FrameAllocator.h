@@ -1891,3 +1891,5 @@ inline uintptr_t FrameAllocator<N>::getAddressKuseg(
 
 
 typedef FrameAllocator<7> MyFrameAllocator;
+
+#undef PRINT_DEBUG
