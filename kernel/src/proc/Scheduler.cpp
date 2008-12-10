@@ -70,10 +70,14 @@ thread_t Scheduler::getId( Thread* newThread )
 	thread_t id = m_nextThread++;
 
 	/* if it is taken repeat */
-	while (m_threadMap.insert(id, newThread) == EINVAL) {
+	int result;
+	while ( (result = m_threadMap.insert(id, newThread)) == EINVAL) {
 		PRINT_DEBUG("ID %u already in use getting new one.\n", id);
 		id = m_nextThread++;
 	}
+
+	if (result == ENOMEM)
+		return 0;
 
 	/* set the id to the thread */
 	newThread->setId(id);

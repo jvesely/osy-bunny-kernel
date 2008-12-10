@@ -70,8 +70,14 @@ Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*)
 		return NULL;
 	}
 //	dprintf("Getting ID.\n");
+	
 	*thread_ptr = Scheduler::instance().getId(new_thread);
+	if (!(*thread_ptr)) { //id space allocation failed
+		delete new_thread;
+		return NULL;
+	}
 //	dprintf("Thread %d(%p) created, now enqueue.\n", new_thread->id(), new_thread);
+
 	new_thread->resume();
 //	Scheduler::instance().enqueue(new_thread);
 //	dprintf("Enqueued and leaving.\n");
