@@ -31,6 +31,7 @@
  */
 
 #include "api.h"
+#include "mem/FrameAllocator.h"
 
 #include "structures/Trees.h"
 
@@ -62,6 +63,14 @@ void* test(void*)
 	thread_kill( thread1 );
 	printf("After kill.\n");
 	thread_join( thread1 );
+
+	// fralloc tests
+
+	//printf("Frame allocator testing...\n");
+
+	//MyFrameAllocator::instance().test();
+
+
 	return NULL;
 	thread_yield();
 	while (true) {

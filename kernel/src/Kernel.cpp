@@ -62,7 +62,7 @@ extern unative_t COUNT_CPU;
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
-	using namespace Processor; 
+	using namespace Processor;
 
 	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
@@ -98,8 +98,7 @@ void Kernel::run()
 	m_physicalMemorySize = getPhysicalMemorySize();
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
 
-	// setup allocator
-	//m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
+	//dprintf("Kernel ends on address %p\n", &_kernel_end);
 
 	Timer::instance();
 
@@ -107,19 +106,18 @@ void Kernel::run()
 	uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
 //	printf("Kernel ends at: %p.\n", &_kernel_end );
 //	printf("Stacks(%x) end at: %p.\n", total_stacks, (uintptr_t)&_kernel_end + total_stacks);
-	uintptr_t end = MyFrameAllocator::instance().init(
+	MyFrameAllocator::instance().init( 
 		m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
 //	printf("Frame allocator initialized: %s\n",
 //		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
-
-	dprintf("Frame allocator ends on address: %x\n", end);
+	ASSERT(MyFrameAllocator::instance().isInitialized());
 
 	//init and run the main thread
 	thread_t mainThread;
 	Thread* main = KernelThread::create(&mainThread, test, NULL, 0);
 	ASSERT (main);
 	main->switchTo();
-	
+
 	panic("Should never reach this.\n");
 }
 /*----------------------------------------------------------------------------*/
@@ -208,7 +206,7 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 {
 	using namespace Processor;
 	InterruptDisabler inter;
-	
+
 	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
 		m_console.interrupt();
 	}
@@ -216,7 +214,7 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 	if (registers->cause & CAUSE_IP7_MASK) { //timer interrupt
 		reg_write_cause(0);
 		Timer::instance().interupt();
-	} 
+	}
 
 }
 /*----------------------------------------------------------------------------*/
@@ -234,7 +232,7 @@ void Kernel::setTimeInterrupt(const Time& time)
 	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();
 
 	const unative_t planned = (time.usecs() || time.secs())
-		?	
+		?
 	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
 		: current;
 
