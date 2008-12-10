@@ -449,7 +449,7 @@ alloc_frames (unsigned int count)
 	// Allocate the feames
 	block->addr = checked_frame_alloc (count);
 	if (block->addr == NULL) {
-		free (block);
+		free ((void*)block);
 		return NULL;
 	}
 
@@ -481,7 +481,7 @@ free_block (mem_block_t block)
 	
 	// Free the memory
 	frame_free ((void * ) VIRT2PHYS(block->addr), block->size / FRAME_SIZE);
-	free (block);
+	free ((void*)block);
 } /* free_block */
 
 

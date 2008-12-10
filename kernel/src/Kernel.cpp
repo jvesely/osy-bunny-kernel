@@ -10,11 +10,11 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
@@ -24,7 +24,7 @@
  */
 
 /*!
- * @file 
+ * @file
  * @brief Kernel class implementation.
  *
  * File contains Kernel class implementation.
@@ -36,6 +36,7 @@
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
+#include "mem/FrameAllocator.h"
 
 /*! This is our great bunny :) */
 const char * BUNNY_STR =
@@ -49,6 +50,8 @@ const char * BUNNY_STR =
      __\\ \" \" /__\n\
 jgs (____/^\\____)\n";
 
+
+
 Kernel::Kernel() :
 	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK) {
 	Processor::reg_write_status(0);
@@ -57,14 +60,14 @@ extern void* test(void*);
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
-	using namespace Processor;
+	using namespace Processor; 
 
 	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
 	printf("HELLO WORLD!\n%s\n", BUNNY_STR );
 	const unative_t cpu_type = reg_read_prid();
-	printf("Running on MIPS R%d revision %d.%d \n", 
-	        cpu_type >> CPU_IMPLEMENTATION_SHIFT, 
+	printf("Running on MIPS R%d revision %d.%d \n",
+	        cpu_type >> CPU_IMPLEMENTATION_SHIFT,
 	        (cpu_type >> CPU_REVISION_SHIFT) & CPU_REVISION_MASK,
 				  cpu_type & CPU_REVISION_MASK );
 
@@ -89,11 +92,24 @@ void Kernel::run()
 	// detect memory
 	m_physicalMemorySize = getPhysicalMemorySize();
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
-	
+
 	// setup allocator
-	m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
-	
+	//m_alloc.setup((uintptr_t)&_kernel_end, 0x100000); /* 1 MB */
+
 	Timer::instance();
+
+	// init frame allocator
+	// its address space will end 5 MB before the end of physical memory
+	uintptr_t end = MyFrameAllocator::instance().init(
+		m_physicalMemorySize - 0x500000, (uintptr_t)&_kernel_end);
+	printf("Frame allocator initialized: %s\n",
+		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
+
+	dprintf("Frame allocator ends on address: %x\n", end);
+
+	// setup allocator
+	//m_alloc.setup(ADDR_PREFIX_KSEG0 + m_physicalMemorySize - 0x500000, 0x500000);
+		/* last 5 MB in the physical memory */
 
 	//init and run the main thread
 	thread_t mainThread;
@@ -107,7 +123,7 @@ void Kernel::run()
 size_t Kernel::getPhysicalMemorySize(){
 	printf("Probing memory range...");
 	const uint32_t MAGIC = 0xDEADBEEF;
-	
+
 	size_t size = 0;
 	const size_t range = 0x100000/sizeof(uint32_t); /* 1MB */
 	volatile uint32_t * front = (&_kernel_end - 0x80000000/sizeof(uint32_t));
@@ -118,7 +134,7 @@ size_t Kernel::getPhysicalMemorySize(){
 	while (true) {
 		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, 0);
 	//	dprintf( "Mapped %x to %x range = %d kB.\n", front, point, (range * sizeof(uint32_t)/1024) );
-		
+
 		(*front) = MAGIC; //write
 		(*back) = MAGIC; //write
 	//	dprintf("Proof read %x:%x %x:%x\n", front, *front, back, *back);
@@ -131,12 +147,12 @@ size_t Kernel::getPhysicalMemorySize(){
 	return size;
 }
 /*----------------------------------------------------------------------------*/
-void* Kernel::malloc(const size_t size) const
+void* Kernel::malloc(const size_t size) //const
 {
 	return m_alloc.getMemory(size);
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::free(const void * address) const
+void Kernel::free(const void * address) //const
 {
 	m_alloc.freeMemory(address);
 }
@@ -164,7 +180,7 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_BP:
 			if (!(reason & CAUSE_BD_MASK) ) {
 				registers->epc +=4; // go to the next instruction
-				break;	
+				break;
 			}
 			panic("Exception: Break.\n");
 		case CAUSE_EXCCODE_TR:
@@ -219,7 +235,7 @@ void Kernel::setTimeInterrupt(const Time& time)
 	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
 		: current;
 
-		
+
 	reg_write_compare( planned );
 	//dprintf("Set time interrupt in %u usecs current: %x, planned: %x.\n", usec, current, planned);
 }

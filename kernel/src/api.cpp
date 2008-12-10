@@ -41,6 +41,9 @@
 #include "timer/TimerManager.h"
 #include "timer/ClassTimer.h"
 
+#include "mem/FrameAllocator.h"
+
+
 #define va_start __builtin_va_start
 #define va_end __builtin_va_end
 #define va_arg __builtin_va_arg
@@ -449,3 +452,26 @@ void spinlock_unlock(spinlock_t* s) {
 
 /*----------------------------------------------------------------------------*/
 
+int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags)
+{
+	if (cnt == 0)
+		return ENOMEM;
+
+	if (MyFrameAllocator::instance().frameAlloc(paddr, cnt, 4096, flags) < cnt)
+		return ENOMEM;
+	
+	return EOK;
+}
+
+/*----------------------------------------------------------------------------*/
+
+int frame_free(const void *paddr, const size_t cnt)
+{
+	if (cnt == 0)
+		return ENOMEM;
+
+	if (!MyFrameAllocator::instance().frameFree(paddr, cnt, 4096))
+		return ENOMEM;
+
+	return EOK;
+}

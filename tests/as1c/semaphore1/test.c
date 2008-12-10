@@ -32,20 +32,20 @@ run_test (void)
 	printk (desc);
 
 	// initialize
-	semaphore_init (& mtx, 1);
+	sem_init (& mtx, 1);
 
 
 	/*
 	 * Play with the mutex...
 	 */
 	for (cnt = 0; cnt < CYCLE_COUNT; cnt++) {
-		semaphore_down (& mtx, 1);
-		semaphore_up (& mtx, 1);
+		sem_down (& mtx);
+		sem_up (& mtx);
 	}
 
 
 	// clean up
-	semaphore_destroy (& mtx);
+	sem_destroy (& mtx);
 
 	// print the result
 	printk ("Test passed...\n");

@@ -58,7 +58,7 @@ thread_proc (void * data)
 
 
 	for (cnt = 0; cnt < CYCLE_COUNT; cnt++) {
-		semaphore_down (& counter_mtx, 1);
+		sem_down (& counter_mtx);
 
 		/*
 		 * Get a copy of the counter, wait a while and store an
@@ -69,12 +69,12 @@ thread_proc (void * data)
 		thread_usleep (SLEEP_TIME_MS * 1000);
 		counter = local_counter + 1;
 
-		semaphore_up (& counter_mtx, 1);
+		sem_up (& counter_mtx);
 	}
 
-	semaphore_down(&threads_running_mtx, 1);
+	sem_down(&threads_running_mtx);
 	threads_running -= 1;
-	semaphore_up(&threads_running_mtx, 1);
+	sem_up(&threads_running_mtx);
 	
 	return NULL;
 }
@@ -92,8 +92,8 @@ run_test (void)
 	counter = 0;
 	threads_running = THREAD_COUNT;
 
-	semaphore_init (& counter_mtx, 1);
-	semaphore_init (& threads_running_mtx, 1);
+	sem_init (& counter_mtx, 1);
+	sem_init (& threads_running_mtx, 1);
 
 
 	/*
@@ -117,8 +117,8 @@ run_test (void)
 		robust_thread_join (threads [cnt]);
 	}
 
-	semaphore_destroy (& threads_running_mtx);
-	semaphore_destroy (& counter_mtx);
+	sem_destroy (& threads_running_mtx);
+	sem_destroy (& counter_mtx);
 
 	// print the result
 	if (counter == THREAD_COUNT * CYCLE_COUNT) {

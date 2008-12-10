@@ -10,11 +10,11 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
@@ -24,7 +24,7 @@
  */
 
 /*!
- * @file 
+ * @file
  * @brief Kernel class declaration.
  *
  * Central class of the entire project. Hope it works well.
@@ -35,7 +35,8 @@
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
-#include "mem/Allocator.h"
+//#include "mem/Allocator.h"
+#include "mem/BasicMemoryAllocator.h"
 //#include "proc/Scheduler.h"
 
 /*! symbol specified in linker script */
@@ -51,12 +52,12 @@ class Kernel:public Singleton<Kernel>
 {
 
 public:
-	/*! 
+	/*!
 	 * @brief Bootstrap code member function.
 	 *
 	 * This function should never return from it's call. I initializes all stuff
 	 * that needs initializing, except that which is already initialized and
-	 * schedules first thread. 
+	 * schedules first thread.
 	 */
 	void run();
 
@@ -96,13 +97,13 @@ public:
 	 * @param size requested size
 	 * @return adress to the block of given size, NULL on failure
 	 */
-	void* malloc( size_t size ) const;
+	void* malloc( size_t size );// const;
 
 	/*! @brief Kernel heap free.
 	 * @param address adress of the returned block
 	 */
-	void free( const void* address ) const;
-	
+	void free( const void* address );// const;
+
 	/*!
 	 * @brief Exception handling member function.
 	 * @param registers pointer to the stored registers at the time
@@ -116,8 +117,9 @@ public:
 	void setTimeInterrupt( const Time& time );
 
 private:
-	/*! kernel heap manager */	
-	Allocator m_alloc;
+	/*! kernel heap manager */
+	//Allocator m_alloc;
+	BasicMemoryAllocator m_alloc;
 
 	/*! console device */
 	Console m_console;

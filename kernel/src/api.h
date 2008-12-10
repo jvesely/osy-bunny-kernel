@@ -32,6 +32,7 @@
 #pragma once
 
 #include "types.h"
+#include "flags.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -383,6 +384,14 @@ void spinlock_destroy(spinlock_t* s);
 
 void spinlock_lock(spinlock_t* s);
 void spinlock_unlock(spinlock_t* s);
+
+/* --------------------------------------------------------------------- */
+/* -----------------------  FRAME ALLOCATOR  --------------------------- */
+/* --------------------------------------------------------------------- */
+
+int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags);
+
+int frame_free(const void *paddr, const size_t cnt);
 
 #ifdef __cplusplus
 }

@@ -40,7 +40,7 @@
 #include "Heap.h"
 
 /*! 
- * @class HeapInsertable HeapInsertable "structures/HeapInsertable.h"
+ * @class HeapInsertable HeapInsertable.h "structures/HeapInsertable.h"
  * @brief This is a base class of all objects that can be inserted into Heap.
  * 
  * All classes that inherit this base class can be inserted into Heap 
@@ -156,7 +156,8 @@ bool HeapInsertable<T, Key, Children>::operator<(
 /*---------------------------------------------------------------------------*/
 
 template <class T, typename Key, int Children>
-void HeapInsertable<T, Key, Children>::insertIntoHeap(Heap<T*, Children>* heap, const Key &key)
+void HeapInsertable<T, Key, Children>::insertIntoHeap(
+	Heap<T*, Children>* heap, const Key &key)
 {
 	ASSERT (!m_owner) 
 		m_key = key;

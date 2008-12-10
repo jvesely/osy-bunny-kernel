@@ -56,7 +56,7 @@ void Allocator::setup(const uintptr_t from, const size_t length)
 	ASSERT (*(uint8_t*)(end - sizeof(MAGIC)) == MAGIC);
 	
 	// test ok
-	//dprintf("Mem chunk seems OK, creating block.\n");
+	dprintf("Mem chunk seems OK, creating block.\n");
 	m_start = start;
 	m_end = end;
 	createBlock(start, end - start, true);

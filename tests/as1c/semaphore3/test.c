@@ -61,7 +61,7 @@ thread_proc_blocking (void * data)
 {
 	assert (data == THREAD_MAGIC);
 
-	semaphore_down (& mtx, 1);
+	sem_down (& mtx);
 
 	if (! finish_flag) {
 		/*
@@ -72,7 +72,7 @@ thread_proc_blocking (void * data)
 		test_failed = 1;
 	}
 
-	semaphore_up (& mtx, 1);
+	sem_up (& mtx);
 
 	dec_var_semaphore (threads_running, threads_running_mtx);
 	
@@ -85,7 +85,7 @@ thread_proc_timeout (void * data)
 {
 	assert (data == THREAD_MAGIC);
 
-	while (semaphore_down_timeout (& mtx, 1, LOCK_TIMEOUT_MS * 1000) != EOK);
+	while (sem_down_timeout (& mtx, LOCK_TIMEOUT_MS * 1000) != EOK);
 
 	if (! finish_flag) {
 		/*
@@ -96,7 +96,7 @@ thread_proc_timeout (void * data)
 		test_failed = 1;
 	}
 
-	semaphore_up (& mtx, 1);
+	sem_up (& mtx);
 
 	dec_var_semaphore (threads_running, threads_running_mtx);
 	
@@ -109,7 +109,7 @@ thread_proc_nonblocking (void * data)
 {
 	assert (data == THREAD_MAGIC);
 
-	while (semaphore_down_timeout (& mtx, 1, 0) != EOK) {
+	while (sem_down_timeout (& mtx, 0) != EOK) {
 		thread_usleep (LOCK_TIMEOUT_MS * 1000);
 	}
 
@@ -122,7 +122,7 @@ thread_proc_nonblocking (void * data)
 		test_failed = 1;
 	}
 
-	semaphore_up (& mtx, 1);
+	sem_up (& mtx);
 
 	dec_var_semaphore (threads_running, threads_running_mtx);
 	
@@ -143,14 +143,14 @@ run_test (void)
 	finish_flag = 0;
 	threads_running = THREAD_COUNT * 3;
 
-	semaphore_init (& mtx, 1);
-	semaphore_init (& threads_running_mtx, 1);
+	sem_init (& mtx, 1);
+	sem_init (& threads_running_mtx, 1);
 
 
 	/* 
 	 * Lock the mutex and start the threads so they can sleep on it.
 	 */
-	semaphore_down (& mtx, 1);
+	sem_down (& mtx);
 
 	for (cnt = 0; cnt < THREAD_COUNT; cnt++) {
 		threads [cnt] [0] = robust_thread_create (
@@ -172,7 +172,7 @@ run_test (void)
 	 * threads can wake up.
 	 */
 	finish_flag = 1;
-	semaphore_up (& mtx, 1);
+	sem_up (& mtx);
 
 	/*
 	 * Wait for all the threads to finish.
@@ -193,13 +193,13 @@ run_test (void)
 	/* 
 	 * Lock/unlock the mutex to verify that it is in correct state.
  	 */
-	semaphore_down (& mtx, 1);
-	semaphore_up (& mtx, 1);
+	sem_down (& mtx);
+	sem_up (& mtx);
 
 
 	// clean up
-	semaphore_destroy (& threads_running_mtx);
-	semaphore_destroy (& mtx);
+	sem_destroy (& threads_running_mtx);
+	sem_destroy (& mtx);
 
 	// print the result
 	if (! test_failed) {
