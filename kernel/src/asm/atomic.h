@@ -46,25 +46,26 @@
  * @return The old value of variable.
  */
 inline native_t swap(volatile native_t& variable, native_t value) {
-	register unative_t temp;
+	register unative_t temp, ret;
 
 	asm volatile (
 		".set push\n"
 		".set noreorder\n"
 
 		"1:\n"
-		"  ll %[temp], %[variable]\n"
-		"  sc %[value], %[variable]\n"
-		"  beqz %[value], 1b\n"
+		"  ll %[temp], %[value]\n"
+		"  ll %[ret], %[variable]\n"
+		"  sc %[temp], %[variable]\n"
+		"  beqz %[temp], 1b\n"
 		"  nop\n"
 
 		".set pop\n"
-		: [temp] "=&r" (temp), [variable] "+m" (variable), [value] "+r" (value)
+		: [ret] "=&r" (ret), [temp] "=&r" (temp), [variable] "+m" (variable), [value] "+m" (value)
 		:
 		: "memory"
 	);
 
-	return temp;
+	return ret;
 }
 
 /**
