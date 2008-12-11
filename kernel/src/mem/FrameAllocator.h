@@ -225,7 +225,7 @@ private:
 	/*! @brief Next frame size = FRAME_STEP * This frame size */
 	static const uint FRAME_STEP = 4;
 
-	static const uint KSEG0_SIZE = /*ADDR_SIZE_KSEG0;*/0x1000000; // 16 MB
+	static const uint KSEG0_SIZE = ADDR_SIZE_KSEG0;// */0x1000000; // 16 MB
 	
 	enum AddressType { KSEG, KUSEG };
 

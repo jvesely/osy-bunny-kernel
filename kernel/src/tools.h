@@ -36,7 +36,7 @@
 
 #include "types.h"
 
-unsigned int roundUp(unsigned int number, unsigned int factor);
-unsigned int roundDown(unsigned int number, unsigned int factor);
+uint roundUp( uint number, uint factor);
+uint roundDown( uint number, uint factor);
 
 uint rand();

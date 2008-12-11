@@ -35,12 +35,12 @@
 #include "tools.h"
 #include "drivers/Processor.h"
 
-unsigned int roundUp(unsigned int number, unsigned int factor)
+uint roundUp(uint number, uint factor)
 {
 	return ((number + factor - 1) / factor) * factor;
 }
 /*----------------------------------------------------------------------------*/
-unsigned int roundDown(unsigned int number, unsigned int factor)
+uint roundDown(uint number, uint factor)
 {
 	return (number / factor) * factor;
 }

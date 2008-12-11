@@ -82,4 +82,6 @@
 
 /*! just under the kernel and writing down */
 #define KERNEL_STATIC_STACK_TOP         ADDR_TO_KSEG0 (0x400)
+/*! 1KB kernel stack */
+#define KERNEL_STATIC_STACK_SIZE        0x400       
 

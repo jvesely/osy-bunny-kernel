@@ -141,7 +141,7 @@ private:
 	 * Detects accesible memory by moving mapping of the first MB.
 	 * @return size of detected memory.
 	 */
-	size_t getPhysicalMemorySize();
+	size_t getPhysicalMemorySize(uintptr_t from);
 
 	/*! @brief Interrupt hanling member function.
 	 * @param registers pointer to the stored registers at the time
