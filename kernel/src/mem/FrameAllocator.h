@@ -416,10 +416,10 @@ uintptr_t FrameAllocator<N>::init( size_t memory_size, const size_t kernel_end )
 		PRINT_DEBUG("Memory size doesn't fit the largest frames, \
 					so we won't use the rest of memory.\n");
 		memory_size = memory_size - (memory_size % frame_size);
-		m_memorySize = memory_size;
 		PRINT_DEBUG("New memory size: %u\n", memory_size);
 	}
 
+	m_memorySize = memory_size;
 	/*--------------------------------------------------------------------------
 	  set the number of free frames and offset in the bitset of each frame size
 	--------------------------------------------------------------------------*/
@@ -805,12 +805,14 @@ uint FrameAllocator<N>::allocateAtSegment( void** address, const uint count,
 		if (free == search_count) {
 			// so determine the address
 			*address = (void*)getAddress(search_start, search_size, info_table);
-
+	
 			PRINT_DEBUG("Found enough free frames, at address %x\n", *address);
 
 			ASSERT((uintptr_t)(*address) % frame_size == 0);
+			ASSERT((uintptr_t)(*address) < m_memorySize);
 
 			uint addr_offset = (uintptr_t)(*address) / frame_size;
+
 #ifdef FRALLOC_DEBUG
 			int n = search_start - offset(search_size, info_table);
 			PRINT_DEBUG("I.e. from the %u-th frame of size %u\n",

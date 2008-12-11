@@ -61,7 +61,8 @@ void* test(void*)
 	// fralloc tests
 
 	//printf("Frame allocator testing...\n");
-
+		
+	// DO NOT USE THIS, WHEN THE NEW MALLOC IS IN USE!!!
 	//MyFrameAllocator::instance().test();
 
 
