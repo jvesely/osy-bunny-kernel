@@ -93,18 +93,17 @@ void Kernel::run()
 	 */
 
 	printf("%d.%d MHz\n", m_timeToTicks, (to - from) % 1000 );
+	uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
 
 	// detect memory
-	m_physicalMemorySize = getPhysicalMemorySize();
+	m_physicalMemorySize = getPhysicalMemorySize((uintptr_t)&_kernel_end + total_stacks);
 	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
 
-	//dprintf("Kernel ends on address %p\n", &_kernel_end);
 
 	Timer::instance();
 
 	// init frame allocator
-	uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
-//	printf("Kernel ends at: %p.\n", &_kernel_end );
+	//	printf("Kernel ends at: %p.\n", &_kernel_end );
 //	printf("Stacks(%x) end at: %p.\n", total_stacks, (uintptr_t)&_kernel_end + total_stacks);
 	MyFrameAllocator::instance().init( 
 		m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
@@ -121,15 +120,15 @@ void Kernel::run()
 	panic("Should never reach this.\n");
 }
 /*----------------------------------------------------------------------------*/
-size_t Kernel::getPhysicalMemorySize(){
+size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 	printf("Probing memory range...");
 	const uint32_t MAGIC = 0xDEADBEEF;
 
 	size_t size = 0;
 	const size_t range = 0x100000/sizeof(uint32_t); /* 1MB */
-	volatile uint32_t * front = (&_kernel_end - 0x80000000/sizeof(uint32_t));
-	volatile uint32_t * back = (volatile uint32_t *)( (range - 1) * sizeof(uint32_t) );
-	volatile uint32_t * point = front;
+	volatile uint32_t* front = (uint32_t*)(ADDR_TO_USEG(from) );
+	volatile uint32_t* back = (volatile uint32_t *)( (range - 1) * sizeof(uint32_t) );
+	volatile uint32_t* point = front;
 
 
 	while (true) {
