@@ -46,6 +46,11 @@ public:
 
 	static const uint ASID_COUNT = 256;
 
+	/*! @brief Counts best suited page size for the given size. */
+	static Processor::PageSize suggestPageSize( 
+		size_t chunk_size, uint prefer_entries, uint prefer_size );
+
+
 	/*! @brief Prepares the TLB, by @a flushing it. */
 	TLB();
 
