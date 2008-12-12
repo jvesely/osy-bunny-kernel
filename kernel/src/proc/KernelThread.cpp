@@ -38,13 +38,13 @@
 #include "api.h"
 #include "timer/Timer.h"
 
-#define KERNEL_THREAD_DEBUG
+//#define KERNEL_THREAD_DEBUG
 
 #ifndef KERNEL_THREAD_DEBUG
 #define PRINT_DEBUG(...)
 #else
 #define PRINT_DEBUG(ARGS...) \
-	puts("[KERNEL THREAD]: "); \
+	puts("[ KERNEL THREAD ]: "); \
 	printf(ARGS);
 #endif
 
@@ -77,9 +77,9 @@ KernelThread::KernelThread( void* (*thread_start)(void*), void* data,
 	m_virtualMap(NULL)
 {
 	if (flags & TF_NEW_VMM) {
-		PRINT_DEBUG ("Creating new Virtual Memory Map.\n");
 		m_virtualMap = new VirtualMemory;
-//		if (!m_virtualMap) m_status = Thread::UNINITIALIZED;
+		if (!m_virtualMap) this->m_status = Thread::UNINITIALIZED;
+		PRINT_DEBUG ("Creating new Virtual Memory Map %d.\n",(bool)m_virtualMap );
 	} else {
 		KernelThread * creator = (KernelThread*)Thread::getCurrent();
 		if (creator) {
@@ -106,4 +106,9 @@ Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*)
 
 	new_thread->resume();
 	return new_thread;
+}
+
+KernelThread::~KernelThread()
+{
+	PRINT_DEBUG ("Thread %d dying.\n", m_id);
 }

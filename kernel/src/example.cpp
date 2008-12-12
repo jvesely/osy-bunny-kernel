@@ -54,7 +54,7 @@ void* test(void*)
 	thread_t thread1;
 //	thread_t thread2;
 //	thread_t thread3;
-	thread_create(&thread1, test1, NULL, 0);
+	thread_create(&thread1, test1, NULL, 1);
 //	thread_create(&thread2, test1, NULL, 0);
 //	thread_create(&thread3, test1, NULL, 0);
 	thread_detach(thread_get_current());

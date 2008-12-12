@@ -60,7 +60,8 @@ class KernelThread: public Thread
 {
 
 public:
-	
+
+	virtual ~KernelThread();
 	/*! @brief Creates thread using given paramters.
 	 *
 	 * Ensures that the thread is correctly created, in case of error

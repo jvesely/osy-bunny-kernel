@@ -46,12 +46,12 @@ public:
 	Object():m_refCount( 0 ){};
 
 	/*! @brief just checks the count. */
-	~Object() { ASSERT(m_refCount == 0); }
+	virtual ~Object() { ASSERT(m_refCount == 0); }
 
 	/*! @brief Increases reference count. */
-	uint incCount() { return ++m_refCount; };
+	inline uint incCount() { return ++m_refCount; };
 	/*! @brief Decreases reference count, deletes object if it reaches 0. */
-	uint decCount() { return (--m_refCount) ? m_refCount : (delete this, 0); };
+	inline uint decCount() { return (--m_refCount) ? m_refCount : (delete this, 0); };
 
 protected:
 	/*! @brief New instance new count. */
