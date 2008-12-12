@@ -32,13 +32,12 @@
 
 #include "api.h"
 #include "mem/FrameAllocator.h"
+#include "mem/TLB.h"
 
-#include "structures/Trees.h"
 
 extern "C" void* test1(void*);
 extern "C" void* test2(void*);
 
-template class Tree<SplayBinaryNode<int> >;
 
 void* test(void*)
 {
@@ -50,7 +49,13 @@ void* test(void*)
 
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
-
+	const uint prefer_count = 1;
+	const uint prefer_size = 1000;
+	TLB::suggestPageSize(1024*1024, prefer_size, prefer_count);
+	TLB::suggestPageSize(1024*1024 + 256*1024, prefer_size, prefer_count);
+	TLB::suggestPageSize(10 * 1024*1024 + 4096, prefer_size, prefer_count);
+	TLB::suggestPageSize(1024*1000, prefer_size, prefer_count);
+	return NULL;
 	thread_t thread1;
 //	thread_t thread2;
 //	thread_t thread3;
@@ -70,6 +75,7 @@ void* test(void*)
 		
 	// DO NOT USE THIS, WHEN THE NEW MALLOC IS IN USE!!!
 	//MyFrameAllocator::instance().test();
+
 
 
 	return NULL;

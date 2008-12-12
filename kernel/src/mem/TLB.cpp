@@ -33,14 +33,15 @@
 #include "TLB.h"
 #include "api.h"
 #include "InterruptDisabler.h"
+#include "tools.h"
 
-//#define TLB_DEBUG
+#define TLB_DEBUG
 
 #ifndef TLB_DEBUG
 #define PRINT_DEBUG(...)
 #else
 #define PRINT_DEBUG(ARGS...) \
-  printf("[ TLB_DEBUG ]: "); \
+  printf("[ TLB DEBUG ]: "); \
   printf(ARGS);
 #endif
 
@@ -48,8 +49,25 @@
 Processor::PageSize TLB::suggestPageSize(
 	size_t chunk_size, uint prefer_size, uint prefer_entries )
 {
+	PRINT_DEBUG ("Analyzing %u B memory chunk.\n", chunk_size);
 	using namespace Processor;
-	return PAGE_4K;
+	uint min_res = -1;
+	PageSize victor = PAGE_4K;
+	for (PageSize page = PAGE_4K; page <= PAGE_16M; page = (PageSize)(page + 1) )
+	{
+		size_t aligned = roundUp(chunk_size, pages[page].size);
+		uint loss = ( (aligned - chunk_size) * 100) / aligned;
+		uint count = (aligned / pages[page].size) ;
+		uint result = loss * prefer_size + count * prefer_entries;
+		PRINT_DEBUG ("%u: %u => %u (%u,%u) %u.\n", pages[page].size, chunk_size, aligned,
+			loss, count, result);
+		if (result < min_res) {
+			min_res = result;
+			victor = page;
+		}
+	}
+	PRINT_DEBUG ("Suggest pages of size: %u.\n", pages[victor].size);
+	return victor;
 }
 /*----------------------------------------------------------------------------*/
 TLB::TLB()
