@@ -39,16 +39,20 @@
 #include "mem/FrameAllocator.h"
 
 /*! This is our great bunny :) */
-const char * BUNNY_STR =
-"       _     _\n\
-       \\`\\ /`/\n\
-        \\ V /\n\
-        /. .\\\n\
-       =\\ T /=\n\
-        / ^ \\\n\
-     {}/\\\\ //\\\n\
-     __\\ \" \" /__\n\
-jgs (____/^\\____)\n";
+static const char * BUNNY_STR[9] = {
+"       _     _     ",
+"       \\`\\ /`/     ",
+"        \\ V /      ",
+"        /. .\\      ",
+"       =\\ T /=     ",
+"        / ^ \\      ",
+"     {}/\\\\ //\\     ",
+"     __\\ \" \" /__   ",
+"jgs (____/^\\____)  "
+};
+
+static const uint BUNNIES_PER_LINE = 4;
+static const uint BUNNY_LINES = 9;
 
 
 
@@ -59,6 +63,27 @@ Kernel::Kernel() :
 extern void* test(void*);
 
 extern unative_t COUNT_CPU;
+void Kernel::printBunnies( uint count) {
+	uint lines = count / BUNNIES_PER_LINE;
+	
+	for (uint i = 0; i < lines; ++i)
+    for (uint j = 0; j < BUNNY_LINES; ++j){
+      puts(BUNNY_STR[j]);
+      puts(BUNNY_STR[j]);
+      puts(BUNNY_STR[j]);
+      puts(BUNNY_STR[j]);
+      puts("\n");
+    }
+	uint rest = (COUNT_CPU % BUNNIES_PER_LINE);
+
+  if (rest)
+    for (uint i = 0; i < BUNNY_LINES; ++i) {
+      for (uint j = 0; j < rest; ++j)
+        puts(BUNNY_STR[i]);
+      puts("\n");
+    }
+	
+}
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
 {
@@ -66,12 +91,12 @@ void Kernel::run()
 
 	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
-	printf("HELLO WORLD!\n%s\n", BUNNY_STR );
-
+	puts("HELLO WORLD!\n");
+	printBunnies( COUNT_CPU );
 	printf("Running on %d processors\n", COUNT_CPU);
 
 	const unative_t cpu_type = reg_read_prid();
-	printf("Running on MIPS R%d revision %d.%d \n",
+	printf("Running on MIPS R%d000 revision %d.%d \n",
 	        cpu_type >> CPU_IMPLEMENTATION_SHIFT,
 	        (cpu_type >> CPU_REVISION_SHIFT) & CPU_REVISION_MASK,
 				  cpu_type & CPU_REVISION_MASK );
@@ -81,7 +106,7 @@ void Kernel::run()
 	printf("Detecting freq....");
 	while (m_clock.time() == start) ;
 	const native_t from = reg_read_count();
-	while (m_clock.time() - (start + 1) < 1) { //1 ms
+	while (m_clock.time() - (start + 1) < 1) { //1 s
 		printf("\b.");
 		to = reg_read_count();
 	}
@@ -97,7 +122,7 @@ void Kernel::run()
 
 	// detect memory
 	m_physicalMemorySize = getPhysicalMemorySize((uintptr_t)&_kernel_end + total_stacks);
-	printf("Detected %d B of accessible memory\n", m_physicalMemorySize);
+	printf("Detected %d MB of accessible memory\n", m_physicalMemorySize / (1024 *1024) );
 
 
 	Timer::instance();

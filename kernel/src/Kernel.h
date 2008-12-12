@@ -117,8 +117,10 @@ public:
 	void setTimeInterrupt( const Time& time );
 
 private:
+	/*! @brief Prints requested number of BUNNIES */
+	void printBunnies( uint count );
+
 	/*! kernel heap manager */
-	//Allocator m_alloc;
 	BasicMemoryAllocator m_alloc;
 
 	/*! console device */
