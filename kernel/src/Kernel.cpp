@@ -38,7 +38,7 @@
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
 
-#define KERNEL_DEBUG
+//#define KERNEL_DEBUG
 
 #ifndef KERNEL_DEBUG
 #define PRINT_DEBUG(...)
@@ -262,8 +262,9 @@ void Kernel::setTimeInterrupt(const Time& time)
 
  	if (time.usecs() || time.secs()) {
 		reg_write_compare( roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND) );
+	} else {
+		reg_write_compare( current );
 	}
-	reg_write_compare( current );
 		PRINT_DEBUG(" [%u:%u]Set time interrupt in %u usecs current: %x, planned: %x.\n",
 			now.secs(), now.usecs(), usec, current, reg_read_compare());
 }
