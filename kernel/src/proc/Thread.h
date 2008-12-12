@@ -198,18 +198,18 @@ public:
 	Thread();
 
 protected:
-	void* m_stack;	          /*!< that's my stack */
-	void* m_stackTop;	        /*!< top of my stack */
-	unsigned int m_stackSize; /*!< size of my stack */
-
-	bool m_detached;	/*!< detached flag */
-	Status m_status;	/*!< my status */
-	thread_t m_id;	/*!< my id */
-	Thread* m_follower;	/*!< someone waiting */
+	void* m_stack;	                           /*!< that's my stack   */
+	void* m_stackTop;                          /*!< top of my stack   */
+	unsigned int m_stackSize;                  /*!< size of my stack  */
+	
+	bool m_detached;                           /*!< detached flag   */
+	Status m_status;                           /*!< my status       */
+	thread_t m_id;	                           /*!< my id           */
+	Thread* m_follower;                        /*!< someone waiting */
 
 private:
-	Thread(const Thread& other); /*!< no copying */
-	const Thread& operator=(const Thread& other);	/*!< no assigning */
+	Thread(const Thread& other);                  /*!< no copying   */
+	const Thread& operator=(const Thread& other); /*!< no assigning */
 
 };
 

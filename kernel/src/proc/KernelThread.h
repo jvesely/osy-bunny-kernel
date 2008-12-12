@@ -34,6 +34,21 @@
 
 #include "api.h"
 #include "Thread.h"
+#include "Pointer.h"
+
+class VirtualMemory: public Object
+{
+public:
+	VirtualMemory()
+		{ printf("Creating Virtual Memory %p.\n", this); }
+	~VirtualMemory()
+		{ printf("Destroying Virtual Memory %p.\n", this); }
+
+};
+
+template class Pointer<VirtualMemory>;
+
+
 /*!
  * @class KernelThread KernelThread.h "proc/KernelThread.h"
  * @brief Thread class.
@@ -58,10 +73,9 @@ public:
 	void run();
 
 protected:
-	void* (*m_runFunc)(void*); /*!< @brief I'm supposed to run this. */
-	void* m_runData; /*!< @brief runFunc expects this. */
-
-
+	void* (*m_runFunc)(void*);           /*!< @brief I'm supposed to run this. */
+	void* m_runData;                     /*!< @brief runFunc expects this.     */
+	Pointer<VirtualMemory> m_virtualMap; /*!< @brief Virtual Memory Map.       */
 
 private:
 	KernelThread(); /*!< no constructing without params */
@@ -74,6 +88,6 @@ private:
 	 * @param stackSize size of stack that will be available to this thread
 	 * @param flags ignored param :)
 	 */
-	KernelThread(	void* (*func)(void*), void* data, unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE );
+	KernelThread(	void* (*func)(void*), void* data, unative_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
 	friend class Scheduler;
 };
