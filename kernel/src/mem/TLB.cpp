@@ -44,6 +44,13 @@
   printf(ARGS);
 #endif
 
+
+Processor::PageSize TLB::suggestPageSize(
+	size_t chunk_size, uint prefer_size, uint prefer_entries )
+{
+	using namespace Processor;
+	return PAGE_4K;
+}
 /*----------------------------------------------------------------------------*/
 TLB::TLB()
 {

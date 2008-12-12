@@ -36,7 +36,13 @@
 
 #include "types.h"
 
-uint roundUp( uint number, uint factor);
-uint roundDown( uint number, uint factor);
+uint roundUp( uint number, uint factor );
+uint roundDown( uint number, uint factor );
 
 uint rand();
+
+template <typename T>
+inline T min( T a, T b )
+{
+	return (a < b) ? a : b;
+}
