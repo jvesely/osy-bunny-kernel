@@ -134,10 +134,12 @@ void Kernel::run()
 	Timer::instance();
 
 	// init frame allocator
-	//	printf("Kernel ends at: %p.\n", &_kernel_end );
-//	printf("Stacks(%x) end at: %p.\n", total_stacks, (uintptr_t)&_kernel_end + total_stacks);
+		printf("Kernel ends at: %p.\n", &_kernel_end );
+		printf("Stacks(%x) end at: %p.\n", total_stacks, (uintptr_t)&_kernel_end + total_stacks);
+
 	MyFrameAllocator::instance().init( 
 		m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
+
 //	printf("Frame allocator initialized: %s\n",
 //		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
 	ASSERT(MyFrameAllocator::instance().isInitialized());
@@ -254,9 +256,8 @@ void Kernel::setTimeInterrupt(const Time& time)
 	InterruptDisabler interrupts;
 
 	Time now = Time::getCurrent();
-	if ( time < now )
-		now = time;
-	Time relative = time - now;
+	Time relative = ( time < now ) ? time - now : Time( 0,0 );
+
 
 	const unative_t current = reg_read_count();
 	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();

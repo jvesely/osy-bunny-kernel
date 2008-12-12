@@ -35,17 +35,8 @@
 #include "tools.h"
 #include "drivers/Processor.h"
 
-uint roundUp(uint number, uint factor)
-{
-	return ((number + factor - 1) / factor) * factor;
-}
 /*----------------------------------------------------------------------------*/
-uint roundDown(uint number, uint factor)
-{
-	return (number / factor) * factor;
-}
-/*----------------------------------------------------------------------------*/
-uint rand()
+inline uint rand()
 {
 	return Processor::reg_read_count() * Processor::reg_read_random();
 }
