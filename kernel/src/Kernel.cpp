@@ -38,20 +38,18 @@
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
 
+//#define KERNEL_DEBUG
+
+#ifndef KERNEL_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...)\
+	puts("[ KERNEL_DEBUG ]: ");\
+	printf(ARGS);
+#endif
+
+
 /*! This is our great bunny :) */
-/*
-static const char * OLD_BUNNY_STR[9] = {
-"       _     _     ",
-"       \\`\\ /`/     ",
-"        \\ V /      ",
-"        /. .\\      ",
-"       =\\ T /=     ",
-"        / ^ \\      ",
-"     {}/\\\\ //\\     ",
-"     __\\ \" \" /__   ",
-"jgs (____/^\\____)  "
-};
-*/
 static const char* BUNNY_STR[5] = {
 "|\\   /| ",
 " \\|_|/  ",
@@ -166,11 +164,11 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 
 	while (true) {
 		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, 0);
-	//	dprintf( "Mapped %x to %x range = %d kB.\n", front, point, (range * sizeof(uint32_t)/1024) );
+	//	PRINT_DEBUG( "Mapped %x to %x range = %d kB.\n", front, point, (range * sizeof(uint32_t)/1024) );
 
 		(*front) = MAGIC; //write
 		(*back) = MAGIC; //write
-	//	dprintf("Proof read %x:%x %x:%x\n", front, *front, back, *back);
+	//	PRINT_DEBUG("Proof read %x:%x %x:%x\n", front, *front, back, *back);
 		if ( (*front != MAGIC) || (*back != MAGIC) ) break; //check
 		size += range * sizeof(uint32_t);
 		point += range; //add
@@ -256,19 +254,16 @@ void Kernel::setTimeInterrupt(const Time& time)
 	InterruptDisabler interrupts;
 
 	Time now = Time::getCurrent();
-	Time relative = ( time < now ) ? time - now : Time( 0,0 );
+	Time relative = ( time > now ) ? time - now : Time( 0,0 );
 
 
 	const unative_t current = reg_read_count();
 	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();
 
-	const unative_t planned = (time.usecs() || time.secs())
-		?
-	roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND)
-		: current;
-
-
-	reg_write_compare( planned );
-	//dprintf("Set time interrupt in %u usecs current: %x, planned: %x.\n", usec, current, planned);
+ 	if (time.usecs() || time.secs()) {
+		reg_write_compare( roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND) );
+		PRINT_DEBUG(" [%u:%u]Set time interrupt in %u usecs current: %x, planned: %x.\n",
+			now.secs(), now.usecs(), usec, current, reg_read_compare());
+	}
 }
 /*----------------------------------------------------------------------------*/
