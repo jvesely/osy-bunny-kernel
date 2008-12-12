@@ -39,7 +39,8 @@
 #include "mem/FrameAllocator.h"
 
 /*! This is our great bunny :) */
-static const char * BUNNY_STR[9] = {
+/*
+static const char * OLD_BUNNY_STR[9] = {
 "       _     _     ",
 "       \\`\\ /`/     ",
 "        \\ V /      ",
@@ -50,9 +51,17 @@ static const char * BUNNY_STR[9] = {
 "     __\\ \" \" /__   ",
 "jgs (____/^\\____)  "
 };
+*/
+static const char* BUNNY_STR[5] = {
+"|\\   /| ",
+" \\|_|/  ",
+" /. .\\  ",
+"=\\_T_/= ",
+" (>o<)  "
+};
 
-static const uint BUNNIES_PER_LINE = 4;
-static const uint BUNNY_LINES = 9;
+static const uint BUNNIES_PER_LINE = 10;
+static const uint BUNNY_LINES = 5;
 
 
 
@@ -63,26 +72,17 @@ Kernel::Kernel() :
 extern void* test(void*);
 
 extern unative_t COUNT_CPU;
-void Kernel::printBunnies( uint count) {
-	uint lines = count / BUNNIES_PER_LINE;
-	
-	for (uint i = 0; i < lines; ++i)
-    for (uint j = 0; j < BUNNY_LINES; ++j){
-      puts(BUNNY_STR[j]);
-      puts(BUNNY_STR[j]);
-      puts(BUNNY_STR[j]);
-      puts(BUNNY_STR[j]);
-      puts("\n");
-    }
-	uint rest = (COUNT_CPU % BUNNIES_PER_LINE);
-
-  if (rest)
-    for (uint i = 0; i < BUNNY_LINES; ++i) {
-      for (uint j = 0; j < rest; ++j)
-        puts(BUNNY_STR[i]);
-      puts("\n");
-    }
-	
+/*----------------------------------------------------------------------------*/
+void Kernel::printBunnies( uint count )
+{
+	for (uint printed = 0; count; count -= printed) {
+		printed = min( count, BUNNIES_PER_LINE);
+		for (uint j = 0; j < BUNNY_LINES; ++j) {
+			for (uint k = 0; k < printed; ++k)
+				puts(BUNNY_STR[j]);
+			puts("\n");
+		}
+	}
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::run()
@@ -92,8 +92,14 @@ void Kernel::run()
 	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
 	puts("HELLO WORLD!\n");
+
+	ASSERT (COUNT_CPU);
+
 	printBunnies( COUNT_CPU );
 	printf("Running on %d processors\n", COUNT_CPU);
+
+	if (COUNT_CPU > 1)
+		puts("Warning: It's nice to have more processors, but we currently support only one.\n");
 
 	const unative_t cpu_type = reg_read_prid();
 	printf("Running on MIPS R%d000 revision %d.%d \n",
