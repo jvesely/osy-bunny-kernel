@@ -52,8 +52,9 @@ class VirtualMemoryArea
 {
 public:
 	VirtualMemoryArea(const void* address, const size_t size = 0)
-		: m_address(address), m_size(size), m_subAreas()
+		: m_address(address), m_size(size)
 	{
+		m_subAreas = new VirtualMemorySubareaContainer();
 		printf("VMA constructed\n");
 	}
 
@@ -77,7 +78,7 @@ private:
 	const void* m_address;
 	size_t m_size;
 
-	VirtualMemorySubareaContainer m_subAreas;
+	VirtualMemorySubareaContainer* m_subAreas;
 
 };
 
@@ -140,7 +141,7 @@ inline int VirtualMemoryArea::allocate(const unsigned int flags)
 				// create the subares
 				VirtualMemorySubarea* s = new VirtualMemorySubarea(address, frameSize, newCount);
 				// add it to the list
-				s->append(&m_subAreas);
+				s->append(m_subAreas);
 				// decrease the amount of "still needed" memory
 				allocate -= (frameSize * newCount);
 				// clear the address pointer
@@ -156,12 +157,13 @@ inline int VirtualMemoryArea::allocate(const unsigned int flags)
 
 inline void VirtualMemoryArea::free()
 {
-	while (m_subAreas.size() != 0) {
+	while (m_subAreas->size() != 0) {
 		// free all the allocated subareas
-		VirtualMemorySubarea* s = m_subAreas.getFront();
+		VirtualMemorySubarea* s = m_subAreas->getFront();
 		s->free();
 		delete s;
 	}
+	delete m_subAreas;
 }
 
 /* --------------------------------------------------------------------- */
@@ -174,13 +176,13 @@ inline bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
 	void *vaEnd, *vaStart = const_cast<void *>(m_address);
 
 	// get the first subarea (expect there is at least one)
-	VirtualMemorySubareaIterator subarea = m_subAreas.begin();
+	VirtualMemorySubareaIterator subarea = m_subAreas->begin();
 
 	do {
 		// set the end of the subarea
 		vaEnd = (void *)((size_t)vaStart + (*subarea)->size());
 		// check if the virtual address is in the range (in subarea)
-		if ((va > vaStart) && (va < vaEnd)) {
+		if ((va >= vaStart) && (va < vaEnd)) {
 			// if so, set output parameters and return true
 			address = (*subarea)->address((((size_t)va - (size_t)vaStart) / (*subarea)->frameSize()));
 			frameSize = (*subarea)->frameSize();
@@ -188,7 +190,7 @@ inline bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
 		}
 		// set new start for the next subarea
 		vaStart = (void *)((size_t)vaStart + (*subarea)->size());
-	} while (++subarea != m_subAreas.end());
+	} while (++subarea != m_subAreas->end());
 
 	// if not returned yet, we have not found the address
 	return false;
@@ -208,5 +210,3 @@ inline bool VirtualMemoryArea::operator< (const VirtualMemoryArea& other) const
 {
 	return m_address < other.m_address;
 }
-
-

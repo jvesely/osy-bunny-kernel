@@ -99,7 +99,7 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 	}
 
 	// add vma to the virtual memory map
-	m_virtualMemoryMap.insert(VirtualMemoryMapEntry(vma));
+	m_virtualMemoryMap.insert(vma);
 
 	return EOK;
 }
