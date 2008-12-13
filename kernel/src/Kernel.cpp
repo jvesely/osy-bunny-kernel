@@ -145,7 +145,7 @@ void Kernel::run()
 
 	//init and run the main thread
 	thread_t mainThread;
-	Thread* main = KernelThread::create(&mainThread, test, NULL, 0);
+	Thread* main = KernelThread::create(&mainThread, test, NULL, TF_NEW_VMM);
 	ASSERT (main);
 	main->switchTo();
 
@@ -277,7 +277,7 @@ void Kernel::refillTLB()
 {
   InterruptDisabler inter;
 
-  KernelThread* thread = (KernelThread*)Thread::getCurrent();
+  Thread* thread = Thread::getCurrent();
   ASSERT (thread);
 
   bool success = m_tlb.refill(thread->getVMM().data(), Processor::reg_read_badvaddr());

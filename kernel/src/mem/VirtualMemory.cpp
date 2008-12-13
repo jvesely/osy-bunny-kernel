@@ -121,6 +121,8 @@ int VirtualMemory::free(const void *from)
 	// delete the entry from the tree
 	delete entry;
 
+	freed();
+
 	return EOK;
 }
 
@@ -179,4 +181,4 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 		// and if from+size ends before the next allocated block (in upper)
 		&& ((size_t)from + size) <= (size_t)(upper->data().address());
 }
-
+/*----------------------------------------------------------------------------*/

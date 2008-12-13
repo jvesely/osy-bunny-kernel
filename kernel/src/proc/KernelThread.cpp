@@ -73,8 +73,7 @@ void KernelThread::run()
 /*----------------------------------------------------------------------------*/
 KernelThread::KernelThread( void* (*thread_start)(void*), void* data, 
 	unative_t flags, uint stackSize ):
-	Thread(flags, stackSize), m_runFunc(thread_start), m_runData(data),
-	m_virtualMap(NULL)
+	Thread(flags, stackSize), m_runFunc(thread_start), m_runData(data)
 {
 	if (flags & TF_NEW_VMM) {
 		m_virtualMap = new VirtualMemory;

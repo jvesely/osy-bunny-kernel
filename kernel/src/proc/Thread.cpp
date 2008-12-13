@@ -66,7 +66,7 @@ Thread* Thread::fromId(thread_t id)
 Thread::Thread( unative_t flags, uint stackSize):
 	ListInsertable<Thread>(), HeapInsertable<Thread, Time, 4>(),
 	m_stackSize(stackSize),	m_detached(false), m_status(UNINITIALIZED), 
-	m_id(0), m_follower(NULL)
+	m_id(0), m_follower(NULL), m_virtualMap( NULL )
 {
 	/* Alloc stack */	
 	m_stack = malloc( m_stackSize );
@@ -125,6 +125,10 @@ void Thread::switchTo()
 	setStatus( RUNNING );
 
 	Scheduler::instance().m_currentThread = this;
+
+	PRINT_DEBUG ("Switching VMM to: %p.\n", m_virtualMap.data());
+	if (m_virtualMap)
+		m_virtualMap->switchTo();
 
 	if (this != Scheduler::instance().m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",

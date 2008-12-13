@@ -35,10 +35,6 @@
 #include "api.h"
 #include "Thread.h"
 #include "Pointer.h"
-#include "mem/VirtualMemory.h"
-
-template class Pointer<VirtualMemory>;
-
 
 /*!
  * @class KernelThread KernelThread.h "proc/KernelThread.h"
@@ -64,15 +60,10 @@ public:
 	/*! @brief Will be run in the separate thread, includes some management. */
 	void run();
 
-	inline Pointer<VirtualMemory> getVMM() { return m_virtualMap; }
-
-	inline Pointer<VirtualMemory> createVMM()
-		{ ASSERT (!m_virtualMap); return (m_virtualMap = new VirtualMemory()); }
 
 protected:
 	void* (*m_runFunc)(void*);           /*!< @brief I'm supposed to run this. */
 	void* m_runData;                     /*!< @brief runFunc expects this.     */
-	Pointer<VirtualMemory> m_virtualMap; /*!< @brief Virtual Memory Map.       */
 
 private:
 	KernelThread(); /*!< no constructing without params */

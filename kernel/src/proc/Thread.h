@@ -36,6 +36,11 @@
 #include "structures/ListInsertable.h"
 #include "structures/HeapInsertable.h"
 #include "timer/Time.h"
+#include "mem/VirtualMemory.h"
+#include "Pointer.h"
+
+template class Pointer<VirtualMemory>;
+
 
 #define THREAD_HEAP_CHILDREN 4
 
@@ -197,15 +202,21 @@ public:
 	/*! @brief Prepares stack and sets status to initialized. */
 	Thread();
 
+	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
+/*
+	inline Pointer<IVirtualMemoryMap> createVMM()
+		{ ASSERT (!m_virtualMap); return (m_virtualMap = new VirtualMemory()); }
+*/
 protected:
-	void* m_stack;	                           /*!< that's my stack   */
-	void* m_stackTop;                          /*!< top of my stack   */
-	unsigned int m_stackSize;                  /*!< size of my stack  */
-	
-	bool m_detached;                           /*!< detached flag   */
-	Status m_status;                           /*!< my status       */
-	thread_t m_id;	                           /*!< my id           */
-	Thread* m_follower;                        /*!< someone waiting */
+	void* m_stack;	                           /*!< that's my stack           */
+	void* m_stackTop;                          /*!< top of my stack           */
+	unsigned int m_stackSize;                  /*!< size of my stack          */
+
+	bool m_detached;                           /*!< detached flag              */
+	Status m_status;                           /*!< my status                  */
+	thread_t m_id;	                           /*!< my id                      */
+	Thread* m_follower;                        /*!< someone waiting            */
+	Pointer<IVirtualMemoryMap> m_virtualMap;   /*!< @brief Virtual Memory Map. */
 
 private:
 	Thread(const Thread& other);                  /*!< no copying   */

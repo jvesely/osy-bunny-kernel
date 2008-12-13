@@ -482,9 +482,7 @@ int vma_alloc(void **from, const size_t size, const unsigned int flags)
 {
 	KernelThread* thread = (KernelThread*)Thread::getCurrent();
 	ASSERT (thread);
-	if (!thread->getVMM()) {
-		thread->createVMM();
-	}
+	ASSERT (thread->getVMM());
 	return thread->getVMM()->allocate(from, size, flags);
 }
 

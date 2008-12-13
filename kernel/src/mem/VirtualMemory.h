@@ -38,8 +38,7 @@
 
 #include "structures/Trees.h"
 #include "mem/VirtualMemoryArea.h"
-#include "Object.h"
-
+#include "mem/IVirtualMemoryMap.h"
 
 typedef Trees<VirtualMemoryArea>::SplayTree VirtualMemoryMap;
 typedef SplayBinaryNode<VirtualMemoryArea> VirtualMemoryMapEntry;
@@ -50,7 +49,7 @@ typedef SplayBinaryNode<VirtualMemoryArea> VirtualMemoryMapEntry;
  *
  * Virtual memory.
  */
-class VirtualMemory: public Object
+class VirtualMemory: public IVirtualMemoryMap
 {
 public:
 	VirtualMemory() : m_ownersCount(1) {}
