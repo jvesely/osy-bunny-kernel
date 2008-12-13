@@ -32,6 +32,7 @@
 #pragma once
 #include "drivers/Processor.h"
 #include "structures/Buffer.h"
+#include "mem/IVirtualMemoryMap.h"
 
 /*!
  * @class TLB mem/TLB.h "mem/TLB.h"
@@ -54,6 +55,7 @@ public:
 	/*! @brief Prepares the TLB, by @a flushing it. */
 	TLB();
 
+	bool refill(IVirtualMemoryMap* vmm, native_t bad_addr);
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *
@@ -86,13 +88,16 @@ public:
 	 * @return Free ASID.
 	 * If all ASIDs are used one (random) is confiscated and reused.
 	 */
-	byte getAsid();
+	byte getAsid( IVirtualMemoryMap* map);
 
 	/*!
 	 * @brief Sets @a asid as free.
 	 * @param asid ASID to free.
 	 */
 	void returnAsid( const byte asid );
+
+	void switchAsid( const byte asid )
+		{ Processor::reg_write_entryhi( asid ); }
 
 	/*!
 	 * @brief Maps page with the location of hardware devices.
@@ -134,6 +139,6 @@ private:
 	Buffer<byte, ASID_COUNT> m_freeAsids;
 
 	/*! @brief Map of Assigned ASIDs. */
-	void* m_asidMap[ASID_COUNT];
+	IVirtualMemoryMap* m_asidMap[ASID_COUNT];
 	
 };

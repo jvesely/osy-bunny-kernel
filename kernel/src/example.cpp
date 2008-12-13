@@ -113,6 +113,24 @@ void* test(void*)
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
 
+	const int count = 1024;
+
+	int * array = (int*)0x40000;
+	
+	printf("Trying to allocate memory...\n");
+
+	int res = vma_alloc((void**)&array, count * sizeof(int), (VF_AT_KUSEG << VF_AT_SHIFT) | VF_VA_AUTO);
+
+	printf("Allocation %s at address: %p.\n", (res == 0) ? "SUCCESSFULL" : "FAILED", array);
+	*array = 0xf00dbad;
+	*(array + 1023) = 0xbadf00d;
+	Processor::msim_stop();
+
+	vma_free(array);
+	Processor::msim_stop();
+
+
+	return NULL;
 	thread_t thread1;
 //	thread_t thread2;
 //	thread_t thread3;

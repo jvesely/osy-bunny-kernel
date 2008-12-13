@@ -73,7 +73,7 @@ void TLB::flush()
 	InterruptDisabler interrupts;
 
 	/* size of page does not really matter at the beginning */
-	reg_write_pagemask( PAGE_4K );
+	reg_write_pagemask( pages[PAGE_4K].mask );
 
 	/* map all to 0, stores pairs */
 	reg_write_entrylo0( 0 );
@@ -95,6 +95,8 @@ void TLB::clearAsid( const byte asid )
 
 	ASSERT (asid < 255);
 
+	PRINT_DEBUG ("Clearing ASID: %d.\n", asid);
+
 	using namespace Processor;
 
   for (uint i = 0; i < ENTRY_COUNT; ++i) {
@@ -102,7 +104,7 @@ void TLB::clearAsid( const byte asid )
 		TLB_read();	
 		if ((reg_read_entryhi() & ASID_MASK) == asid) {
 			reg_write_entryhi ( 0xff );
-			reg_write_pagemask( PAGE_4K );
+			reg_write_pagemask( pages[PAGE_4K].mask );
 			reg_write_entrylo0( 0 );
 			reg_write_entrylo1( 0 );
     	TLB_write_index();
@@ -141,26 +143,34 @@ void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Pro
 	
 }
 /*----------------------------------------------------------------------------*/
-byte TLB::getAsid()
+byte TLB::getAsid( IVirtualMemoryMap* map )
 {
-	if (m_freeAsids.count())
-		return m_freeAsids.getFirst();
-	
-	/* 0 and 255 are reserved */
-	byte asid = (Processor::reg_read_count() % 254) +1;
+	PRINT_DEBUG ("Getting new ASID for VMM: %p.\n", map);
+	byte new_asid;
+	if (m_freeAsids.count()) {
+		new_asid = m_freeAsids.getFirst();
+		ASSERT (m_asidMap[new_asid] == NULL);
 
-	/* take asid from someone */
-	// here thre should be taking asid from vmm
+	} else {
+	/* 0 and 255 are reserved */
+		new_asid = (Processor::reg_read_count() % 254) +1;
+		ASSERT (m_asidMap[new_asid] != NULL);
+		m_asidMap[new_asid]->setAsid( 0 );
+		clearAsid( new_asid );
+	}
+	PRINT_DEBUG ("Selected ASID: %d.\n", new_asid);
+	m_asidMap[new_asid] = map;
+	map->setAsid( new_asid );
 	
-	/* clear tlb of the old entries */
-	clearAsid( asid );
-	return asid;
+	return new_asid;
 }
 /*----------------------------------------------------------------------------*/
 void TLB::returnAsid( const byte asid )
 {
+	PRINT_DEBUG ("Returning ASID: %d.\n", asid);
 	clearAsid( asid );
 	m_freeAsids.append( asid );
+	ASSERT (m_asidMap[asid]->asid() == asid);
 	m_asidMap[asid] = NULL;
 }
 /*----------------------------------------------------------------------------*/
@@ -235,4 +245,27 @@ void TLB::setMapping(
 		TLB_write_random();
 		PRINT_DEBUG ("Adding entry at position.\n");
 	}
+}
+/*----------------------------------------------------------------------------*/
+bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
+{
+	PRINT_DEBUG ("Refilling virtual address %p.\n", bad_addr);
+	ASSERT (vmm);
+
+	byte asid = vmm->asid();
+
+	ASSERT (asid);
+
+	void* phys_addr = (void*)bad_addr;
+	size_t size;
+	bool success = vmm->translate( phys_addr, size );
+
+	PRINT_DEBUG ("Virtual Address %p translated into %p %s.\n", bad_addr, phys_addr, success ? "OK" : "FAIL");
+
+	if (!success) 
+		return false;
+
+	setMapping((uintptr_t)bad_addr, (uintptr_t)phys_addr, Processor::PAGE_4K, asid);
+	return true;
+
 }

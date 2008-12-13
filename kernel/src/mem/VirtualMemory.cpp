@@ -37,6 +37,8 @@
 
 int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 {
+	if (size == 0) return EINVAL;
+
 	//TODO add new param with frame size or get the optimal size (check how is from aligned)
 	size_t frameSize = 4096;
 
@@ -99,7 +101,7 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 	}
 
 	// add vma to the virtual memory map
-	m_virtualMemoryMap.insert(VirtualMemoryMapEntry(vma));
+	m_virtualMemoryMap.insert(vma);
 
 	return EOK;
 }
@@ -120,6 +122,8 @@ int VirtualMemory::free(const void *from)
 
 	// delete the entry from the tree
 	delete entry;
+
+	freed();
 
 	return EOK;
 }
@@ -143,8 +147,8 @@ bool VirtualMemory::translate(void*& address, size_t& frameSize)
 
 bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 {
-	// never return NULL as free space
-	if (from == NULL) return false;
+	// check if the space ends on usable address
+	if (((size_t)from + size) > VirtualMemory::MAX_VIRTUAL_ADDRESS) return false;
 
 	// if we have not allocated yet, everything is free (except NULL)
 	if (m_virtualMemoryMap.count() == 0) return true;
@@ -179,4 +183,4 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 		// and if from+size ends before the next allocated block (in upper)
 		&& ((size_t)from + size) <= (size_t)(upper->data().address());
 }
-
+/*----------------------------------------------------------------------------*/

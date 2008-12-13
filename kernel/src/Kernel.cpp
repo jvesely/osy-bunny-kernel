@@ -140,11 +140,12 @@ void Kernel::run()
 
 //	printf("Frame allocator initialized: %s\n",
 //		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
+	//m_alloc.setup(ADDR_TO_KSEG0(m_physicalMemorySize - 0x100000), 0x100000);
 	ASSERT(MyFrameAllocator::instance().isInitialized());
 
 	//init and run the main thread
 	thread_t mainThread;
-	Thread* main = KernelThread::create(&mainThread, test, NULL, 0);
+	Thread* main = KernelThread::create(&mainThread, test, NULL, TF_NEW_VMM);
 	ASSERT (main);
 	main->switchTo();
 
@@ -180,11 +181,14 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 /*----------------------------------------------------------------------------*/
 void* Kernel::malloc(const size_t size) //const
 {
-	return m_alloc.getMemory(size);
+	void* ret =  m_alloc.getMemory(size);
+	PRINT_DEBUG ("Malloc %u %p.\n", size, ret);
+	return ret;
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::free(const void * address) //const
 {
+	PRINT_DEBUG ("Free %p.\n", address);
 	m_alloc.freeMemory(address);
 }
 /*----------------------------------------------------------------------------*/
@@ -267,3 +271,18 @@ void Kernel::setTimeInterrupt(const Time& time)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void Kernel::refillTLB()
+{
+  InterruptDisabler inter;
+
+  Thread* thread = Thread::getCurrent();
+  ASSERT (thread);
+
+  bool success = m_tlb.refill(thread->getVMM().data(), Processor::reg_read_badvaddr());
+
+	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", Processor::reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
+	
+  if (!success)
+    thread->kill();
+
+}

@@ -63,6 +63,10 @@ typedef uint32_t ipl_t;
 typedef unsigned int uint;
 
 typedef __builtin_va_list va_list;
+#define va_start __builtin_va_start
+#define va_end __builtin_va_end
+#define va_arg __builtin_va_arg
+
 
 #ifndef __cplusplus
 typedef uint8_t bool;

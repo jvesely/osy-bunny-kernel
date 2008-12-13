@@ -38,7 +38,7 @@
 
 #include "structures/Trees.h"
 #include "mem/VirtualMemoryArea.h"
-
+#include "mem/IVirtualMemoryMap.h"
 
 typedef Trees<VirtualMemoryArea>::SplayTree VirtualMemoryMap;
 typedef SplayBinaryNode<VirtualMemoryArea> VirtualMemoryMapEntry;
@@ -49,7 +49,7 @@ typedef SplayBinaryNode<VirtualMemoryArea> VirtualMemoryMapEntry;
  *
  * Virtual memory.
  */
-class VirtualMemory
+class VirtualMemory: public IVirtualMemoryMap
 {
 public:
 	VirtualMemory() : m_ownersCount(1) {}
@@ -94,7 +94,7 @@ inline bool VirtualMemory::checkAligned(const void* address, const size_t frameS
 inline bool VirtualMemory::checkAligned(const size_t size, const size_t frameSize)
 {
 	// less than MAX, because there is no allocation from address zero
-	return ((size % frameSize) == 0) && (size < VirtualMemory::MAX_VIRTUAL_ADDRESS);
+	return ((size % frameSize) == 0) && (size <= VirtualMemory::MAX_VIRTUAL_ADDRESS);
 }
 
 

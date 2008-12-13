@@ -34,6 +34,8 @@
 
 #include "api.h"
 #include "Thread.h"
+#include "Pointer.h"
+
 /*!
  * @class KernelThread KernelThread.h "proc/KernelThread.h"
  * @brief Thread class.
@@ -45,7 +47,8 @@ class KernelThread: public Thread
 {
 
 public:
-	
+
+	virtual ~KernelThread();
 	/*! @brief Creates thread using given paramters.
 	 *
 	 * Ensures that the thread is correctly created, in case of error
@@ -57,11 +60,10 @@ public:
 	/*! @brief Will be run in the separate thread, includes some management. */
 	void run();
 
+
 protected:
-	void* (*m_runFunc)(void*); /*!< @brief I'm supposed to run this. */
-	void* m_runData; /*!< @brief runFunc expects this. */
-
-
+	void* (*m_runFunc)(void*);           /*!< @brief I'm supposed to run this. */
+	void* m_runData;                     /*!< @brief runFunc expects this.     */
 
 private:
 	KernelThread(); /*!< no constructing without params */
@@ -74,6 +76,6 @@ private:
 	 * @param stackSize size of stack that will be available to this thread
 	 * @param flags ignored param :)
 	 */
-	KernelThread(	void* (*func)(void*), void* data, unative_t flags = 0, unsigned int stackSize = DEFAULT_STACK_SIZE );
+	KernelThread(	void* (*func)(void*), void* data, unative_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
 	friend class Scheduler;
 };

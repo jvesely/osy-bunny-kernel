@@ -116,6 +116,10 @@ public:
 	 */
 	void setTimeInterrupt( const Time& time );
 
+	void refillTLB();
+
+	inline TLB& tlb() { return m_tlb; }
+
 private:
 	/*! @brief Prints requested number of BUNNIES */
 	void printBunnies( uint count );

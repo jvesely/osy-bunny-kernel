@@ -638,6 +638,9 @@ template <uint N>
 uint FrameAllocator<N>::allocateAtKuseg( 
 	void** address, const uint count, const uint frame_size )
 {
+	if (m_buddyMapKuseg == NULL) {
+		return allocateAtSegment(address, count, frame_size, KSEG);
+	}
 	uint free_kuseg = allocateAtSegment(address, count, frame_size, KUSEG);
 
 	// if the allocation in KUSEG was successful, end

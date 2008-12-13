@@ -44,11 +44,6 @@
 #include "mem/FrameAllocator.h"
 
 
-#define va_start __builtin_va_start
-#define va_end __builtin_va_end
-#define va_arg __builtin_va_arg
-
-
 /*----------------------------------------------------------------------------*/
 size_t putc(const char c)
 {
@@ -480,12 +475,18 @@ int frame_free(const void *paddr, const size_t cnt)
 
 int vma_alloc(void **from, const size_t size, const unsigned int flags)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	ASSERT (thread->getVMM());
+	return thread->getVMM()->allocate(from, size, flags);
 }
 
 int vma_free(const void *from)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->free(from);
 }
 
 /*----------------------------------------------------------------------------*/
