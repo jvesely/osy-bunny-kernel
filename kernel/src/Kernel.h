@@ -84,7 +84,7 @@ public:
 	static inline void stop() { Processor::msim_stop(); };
 	
 	/*! @brief Stops execution, shuts down msim. */
-	static inline void halt() { Processor::msim_halt(); };
+	static inline void halt() { Processor::msim_stop(); };
 
 	/*! @brief Dumps registers of the active processor. */
 	static inline void regDump() { Processor::msim_reg_dump(); };

@@ -140,6 +140,7 @@ void Kernel::run()
 
 //	printf("Frame allocator initialized: %s\n",
 //		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
+	//m_alloc.setup(ADDR_TO_KSEG0(m_physicalMemorySize - 0x100000), 0x100000);
 	ASSERT(MyFrameAllocator::instance().isInitialized());
 
 	//init and run the main thread
@@ -180,11 +181,14 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 /*----------------------------------------------------------------------------*/
 void* Kernel::malloc(const size_t size) //const
 {
-	return m_alloc.getMemory(size);
+	void* ret =  m_alloc.getMemory(size);
+	PRINT_DEBUG ("Malloc %u %p.\n", size, ret);
+	return ret;
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::free(const void * address) //const
 {
+	PRINT_DEBUG ("Free %p.\n", address);
 	m_alloc.freeMemory(address);
 }
 /*----------------------------------------------------------------------------*/

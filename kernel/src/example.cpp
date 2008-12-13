@@ -116,11 +116,14 @@ void* test(void*)
 	const int count = 1024;
 
 	int * array = (int*)0x40000;
+	
+	printf("Trying to allocate memory...\n");
 
-	int res = vma_alloc((void**)&array, count, (VF_AT_KUSEG << VF_AT_SHIFT) | VF_VA_AUTO);
+	int res = vma_alloc((void**)&array, count * sizeof(int), (VF_AT_KUSEG << VF_AT_SHIFT) | VF_VA_AUTO);
+
 	printf("Allocation %s at address: %p.\n", (res == 0) ? "SUCCESSFULL" : "FAILED", array);
 	*array = 0xf00dbad;
-	*(array + 1022) = 0xbadf00d;
+	*(array + 1023) = 0xbadf00d;
 	Processor::msim_stop();
 
 	vma_free(array);

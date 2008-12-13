@@ -35,7 +35,7 @@
 #include "InterruptDisabler.h"
 #include "tools.h"
 
-#define TLB_DEBUG
+//#define TLB_DEBUG
 
 #ifndef TLB_DEBUG
 #define PRINT_DEBUG(...)
@@ -251,7 +251,7 @@ void TLB::setMapping(
 		PRINT_DEBUG ("Adding entry at position.\n");
 	}
 
-	reg_write_pagemask( old_mask & 0 );
+	reg_write_pagemask( old_mask );
 }
 /*----------------------------------------------------------------------------*/
 bool TLB::refill(VirtualMemory* vmm, native_t bad_addr)
@@ -264,7 +264,7 @@ bool TLB::refill(VirtualMemory* vmm, native_t bad_addr)
 	size_t size;
 	bool success = vmm->translate(phys_addr, size);
 
-	PRINT_DEBUG ("Virtual Address %p translated into %p.\n", bad_addr, phys_addr);
+	PRINT_DEBUG ("Virtual Address %p translated into %p %s.\n", bad_addr, phys_addr, success ? "OK" : "FAIL");
 
 	if (!success) 
 		return false;

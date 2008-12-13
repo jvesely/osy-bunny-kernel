@@ -47,6 +47,9 @@ public:
 	/*! @brief Creates Pointer gurading instance object. */
 	Pointer( T * object ):m_obj( object )
 		{ if (m_obj)  m_obj->incCount(); }
+	
+	Pointer( const Pointer<T>& other )
+		{ if ((m_obj = other.m_obj)) m_obj->incCount(); }
 
 	/*! @brief Correctly destorys pointer. */
 	inline ~Pointer() { releaseObj(); }
