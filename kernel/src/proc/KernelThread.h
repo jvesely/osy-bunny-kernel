@@ -64,6 +64,8 @@ public:
 	/*! @brief Will be run in the separate thread, includes some management. */
 	void run();
 
+	inline Pointer<VirtualMemory> getVMM() { return m_virtualMap; }
+
 protected:
 	void* (*m_runFunc)(void*);           /*!< @brief I'm supposed to run this. */
 	void* m_runData;                     /*!< @brief runFunc expects this.     */

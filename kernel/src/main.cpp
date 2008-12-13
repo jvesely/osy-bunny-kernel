@@ -55,4 +55,5 @@ void wrapped_general(Processor::Context* registers)
 /*! TLB miss handler */
 void wrapped_tlbrefill(void)
 {
+	Kernel::instance().refillTLB();
 }

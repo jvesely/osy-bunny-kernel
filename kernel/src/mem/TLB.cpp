@@ -91,7 +91,7 @@ void TLB::flush()
 	InterruptDisabler interrupts;
 
 	/* size of page does not really matter at the beginning */
-	reg_write_pagemask( PAGE_4K );
+	reg_write_pagemask( pages[PAGE_4K].mask );
 
 	/* map all to 0, stores pairs */
 	reg_write_entrylo0( 0 );
@@ -120,7 +120,7 @@ void TLB::clearAsid( const byte asid )
 		TLB_read();	
 		if ((reg_read_entryhi() & ASID_MASK) == asid) {
 			reg_write_entryhi ( 0xff );
-			reg_write_pagemask( PAGE_4K );
+			reg_write_pagemask( pages[PAGE_4K].mask );
 			reg_write_entrylo0( 0 );
 			reg_write_entrylo1( 0 );
     	TLB_write_index();
@@ -252,4 +252,22 @@ void TLB::setMapping(
 	}
 
 	reg_write_pagemask( old_mask );
+}
+/*----------------------------------------------------------------------------*/
+bool TLB::refill(VirtualMemory* vmm, native_t bad_addr)
+{
+	PRINT_DEBUG ("Refilling virtual address %p.\n", bad_addr);
+	ASSERT (vmm);
+
+	byte asid = 0;
+	void* phys_addr = (void*)bad_addr;
+	size_t size;
+	bool success = vmm->translate(phys_addr, size);
+	
+	if (!success) 
+		return false;
+
+	setMapping((uintptr_t)bad_addr, (uintptr_t)phys_addr, Processor::PAGE_4K, asid);
+	return true;
+
 }

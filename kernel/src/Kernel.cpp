@@ -269,3 +269,16 @@ void Kernel::setTimeInterrupt(const Time& time)
 			now.secs(), now.usecs(), usec, current, reg_read_compare());
 }
 /*----------------------------------------------------------------------------*/
+void Kernel::refillTLB()
+{
+  InterruptDisabler inter;
+
+  KernelThread* thread = (KernelThread*)Thread::getCurrent();
+  ASSERT (thread);
+
+  bool success = m_tlb.refill(thread->getVMM().data(), Processor::reg_read_badvaddr());
+
+  if (!success)
+    thread->kill();
+
+}

@@ -480,12 +480,16 @@ int frame_free(const void *paddr, const size_t cnt)
 
 int vma_alloc(void **from, const size_t size, const unsigned int flags)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	return thread->getVMM()->allocate(from, size, flags);
 }
 
 int vma_free(const void *from)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	return thread->getVMM()->free(from);
 }
 
 /*----------------------------------------------------------------------------*/

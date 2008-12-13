@@ -32,6 +32,7 @@
 #pragma once
 #include "drivers/Processor.h"
 #include "structures/Buffer.h"
+#include "mem/VirtualMemory.h"
 
 /*!
  * @class TLB mem/TLB.h "mem/TLB.h"
@@ -54,6 +55,7 @@ public:
 	/*! @brief Prepares the TLB, by @a flushing it. */
 	TLB();
 
+	bool refill(VirtualMemory* vmm, native_t bad_addr);
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *
