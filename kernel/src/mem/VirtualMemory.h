@@ -94,7 +94,7 @@ inline bool VirtualMemory::checkAligned(const void* address, const size_t frameS
 inline bool VirtualMemory::checkAligned(const size_t size, const size_t frameSize)
 {
 	// less than MAX, because there is no allocation from address zero
-	return ((size % frameSize) == 0) && (size < VirtualMemory::MAX_VIRTUAL_ADDRESS);
+	return ((size % frameSize) == 0) && (size <= VirtualMemory::MAX_VIRTUAL_ADDRESS);
 }
 
 
