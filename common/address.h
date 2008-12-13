@@ -43,11 +43,11 @@
 #define ADDR_OFFSET(addr)	( (addr) & ADDR_OFFSET_MASK ) /*! take the offset */
 
 /*! replace prefix by kseg0 prefix */
-#define ADDR_TO_KSEG0(addr)	( (addr & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG0 )
+#define ADDR_TO_KSEG0(addr)	( ((addr) & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG0 )
 /*! replace prefix by kseg1 prefix */
-#define ADDR_TO_KSEG1(addr) ( (addr & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG1 )
+#define ADDR_TO_KSEG1(addr) ( ((addr) & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG1 )
 /*! remove prefix (move to useg) */
-#define ADDR_TO_USEG(addr)  ( (addr & ADDR_OFFSET_MASK) )
+#define ADDR_TO_USEG(addr)  ( ((addr) & ADDR_OFFSET_MASK) )
 
 #define ADDR_SIZE_KSEG0 (ADDR_PREFIX_KSEG1 - ADDR_PREFIX_KSEG0)	/*! 0.5 GB */
 
