@@ -43,12 +43,18 @@ class Pointer
 {
 public:
 	Pointer():m_obj( NULL ) {}
+	
 	/*! @brief Creates Pointer gurading instance object. */
 	Pointer( T * object ):m_obj( object )
 		{ if (m_obj)  m_obj->incCount(); }
+	
+	Pointer( const Pointer<T>& other )
+		{ if ((m_obj = other.m_obj)) m_obj->incCount(); }
 
-	/*! @brief Correctly destorys pointer. */
+	/*! @brief Correctly destroys pointer. */
 	inline ~Pointer() { releaseObj(); }
+
+	inline T* data() { return m_obj; }
 
 	/*! @brief Assigns instance to guard. */
 	inline Pointer<T>& operator = ( T * other_obj )
