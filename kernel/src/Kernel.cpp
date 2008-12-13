@@ -278,6 +278,8 @@ void Kernel::refillTLB()
 
   bool success = m_tlb.refill(thread->getVMM().data(), Processor::reg_read_badvaddr());
 
+	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", Processor::reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
+	
   if (!success)
     thread->kill();
 

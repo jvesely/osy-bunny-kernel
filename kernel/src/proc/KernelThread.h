@@ -66,6 +66,9 @@ public:
 
 	inline Pointer<VirtualMemory> getVMM() { return m_virtualMap; }
 
+	inline Pointer<VirtualMemory> createVMM()
+		{ ASSERT (!m_virtualMap); return (m_virtualMap = new VirtualMemory()); }
+
 protected:
 	void* (*m_runFunc)(void*);           /*!< @brief I'm supposed to run this. */
 	void* m_runData;                     /*!< @brief runFunc expects this.     */

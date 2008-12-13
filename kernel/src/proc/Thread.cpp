@@ -38,7 +38,7 @@
 #include "timer/Timer.h"
 #include "api.h"
 
-//#define THREAD_DEBUG
+#define THREAD_DEBUG
 
 #ifndef THREAD_DEBUG
 #define PRINT_DEBUG(...)
