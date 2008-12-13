@@ -393,6 +393,19 @@ int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags);
 
 int frame_free(const void *paddr, const size_t cnt);
 
+/* --------------------------------------------------------------------- */
+/* ---------------------   VIRTUAL MEMORY AREA  ------------------------ */
+/* --------------------------------------------------------------------- */
+
+int vma_alloc(void **from, const size_t size, const unsigned int flags);
+int vma_free(const void *from);
+
+int vma_resize(const void *from, const size_t size);
+int vma_remap(const void *from, const void *to);
+int vma_merge(const void *area1, const void *area2);
+int vma_split(const void *from, const void *split);
+
+
 #ifdef __cplusplus
 }
 #endif

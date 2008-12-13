@@ -32,38 +32,95 @@
 
 #include "api.h"
 #include "mem/FrameAllocator.h"
-#include "mem/TLB.h"
-
+#include "structures/Trees.h"
 
 extern "C" void* test1(void*);
 extern "C" void* test2(void*);
 
+//template class Tree<SplayBinaryNode<int> >;
+
+/*
+class MyType : public SplayBinaryNode<MyType*> {
+public:
+	MyType(int i) : SplayBinaryNode<MyType*>(static_cast<MyType*>(this)), m_value(i) {
+		printf("constructing mytype with value %d\n", i);
+	}
+
+	MyType(const MyType& other) : SplayBinaryNode<MyType*>(static_cast<MyType*>(this)) {
+		printf("copy-constructing mytype with value %d\n", other.m_value);
+		m_value = other.m_value;
+	}
+
+	MyType& operator=(const MyType& other) {
+		printf("assigning mytype with value %d\n", other.m_value);
+		m_value = other.m_value;
+
+		return *this;
+	}
+
+	virtual ~MyType() {
+		printf("destructing mytype with value %d\n", m_value);
+	}
+
+	bool operator== (const MyType& other) const {
+		return m_value == other.m_value;
+	}
+
+	bool operator< (const MyType& other) const {
+		return m_value < other.m_value;
+	}
+
+	void print() const {
+		printf("MyNode value is: %d\n", m_value);
+	}
+
+private:
+	int m_value;
+
+};
+*/
 
 void* test(void*)
 {
+/*
+	Tree< MyType > tree;
 
+	tree.insert(new MyType(5));
+  tree.insert(new MyType(7));
+  tree.insert(new MyType(3));
+  tree.insert(new MyType(4));
+  tree.insert(new MyType(8));
+  tree.insert(new MyType(6));
+
+	printf( "=======================================\n");
+	printf( "Inserting done and count is: %u\n", tree.count());
+	printf( "=======================================\n");
+
+	//SplayBinaryNode<MyType*>* node = tree.findItem(MyType(4));
+	//node->print();
+
+	//tree.remove(MyType(5));
+	//delete node;
+
+	printf( "=======================================\n");
+	printf( "After remove and delete count %u\n", tree.count());
+	printf( "=======================================\n");
+*/
 	#ifdef KERNEL_TEST
 		run_test();
 		return NULL;
 	#endif
-
 //	dprintf("Pausing execution");
 //	Processor::msim_stop();
-	const uint prefer_count = 1;
-	const uint prefer_size = 1000;
-	TLB::suggestPageSize(1024*1024, prefer_size, prefer_count);
-	TLB::suggestPageSize(1024*1024 + 256*1024, prefer_size, prefer_count);
-	TLB::suggestPageSize(10 * 1024*1024 + 4096, prefer_size, prefer_count);
-	TLB::suggestPageSize(1024*1000, prefer_size, prefer_count);
-	return NULL;
+
 	thread_t thread1;
 //	thread_t thread2;
 //	thread_t thread3;
-	thread_create(&thread1, test1, NULL, 1);
+	thread_create(&thread1, test1, NULL, 0);
 //	thread_create(&thread2, test1, NULL, 0);
 //	thread_create(&thread3, test1, NULL, 0);
 	thread_detach(thread_get_current());
-	thread_join_timeout( thread1, 1000000 );
+	thread_join_timeout( thread1, 100 );
 	printf("After join timeout.\n");
 	thread_kill( thread1 );
 	printf("After kill.\n");
@@ -75,7 +132,6 @@ void* test(void*)
 		
 	// DO NOT USE THIS, WHEN THE NEW MALLOC IS IN USE!!!
 	//MyFrameAllocator::instance().test();
-
 
 
 	return NULL;

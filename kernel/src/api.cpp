@@ -475,3 +475,41 @@ int frame_free(const void *paddr, const size_t cnt)
 
 	return EOK;
 }
+
+/*----------------------------------------------------------------------------*/
+
+int vma_alloc(void **from, const size_t size, const unsigned int flags)
+{
+	return ENOMEM;
+}
+
+int vma_free(const void *from)
+{
+	return ENOMEM;
+}
+
+/*----------------------------------------------------------------------------*/
+
+int vma_resize(const void *from, const size_t size)
+{
+	return ENOMEM;
+}
+
+int vma_remap(const void *from, const void *to)
+{
+	return ENOMEM;
+}
+
+int vma_merge(const void *area1, const void *area2)
+{
+	return ENOMEM;
+}
+
+int vma_split(const void *from, const void *split)
+{
+	return ENOMEM;
+}
+
+/*----------------------------------------------------------------------------*/
+
+

@@ -35,16 +35,7 @@
 #include "api.h"
 #include "Thread.h"
 #include "Pointer.h"
-
-class VirtualMemory: public Object
-{
-public:
-	VirtualMemory()
-		{ printf("Creating Virtual Memory %p.\n", this); }
-	~VirtualMemory()
-		{ printf("Destroying Virtual Memory %p.\n", this); }
-
-};
+#include "mem/VirtualMemory.h"
 
 template class Pointer<VirtualMemory>;
 
