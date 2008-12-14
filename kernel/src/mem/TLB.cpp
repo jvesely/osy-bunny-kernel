@@ -35,7 +35,7 @@
 #include "InterruptDisabler.h"
 #include "tools.h"
 
-//#define TLB_DEBUG
+#define TLB_DEBUG
 
 #ifndef TLB_DEBUG
 #define PRINT_DEBUG(...)

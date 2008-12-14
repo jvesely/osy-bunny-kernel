@@ -291,6 +291,7 @@ void BinaryNode<T>::removeFromTree()
 	if (!m_parent) {
 		treeRoot() = son; // place new root
 		m_left = m_right = m_parent = m_next = m_previous =  NULL;
+		treeCount() -= 1;
 		return;
 	}
 
