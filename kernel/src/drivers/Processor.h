@@ -94,7 +94,7 @@ struct Page {
 	unative_t mask; /*!< @brief Inverse mask of the used bit for upper 20 bits */
 };
 
-static const Page pages[8] = {
+static const Page pages[7] = {
 	{ 0x0001000, 12, 0x000 },        /*!<   4KB */
 	{ 0x0004000, 14, 0x003 },        /*!<  16KB */
 	{ 0x0010000, 16, 0x00f },        /*!<  64KB */

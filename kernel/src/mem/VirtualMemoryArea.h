@@ -168,7 +168,7 @@ inline void VirtualMemoryArea::free()
 
 /* --------------------------------------------------------------------- */
 
-bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
+inline bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
 {
 	// virtualAddress we are searching
 	const void *va = address;
@@ -198,7 +198,7 @@ bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
 
 /* --------------------------------------------------------------------- */
 
-bool VirtualMemoryArea::operator== (const VirtualMemoryArea& other) const
+inline bool VirtualMemoryArea::operator== (const VirtualMemoryArea& other) const
 {
 	return (m_address <= other.m_address)
 		&& (other.m_address < (void *)((int)m_address + m_size));
@@ -206,7 +206,7 @@ bool VirtualMemoryArea::operator== (const VirtualMemoryArea& other) const
 
 /* --------------------------------------------------------------------- */
 
-bool VirtualMemoryArea::operator< (const VirtualMemoryArea& other) const
+inline bool VirtualMemoryArea::operator< (const VirtualMemoryArea& other) const
 {
 	return m_address < other.m_address;
 }

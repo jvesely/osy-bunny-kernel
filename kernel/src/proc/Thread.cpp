@@ -105,20 +105,23 @@ void Thread::switchTo()
 	static const Time DEFAULT_QUANTUM(0, 20000);
 
 	Thread* old_thread = getCurrent();
-
-	if ( old_thread && (old_thread->status() == KILLED || old_thread->status() == FINISHED)
-		&& old_thread->m_detached)
-	{
-		delete old_thread;
-		old_thread = NULL;
-	}
-	
-	void** old_stack = old_thread ? &old_thread->m_stackTop : NULL;
+	void** old_stack = NULL;
 	void** new_stack = &m_stackTop;
 
-	if (old_thread && old_thread->status() == RUNNING)
-		old_thread->setStatus( READY );
+	if ( old_thread ) {
+		if ((old_thread->status() == KILLED || old_thread->status() == FINISHED)
+			&& old_thread->m_detached)
+		{
+			delete old_thread;
+			old_thread = NULL;
+		}
 
+		if (old_thread->status() == RUNNING)
+			old_thread->setStatus( READY );
+
+		old_stack = &old_thread->m_stackTop;
+	}
+	
 	setStatus( RUNNING );
 
 	Scheduler::instance().m_currentThread = this;
@@ -147,6 +150,7 @@ void Thread::yield()
 		removeFromHeap();
 	}
 
+	/* switch to the next thread */
 	Thread* next = getNext();
 	if (!next) {
 		PRINT_DEBUG ("Last thread (%u) finished, shutting down.\n", m_id);
