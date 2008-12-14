@@ -353,12 +353,25 @@ void* memcpy( void* dest, const void* src, size_t count )
 int copy_from_thread( const thread_t thr,
           void *dest, const void *src, const size_t len)
 {
-	return EINVAL;
+	if (! Thread::fromId( thr ))
+		return EINVAL;
+	ASSERT (Thread::getCurrent());
+	ASSERT (Thread::getCurrent()->getVMM());
+	ASSERT (Thread::fromId( thr )->getVMM());
+	return Thread::getCurrent()->getVMM()->copyTo(
+		src, Thread::fromId( thr )->getVMM(), dest, len );
 }
 /*----------------------------------------------------------------------------*/
 int copy_to_thread( const thread_t thr,
           void *dest, const void *src, const size_t len)
 {
+	if (! Thread::fromId( thr ))
+    return EINVAL;
+  ASSERT (Thread::getCurrent());
+  ASSERT (Thread::getCurrent()->getVMM());
+  ASSERT (Thread::fromId( thr )->getVMM());
+  return Thread::fromId( thr )->getVMM()->copyTo(
+    src, Thread::getCurrent()->getVMM(), dest, len );
 	return EINVAL;
 }
 /*----------------------------------------------------------------------------*/

@@ -67,3 +67,8 @@ IVirtualMemoryMap::~IVirtualMemoryMap()
 {
 	if (m_asid) Kernel::instance().tlb().returnAsid(m_asid);
 }
+/*----------------------------------------------------------------------------*/
+int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> dest_map, void* dst_addr, size_t size)
+{
+	return ENOMEM;
+}

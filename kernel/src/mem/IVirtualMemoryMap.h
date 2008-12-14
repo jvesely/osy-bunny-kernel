@@ -36,6 +36,7 @@
 
 #include "types.h"
 #include "Object.h"
+#include "Pointer.h"
 
 class IVirtualMemoryMap: public Object
 {
@@ -43,6 +44,7 @@ public:
 	inline byte asid() { return m_asid; }
 	inline byte setAsid( byte asid) { return m_asid = asid; }
 	void switchTo();
+	int copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> dest_map, void* dst_addr, size_t size);
 	virtual int allocate(void** from, size_t size, unsigned int flags)=0;
 	virtual int free(const void* from)=0;
 	virtual bool translate(void*& address, size_t& frameSize)=0;

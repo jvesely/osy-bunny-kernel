@@ -166,7 +166,9 @@ bool VirtualMemoryArea::operator== (const VirtualMemoryArea& other) const
 	PRINT_DEBUG("Comparing (==) %p (size %x) and %p (size %x).\n",
 		m_address, m_size, other.m_address, other.m_size);
 
+	// check if other is inside this
 	return ((other.m_address >= m_address) && (other.m_address < (void *)((size_t)m_address + m_size)))
+		// check if this is inside other
 		|| ((m_address >= other.m_address) && (m_address < (void *)((size_t)other.m_address + other.m_size)));
 }
 

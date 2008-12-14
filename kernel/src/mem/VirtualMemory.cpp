@@ -74,6 +74,8 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 			// start from beginning
 			VirtualMemoryMapEntry *next, *low = &m_virtualMemoryMap.min();
 
+			//TODO: loop to the right segment!!!
+
 			do {
 				// the next free pointer
 				*from = (void *)((size_t)(low->data().address()) + low->data().size());
@@ -81,11 +83,15 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 				if ((next = (VirtualMemoryMapEntry *)low->next()) == NULL) break;
 				// free space between the two pointers
 				freeSize = (size_t)(next->data().address()) - (size_t)(*from);
+				// store next as low for the next iteration
+				low = next;
 				// loop while the space is not enough
-			} while (freeSize >= size);
+			} while (freeSize < size);
 
 			//TODO align from to the frameSize
 		}
+
+		PRINT_DEBUG("Address %p choosen for the new block of size %x.\n", *from, size);
 	} else {
 		// VF_VA_USER means the from is important for virtual address
 
@@ -128,6 +134,7 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 	}
 
 	VirtualMemoryArea vma(*from, size);
+	PRINT_DEBUG("Allocating physical memory for VMA at %p with size %x.\n", *from, size);
 	int res = vma.allocate(flags);
 
 	if (res == ENOMEM) {
@@ -139,6 +146,8 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 	}
 
 	// add vma to the virtual memory map
+	PRINT_DEBUG("Adding VMA at %p with size %x to the virtual memory map (%u).\n",
+		*from, size, m_virtualMemoryMap.count());
 	m_virtualMemoryMap.insert(vma);
 
 	return EOK;
