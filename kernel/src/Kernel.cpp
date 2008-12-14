@@ -38,7 +38,7 @@
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
 
-#define KERNEL_DEBUG
+//#define KERNEL_DEBUG
 
 #ifndef KERNEL_DEBUG
 #define PRINT_DEBUG(...)
