@@ -358,8 +358,8 @@ int copy_from_thread( const thread_t thr,
 	ASSERT (Thread::getCurrent());
 	ASSERT (Thread::getCurrent()->getVMM());
 	ASSERT (Thread::fromId( thr )->getVMM());
-	return Thread::getCurrent()->getVMM()->copyTo(
-		src, Thread::fromId( thr )->getVMM(), dest, len );
+	return Thread::fromId( thr )->getVMM()->copyTo(
+		src, Thread::getCurrent()->getVMM(), dest, len );
 }
 /*----------------------------------------------------------------------------*/
 int copy_to_thread( const thread_t thr,
@@ -370,8 +370,8 @@ int copy_to_thread( const thread_t thr,
   ASSERT (Thread::getCurrent());
   ASSERT (Thread::getCurrent()->getVMM());
   ASSERT (Thread::fromId( thr )->getVMM());
-  return Thread::fromId( thr )->getVMM()->copyTo(
-    src, Thread::getCurrent()->getVMM(), dest, len );
+  return Thread::getCurrent()->getVMM()->copyTo(
+    src, Thread::fromId( thr )->getVMM(), dest, len );
 	return EINVAL;
 }
 /*----------------------------------------------------------------------------*/

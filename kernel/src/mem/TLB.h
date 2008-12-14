@@ -77,6 +77,8 @@ public:
 		const bool global = false
 		);
 
+	byte currentAsid()
+		{ return Processor::reg_read_entryhi() & Processor::ASID_MASK; }
 	/*!
 	 * @brief Clears all entries with the corresponding ASID from the TLB.
 	 * @param asid ASID to clear.

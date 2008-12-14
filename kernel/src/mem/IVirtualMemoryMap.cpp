@@ -70,5 +70,29 @@ IVirtualMemoryMap::~IVirtualMemoryMap()
 /*----------------------------------------------------------------------------*/
 int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> dest_map, void* dst_addr, size_t size)
 {
-	return ENOMEM;
+		
+	InterruptDisabler inter;
+
+	byte old_asid = Kernel::instance().tlb().currentAsid();
+	const size_t BUFFER_SIZE = 512;
+	byte buffer[BUFFER_SIZE];
+	char* dest = (char*)dst_addr;
+	const char* src  = (const char*)src_addr;
+
+	ASSERT (m_asid);
+
+	while (size) {
+		Kernel::instance().tlb().switchAsid( m_asid );
+		size_t count = min(BUFFER_SIZE, size);
+		memcpy((void*)src, (void*)buffer, count);
+		Kernel::instance().tlb().switchAsid( dest_map->asid() );
+		memcpy((void*)buffer, (void*)dest, count);
+		src  += count;
+		dest += count;
+		size -= count;
+	}
+
+
+	Kernel::instance().tlb().switchAsid( old_asid );
+	return EOK;
 }
