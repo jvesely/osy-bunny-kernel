@@ -144,6 +144,7 @@ void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Pro
 
 	reg_write_entryhi (pageToVPN2( page, 0xff )); // set address, ASID = 0xff
 
+
 	unative_t reg_addr_value = 
 		frameToPFN( frame, ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | ENTRY_LO_GLOBAL_MASK );
 	
@@ -220,7 +221,7 @@ void TLB::setMapping(
 	/* try find mapping */
 	TLB_probe();
 
-	/* check the hit */
+	/* read found position or any other if it was not found */
 	const bool hit = !(reg_read_index() & PROBE_FAILURE);
 
 	if (hit) {
@@ -260,7 +261,6 @@ void TLB::setMapping(
 		TLB_write_random();
 		PRINT_DEBUG ("Adding entry at position.\n");
 	}
-
 	reg_write_pagemask( old_mask );
 }
 /*----------------------------------------------------------------------------*/

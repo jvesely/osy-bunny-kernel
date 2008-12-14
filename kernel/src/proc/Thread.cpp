@@ -150,7 +150,7 @@ void Thread::yield()
 		removeFromHeap();
 	}
 
-	/* switch to the nextx thread */
+	/* switch to the next thread */
 	Thread* next = getNext();
 	if (!next) {
 		PRINT_DEBUG ("Last thread (%u) finished, shutting down.\n", m_id);

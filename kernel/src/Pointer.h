@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id$
+ *   @version $Id: Pointer.h 386 2008-12-12 19:02:55Z vesely $
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -51,7 +51,7 @@ public:
 	Pointer( const Pointer<T>& other )
 		{ if ((m_obj = other.m_obj)) m_obj->incCount(); }
 
-	/*! @brief Correctly destorys pointer. */
+	/*! @brief Correctly destroys pointer. */
 	inline ~Pointer() { releaseObj(); }
 
 	inline T* data() { return m_obj; }
