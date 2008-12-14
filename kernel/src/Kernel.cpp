@@ -154,6 +154,7 @@ void Kernel::run()
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 	printf("Probing memory range...");
+	m_tlb.switchAsid( 0 );
 	const uint32_t MAGIC = 0xDEADBEEF;
 
 	size_t size = 0;
@@ -206,7 +207,8 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_TLBL:
 		case CAUSE_EXCCODE_TLBS:
-			panic("TLB Exception.\n");
+			refillTLB();
+			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
 			printf("Exception: Address error exception. THREAD KILLED\n");
@@ -280,11 +282,15 @@ void Kernel::refillTLB()
   Thread* thread = Thread::getCurrent();
   ASSERT (thread);
 
-  bool success = m_tlb.refill(thread->getVMM().data(), Processor::reg_read_badvaddr());
+	using namespace Processor;
 
-	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", Processor::reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
+  bool success = m_tlb.refill(thread->getVMM().data(), reg_read_badvaddr());
 	
-  if (!success)
+	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
+
+  if (!success) {
+		PRINT_DEBUG ("KILLING offending thread.\n");
     thread->kill();
+	}
 
 }
