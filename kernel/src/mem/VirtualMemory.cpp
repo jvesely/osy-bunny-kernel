@@ -51,10 +51,16 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 	size_t frameSize = 4096;
 
 	// check if size is aligned and not zero
-	if (!VirtualMemory::checkAligned(size, frameSize)) return EINVAL;
+	if (!VirtualMemory::checkAligned(size, frameSize)) {
+		PRINT_DEBUG("Size %u not aligned to frame size %x.\n", size, frameSize);
+		return EINVAL;
+	}
 
 	// check if in the given size is possible in the given segment (for area1 test)
-	if (!VirtualMemory::checkSizeInSegment(size, VF_ADDR_TYPE(flags))) return ENOMEM;
+	if (!VirtualMemory::checkSizeInSegment(size, VF_ADDR_TYPE(flags))) {
+		PRINT_DEBUG("Segment %u is smaller than requested size %x.\n", VF_ADDR_TYPE(flags), size);
+		return ENOMEM;
+	}
 
 	if (VF_VIRT_ADDR(flags) == VF_VA_AUTO) {
 		// automatically assign the virtual address
@@ -79,19 +85,20 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 			} while (freeSize >= size);
 
 			//TODO align from to the frameSize
-
-			// check if not on the end of the virtual space
-			if (((size_t)*from + size) >= VirtualMemory::MAX_VIRTUAL_ADDRESS) {
-				return ENOMEM;
-			}
 		}
 	} else {
 		// VF_VA_USER means the from is important for virtual address
 
 		// check if address is aliged
-		if (!VirtualMemory::checkAligned(*from, frameSize)) return EINVAL;
+		if (!VirtualMemory::checkAligned(*from, frameSize)) {
+			PRINT_DEBUG("Address %p not aligned to frame size %x.\n", *from, frameSize);
+			return EINVAL;
+		}
 		// check if from/size is free
-		if (!checkIfFree(*from, size)) return EINVAL;
+		if (!checkIfFree(*from, size)) {
+			PRINT_DEBUG("Address %p with size %x (or its part) is not free.\n", *from, size);
+			return EINVAL;
+		}
 
 		// for test area1
 		// calculate the missing or wrong segment
@@ -102,7 +109,15 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 
 	// check if the whole  virtual block is in the right segment (KSEG0/1 will be checked later)
 	if ((VirtualMemory::getSegment(*from) != VF_ADDR_TYPE(flags)) || !checkSegment(*from, size)) {
-		return (VF_VIRT_ADDR(flags) == VF_VA_AUTO) ? ENOMEM : EINVAL;
+		if (VF_VIRT_ADDR(flags) == VF_VA_AUTO) {
+			PRINT_DEBUG("Address %p with size %x is overflowing segment %u.\n",
+				*from, size, VF_ADDR_TYPE(flags));
+			return ENOMEM;
+		} else {
+			PRINT_DEBUG("Address %p with size %x is overflowing segment %u.\n",
+				*from, size, VF_ADDR_TYPE(flags));
+			return EINVAL;
+		}
 	}
 
 	// VF_AT_KSEG0 and VF_AT_KSEG1 means VF_VA_USER is important also for frame allocator
@@ -116,6 +131,8 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 	int res = vma.allocate(flags);
 
 	if (res == ENOMEM) {
+		PRINT_DEBUG("Not enough memory for %p with size %x, freeing already allocated parts.\n",
+			*from, size);
 		// on error free the allocated memory and return
 		vma.free();
 		return ENOMEM;
@@ -177,14 +194,15 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 	if (m_virtualMemoryMap.count() == 0) return true;
 
 	// check if address not in other block
-	if (m_virtualMemoryMap.findItem(VirtualMemoryMapEntry(VirtualMemoryArea(from))) != NULL) {
+	if (m_virtualMemoryMap.findItem(VirtualMemoryArea(from)) != NULL) {
+		PRINT_DEBUG("Address %p was found in the virtual memory map.\n", from);
 		return false;
 	}
 
 	// check if the space after from is free too
 
 	// start from beginning
-	const VirtualMemoryMapEntry& checkedAddress = VirtualMemoryMapEntry(VirtualMemoryArea(from, size));
+	const VirtualMemoryMapEntry& checkedAddress(VirtualMemoryArea(from, size));
 	VirtualMemoryMapEntry *lower, *upper = &m_virtualMemoryMap.min();
 	do {
 		lower = upper;
@@ -193,14 +211,18 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 
 	if (lower->data().address() > from) {
 		// check if there is enough space after from to the first allocated block
+		PRINT_DEBUG("Checking space (size %x) after %p.\n", size, from);
 		return ((size_t)from + size) <= (size_t)(lower->data().address());
 	}
 
 	if (upper == NULL) {
 		// no block with higher address then from
-		return (size_t)from > ((size_t)(lower->data().address()) + lower->data().size());
+		PRINT_DEBUG("Checking block length before %p.\n", from);
+		return (size_t)from >= ((size_t)(lower->data().address()) + lower->data().size());
 	}
 
+	PRINT_DEBUG("Checking if %p with size %x suits between %p (%x) and %p (%x).\n",
+		from, size, lower->data().address(), lower->data().size(), upper->data().address(), upper->data().size());
 	// check if from is after lower+size
 	return ((size_t)from >= ((size_t)(lower->data().address()) + lower->data().size()))
 		// and if from+size ends before the next allocated block (in upper)
