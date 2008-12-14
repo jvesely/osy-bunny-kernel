@@ -241,6 +241,11 @@ int thread_kill(thread_t thr);
 
 void* memcpy( void* dest, const void* src, size_t count );
 
+int copy_from_thread( const thread_t thr,
+          void *dest, const void *src, const size_t len);
+
+int copy_to_thread( const thread_t thr,
+          void *dest, const void *src, const size_t len);
 /* --------------------------------------------------------------------- */
 /* ----------------------      MUTEX    -------------------------------- */
 /* --------------------------------------------------------------------- */

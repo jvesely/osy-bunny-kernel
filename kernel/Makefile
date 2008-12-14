@@ -42,17 +42,14 @@ KERNEL_RAW = kernel.raw
 KERNEL_MAP = kernel.map
 LDS_FILE = kernel.lds
 OBJS += $(shell find src -name "*.cpp" -o -name "*.S" -o -name "*.c")
+TEST_DIRS = 
 
 ifneq ($(KERNEL_TEST),)
+
 	OBJS += $(KERNEL_TEST)
 	CPPFLAGS += -DKERNEL_TEST
-	VPATH += $(dir ../$(KERNEL_TEST))
-endif
-
-# Add needed files for map1 and map2
-ifneq (, $(findstring map, $(KERNEL_TEST)))
-	OBJS += ../tests/as2/shared/tst_area_list.c  ../tests/as2/shared/tst_area_ops.c
-	VPATH += ../tests/as2/shared/
+	TEST_DIRS += $(dir $(addprefix ../, $(KERNEL_TEST)))
+	VPATH += $(TEST_DIRS)
 endif
 
 # Define DEBUG_MUTEX for mutex5 test
@@ -94,10 +91,11 @@ $(OBJ_DIR)/%.o : %.S
 
 
 ### Dependencies ###
-DEPEND = find $(SRC_DIR) ../$(KERNEL_TEST) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
+DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
 .PHONY: depend
 depend:
 	@$(DEPEND) > Makefile.depend
+	#echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
 		
 
 
