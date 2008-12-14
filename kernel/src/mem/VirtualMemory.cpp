@@ -209,7 +209,6 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 	}
 
 	// check if the space after from is free too
-
 	// start from beginning
 	const VirtualMemoryMapEntry& checkedAddress(VirtualMemoryArea(from, size));
 	VirtualMemoryMapEntry *lower, *upper = &m_virtualMemoryMap.min();

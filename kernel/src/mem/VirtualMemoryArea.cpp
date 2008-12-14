@@ -35,12 +35,21 @@
 #include "mem/VirtualMemoryArea.h"
 
 #define VMA_DEBUG
+//#define VMA_OPERATOR_DEBUG
 
 #ifndef VMA_DEBUG
 #define PRINT_DEBUG(...)
 #else
 #define PRINT_DEBUG(ARGS...) \
   printf("[ VMA DEBUG ]: "); \
+  printf(ARGS);
+#endif
+
+#ifndef VMA_OPERATOR_DEBUG
+#define PRINT_OP_DEBUG(...)
+#else
+#define PRINT_OP_DEBUG(ARGS...) \
+  printf("[ SPLAY DEBUG ]: "); \
   printf(ARGS);
 #endif
 
@@ -163,7 +172,7 @@ bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
 
 bool VirtualMemoryArea::operator== (const VirtualMemoryArea& other) const
 {
-	PRINT_DEBUG("Comparing (==) %p (size %x) and %p (size %x).\n",
+	PRINT_OP_DEBUG("Comparing (==) %p (size %x) and %p (size %x).\n",
 		m_address, m_size, other.m_address, other.m_size);
 
 	// check if other is inside this
@@ -176,7 +185,7 @@ bool VirtualMemoryArea::operator== (const VirtualMemoryArea& other) const
 
 bool VirtualMemoryArea::operator< (const VirtualMemoryArea& other) const
 {
-	PRINT_DEBUG("Contrasting (<) %p (size %x) and %p (size %x).\n",
+	PRINT_OP_DEBUG("Contrasting (<) %p (size %x) and %p (size %x).\n",
 		m_address, m_size, other.m_address, other.m_size);
 
 	return (m_address < other.m_address)
