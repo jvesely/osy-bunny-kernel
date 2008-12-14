@@ -49,6 +49,12 @@ ifneq ($(KERNEL_TEST),)
 	VPATH += $(dir ../$(KERNEL_TEST))
 endif
 
+# Add needed files for map1 and map2
+ifneq (, $(findstring map, $(KERNEL_TEST)))
+	OBJS += ../tests/as2/shared/tst_area_list.c  ../tests/as2/shared/tst_area_ops.c
+	VPATH += ../tests/as2/shared/
+endif
+
 # Define DEBUG_MUTEX for mutex5 test
 ifneq (, $(findstring mutex5,$(KERNEL_TEST)))
 	CPPFLAGS += -DDEBUG_MUTEX
