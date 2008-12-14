@@ -207,7 +207,7 @@ void TLB::setMapping(
 	unative_t page_mask   = pages[pageSize].mask << PAGE_MASK_SHIFT;
 	unative_t global_flag = global ? ENTRY_LO_GLOBAL_MASK : 0;
 
-	unative_t old_mask    = reg_read_pagemask();
+	unative_t old_asid    = reg_read_entryhi();
 
 	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
 		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
@@ -261,7 +261,8 @@ void TLB::setMapping(
 		TLB_write_random();
 		PRINT_DEBUG ("Adding entry at position.\n");
 	}
-	reg_write_pagemask( old_mask );
+
+	reg_write_entryhi( old_asid );
 }
 /*----------------------------------------------------------------------------*/
 bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
