@@ -50,13 +50,7 @@ class VirtualMemorySubarea : public ListInsertable<VirtualMemorySubarea>
 public:
 	VirtualMemorySubarea(const void* physicalAddress, const size_t frameSize, const size_t frameCount)
 		: m_physicalAddress(physicalAddress), m_frameSize(frameSize), m_frameCount(frameCount)
-	{
-		printf("VMSubA constructed\n");
-	}
-
-	~VirtualMemorySubarea() {
-		printf("VMSubA destructed\n");
-	}
+	{}
 
 	inline size_t size() const;
 	inline size_t frameSize() const;
@@ -99,5 +93,4 @@ inline void VirtualMemorySubarea::free()
 	// free the physical memory
 	MyFrameAllocator::instance().frameFree(m_physicalAddress, m_frameCount, m_frameSize);
 }
-
 

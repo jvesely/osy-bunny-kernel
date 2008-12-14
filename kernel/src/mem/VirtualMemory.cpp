@@ -35,6 +35,16 @@
 #include "flags.h"
 #include "VirtualMemory.h"
 
+#define VMA_DEBUG
+
+#ifndef VMA_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+  printf("[ VMA DEBUG ]: "); \
+  printf(ARGS);
+#endif
+
 int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 {
 	//TODO add new param with frame size or get the optimal size (check how is from aligned)
@@ -143,12 +153,17 @@ int VirtualMemory::free(const void *from)
 
 bool VirtualMemory::translate(void*& address, size_t& frameSize)
 {
+	PRINT_DEBUG("Virtual memory map tree size %u.\n", m_virtualMemoryMap.count());
+
 	// search for the address and get the VMA
-	const VirtualMemoryMapEntry* entry = m_virtualMemoryMap.findItem(
-		VirtualMemoryMapEntry(VirtualMemoryArea(address)));
+	const VirtualMemoryMapEntry* entry = 
+		m_virtualMemoryMap.findItem(VirtualMemoryArea(address));
 
 	// if VMA not found, address is not allocated
-	if (entry == NULL) return false;
+	if (entry == NULL) {
+		PRINT_DEBUG("Address %p is not in the tree.\n", address);
+		return false;
+	}
 
 	// find the address translation on the found VMA
 	return entry->data().find(address, frameSize);
