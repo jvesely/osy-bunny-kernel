@@ -95,7 +95,7 @@ DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC)
 .PHONY: depend
 depend:
 	@$(DEPEND) > Makefile.depend
-	#echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
+	@#echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
 		
 
 
