@@ -35,7 +35,7 @@
 #include "flags.h"
 #include "VirtualMemory.h"
 
-#define VMA_DEBUG
+//#define VMA_DEBUG
 
 #ifndef VMA_DEBUG
 #define PRINT_DEBUG(...)
@@ -69,25 +69,7 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 		*from = getAddressInSegment(VF_ADDR_TYPE(flags));
 
 		if (m_virtualMemoryMap.count() != 0) {
-			// if we already allocated something, find the next free big enough pointer
-			size_t freeSize;
-			// start from beginning
-			VirtualMemoryMapEntry *next, *low = &m_virtualMemoryMap.min();
-
-			//TODO: loop to the right segment!!!
-
-			do {
-				// the next free pointer
-				*from = (void *)((size_t)(low->data().address()) + low->data().size());
-				// the next used pointer (TODO: next() should return my ptr)
-				if ((next = (VirtualMemoryMapEntry *)low->next()) == NULL) break;
-				// free space between the two pointers
-				freeSize = (size_t)(next->data().address()) - (size_t)(*from);
-				// store next as low for the next iteration
-				low = next;
-				// loop while the space is not enough
-			} while (freeSize < size);
-
+			getFreeAddress(*from, size);
 			//TODO align from to the frameSize
 		}
 
@@ -237,4 +219,43 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 		&& ((size_t)from + size) <= (size_t)(upper->data().address());
 }
 
+/* --------------------------------------------------------------------- */
+
+void VirtualMemory::getFreeAddress(void*& from, const size_t size)
+{
+	// start from beginning (min() - so count check was done before call)
+	VirtualMemoryMapEntry *next, *low = &m_virtualMemoryMap.min();
+
+	// loop to the right segment (so from already contains address in the right segment)
+	while (VirtualMemory::getSegment(from) != VirtualMemory::getSegment(low->data().address())) {
+		if ((low = (VirtualMemoryMapEntry *)low->next()) == NULL) break;
+	}
+
+	if (low == NULL) {
+		// there was no allocation in the requested segment, so from is set to a good value
+		return;
+	}
+
+	// from is set to the minimal automatically assigned address in segment
+	if ((from < low->data().address()) && (checkIfFree(from, size))) {
+		// from is lower than the first allocated block and there is enough free space
+		return;
+	}
+
+	size_t freeSize;
+	// loop trough the allocated block, to find a suitable place for the new block
+	do {
+		// the next free pointer
+		from = (void *)((size_t)(low->data().address()) + low->data().size());
+		// the next used pointer (TODO: next() should return my ptr)
+		if ((next = (VirtualMemoryMapEntry *)low->next()) == NULL) break;
+		// if running out of segment
+		if (VirtualMemory::getSegment(from) != VirtualMemory::getSegment(next->data().address())) break;
+		// free space between the two pointers
+		freeSize = (size_t)(next->data().address()) - (size_t)(from);
+		// store next as low for the next iteration
+		low = next;
+		// loop while the space is not enough
+	} while (freeSize < size);
+}
 

@@ -65,6 +65,7 @@ public:
 
 protected:
 	bool checkIfFree(const void* from, const size_t size);
+	void getFreeAddress(void*& from, const size_t size);
 
 	static inline bool checkAligned(const void* address, const size_t frameSize);
 	static inline bool checkAligned(const size_t size, const size_t frameSize);

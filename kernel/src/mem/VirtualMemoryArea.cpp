@@ -34,7 +34,7 @@
 
 #include "mem/VirtualMemoryArea.h"
 
-#define VMA_DEBUG
+//#define VMA_DEBUG
 //#define VMA_OPERATOR_DEBUG
 
 #ifndef VMA_DEBUG
