@@ -349,7 +349,18 @@ void* memcpy( void* dest, const void* src, size_t count )
 	}
 	return dest;
 }
-
+/*----------------------------------------------------------------------------*/
+int copy_from_thread( const thread_t thr,
+          void *dest, const void *src, const size_t len)
+{
+	return EINVAL;
+}
+/*----------------------------------------------------------------------------*/
+int copy_to_thread( const thread_t thr,
+          void *dest, const void *src, const size_t len)
+{
+	return EINVAL;
+}
 /*----------------------------------------------------------------------------*/
 
 void mutex_init(struct mutex *mtx) {

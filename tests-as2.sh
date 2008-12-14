@@ -50,9 +50,9 @@ for TEST in \
 	tests/as2/map1 \
 	tests/as2/map2 \
 	; do
-	cp -f kernel/$TEST/test.h kernel/tests/as2/shared/
+	cp -f $TEST/test.h tests/as2/shared/
 	test "${TEST}/test.c tests/as2/shared/tst_area_list.c tests/as2/shared/tst_area_ops.c"
-	rm kernel/test/as2/shared/test.h
+	rm tests/as2/shared/test.h
 done
 
 echo
