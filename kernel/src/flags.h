@@ -20,4 +20,8 @@
 #define VF_AT_KUSEG   0x2
 #define VF_AT_KSSEG   0x3
 #define VF_AT_KSEG3   0x4
+
+#define VF_SEG_NOTLB(segment) (((segment) == (VF_AT_KSEG0)) || ((segment) == (VF_AT_KSEG1)))
+
 #define TF_NEW_VMM    0x1
+

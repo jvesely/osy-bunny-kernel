@@ -37,22 +37,22 @@
 
 int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 {
-	if (size == 0) return EINVAL;
-
 	//TODO add new param with frame size or get the optimal size (check how is from aligned)
 	size_t frameSize = 4096;
 
-	// check if size is aligned
+	// check if size is aligned and not zero
 	if (!VirtualMemory::checkAligned(size, frameSize)) return EINVAL;
+
+	// check if in the given size is possible in the given segment (for area1 test)
+	if (!VirtualMemory::checkSizeInSegment(size, VF_ADDR_TYPE(flags))) return ENOMEM;
 
 	if (VF_VIRT_ADDR(flags) == VF_VA_AUTO) {
 		// automatically assign the virtual address
-		if (m_virtualMemoryMap.count() == 0) {
-			// FrameAllocator::MAX_FRAME_SIZE which is private
-			// the lowest virtual memory (it should be aligned for the used frame size)
-			//TODO: choose better way to get this number
-			*from = (void *)16777216;
-		} else {
+
+		// get the right address in segment (KSEG0/1 will be ignored later)
+		*from = getAddressInSegment(VF_ADDR_TYPE(flags));
+
+		if (m_virtualMemoryMap.count() != 0) {
 			// if we already allocated something, find the next free big enough pointer
 			size_t freeSize;
 			// start from beginning
@@ -83,12 +83,23 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 		// check if from/size is free
 		if (!checkIfFree(*from, size)) return EINVAL;
 
-		// VF_AT_KSEG0 and VF_AT_KSEG1 means VF_VA_USER is important also for frame allocator
-		if ((VF_ADDR_TYPE(flags) != VF_AT_KSEG0) && (VF_ADDR_TYPE(flags) != VF_AT_KSEG1)) {
-			// other segments are trough TLB, so clear the VF_VA_USER flag
-			flags &= ~VF_VA_MASK;
-			flags |= (VF_VA_AUTO << VF_VA_SHIFT);
-		}
+		// for test area1
+		// calculate the missing or wrong segment
+		flags &= ~VF_AT_MASK;
+		flags |= (VirtualMemory::getSegment(*from) << VF_AT_SHIFT);
+		//XXX printf("FLAGS: %x - seg %u, type %u\n", flags, VF_ADDR_TYPE(flags), VF_VIRT_ADDR(flags));
+	}
+
+	// check if the whole  virtual block is in the right segment (KSEG0/1 will be checked later)
+	if ((VirtualMemory::getSegment(*from) != VF_ADDR_TYPE(flags)) || !checkSegment(*from, size)) {
+		return (VF_VIRT_ADDR(flags) == VF_VA_AUTO) ? ENOMEM : EINVAL;
+	}
+
+	// VF_AT_KSEG0 and VF_AT_KSEG1 means VF_VA_USER is important also for frame allocator
+	if ((VF_VIRT_ADDR(flags) == VF_VA_USER) && !VF_SEG_NOTLB(VF_ADDR_TYPE(flags))) {
+		// other segments are trough TLB, so clear the VF_VA_USER flag
+		flags &= ~VF_VA_MASK;
+		flags |= (VF_VA_AUTO << VF_VA_SHIFT);
 	}
 
 	VirtualMemoryArea vma(*from, size);
@@ -147,9 +158,6 @@ bool VirtualMemory::translate(void*& address, size_t& frameSize)
 
 bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 {
-	// check if the space ends on usable address
-	if (((size_t)from + size) > VirtualMemory::MAX_VIRTUAL_ADDRESS) return false;
-
 	// if we have not allocated yet, everything is free (except NULL)
 	if (m_virtualMemoryMap.count() == 0) return true;
 
@@ -183,4 +191,5 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 		// and if from+size ends before the next allocated block (in upper)
 		&& ((size_t)from + size) <= (size_t)(upper->data().address());
 }
-/*----------------------------------------------------------------------------*/
+
+

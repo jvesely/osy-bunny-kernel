@@ -40,6 +40,7 @@
 #define ADDR_PREFIX_KSSEG (0xC0000000)  /*!< 3.0 GB */
 #define ADDR_PREFIX_KSEG3 (0xE0000000)  /*!< 3.5 GB */
 
+#define ADDR_PREFIX(addr)	( (addr) & ADDR_PREFIX_MASK ) /*! take the prefix */
 #define ADDR_OFFSET(addr)	( (addr) & ADDR_OFFSET_MASK ) /*! take the offset */
 
 /*! replace prefix by kseg0 prefix */

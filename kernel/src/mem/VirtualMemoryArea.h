@@ -103,14 +103,28 @@ inline int VirtualMemoryArea::allocate(const unsigned int flags)
 	//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
 	size_t frameSize = 4096;
 
-	if (VF_VIRT_ADDR(flags) == VF_VA_USER) {
+	if ((VF_ADDR_TYPE(flags) == VF_AT_KSEG0) || (VF_ADDR_TYPE(flags) == VF_AT_KSEG1)) {
 		// VF_VA_USER here means it has to have the same physical address (KSEG0-1)
+
+		m_address = (void *)ADDR_OFFSET((size_t)m_address);
 		// calculate the frame count (ceil it)
 		size_t count = (m_size / frameSize) + (m_size % frameSize ? 1 : 0);
 		// allocate one piece of memory
 		if (MyFrameAllocator::instance().allocateAtAddress(m_address, count, frameSize) < count) {
 			return ENOMEM;
 		}
+
+		// change address to virtual 0x8* or 0xA*
+		if (VF_ADDR_TYPE(flags) == VF_AT_KSEG0) {
+			m_address = (void *)ADDR_TO_KSEG0((size_t)m_address);
+		} else {
+			m_address = (void *)ADDR_TO_KSEG1((size_t)m_address);
+		}
+
+		// save as subarea
+		VirtualMemorySubarea* s = new VirtualMemorySubarea(m_address, frameSize, count);
+		// add it to the list
+		s->append(m_subAreas);
 	} else {
 		// how much we still need
 		size_t allocate = m_size;
@@ -210,3 +224,5 @@ inline bool VirtualMemoryArea::operator< (const VirtualMemoryArea& other) const
 {
 	return m_address < other.m_address;
 }
+
+
