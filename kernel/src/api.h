@@ -41,6 +41,10 @@ void switch_cpu_context(void** old_top, void** new_top);
 
 void run_test(void);
 
+void disable_interrupts();
+
+void enable_interrupts();
+
 /*! putc outputs one character.
  * @param c character to be printed
  * @return number of printed chars (0 or 1)

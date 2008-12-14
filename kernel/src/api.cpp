@@ -43,7 +43,15 @@
 
 #include "mem/FrameAllocator.h"
 
-
+void disable_interrupts()
+{
+	Processor::save_and_disable_interrupts();
+}
+/*----------------------------------------------------------------------------*/
+void enable_interrupts()
+{
+	Processor::revert_interrupt_state( true );
+}
 /*----------------------------------------------------------------------------*/
 size_t putc(const char c)
 {
