@@ -98,8 +98,7 @@ public:
 	 */
 	void returnAsid( const byte asid );
 
-	void switchAsid( const byte asid )
-		{ Processor::reg_write_entryhi( asid ); }
+	void switchAsid( const byte asid );
 
 	/*!
 	 * @brief Maps page with the location of hardware devices.

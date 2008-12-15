@@ -35,7 +35,7 @@
 #include "IVirtualMemoryMap.h"
 #include "Kernel.h"
 
-#define IVMM_DEBUG
+//#define IVMM_DEBUG
 
 #ifndef IVMM_DEBUG
 #define PRINT_DEBUG(...)
@@ -71,7 +71,6 @@ IVirtualMemoryMap::~IVirtualMemoryMap()
 int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> dest_map, void* dst_addr, size_t size)
 {
 		
-	InterruptDisabler inter;
 	
 	PRINT_DEBUG ("Copying from VMM: %p to %p. addr: %p toaddr %p, count: %u asid: %u asid:%u .\n",
 		this, dest_map.data(), src_addr, dst_addr, size, m_asid, dest_map->asid());
@@ -85,15 +84,17 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 	ASSERT (m_asid);
 
 	while (size) {
+		InterruptDisabler inter;
 		Kernel::instance().tlb().switchAsid( m_asid );
 		size_t count = min(BUFFER_SIZE, size);
-		memcpy((void*)src, (void*)buffer, count);
-		PRINT_DEBUG ("Copying %uB data %x vs. %x.\n", count, *src, buffer[0]);
+		PRINT_DEBUG ("First 4B to copy: %x.\n", *src);
+		memcpy((void*)buffer, (void*)src, count);
+		PRINT_DEBUG ("Copying %uB data %x vs. %x.\n", count, *(uint*)src,*(uint*) buffer);
 		PRINT_DEBUG ("Copied from %p to buffer %p count %u.\n", src, buffer, count);
-		Kernel::instance().stop();
+//		Kernel::instance().stop();
 		Kernel::instance().tlb().switchAsid( dest_map->asid() );
-		memcpy((void*)buffer, (void*)dest, count);
-
+		memcpy((void*)dest, (void*)buffer, count);
+//		Kernel::instance().stop();
 		src  += count;
 		dest += count;
 		size -= count;
@@ -102,6 +103,6 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 
 	Kernel::instance().tlb().switchAsid( old_asid );
 	PRINT_DEBUG ("Thread copy complete, copied %u B of data.\n", dest - (char*)dst_addr);
-	Kernel::instance().stop();
+//	Kernel::instance().stop();
 	return EOK;
 }

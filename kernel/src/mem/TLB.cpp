@@ -35,7 +35,7 @@
 #include "InterruptDisabler.h"
 #include "tools.h"
 
-#define TLB_DEBUG
+//#define TLB_DEBUG
 
 #ifndef TLB_DEBUG
 #define PRINT_DEBUG(...)
@@ -128,6 +128,12 @@ void TLB::clearAsid( const byte asid )
     	TLB_write_index();
 		}
   }	
+}
+/*----------------------------------------------------------------------------*/
+void TLB::switchAsid( byte asid )
+{
+	PRINT_DEBUG ("Switching ASID to %u.\n", asid);
+	Processor::reg_write_entryhi( asid & Processor::ASID_MASK );
 }
 /*----------------------------------------------------------------------------*/
 void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Processor::PageSize page_size )
@@ -267,13 +273,14 @@ void TLB::setMapping(
 /*----------------------------------------------------------------------------*/
 bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
 {
-	PRINT_DEBUG ("Refilling virtual address %p.\n", bad_addr);
 	ASSERT (vmm);
 
 	byte asid = vmm->asid();
 
 	ASSERT (asid);
 
+	PRINT_DEBUG ("Refilling virtual address %p ASID: %u.\n", bad_addr, asid);
+	
 	void* phys_addr = (void*)bad_addr;
 	size_t size;
 	bool success = vmm->translate( phys_addr, size );
