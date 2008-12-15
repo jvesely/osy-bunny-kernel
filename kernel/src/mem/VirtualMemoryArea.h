@@ -52,10 +52,8 @@ class VirtualMemoryArea
 {
 public:
 	VirtualMemoryArea(const void* address, const size_t size = 0)
-		: m_address(address), m_size(size)
-	{
-		m_subAreas = new VirtualMemorySubareaContainer();
-	}
+		: m_address(address), m_size(size), m_subAreas(NULL)
+	{}
 
 	inline const void* address() const;
 	inline size_t size() const;

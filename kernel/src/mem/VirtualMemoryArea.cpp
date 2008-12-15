@@ -55,6 +55,11 @@
 
 int VirtualMemoryArea::allocate(const unsigned int flags)
 {
+	if (m_subAreas == NULL) {
+		// create the subarea container only if necessary
+		m_subAreas = new VirtualMemorySubareaContainer();
+	}
+
 	//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
 	size_t frameSize = 4096;
 
