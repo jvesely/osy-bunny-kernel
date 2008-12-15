@@ -77,6 +77,8 @@ public:
 		const bool global = false
 		);
 
+	byte currentAsid()
+		{ return Processor::reg_read_entryhi() & Processor::ASID_MASK; }
 	/*!
 	 * @brief Clears all entries with the corresponding ASID from the TLB.
 	 * @param asid ASID to clear.
@@ -96,8 +98,7 @@ public:
 	 */
 	void returnAsid( const byte asid );
 
-	void switchAsid( const byte asid )
-		{ Processor::reg_write_entryhi( asid ); }
+	void switchAsid( const byte asid );
 
 	/*!
 	 * @brief Maps page with the location of hardware devices.
