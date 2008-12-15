@@ -55,6 +55,13 @@
 
 int VirtualMemoryArea::allocate(const unsigned int flags)
 {
+	if (m_subAreas == NULL) {
+		// create the subarea container only if necessary
+		if ((m_subAreas = new VirtualMemorySubareaContainer()) == NULL) {
+			return ENOMEM;
+		}
+	}
+
 	//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
 	size_t frameSize = 4096;
 
@@ -126,19 +133,23 @@ int VirtualMemoryArea::allocate(const unsigned int flags)
 
 void VirtualMemoryArea::free()
 {
-	while (m_subAreas->size() != 0) {
-		// free all the allocated subareas
-		VirtualMemorySubarea* s = m_subAreas->getFront();
-		s->free();
-		delete s;
+	if (m_subAreas != NULL) {
+		while (m_subAreas->size() != 0) {
+			// free all the allocated subareas
+			VirtualMemorySubarea* s = m_subAreas->getFront();
+			s->free();
+			delete s;
+		}
+		delete m_subAreas;
 	}
-	delete m_subAreas;
 }
 
 /* --------------------------------------------------------------------- */
 
 bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
 {
+	if (m_subAreas == NULL) return false;
+
 	PRINT_DEBUG("Searching address %p in VMA %p (size %x with %u subareas).\n",
 		address, m_address, m_size, m_subAreas->size());
 
