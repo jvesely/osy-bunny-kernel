@@ -274,10 +274,12 @@ void BinaryNode<T>::removeFromTree()
 	ASSERT (!m_left || !m_right);
 
 	/* this is my only son */
-	BinaryNode<T>* son = m_left ? m_left : m_right;
+	BinaryNode<T>* only_son = (BinaryNode<T>*)((uintptr_t)m_left | (uintptr_t)m_right);
 
-	if (son)
-		son->m_parent = m_parent;
+	ASSERT (only_son == m_left || only_son == m_right);
+
+	if (only_son)
+		only_son->m_parent = m_parent;
 
 	/* take out of the sorted chain */
 	if (m_previous)
@@ -289,23 +291,20 @@ void BinaryNode<T>::removeFromTree()
 
 	/* I am root */
 	if (!m_parent) {
-		treeRoot() = son; // place new root
-		m_left = m_right = m_parent = m_next = m_previous =  NULL;
-		treeCount() -= 1;
-		return;
-	}
-
-	/* Let my son take my place */
-	if (isLeftSon()) {
-		m_parent->m_left = son;
+		treeRoot() = only_son; // place new root
 	} else {
-		m_parent->m_right = son;
+		/* Let my son take my place */
+		if (isLeftSon()) {
+			m_parent->m_left = only_son;
+		} else {
+			m_parent->m_right = only_son;
+		}
 	}
 
 	m_left = m_right = m_parent = m_next = m_previous = NULL;
 	treeCount() -= 1;
+	m_myTree = NULL;
 	return;
-
 }
 /*----------------------------------------------------------------------------*/
 template <typename T>
@@ -339,7 +338,8 @@ void BinaryNode<T>::rotateLeft()
 
 	/* Son Becomes parent */
 	m_parent = m_left;
-	m_left = m_parent->m_right;
+	m_left = m_left->m_right;
+	if (m_left) m_left->m_parent = this;
 	m_parent->m_right = this;
 }
 /*----------------------------------------------------------------------------*/
@@ -362,8 +362,8 @@ void BinaryNode<T>::rotateRight()
 	/* Son becomes parent */
 	m_parent = m_right;
 	m_right = m_parent->m_left;
+	if (m_right) m_right->m_parent = this;
 	m_parent->m_left = this;
-
 }
 /*----------------------------------------------------------------------------*/
 template <typename T>

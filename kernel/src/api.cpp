@@ -218,7 +218,7 @@ size_t printk(const char * format, ...)
 void kpanic(void** context, const char* format, ...){
 	using namespace Processor;
 	Kernel::instance().regDump();
-
+/*
 	Context* registers = (Context*)*context;
 	printf("Register DUMP: %p\n", *context );
 	printf("   0 %p\tat %p\tv0 %p\tv1 %p\ta0 %p\n", registers->zero, 
@@ -236,14 +236,14 @@ void kpanic(void** context, const char* format, ...){
 	printf("  fp %p\tra %p\tepc %p\tlo %p\thi %p\n", registers->fp, registers->ra,
 		registers->epc, registers->lo, registers->hi );
 	printf("  cause %p\tbadva %p\tstatus %p\n", registers->cause,	registers->badva, registers->status);
-
+*/
 	printf("Kernel PANIC: ");
-	if (!format) return;
-
-	va_list args;
-	va_start(args, format);
-	vprintk(format, args);
-	va_end(args);
+	if (format) {
+		va_list args;
+		va_start(args, format);
+		vprintk(format, args);
+		va_end(args);
+	}
 
 	Kernel::instance().stop();
 	Kernel::instance().block();

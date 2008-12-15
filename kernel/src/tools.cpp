@@ -36,7 +36,7 @@
 #include "drivers/Processor.h"
 
 /*----------------------------------------------------------------------------*/
-inline uint rand()
+uint rand()
 {
 	return Processor::reg_read_count() * Processor::reg_read_random();
 }
