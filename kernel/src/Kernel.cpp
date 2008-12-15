@@ -190,7 +190,8 @@ void* Kernel::malloc(const size_t size) //const
 void Kernel::free(const void * address) //const
 {
 	PRINT_DEBUG ("Free %p.\n", address);
-	m_alloc.freeMemory(address);
+	if (address)
+		m_alloc.freeMemory(address);
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::handle(Processor::Context* registers)
