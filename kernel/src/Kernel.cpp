@@ -38,7 +38,7 @@
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
 
-//#define KERNEL_DEBUG
+#define KERNEL_DEBUG
 
 #ifndef KERNEL_DEBUG
 #define PRINT_DEBUG(...)
@@ -182,6 +182,7 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 /*----------------------------------------------------------------------------*/
 void* Kernel::malloc(const size_t size) //const
 {
+	PRINT_DEBUG ("Malloc request for: %u.\n", size);
 	void* ret =  m_alloc.getMemory(size);
 	PRINT_DEBUG ("Malloc %u %p.\n", size, ret);
 	return ret;
@@ -290,7 +291,7 @@ void Kernel::refillTLB()
 	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
 
   if (!success) {
-		PRINT_DEBUG ("KILLING offending thread.\n");
+		puts ("Access to unmapped address, KILLING offending thread.\n");
     thread->kill();
 	}
 
