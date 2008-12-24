@@ -35,6 +35,7 @@
 #include "Timer.h"
 #include "Kernel.h"
 #include "InterruptDisabler.h"
+#include "proc/Thread.h"
 
 //#define TIMER_DEBUG
 
