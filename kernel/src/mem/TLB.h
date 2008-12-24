@@ -54,7 +54,16 @@ public:
 
 	/*! @brief Prepares the TLB, by @a flushing it. */
 	TLB();
-
+	
+	/*! @brief Uses input memory map and address to insert its translation.
+	 *
+	 * Given address is looked up in the VirtualMemoryMap and translation is
+	 * inserted into the TLB, if sucessfull.
+	 * @param vmm VirtualMemoryMap to search the address in.
+	 * @param bad_addr Address to refill.
+	 * @return @a true if translation was found and inserrted into the TLB
+	 * 		@a false otherwise.
+	 */
 	bool refill(IVirtualMemoryMap* vmm, native_t bad_addr);
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
@@ -77,8 +86,13 @@ public:
 		const bool global = false
 		);
 
+	/*!
+	 * @brief Gets currently used ASID.
+	 * @return Currently used ASID.
+	 */
 	byte currentAsid()
 		{ return Processor::reg_read_entryhi() & Processor::ASID_MASK; }
+	
 	/*!
 	 * @brief Clears all entries with the corresponding ASID from the TLB.
 	 * @param asid ASID to clear.
@@ -98,6 +112,10 @@ public:
 	 */
 	void returnAsid( const byte asid );
 
+	/*!
+	 * @brief Switches currently used ASID.
+	 * @param asid ASID to switch to.
+	 */
 	void switchAsid( const byte asid );
 
 	/*!
