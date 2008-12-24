@@ -246,6 +246,7 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 //------------------------------------------------------------------------------
 void BasicMemoryAllocator::freeMemory(const void * address)
 {
+	if(!address) return;//according to specification, this should do nothing
 	InterruptDisabler lock;
 
 #ifdef BMA_DEBUG
