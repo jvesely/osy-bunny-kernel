@@ -38,7 +38,7 @@
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
 
-#define KERNEL_DEBUG
+//#define KERNEL_DEBUG
 
 #ifndef KERNEL_DEBUG
 #define PRINT_DEBUG(...)
@@ -213,8 +213,8 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
-			printf("Exception: Address error exception. THREAD KILLED\n");
-			Thread::getCurrent()->kill();
+			//printf("Exception: Address error exception. THREAD KILLED\n");
+			//Thread::getCurrent()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
 			if (!(reason & CAUSE_BD_MASK) ) {
@@ -291,7 +291,7 @@ void Kernel::refillTLB()
 	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
 
   if (!success) {
-		puts ("Access to unmapped address, KILLING offending thread.\n");
+		printf( "Access to invalid address %p, KILLING offending thread.\n", reg_read_badvaddr() );
     thread->kill();
 	}
 
