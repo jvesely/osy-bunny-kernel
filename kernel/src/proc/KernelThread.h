@@ -32,9 +32,7 @@
  */
 #pragma once
 
-#include "api.h"
 #include "Thread.h"
-#include "Pointer.h"
 
 /*!
  * @class KernelThread KernelThread.h "proc/KernelThread.h"

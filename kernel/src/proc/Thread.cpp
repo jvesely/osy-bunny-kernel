@@ -127,10 +127,11 @@ void Thread::switchTo()
 	Scheduler::instance().m_currentThread = this;
 
 	PRINT_DEBUG ("Switching VMM to: %p.\n", m_virtualMap.data());
+
 	if (m_virtualMap)
 		m_virtualMap->switchTo();
 
-	if (this != Scheduler::instance().m_idle) {
+	if (this != (Thread*) Scheduler::instance().m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
 			getCurrent()->id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
 		Timer::instance().plan( this, DEFAULT_QUANTUM );

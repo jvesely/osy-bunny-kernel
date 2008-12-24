@@ -37,6 +37,7 @@
 #include "address.h"
 #include "api.h"
 #include "timer/Timer.h"
+#include "mem/VirtualMemory.h"
 
 //#define KERNEL_THREAD_DEBUG
 

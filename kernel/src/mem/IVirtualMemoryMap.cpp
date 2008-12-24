@@ -34,6 +34,8 @@
 
 #include "IVirtualMemoryMap.h"
 #include "Kernel.h"
+#include "InterruptDisabler.h"
+#include "tools.h"
 
 //#define IVMM_DEBUG
 

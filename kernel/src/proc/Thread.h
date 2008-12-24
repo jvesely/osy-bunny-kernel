@@ -32,14 +32,13 @@
  */
 #pragma once
 
-#include "api.h"
 #include "structures/ListInsertable.h"
 #include "structures/HeapInsertable.h"
 #include "timer/Time.h"
-#include "mem/VirtualMemory.h"
+#include "mem/IVirtualMemoryMap.h"
 #include "Pointer.h"
 
-template class Pointer<VirtualMemory>;
+template class Pointer<IVirtualMemoryMap>;
 
 
 #define THREAD_HEAP_CHILDREN 4
@@ -203,14 +202,11 @@ public:
 	Thread();
 
 	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
-/*
-	inline Pointer<IVirtualMemoryMap> createVMM()
-		{ ASSERT (!m_virtualMap); return (m_virtualMap = new VirtualMemory()); }
-*/
+
 protected:
-	void* m_stack;	                           /*!< that's my stack           */
-	void* m_stackTop;                          /*!< top of my stack           */
-	unsigned int m_stackSize;                  /*!< size of my stack          */
+	void* m_stack;	                           /*!< that's my stack            */
+	void* m_stackTop;                          /*!< top of my stack            */
+	unsigned int m_stackSize;                  /*!< size of my stack           */
 
 	bool m_detached;                           /*!< detached flag              */
 	Status m_status;                           /*!< my status                  */

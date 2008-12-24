@@ -33,6 +33,7 @@
 #include "Scheduler.h"
 #include "Kernel.h"
 #include "KernelThread.h"
+#include "IdleThread.h"
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 
@@ -119,7 +120,7 @@ Thread* Scheduler::nextThread()
 	}
 }
 /*----------------------------------------------------------------------------*/
-void Scheduler::enqueue(Thread * thread)
+void Scheduler::enqueue( Thread* thread )
 {
 	/* disable interupts as all sheduling queue mangling functions */
 	InterruptDisabler interrupts;

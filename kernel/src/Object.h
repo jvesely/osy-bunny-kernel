@@ -46,7 +46,7 @@ public:
 	Object():m_refCount( 0 ){};
 
 	/*! @brief just checks the count. */
-	virtual ~Object() { ASSERT(m_refCount == 0); }
+	virtual ~Object() { ASSERT (m_refCount == 0); }
 
 	/*! @brief Increases reference count. */
 	inline uint incCount() { return ++m_refCount; };

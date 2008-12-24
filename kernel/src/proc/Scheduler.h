@@ -32,9 +32,7 @@
 #pragma once
 
 #include "Singleton.h"
-#include "KernelThread.h"
-#include "IdleThread.h"
-#include "structures/List.h"
+#include "KernelThread.h"       /* needed for friendship */
 #include "structures/HashMap.h"
 
 /*! @class Scheduler Scheduler.h "proc/Scheduler.h"
@@ -42,6 +40,8 @@
  *
  * Stores active thread and decides who is next to run.
  */
+
+class IdleThread;
 
 typedef HashMap<thread_t, Thread*> ThreadMap; 
 
