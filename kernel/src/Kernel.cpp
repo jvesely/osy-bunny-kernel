@@ -182,6 +182,7 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 /*----------------------------------------------------------------------------*/
 void* Kernel::malloc(const size_t size) //const
 {
+	PRINT_DEBUG ("Malloc request for: %u.\n", size);
 	void* ret =  m_alloc.getMemory(size);
 	PRINT_DEBUG ("Malloc %u %p.\n", size, ret);
 	return ret;
@@ -212,8 +213,8 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
-			printf("Exception: Address error exception. THREAD KILLED\n");
-			Thread::getCurrent()->kill();
+			//printf("Exception: Address error exception. THREAD KILLED\n");
+			//Thread::getCurrent()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
 			if (!(reason & CAUSE_BD_MASK) ) {
@@ -290,7 +291,7 @@ void Kernel::refillTLB()
 	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
 
   if (!success) {
-		PRINT_DEBUG ("KILLING offending thread.\n");
+		printf( "Access to invalid address %p, KILLING offending thread.\n", reg_read_badvaddr() );
     thread->kill();
 	}
 

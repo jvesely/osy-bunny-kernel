@@ -59,6 +59,7 @@ public:
 	/*! @brief Creates empty tree. */
 	Tree(): m_root( NULL ), m_count( 0 ) {};
 
+	bool checkOK();
 	/*!
 	 * @brief Checks for existance of item in the tree.
 	 *
@@ -192,7 +193,12 @@ protected:
 /*----------------------------------------------------------------------------*/
 /* DEFINITIONS ---------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
-
+template <class MyNode>
+bool Tree<MyNode>::checkOK()
+{
+	return (m_root == NULL) || m_root->checkOK( (Tree<Node>*)this );
+}
+/*----------------------------------------------------------------------------*/
 template <class MyNode>
 bool Tree<MyNode>::contains( const MyNode& item )
 {
@@ -242,7 +248,7 @@ bool Tree<MyNode>::remove( const MyNode& item )
 	const MyNode* my_item = findItem( item );
 	
 	/* and destroy, this is NULL safe */
-	delete my_item;
+	return (delete my_item), my_item;
 
 	/* use invalid pointer converted to bool */
 	return my_item;
