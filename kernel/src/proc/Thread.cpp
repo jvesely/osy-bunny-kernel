@@ -69,10 +69,12 @@ bool Thread::shouldSwitch()
 }
 /*----------------------------------------------------------------------------*/
 Thread::Thread( unative_t flags, uint stackSize):
-	ListInsertable<Thread>(), HeapInsertable<Thread, Time, 4>(),
-	m_stackSize(stackSize),	m_detached(false), m_status(UNINITIALIZED), 
-	m_id(0), m_follower(NULL), m_virtualMap( NULL )
+	ListInsertable<Thread>(),
+	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(),
+	m_stackSize( stackSize ),	m_detached( false ), m_status(UNINITIALIZED), 
+	m_id( 0 ), m_follower( NULL ), m_virtualMap( NULL )
 {
+	if (!m_stackSize) return;
 	/* Alloc stack */	
 	m_stack = malloc( m_stackSize );
 	if (m_stack == NULL) return;  /* test stack */

@@ -35,9 +35,9 @@
 #include "structures/Heap.h"
 #include "Singleton.h"
 #include "timer/Time.h"
-#define THREAD_HEAP_CHILDREN 4
+#include "proc/Thread.h"
 
-class Thread;
+typedef Heap<Thread*, THREAD_HEAP_CHILDREN> ThreadHeap;
 
 /*! class Timer Timer.h "timer/Timer.h"
  * @brief Timer class keeps truck of sleeping threads that wish to be awaken 
@@ -67,5 +67,5 @@ public:
 
 private:
 	/*! @brief Event heap */
-	Heap<Thread*, THREAD_HEAP_CHILDREN> m_heap;
+	ThreadHeap m_heap;
 };
