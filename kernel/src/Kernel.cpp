@@ -213,8 +213,8 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
-			//printf("Exception: Address error exception. THREAD KILLED\n");
-			//Thread::getCurrent()->kill();
+			printf("Exception: Address error exception. THREAD KILLED\n");
+			Thread::getCurrent()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
 			if (!(reason & CAUSE_BD_MASK) ) {
@@ -253,6 +253,9 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 		reg_write_cause(0);
 		Timer::instance().interupt();
 	}
+
+	if (Thread::shouldSwitch())
+		Thread::getCurrent()->yield();
 
 }
 /*----------------------------------------------------------------------------*/

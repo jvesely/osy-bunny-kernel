@@ -86,6 +86,8 @@ public:
 	 */
 	static Thread* fromId( thread_t );
 
+	static bool shouldSwitch();
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
@@ -123,7 +125,7 @@ public:
 	 */
 	void switchTo();
 
-	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
+	/*! @brief Stops execution of the current thread and switches to the next. */
 	void yield();
 
 	/*! @brief Puts Thread back into the running queue */
@@ -167,15 +169,7 @@ public:
 	 * @retval EOK this thread was suspended and successfully awoken on 
 	 * others ending
 	 */
-	int join( Thread* other, bool timed = false );
-
-	/*! @brief Timed version of join.
-	 *
-	 * If the thread other is still running after timeout.
-	 * @return is same as join adding ETIMEDOUT, if the time is up and other
-	 * thread is still running.
-	 */
-	int joinTimeout( Thread* other, const uint usec );
+	int join( Thread* other, bool timed = false, const Time& wait_time = Time() );
 
 	/*! @brief Removes thread from the scheduling queue */
 	void block();

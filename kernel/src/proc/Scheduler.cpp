@@ -64,17 +64,18 @@ Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 thread_t Scheduler::getId( Thread* newThread )
 {
 	/* there has to be free id becasue if all were occupied, than
-	 * the system would have thread at every byt of adressable memory,
+	 * the system would have thread at every byte of adressable memory,
 	 * but the next variable and the parameter take up 8 bytes 
-	 * (and even more is used by the rest of the kernel), there must be a free id
+	 * (and even more is used by the rest of the kernel), 
+	 * thus there must be a free id
 	 */
-	thread_t id = m_nextThread++;
+	thread_t id = m_nextThreadId++;
 
 	/* if it is taken repeat */
 	int result;
 	while ( (result = m_threadMap.insert(id, newThread)) == EINVAL) {
 		PRINT_DEBUG("ID %u already in use getting new one.\n", id);
-		id = m_nextThread++;
+		id = m_nextThreadId++;
 	}
 
 	if (result == ENOMEM)
@@ -137,9 +138,9 @@ void Scheduler::enqueue( Thread* thread )
 	/* if the idle thread is running and other thread became ready,
 	 * idle thread is planned for switch as soon as possible
 	 */
-	if (m_currentThread == m_idle && m_activeThreadList.size() == 1) {
+	if (m_currentThread == m_idle) {
 		PRINT_DEBUG("Ending IDLE thread reign.\n");
-		thread->switchTo();
+		m_shouldSwitch = true;
 	}
 	
 }

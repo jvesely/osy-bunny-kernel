@@ -27,7 +27,7 @@
  * @file 
  * @brief Thread class implementation.
  *
- * Constians Thread member functions' implementations.
+ * Contians Thread member functions' implementation.
  */
 
 #include "Thread.h"
@@ -61,6 +61,11 @@ Thread* Thread::getNext()
 Thread* Thread::fromId(thread_t id)
 {
 	return Scheduler::instance().thread( id );
+}
+/*----------------------------------------------------------------------------*/
+bool Thread::shouldSwitch()
+{
+	return Scheduler::instance().m_shouldSwitch;
 }
 /*----------------------------------------------------------------------------*/
 Thread::Thread( unative_t flags, uint stackSize):
@@ -114,17 +119,18 @@ void Thread::switchTo()
 		{
 			delete old_thread;
 			old_thread = NULL;
+		} else {
+			if (old_thread->status() == RUNNING)
+				old_thread->setStatus( READY );
+
+			old_stack = &old_thread->m_stackTop;
 		}
-
-		if (old_thread->status() == RUNNING)
-			old_thread->setStatus( READY );
-
-		old_stack = &old_thread->m_stackTop;
 	}
 	
 	setStatus( RUNNING );
 
 	Scheduler::instance().m_currentThread = this;
+	Scheduler::instance().m_shouldSwitch = false;
 
 	PRINT_DEBUG ("Switching VMM to: %p.\n", m_virtualMap.data());
 
@@ -221,19 +227,10 @@ bool Thread::detach()
 	return m_detached = true;
 }
 /*----------------------------------------------------------------------------*/
-int Thread::joinTimeout( Thread* thread, const uint usec )
-{
-	InterruptDisabler interrupts;
-
-	PRINT_DEBUG ("Thread %u trying to join thread %u in %u microsecs.\n", m_id, thread->m_id, usec);
-	alarm( Time(0, usec) );
-	return join( thread, true );
-}
-/*----------------------------------------------------------------------------*/
-int Thread::join( Thread * thread, bool timed )
+int Thread::join( Thread* thread, bool timed, const Time& wait_time )
 {
 	/* Need to disable interupts as the status of the thread
-	 * may not survive during reeschedule
+	 * may not survive during reschedule
 	 */
 	InterruptDisabler interrupts;
 	
@@ -243,11 +240,11 @@ int Thread::join( Thread * thread, bool timed )
 		|| thread->detached()                              /* detached thread */
 		|| thread->m_follower                              /* already waited for */
 	) {
-		if (timed) resume();
 		return EINVAL;
 	}
 	
-	PRINT_DEBUG ("Thread %u joining thread %u.\n", m_id, thread->m_id);
+	PRINT_DEBUG ("Thread %u joining thread %u%s.\n", 
+		m_id, thread->m_id, timed ? " (TIMED)" : "");
 
 	Status others_status = thread->status();
 
@@ -255,7 +252,6 @@ int Thread::join( Thread * thread, bool timed )
 	if (others_status == KILLED || others_status == FINISHED) {
 		PRINT_DEBUG ("Thread %u joined KILLED thread %u.\n", m_id, thread->m_id);
 		delete thread;
-		if (timed) resume();
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
 
@@ -263,10 +259,12 @@ int Thread::join( Thread * thread, bool timed )
 	thread->m_follower = this;
 	m_status = JOINING;
 	
-	if (!timed) {
+	if ( timed ) {
+		alarm( wait_time );
+	} else {
 		/* No more action for me until thread is dead. */
 		block();
-	}
+	} 
 
   yield();
 
