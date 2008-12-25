@@ -35,6 +35,7 @@
 #pragma once
 
 #include "List.h"
+
 /*! @class ListInsertable ListInsertable.h "structures/ListInsertable.h"
  * @brief Base class for all classes that wish to be inserted into List.
  *
@@ -43,7 +44,6 @@
  * as well as removing from the List. It is also delete safe 
  * (It removes from any list it may be in upon destruction).
  */
-
 template <class T>
 class ListInsertable: public ListItem<T*>
 {

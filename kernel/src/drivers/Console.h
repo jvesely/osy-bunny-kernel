@@ -34,7 +34,9 @@
 #include "OutputCharacterDevice.h"
 #include "InputCharacterDevice.h"
 #include "structures/List.h"
-#include "proc/Thread.h"
+
+class Thread;
+typedef List<Thread *> ThreadList;
 
 /*!
  * @class Console Console.h "drivers/Console.h"

@@ -32,14 +32,13 @@
  */
 #pragma once
 
-#include "api.h"
 #include "structures/ListInsertable.h"
 #include "structures/HeapInsertable.h"
 #include "timer/Time.h"
-#include "mem/VirtualMemory.h"
+#include "mem/IVirtualMemoryMap.h"
 #include "Pointer.h"
 
-template class Pointer<VirtualMemory>;
+template class Pointer<IVirtualMemoryMap>;
 
 
 #define THREAD_HEAP_CHILDREN 4
@@ -87,6 +86,8 @@ public:
 	 */
 	static Thread* fromId( thread_t );
 
+	static bool shouldSwitch();
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
@@ -124,7 +125,7 @@ public:
 	 */
 	void switchTo();
 
-	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
+	/*! @brief Stops execution of the current thread and switches to the next. */
 	void yield();
 
 	/*! @brief Puts Thread back into the running queue */
@@ -168,15 +169,7 @@ public:
 	 * @retval EOK this thread was suspended and successfully awoken on 
 	 * others ending
 	 */
-	int join( Thread* other, bool timed = false );
-
-	/*! @brief Timed version of join.
-	 *
-	 * If the thread other is still running after timeout.
-	 * @return is same as join adding ETIMEDOUT, if the time is up and other
-	 * thread is still running.
-	 */
-	int joinTimeout( Thread* other, const uint usec );
+	int join( Thread* other, bool timed = false, const Time& wait_time = Time() );
 
 	/*! @brief Removes thread from the scheduling queue */
 	void block();
@@ -203,14 +196,11 @@ public:
 	Thread();
 
 	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
-/*
-	inline Pointer<IVirtualMemoryMap> createVMM()
-		{ ASSERT (!m_virtualMap); return (m_virtualMap = new VirtualMemory()); }
-*/
+
 protected:
-	void* m_stack;	                           /*!< that's my stack           */
-	void* m_stackTop;                          /*!< top of my stack           */
-	unsigned int m_stackSize;                  /*!< size of my stack          */
+	void* m_stack;	                           /*!< that's my stack            */
+	void* m_stackTop;                          /*!< top of my stack            */
+	unsigned int m_stackSize;                  /*!< size of my stack           */
 
 	bool m_detached;                           /*!< detached flag              */
 	Status m_status;                           /*!< my status                  */

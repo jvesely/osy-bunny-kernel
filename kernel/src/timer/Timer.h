@@ -33,10 +33,11 @@
 #pragma once
 
 #include "structures/Heap.h"
-#include "proc/Thread.h"
 #include "Singleton.h"
 #include "timer/Time.h"
+#define THREAD_HEAP_CHILDREN 4
 
+class Thread;
 
 /*! class Timer Timer.h "timer/Timer.h"
  * @brief Timer class keeps truck of sleeping threads that wish to be awaken 

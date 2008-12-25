@@ -31,7 +31,7 @@
  */
 #pragma once
 
-#include "types.h"
+#include "api.h"
 
 /*! reads value from given register */
 #define read_register(reg)\
@@ -67,20 +67,20 @@
 namespace Processor
 {
 
-static const unative_t CPU_IMPLEMENTATION_SHIFT = 8; /*!< upper  byte */
-static const unative_t CPU_REVISION_SHIFT = 4; /*!< half byte */
-static const unative_t CPU_REVISION_MASK = 0xf; /*!< lower hlaf of byte */
+static const unative_t CPU_IMPLEMENTATION_SHIFT = 8; /*!< upper  byte        */
+static const unative_t CPU_REVISION_SHIFT = 4;       /*!< half byte          */
+static const unative_t CPU_REVISION_MASK = 0xf;      /*!< lower half of byte */
 
 static const unative_t PAGE_MASK_SHIFT = 13; /*!< lower 13 bits should be zeros */
-static const unative_t ASID_MASK  = 0x000000ff; /*!< lower 8 bits */
+static const unative_t ASID_MASK  = 0x000000ff;      /*!< lower 8 bits       */
 static const unative_t VPN2_SHIFT = 12;
-static const unative_t VPN2_MASK  = 0xffffe000; /*!< upper 19 bits */
+static const unative_t VPN2_MASK  = 0xffffe000;      /*!< upper 19 bits      */
 static const unative_t PFN_SHIFT  = 6; /*!< lower 6 bits contains flags */
 static const unative_t PFN_ADDR_MASK = (0xffffff << PFN_SHIFT); /*!< bits 6-30*/
 
 static const unative_t PROBE_FAILURE        = 0x80000000; /*!< highest bit */
-static const unative_t ENTRY_LO_VALID_MASK  = 0x00000002; /*!< second bit */
-static const unative_t ENTRY_LO_DIRTY_MASK  = 0x00000004; /*!< third bit */
+static const unative_t ENTRY_LO_VALID_MASK  = 0x00000002; /*!< second bit  */
+static const unative_t ENTRY_LO_DIRTY_MASK  = 0x00000004; /*!< third bit   */
 static const unative_t ENTRY_LO_GLOBAL_MASK = 0x00000001;
 
 static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
@@ -89,9 +89,9 @@ static const unsigned int ENTRY_COUNT = 48; /*!< number of TLB entries */
  * @brief Stores information about page size.
  */
 struct Page {
-	uint size;      /*!< @brief Size of the page */
+	uint size;      /*!< @brief Size of the page                                */
 	uint shift;     /*!< @brief Position of the lowest valid bit in an address. */
-	unative_t mask; /*!< @brief Inverse mask of the used bit for upper 20 bits */
+	unative_t mask; /*!< @brief Inverse mask of the used bit for upper 20 bits  */
 };
 
 static const Page pages[7] = {
@@ -101,43 +101,36 @@ static const Page pages[7] = {
 	{ 0x0040000, 18, 0x03f },        /*!< 256KB */
 	{ 0x0100000, 20, 0x0ff },        /*!<   1MB */
 	{ 0x0400000, 22, 0x3ff },        /*!<   4MB */
-	{ 0x1000000, 24, 0xfff }
+	{ 0x1000000, 24, 0xfff }         /*!<  16MB */
 };
 
 /*! reverted bit usage mask in TLB according to page size */
 enum PageSize {
-	PAGE_4K,//   = 0x000, 	                  /*!< all bits used */
-	PAGE_16K,//  = 0x003 << PAGE_MASK_SHIFT, /*!< bits 14,13 */
-	PAGE_64K,//  = 0x00f << PAGE_MASK_SHIFT, /*!< bits 16-13 */
-	PAGE_256K,// = 0x03f << PAGE_MASK_SHIFT, /*!< bits 18-13 */
-	PAGE_1M,//   = 0x0ff << PAGE_MASK_SHIFT, /*!< bits 20-13 */
-	PAGE_4M,//   = 0x3ff << PAGE_MASK_SHIFT, /*!< bits 22-13 */
-	PAGE_16M//  = 0xfff << PAGE_MASK_SHIFT  /*!< bits 24-13 */
-
+	PAGE_4K = 0, PAGE_16K, PAGE_64K, PAGE_256K,	PAGE_1M, PAGE_4M, PAGE_16M
 };
 
 extern "C" void switch_cpu_context(void** old_top, void** new_top);
 
 /*! "tlbwr" instruction wrapper */
-inline void TLB_write_random() { asm volatile ("tlbwr\n"); }
+inline void TLB_write_random()        { asm volatile ("tlbwr\n"); }
 /*! "tlbwi" instruction wrapper */
-inline void TLB_write_index() { asm volatile ("tlbwi\n"); }
+inline void TLB_write_index()         { asm volatile ("tlbwi\n"); }
 /*! "tlbr" instruction wrapper */
-inline void TLB_read() { asm volatile ("tlbr\n"); }
+inline void TLB_read()                { asm volatile ("tlbr\n");  }
 /*! "tlbp" instruction wrapper */
-inline void TLB_probe() { asm volatile ("tlbp\n"); }
+inline void TLB_probe()               { asm volatile ("tlbp\n");  }
 
 
 /*! named register read wrapper */
-inline unative_t reg_read_index()     { return read_register(0); }
+inline unative_t reg_read_index()     { return read_register(0);  }
 /*! named register read wrapper */
-inline unative_t reg_read_random()    { return read_register(1); }
+inline unative_t reg_read_random()    { return read_register(1);  }
 /*! named register read wrapper */
-inline unative_t reg_read_pagemask()	{ return read_register(5); }
+inline unative_t reg_read_pagemask()  { return read_register(5);  }
 /*! named register read wrapper */
-inline unative_t reg_read_badvaddr()  { return read_register(8); }
+inline unative_t reg_read_badvaddr()  { return read_register(8);  }
 /*! named register read wrapper */
-inline unative_t reg_read_count()     { return read_register(9); }
+inline unative_t reg_read_count()     { return read_register(9);  }
 /*! named register read wrapper */
 inline unative_t reg_read_entryhi()   { return read_register(10); }
 /*! named register read wrapper */
@@ -156,29 +149,29 @@ inline unative_t reg_read_xcontext()  { return read_register(20); }
 inline unative_t reg_read_eepc()      { return read_register(30); }
 
 /*! named register write wrapper */
-inline void reg_write_index(unative_t value)    { write_register(0, value); }
+inline void reg_write_index( unative_t value )    { write_register(0, value);  }
 /*! named register write wrapper */
-inline void reg_write_entrylo0(unative_t value) { write_register(2, value); }
+inline void reg_write_entrylo0( unative_t value ) { write_register(2, value);  }
 /*! named register write wrapper */
-inline void reg_write_entrylo1(unative_t value) { write_register(3, value); }
+inline void reg_write_entrylo1( unative_t value ) { write_register(3, value);  }
 /*! named register write wrapper */
-inline void reg_write_pagemask(unative_t value) { write_register(5, value); }
+inline void reg_write_pagemask( unative_t value ) { write_register(5, value);  }
 /*! named register write wrapper */
-inline void reg_write_wired(unative_t value)    { write_register(6, value); }
+inline void reg_write_wired( unative_t value )    { write_register(6, value);  }
 /*! named register write wrapper */
-inline void reg_write_count(unative_t value)    { write_register(9, value); }
+inline void reg_write_count( unative_t value )    { write_register(9, value);  }
 /*! named register write wrapper */
-inline void reg_write_entryhi(unative_t value)  { write_register(10, value); }
+inline void reg_write_entryhi( unative_t value )  { write_register(10, value); }
 /*! named register write wrapper */
-inline void reg_write_compare(unative_t value)  { write_register(11, value); }
+inline void reg_write_compare( unative_t value )  { write_register(11, value); }
 /*! named register write wrapper */
-inline void reg_write_status(unative_t value)   { write_register(12, value); }
+inline void reg_write_status( unative_t value )   { write_register(12, value); }
 /*! named register write wrapper */
-inline void reg_write_cause(unative_t value)    { write_register(13, value); }
+inline void reg_write_cause( unative_t value )    { write_register(13, value); }
 /*! named register write wrapper */
-inline void reg_write_epc(unative_t value)      { write_register(14, value); }
+inline void reg_write_epc( unative_t value )      { write_register(14, value); }
 /*! named register write wrapper */
-inline void reg_write_eepc(unative_t value)     { write_register(30, value); }
+inline void reg_write_eepc( unative_t value )     { write_register(30, value); }
 
 
 /*! @struct Context Processor.h "drivers/Processor.h"
@@ -269,6 +262,7 @@ enum Status {
 	STATUS_CU_MASK  = 0xf0000000
 
 };
+
 /*! return current status of interrupts and disable them, taken from Kalisto */
 inline ipl_t save_and_disable_interrupts()
 {
@@ -299,14 +293,17 @@ enum Exceptions {
 	CAUSE_EXCCODE_RI,		/*!< Resrved Instruction */
 	CAUSE_EXCCODE_CPU,  /*!< Coprocessor Unusable */
 	CAUSE_EXCCODE_OV,   /*!< Integer Overflow */
-	CAUSE_EXCCODE_TR,   /*!< Trap */
-	CAUSE_EXCCODE_MASK  = 0x0000007c,
-	CAUSE_EXCCODE_SHIFT = 2
+	CAUSE_EXCCODE_TR    /*!< Trap */
 };
 
-inline unative_t get_exccode(unative_t cause_reg)
+const unative_t	CAUSE_EXCCODE_MASK  = 0x0000007c;
+const unative_t	CAUSE_EXCCODE_SHIFT = 2;
+
+inline Exceptions get_exccode(unative_t cause_reg)
 {
-	return (cause_reg & CAUSE_EXCCODE_MASK) >> CAUSE_EXCCODE_SHIFT;
+	unative_t exc = (cause_reg & CAUSE_EXCCODE_MASK) >> CAUSE_EXCCODE_SHIFT;
+	ASSERT ( exc <= (uint) CAUSE_EXCCODE_TR);
+	return (Exceptions) exc;
 }
 /*----------------------------------------------------------------------------*/
 /*! msim_special instruction: turn trace ON */
@@ -354,4 +351,4 @@ inline void msim_stop (void)
   );
 }
 
-}
+} // namespace Processor

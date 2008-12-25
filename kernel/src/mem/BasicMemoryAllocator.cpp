@@ -38,6 +38,7 @@
 #include <InterruptDisabler.h>
 #include <tools.h>
 #include <../../common/address.h>
+#include "mem/FrameAllocator.h"
 
 //------------------------------------------------------------------------------
 //debug reports

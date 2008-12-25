@@ -45,7 +45,7 @@ public:
 	/*! @brief Constructor sets writing address.
 	 * @param add writing address
 	 */
-	OutputCharacterDevice(char * add):m_outputAddress(add){};
+	OutputCharacterDevice( char* address ):m_outputAddress( address ) {};
 
 	/*! @brief Prints given char on the associated device.
 	 * @param c character to print

@@ -34,7 +34,6 @@
 
 
 #pragma once
-#include <api.h>
 
 /** @brief pair of key and data, used in Map or HashMap
 *	requires copy ctor of both types and == operator of KeyType

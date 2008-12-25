@@ -32,9 +32,7 @@
 #pragma once
 
 #include "Singleton.h"
-#include "KernelThread.h"
-#include "IdleThread.h"
-#include "structures/List.h"
+#include "KernelThread.h"       /* needed for friendship */
 #include "structures/HashMap.h"
 
 /*! @class Scheduler Scheduler.h "proc/Scheduler.h"
@@ -43,15 +41,19 @@
  * Stores active thread and decides who is next to run.
  */
 
+class IdleThread;
+class Timer;
+
 typedef HashMap<thread_t, Thread*> ThreadMap; 
 
 class Scheduler: public Singleton<Scheduler>
 {
 //	static const Time DEFAULT_QUANTUM;
 
-	/*! @brief Converts identifier to pointer 
-	 * @param thread id to be converted
-	 * @return pointer to Thread class, NULL on failure
+	/*! @brief Translates identifier to pointer.
+	 * @param thread identifier to translate.
+	 * @retval Pointer to Thread class.
+	 * @retval NULL if no thread with such an id exists.
 	 */
 	Thread* thread( thread_t thread )
 		{ return m_threadMap.exists( thread ) ? m_threadMap.at( thread ) : NULL; };
@@ -75,7 +77,6 @@ class Scheduler: public Singleton<Scheduler>
 	 * @note If IdleThread was running context is switched to the enqueued thread.
 	 */
 	void enqueue( Thread* thread );
-
 	
 	/*! @brief Gets pointer to current thread.
 	 * @return Pointer to structure representing running thread.
@@ -98,7 +99,7 @@ class Scheduler: public Singleton<Scheduler>
 	Thread* m_currentThread;
 
 	/*! Thread id generating helper. Increases avery time thread is added. */
-	thread_t m_nextThread;
+	thread_t m_nextThreadId;
 
 	/*! Number of active threads */
 	uint m_threadCount;
@@ -106,11 +107,15 @@ class Scheduler: public Singleton<Scheduler>
 	/*! @brief Thread that runs when no one else will. */
 	IdleThread* m_idle;
 	
+	/*! @brief Remember if switching is due. */
+	bool m_shouldSwitch;
+
 	/*! @brief Just sets current thread to NULL, creates Idle thread */
 	Scheduler();
 	
 	friend class Singleton<Scheduler>;
 	friend class Thread;
+	friend class Timer;
 	friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
 
 };

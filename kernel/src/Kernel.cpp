@@ -198,7 +198,7 @@ void Kernel::free(const void * address) //const
 void Kernel::handle(Processor::Context* registers)
 {
 	using namespace Processor;
-	const unative_t reason = get_exccode(registers->cause);
+	const Exceptions reason = get_exccode(registers->cause);
 
 	switch (reason){
 		case CAUSE_EXCCODE_INT:
@@ -213,12 +213,12 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
-			//printf("Exception: Address error exception. THREAD KILLED\n");
-			//Thread::getCurrent()->kill();
+			printf("Exception: Address error exception. THREAD KILLED\n");
+			Thread::getCurrent()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
 			if (!(reason & CAUSE_BD_MASK) ) {
-				registers->epc +=4; // go to the next instruction
+				registers->epc += 4; // go to the next instruction
 				break;
 			}
 			panic("Exception: Break.\n");
@@ -229,7 +229,7 @@ void Kernel::handle(Processor::Context* registers)
 		case CAUSE_EXCCODE_CPU:
 			panic("Exception: Coprocessor unusable.\n");
 		case CAUSE_EXCCODE_RI:
-			printf("Exception: Address error exception. THREAD KILLED\n");
+			printf("Exception: Reserved Instruction exception. THREAD KILLED\n");
 			Thread::getCurrent()->kill();
 			panic("Exception: Reserved Instruction.\n");
 		case CAUSE_EXCCODE_IBE:
@@ -253,6 +253,9 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 		reg_write_cause(0);
 		Timer::instance().interupt();
 	}
+
+	if (Thread::shouldSwitch())
+		Thread::getCurrent()->yield();
 
 }
 /*----------------------------------------------------------------------------*/

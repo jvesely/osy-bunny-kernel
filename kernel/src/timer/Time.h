@@ -199,7 +199,6 @@ public:
 	*	Each component is added separately and then they are normalized.
 	*	@note Implementation uses Time& operator += (const Time& other);
 	*/
-
 	Time operator + ( const Time& other ) const
 	{
 		ASSERT (m_usecs < MILLION);
@@ -225,6 +224,8 @@ public:
 		return result;
 	};
 
+	inline operator bool () const { return m_secs || m_usecs; }
+
 	/** @brief Gets timestamp part. */
 	inline uint secs() const { return m_secs; }
 
@@ -242,9 +243,6 @@ public:
 	 * Given time should not differ from actual time by more than 1 second.
 	 */
 	static Time getCurrentTime();
-	/*{
-		return Time(Kernel::instance().clock().time(), Kernel::instance().clock().usec());
-	}*/
 
 	/** @brief Gets current time.
 	*
@@ -253,6 +251,10 @@ public:
 	*/
 	inline static Time getCurrent() { return getCurrentTime(); }
 
+	inline static Time fromSeconds( uint secs ) { return Time(secs, 0); }
+
+	inline static Time fromMicroSeconds( uint usecs ) { return Time(0, usecs); }
+
 protected:
 	/** @brief corrects time
 	*
@@ -260,7 +262,7 @@ protected:
 	*/
 	inline void correctTime()
 	{
-		m_secs = m_secs + ( m_usecs / MILLION );
+		m_secs += ( m_usecs / MILLION );
 		m_usecs = m_usecs % MILLION;
 	}
 
@@ -270,26 +272,4 @@ protected:
 	/** @brief microseconds time */
 	uint m_usecs;
 };
-
-/*----------------------------------------------------------------------------*/
-/* DEFINITIONS ---------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
-/*inline const Time& Time::operator -= ( const Time& other )
-{
-//	if ( m_usecs < time.m_usecs ) {
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
-		setTime( (m_secs - other.m_secs) - 1, (MILLION + m_usecs) - time.m_usecs );
-//	} else {
-//		setTime( m_secs - time.m_secs, m_usecs - time.m_usecs );
-//	}
-	return *this;
-}*/
-//------------------------------------------------------------------------------
-
-
-
-
-
-
 

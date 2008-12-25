@@ -32,7 +32,6 @@
  */
 #pragma once
 
-#include "api.h"
 #include "Thread.h"
 /*!
  * @class IdleThread IdleThread.h "proc/IdleThread.h"
