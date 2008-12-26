@@ -105,7 +105,7 @@ void kpanic(void** context, const char* format, ...){
 		registers->epc, registers->lo, registers->hi );
 	printf("  cause %p\tbadva %p\tstatus %p\n", registers->cause,	registers->badva, registers->status);
 */
-	printf("Kernel PANIC: ");
+	puts("Kernel PANIC: ");
 	if (format) {
 		va_list args;
 		va_start(args, format);

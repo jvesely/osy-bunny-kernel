@@ -36,7 +36,7 @@
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
 //#include "mem/Allocator.h"
-#include "mem/BasicMemoryAllocator.h"
+#include "BasicMemoryAllocator.h"
 
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
