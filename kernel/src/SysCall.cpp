@@ -36,7 +36,7 @@
 #include "proc/Thread.h"
 #include "address.h"
 
-SysCall::SysCall(Processor::Context* registers)
+SysCall::SysCall(Processor::Context* registers): m_registers( registers )
 {
 	call      = (SysCalls::SysCalls)registers->a0;
 	params[0] = registers->a1;
@@ -68,7 +68,7 @@ void SysCall::handlePuts()
 		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */
 //	Processor::msim_stop();
 //	if (ADDR_TO_USEG(params[0]) == params[0]) {
-		registers->a0 = puts( (const char*)params[0] );
+		m_registers->a0 = puts( (const char*)params[0] );
 //	} else {
 //		Thread::getCurrent()->kill();
 //	}

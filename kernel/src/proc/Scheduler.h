@@ -32,8 +32,8 @@
 #pragma once
 
 #include "Singleton.h"
-#include "KernelThread.h"       /* needed for friendship */
 #include "structures/HashMap.h"
+#include "structures/List.h"
 
 /*! @class Scheduler Scheduler.h "proc/Scheduler.h"
  * @brief Stores and handles active threads.
@@ -41,10 +41,14 @@
  * Stores active thread and decides who is next to run.
  */
 
+class Thread;
 class IdleThread;
+class KernelThread;
+class UserThread;
 class Timer;
 
 typedef HashMap<thread_t, Thread*> ThreadMap; 
+typedef List<Thread*> ThreadList;
 
 class Scheduler: public Singleton<Scheduler>
 {
@@ -115,8 +119,10 @@ class Scheduler: public Singleton<Scheduler>
 	
 	friend class Singleton<Scheduler>;
 	friend class Thread;
+	friend class UserThread;
+	friend class KernelThread;
 	friend class Timer;
-	friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
+	//friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
 
 };
 

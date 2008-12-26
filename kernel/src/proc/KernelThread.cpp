@@ -84,7 +84,7 @@ KernelThread::KernelThread( void* (*thread_start)(void*), void* data,
 		KernelThread * creator = (KernelThread*)Thread::getCurrent();
 		if (creator) {
 			m_virtualMap = creator->m_virtualMap;
-			PRINT_DEBUG ("Using creators(%u) Virtual Memory Map.\n", creator->id());		
+			PRINT_DEBUG ("Using creators(%u) Virtual Memory Map.\n", creator->id());
 		}
 	}
 }

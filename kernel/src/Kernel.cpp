@@ -30,7 +30,7 @@
  * File contains Kernel class implementation.
  */
 #include "Kernel.h"
-#include "proc/KernelThread.h"
+#include "proc/UserThread.h"
 #include "api.h"
 #include "devices.h"
 #include "tools.h"
@@ -279,20 +279,18 @@ void Kernel::setTimeInterrupt(const Time& time)
 	} else {
 		reg_write_compare( current );
 	}
-		PRINT_DEBUG(" [%u:%u]Set time interrupt in %u usecs current: %x, planned: %x.\n",
-			now.secs(), now.usecs(), usec, current, reg_read_compare());
+		PRINT_DEBUG
+			("[%u:%u] Set time interrupt in %u usecs current: %x, planned: %x.\n",
+				now.secs(), now.usecs(), usec, current, reg_read_compare());
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::refillTLB()
 {
   InterruptDisabler inter;
 
-  Thread* thread = Thread::getCurrent();
-  ASSERT (thread);
-
 	using namespace Processor;
 
-  bool success = m_tlb.refill(thread->getVMM().data(), reg_read_badvaddr());
+  bool success = m_tlb.refill(IVirtualMemoryMap::getCurrent().data(), reg_read_badvaddr());
 	
 	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n",
 		reg_read_badvaddr(), success ? "SUCESS" : "FAILURE");
@@ -300,7 +298,10 @@ void Kernel::refillTLB()
   if (!success) {
 		printf( "Access to invalid address %p, KILLING offending thread.\n",
 			reg_read_badvaddr() );
-    thread->kill();
+    if (Thread::getCurrent())
+			Thread::getCurrent()->kill();
+		else
+			panic( "No thread and invalid tlb refill.\n" );
 	}
 
 }

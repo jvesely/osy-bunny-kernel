@@ -31,20 +31,24 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
+
 #pragma once
-#include "syscalls.h"
-#include "drivers/Processor.h"
 
-class SysCall {
+#include "proc/KernelThread.h"
+
+class UserThread: public KernelThread
+{
 public:
-	SysCall(Processor::Context* registers);
+	virtual ~UserThread(){};
 
-	void handle();
+	static Thread* create( thread_t* thread_ptr, void* (*thread_start)(void*),
+		void* data = NULL, const unsigned int flags = 0 );
+
 private:
-	SysCalls::SysCalls call;
-	unative_t params[3];
-	Processor::Context* m_registers;
+	UserThread();
+	UserThread( const UserThread& other );
+	const UserThread& operator = ( const UserThread& other );
 
-	void handlePuts();
-	void handleGets(){};
+	UserThread( void* (*func)(void*), void* data, 
+		native_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
 };
