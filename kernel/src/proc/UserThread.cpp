@@ -37,7 +37,7 @@
 #include "drivers/Processor.h"
 #include "proc/Scheduler.h"
 
-#define USER_THREAD_DEBUG
+//#define USER_THREAD_DEBUG
 
 #ifndef USER_THREAD_DEBUG
 #define PRINT_DEBUG(...)
@@ -109,6 +109,8 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 
 	if (old_map)
 		old_map->switchTo();
+
+	PRINT_DEBUG ("Stack in USEG created sucessfully.\n");
 
 	m_status = INITIALIZED;
 }

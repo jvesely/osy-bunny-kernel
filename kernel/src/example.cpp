@@ -32,21 +32,28 @@
 
 #include "api.h"
 #include "syscalls.h"
+#include "proc/UserThread.h"
 
 extern "C" void* test1(void*);
 extern "C" void* test2(void*);
 
-void* test(void*)
+void* test(void* data)
 {
 	#ifdef KERNEL_TEST
 		run_test();
 	#else
 		puts( "No test specified !!!\n" );
 	#endif
-	
-	char * text = (char*)"FOO";
-	printf ("text at %p is %s.\n", text, text);
 
-	SysCalls::puts( "FOO\n" );
+	if (data) {
+		char * text = (char*)"FOO";
+		printf ("text at %p is %s.\n", text, text);
+
+		SysCalls::puts( "FOO\n" );
+	} else {
+		thread_t user_t;
+		Thread* user = UserThread::create(&user_t, test, (void*)0xff, TF_NEW_VMM);
+		printf ("created thread: %p.\n", user);
+	}
 	return NULL;
 }
