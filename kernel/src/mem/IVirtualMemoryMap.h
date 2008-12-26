@@ -75,7 +75,7 @@ public:
 	int copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> dest_map, void* dst_addr, size_t size);
 
 	/*! @brief Interface for creating virtual memory area 
-	 * @param from pointerr to the location of starting pointer,
+	 * @param from pointer to the location of the starting pointer,
 	 * 	handling depends on flags
 	 * @param size requested size of the VMA
 	 * @param flags tunes the allocation.

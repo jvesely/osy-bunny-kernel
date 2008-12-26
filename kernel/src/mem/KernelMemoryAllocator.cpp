@@ -32,6 +32,7 @@
  * at least people can understand it. 
  */
 #include "KernelMemoryAllocator.h"
+#include "mem/FrameAllocator.h"
 
 BasicMemoryAllocator::BlockHeader * KernelMemoryAllocator::getBlock(size_t realSize)
 {

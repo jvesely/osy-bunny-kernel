@@ -232,31 +232,39 @@ public:
 	/** @brief Gets useconds part. */
 	inline uint usecs() const { return m_usecs; }
 
-	/** @brief Gets timestamp part. wrapper for usecs*/
+	/** @brief Gets timestamp part. wrapper for usecs. */
 	inline uint getSecs() const { return secs(); }
 
-	/** @brief Gets useconds part. wrapper for secs*/
+	/** @brief Gets useconds part. wrapper for secs. */
 	inline uint getUsecs() const { return usecs(); }
 
 	/** @brief Gets current time.
 	 *
-	 * Given time should not differ from actual time by more than 1 second.
+	 * Returned time should not differ from actual time by more than 1 second.
 	 */
 	static Time getCurrentTime();
 
 	/** @brief Gets current time.
 	*
-	* Given time should not differ from actual time by more than 1 second.
+	* Returned time should not differ from actual time by more than 1 second.
 	*	wrapper for getCurrentTime()
 	*/
 	inline static Time getCurrent() { return getCurrentTime(); }
 
+	/*! @brief Constructs Time from seconds count.
+	 *
+	 * Function provided for convenience.
+	 */
 	inline static Time fromSeconds( uint secs ) { return Time(secs, 0); }
 
+	/*! @brief Constructs Time from microseconds count.
+	 *
+	 * Function provided for convenience.
+	 */
 	inline static Time fromMicroSeconds( uint usecs ) { return Time(0, usecs); }
 
 protected:
-	/** @brief corrects time
+	/** @brief corrects Time
 	*
 	*	Ensures that microsecond part of time is less than million
 	*/

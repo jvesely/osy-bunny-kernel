@@ -36,9 +36,9 @@
 
 /*!
  * @class Node Node.h "structures/Node.h"
- * @brief Predecessor for all Nodes.
+ * @brief Parent to all specialized Nodes.
  *
- * Iplements functions that needs to access private members of the Tree.
+ * Implements functions that needs to access private members of the Tree.
  */
 
 class Node
@@ -46,9 +46,9 @@ class Node
 
 public:
 	/*! @brief Makes me think I'm part of the Tree "tree".  */
-	Node( Tree< Node > * tree): m_myTree( tree ){};
+	Node( Tree< Node > * tree): m_myTree( tree ) {};
 
-	virtual ~Node(){};
+	virtual ~Node() {};
 
 protected:
 	Node( const Node& other );
