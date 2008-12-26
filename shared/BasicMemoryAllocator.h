@@ -361,7 +361,7 @@ protected:
 	*	@param realSize minimum size of new block. Usually should not affect the
 		size of new block, because default size is greater (1/2 MB).
 	*/
-	BlockHeader * getBlock(size_t realSize);
+	virtual BlockHeader * getBlock(size_t realSize) = 0;
 
 	/** @brief return memory block to frame allocator
 	*
@@ -372,7 +372,7 @@ protected:
 	*	Block is correctly disconnected from list.
 	*	@param header header of returned block
 	*/
-	void returnBlock(BlockHeader * header);
+	virtual void returnBlock(BlockHeader * header) = 0;
 
 	/** @brief return physical memory block to frame allocator if possible
 	*

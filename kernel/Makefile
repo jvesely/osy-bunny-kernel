@@ -4,18 +4,18 @@
 
 #use all paths
 VPATH = $(shell find src -type d | grep src | grep -v \.svn)
-VPATH += ../common/
+VPATH += ../shared/
 
 CC = $(shell which mipsel-linux-gnu-gcc)
 OBJCOPY = $(shell which mipsel-linux-gnu-objcopy)
 AS = $(shell which mipsel-linux-gnu-as)
 LD = $(shell which mipsel-linux-gnu-ld)
 
-CPPFLAGS = -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -g3 -fno-rtti -fno-threadsafe-statics -nostartfiles -nostdlib -fno-exceptions -I. -I ../common -I $(SRC_DIR)
+CPPFLAGS = -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -g3 -fno-rtti -fno-threadsafe-statics -nostartfiles -nostdlib -fno-exceptions -I. -I ../shared -I $(SRC_DIR)
 
-CFLAGS =  -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I $(SRC_DIR)
+CFLAGS =  -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I $(SRC_DIR) -I ../shared
 
-ASFLAGS = -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I ../common -I $(SRC_DIR) -D__ASM__
+ASFLAGS = -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I ../shared -I $(SRC_DIR) -D__ASM__
 
 LDFLAGS = -G 0 -static -g
 
@@ -34,14 +34,14 @@ COL_END = \033[0m
 BIN_DIR = bin
 OBJ_DIR = obj
 SRC_DIR = src
-INC_DIR = ../common
+INC_DIR = ../shared
 
 ### Files ###
 KERNEL_BIN = kernel.bin
 KERNEL_RAW = kernel.raw
 KERNEL_MAP = kernel.map
 LDS_FILE = kernel.lds
-OBJS += $(shell find src -name "*.cpp" -o -name "*.S" -o -name "*.c")
+OBJS += $(shell find src ../shared -name "*.cpp" -o -name "*.S" -o -name "*.c")
 TEST_DIRS = 
 
 ifneq ($(KERNEL_TEST),)
