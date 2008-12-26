@@ -361,7 +361,7 @@ protected:
 	*	@param realSize minimum size of new block. Usually should not affect the
 		size of new block, because default size is greater (1/2 MB).
 	*/
-	BlockHeader * getBlock(size_t realSize);
+	virtual BlockHeader * getBlock(size_t realSize) = 0;
 
 	/** @brief return memory block to frame allocator
 	*

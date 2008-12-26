@@ -293,6 +293,7 @@ void BasicMemoryAllocator::freeAll()
 	}
 }
 //------------------------------------------------------------------------------
+/*
 BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::getBlock(size_t realSize)
 {
 	//expecting that realsize > 0 - otherwise it does not have sense
@@ -340,7 +341,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::getBlock(size_t realSi
 		//m_firstUsable = end;//intentionally unsafe - to test proper creation
 	};
 	return res;
-}
+}*/
 //------------------------------------------------------------------------------
 void BasicMemoryAllocator::returnBlock(BlockHeader * header)
 {

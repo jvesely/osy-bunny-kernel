@@ -13,7 +13,7 @@ LD = $(shell which mipsel-linux-gnu-ld)
 
 CPPFLAGS = -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -g3 -fno-rtti -fno-threadsafe-statics -nostartfiles -nostdlib -fno-exceptions -I. -I ../shared -I $(SRC_DIR)
 
-CFLAGS =  -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I $(SRC_DIR)
+CFLAGS =  -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I $(SRC_DIR) -I ../shared
 
 ASFLAGS = -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -I ../shared -I $(SRC_DIR) -D__ASM__
 

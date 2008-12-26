@@ -36,7 +36,7 @@
 #include "drivers/RTC.h"
 #include "mem/TLB.h"
 //#include "mem/Allocator.h"
-#include "BasicMemoryAllocator.h"
+#include "mem/KernelMemoryAllocator.h"
 
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
@@ -124,7 +124,7 @@ private:
 	void printBunnies( uint count );
 
 	/*! kernel heap manager */
-	BasicMemoryAllocator m_alloc;
+	KernelMemoryAllocator m_alloc;
 
 	/*! console device */
 	Console m_console;
