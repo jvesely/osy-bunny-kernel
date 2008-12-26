@@ -40,4 +40,5 @@ class KernelMemoryAllocator: public BasicMemoryAllocator
 {
 protected:
 	BlockHeader * getBlock(size_t realSize);
+	void returnBlock(BlockHeader * header);
 };

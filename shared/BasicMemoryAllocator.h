@@ -372,7 +372,7 @@ protected:
 	*	Block is correctly disconnected from list.
 	*	@param header header of returned block
 	*/
-	void returnBlock(BlockHeader * header);
+	virtual void returnBlock(BlockHeader * header) = 0;
 
 	/** @brief return physical memory block to frame allocator if possible
 	*

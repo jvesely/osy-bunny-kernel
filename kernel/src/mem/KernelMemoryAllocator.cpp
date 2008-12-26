@@ -81,3 +81,35 @@ BasicMemoryAllocator::BlockHeader * KernelMemoryAllocator::getBlock(size_t realS
   };
   return res;
 }
+/*----------------------------------------------------------------------------*/
+void KernelMemoryAllocator::returnBlock(BlockHeader * header)
+{
+//  PRINT_DEBUG_FRAME("returning frame \n");
+  size_t FRAME_SIZE = 4096;
+  size_t finalSize = header->size() + sizeof(BlockFooter) + sizeof(BlockHeader);
+//  PRINT_DEBUG_SIZE("returning frame of size %x, internal block of size %x\n", finalSize, header->size());
+
+  assert(finalSize == roundUp(finalSize, FRAME_SIZE));
+
+  BlockFooter * frontBorder = (BlockFooter*)((uintptr_t)header - sizeof(BlockFooter));
+  BlockHeader * backBorder = (BlockHeader*)((uintptr_t)(header->getFooter()) + sizeof(BlockFooter));
+
+  assert(frontBorder->isBorder());
+  assert(backBorder->isBorder());
+  assert((size_t)finalSize == (size_t)((uintptr_t)backBorder - (uintptr_t)frontBorder + sizeof(BlockHeader)));
+  assert(finalSize == backBorder->size());
+//  PRINT_DEBUG_FRAME("checks passed\n");
+
+  //how much
+  uint frameCount = finalSize / FRAME_SIZE;
+  //disconnecting and returning
+  header->disconnect();
+  //FrameAllocator<7>::instance().frameFree(frontBorder,frameCount,FRAME_SIZE);
+  uintptr_t finalAddress = (uintptr_t)frontBorder-(uintptr_t)ADDR_PREFIX_KSEG0;
+  //PRINT_DEBUG_FRAME("returning at %x, count %x, fsize %x \n",finalAddress,frameCount,FRAME_SIZE);
+  MyFrameAllocator::instance().frameFree((void*)finalAddress, frameCount, FRAME_SIZE);
+  m_totalSize -= finalSize;
+//  PRINT_DEBUG_FRAME("total size decreased to %x \n", m_totalSize);
+
+ // PRINT_DEBUG_FRAME("frame returned\n");
+}

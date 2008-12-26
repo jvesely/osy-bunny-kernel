@@ -37,7 +37,7 @@
 #include <InterruptDisabler.h>
 #include <tools.h>
 #include "address.h"
-#include "mem/FrameAllocator.h"
+//#include "mem/FrameAllocator.h"
 
 //------------------------------------------------------------------------------
 //debug reports
@@ -343,6 +343,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::getBlock(size_t realSi
 	return res;
 }*/
 //------------------------------------------------------------------------------
+/*
 void BasicMemoryAllocator::returnBlock(BlockHeader * header)
 {
 	PRINT_DEBUG_FRAME("returning frame \n");
@@ -374,6 +375,7 @@ void BasicMemoryAllocator::returnBlock(BlockHeader * header)
 
 	PRINT_DEBUG_FRAME("frame returned\n");
 }
+*/
 //------------------------------------------------------------------------------
 BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::createBlock(
     uintptr_t start, size_t size)
