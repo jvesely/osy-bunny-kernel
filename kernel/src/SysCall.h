@@ -25,28 +25,25 @@
 
 /*!
  * @file 
- * @brief Contains body of the first thread.
+ * @brief Short description.
  *
- * First "program" run by the kernel.
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
-
-#include "api.h"
+#pragma once
 #include "syscalls.h"
+#include "drivers/Processor.h"
 
-extern "C" void* test1(void*);
-extern "C" void* test2(void*);
+class SysCall {
+public:
+	SysCall(Processor::Context* registers);
 
-void* test(void*)
-{
-	#ifdef KERNEL_TEST
-		run_test();
-	#else
-		puts( "No test specified !!!\n" );
-	#endif
-	
-	char * text = (char*)"FOO";
-	printf ("text at %p is %s.\n", text, text);
+	void handle();
+private:
+	SysCalls::SysCalls call;
+	unative_t params[3];
 
-	SysCalls::puts( "FOO\n" );
-	return NULL;
-}
+	void handlePuts();
+	void handleGets(){};
+};

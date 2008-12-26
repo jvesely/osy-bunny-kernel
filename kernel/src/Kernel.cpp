@@ -37,6 +37,7 @@
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
+#include "SysCall.h"
 
 //#define KERNEL_DEBUG
 
@@ -205,7 +206,9 @@ void Kernel::handle(Processor::Context* registers)
 			handleInterrupts(registers);
 			break;
 		case CAUSE_EXCCODE_SYS:
-			panic("Syscall.\n");
+			SysCall( registers ).handle();
+			registers->epc += 4;
+//			panic("Syscall.\n");
 			break;
 		case CAUSE_EXCCODE_TLBL:
 		case CAUSE_EXCCODE_TLBS:
@@ -291,10 +294,12 @@ void Kernel::refillTLB()
 
   bool success = m_tlb.refill(thread->getVMM().data(), reg_read_badvaddr());
 	
-	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
+	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n",
+		reg_read_badvaddr(), success ? "SUCESS" : "FAILURE");
 
   if (!success) {
-		printf( "Access to invalid address %p, KILLING offending thread.\n", reg_read_badvaddr() );
+		printf( "Access to invalid address %p, KILLING offending thread.\n",
+			reg_read_badvaddr() );
     thread->kill();
 	}
 
