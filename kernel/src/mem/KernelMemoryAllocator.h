@@ -25,20 +25,36 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief KernelMemoryAllocator declaration.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
  */
 #pragma once
 
 #include "BasicMemoryAllocator.h"
-#include "mem/FrameAllocator.h"
 
+/*! @class KernelMemoryAllocator KernelMemoryAllocator.h 
+ * "mem/KernelMemoryAllocator.h"
+ *
+ * @brief Memory allocator that gets aditional memory directly from
+ * the FrameAllocator.
+ *
+ * KernelMemoryAllocator inherits handling of the allocated and free blocks
+ * from the BasicMemoryAllocator, but gets new memoyr blocks directly from
+ * the FrameAllocator.
+ */
 class KernelMemoryAllocator: public BasicMemoryAllocator
 {
 protected:
-	BlockHeader * getBlock(size_t realSize);
-	void returnBlock(BlockHeader * header);
+	/*! @brief Gets new block from the FrameAllocator.
+	 * @param realSize size of the requested block
+	 * @return Pointer to the header of the new block on success,
+	 * 	NULL otherwise.
+	 * Size of the returned block is >= requested size.
+	 */
+	BlockHeader * getBlock( size_t realSize );
+
+	/*! @brief Returns no longer used block.
+	 * @param header pointer to the header of the returned block.
+	 */
+	void returnBlock( BlockHeader* header );
 };
