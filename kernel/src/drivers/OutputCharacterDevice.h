@@ -43,7 +43,7 @@ class OutputCharacterDevice
 {
 public:
 	/*! @brief Constructor sets writing address.
-	 * @param add writing address
+	 * @param address Writing address.
 	 */
 	OutputCharacterDevice( char* address ):m_outputAddress( address ) {};
 
