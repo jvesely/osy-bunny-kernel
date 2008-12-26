@@ -41,7 +41,7 @@ KERNEL_BIN = kernel.bin
 KERNEL_RAW = kernel.raw
 KERNEL_MAP = kernel.map
 LDS_FILE = kernel.lds
-OBJS += $(shell find src -name "*.cpp" -o -name "*.S" -o -name "*.c")
+OBJS += $(shell find src ../shared -name "*.cpp" -o -name "*.S" -o -name "*.c")
 TEST_DIRS = 
 
 ifneq ($(KERNEL_TEST),)
