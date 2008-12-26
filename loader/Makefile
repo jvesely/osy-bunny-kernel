@@ -27,12 +27,12 @@ COL_END = \033[0m
 BIN_DIR = bin
 OBJ_DIR = obj
 SRC_DIR = src
-COMMON_DIR = ../common
+COMMON_DIR = ../shared
 
 ### Files ###
 
 VPATH = $(shell find src -type d )
-VPATH += ../common
+VPATH += COMMON_DIR
 
 LOADER_BIN = loader.bin
 LOADER_RAW = loader.raw

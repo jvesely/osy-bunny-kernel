@@ -32,12 +32,11 @@
  * at least people can understand it.
  */
 
-#include <mem/BasicMemoryAllocator.h>
+#include "BasicMemoryAllocator.h"
 #include <api.h>
-#include <Kernel.h>
 #include <InterruptDisabler.h>
 #include <tools.h>
-#include <../../common/address.h>
+#include "address.h"
 #include "mem/FrameAllocator.h"
 
 //------------------------------------------------------------------------------
