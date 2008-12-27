@@ -35,6 +35,7 @@
 #include "structures/Heap.h"
 #include "Singleton.h"
 #include "timer/Time.h"
+#include "drivers/InterruptHandler.h"
 #include "proc/Thread.h"
 
 typedef Heap<Thread*, THREAD_HEAP_CHILDREN> ThreadHeap;
@@ -47,7 +48,7 @@ typedef Heap<Thread*, THREAD_HEAP_CHILDREN> ThreadHeap;
  * to add an event to the event heap. Interupt signals that some events might
  * be due. Future interupts are planned using timer interrupts.
  */
-class Timer: public Singleton<Timer>
+class Timer:public InterruptHandler, public Singleton<Timer>
 {
 public:
 	/*! @brief Adds thread that wish to be waken on given time to the event heap.
@@ -63,7 +64,7 @@ public:
 	 *		RUNNING threads are switched (at the end of processing)
 	 *		other threads are enqueued to the running queue.
 	 */
-	void interupt();
+	void handleInterrupt();
 
 private:
 	/*! @brief Event heap */

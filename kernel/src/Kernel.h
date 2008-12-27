@@ -119,27 +119,19 @@ public:
 
 	inline TLB& tlb() { return m_tlb; }
 
+	void registerInterruptHandler( InterruptHandler* handler, uint inter );
+
 private:
-	/*! @brief Prints requested number of BUNNIES */
-	void printBunnies( uint count );
-
-	/*! kernel heap manager */
-	KernelMemoryAllocator m_alloc;
-
-	/*! console device */
-	Console m_console;
-
-	/*! clock device */
-	const RTC m_clock;
-
-	/*! store memory size so it does not have to be detected again */
-	size_t m_physicalMemorySize;
-
-	/*! TLB managing */
-	TLB m_tlb;
-
-	/*! converting constant */
-	uint m_timeToTicks;
+	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
+	KernelMemoryAllocator m_alloc;     /*!< Kernel heap manager.   */
+	Console m_console;                 /*!< Console device.        */
+	const RTC m_clock;                 /*!< Clock device.          */
+	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
+	TLB m_tlb;                         /*!< TLB managing.          */	
+	uint m_timeToTicks;                /*!< Converting constant.   */
+	
+	/*! Vector of handlers.    */
+	InterruptHandler* m_interrupts[Processor::INTERRUPT_COUNT]; 
 
 	/*! @brief Detects accessible memory.
 	 *

@@ -42,7 +42,7 @@ extern "C" size_t printk(const char * format, ...);
  * @param number number to be printed
  * @return number of printed decimal digits
  */
-size_t print_udecimal( uint32_t number)
+static size_t print_udecimal( uint32_t number)
 {
   /* too many digits for the reverting algorithm */
   if ( number > ( (uint)(-1) / 10 ))
@@ -68,7 +68,7 @@ size_t print_udecimal( uint32_t number)
  * @return number of printed decimal digits (+ sign)
  */
 
-size_t print_decimal(const int32_t number)
+static size_t print_decimal(const int32_t number)
 {
   if (number < 0){
     return putc('-') + print_udecimal(-number);
@@ -82,7 +82,7 @@ size_t print_decimal(const int32_t number)
  * @param align set to @a true to ouput leading zeros
  * @return number of printed hexadigits
  */
-size_t print_hexa(uint32_t number, bool align)
+static size_t print_hexa(uint32_t number, bool align)
 {
   puts("0x");
   size_t count = 2;

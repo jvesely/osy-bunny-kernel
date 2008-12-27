@@ -41,6 +41,7 @@ void* test(void* data)
 {
 	#ifdef KERNEL_TEST
 		run_test();
+		return NULL;
 	#else
 		puts( "No test specified !!!\n" );
 	#endif

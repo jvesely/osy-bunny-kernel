@@ -83,7 +83,7 @@ void Timer::plan(Thread* thread, const Time& time)
 		m_heap.size(), "------------------PLANNING END--------------\n");
 }
 /*----------------------------------------------------------------------------*/
-void Timer::interupt()
+void Timer::handleInterrupt()
 {
 	InterruptDisabler interrupts;
 

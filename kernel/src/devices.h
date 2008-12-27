@@ -27,7 +27,7 @@
  * @file 
  * @brief Device addresses.
  *
- * Device addreses are defined here in one place.
+ * Device addresses and interrupts are defined in this place.
  */
 
 #pragma once
@@ -35,12 +35,14 @@
 
 #define DEVICES_MAP_START 0xFFFFFFF0
 
+#define TIMER_INTERRUPT 7
+
 /*! simple character output */
 #define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
 
 /*! keyboard */
 #define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFF4)
-#define CHARACTER_INPUT_INTERUPT 1
+#define CHARACTER_INPUT_INTERRUPT 1
 
 /*! rtc */
 #define CLOCK (uint32_t*)(0xFFFFFFF8)

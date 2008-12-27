@@ -65,8 +65,11 @@ static const uint BUNNY_LINES = 5;
 
 
 Kernel::Kernel() :
-	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK) {
+	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK)
+{
 	Processor::reg_write_status(0);
+	registerInterruptHandler( &m_console, CHARACTER_INPUT_INTERRUPT );
+	registerInterruptHandler( &Timer::instance(), TIMER_INTERRUPT );
 }
 extern void* test(void*);
 
@@ -129,8 +132,6 @@ void Kernel::run()
 	m_physicalMemorySize = getPhysicalMemorySize((uintptr_t)&_kernel_end + total_stacks);
 	printf("Detected %d MB of accessible memory\n", m_physicalMemorySize / (1024 *1024) );
 
-
-	Timer::instance();
 
 	// init frame allocator
 		printf("Kernel ends at: %p.\n", &_kernel_end );
@@ -243,20 +244,25 @@ void Kernel::handle(Processor::Context* registers)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void Kernel::registerInterruptHandler( InterruptHandler* handler, uint inter)
+{
+	ASSERT (inter < Processor::INTERRUPT_COUNT);
+	m_interrupts[inter] = handler;
+}
+/*----------------------------------------------------------------------------*/
 void Kernel::handleInterrupts(Processor::Context* registers)
 {
 	using namespace Processor;
 	InterruptDisabler inter;
 
-	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
-		m_console.interrupt();
+	for (uint i = 0; i < INTERRUPT_COUNT; ++i)
+	{
+		if (registers->cause & INTERRUPT_MASKS[i]) {
+			if (m_interrupts[i])
+				m_interrupts[i]->handleInterrupt();
+		}
 	}
-
-	if (registers->cause & CAUSE_IP7_MASK) { //timer interrupt
-		reg_write_cause(0);
-		Timer::instance().interupt();
-	}
-
+	
 	if (Thread::shouldSwitch())
 		Thread::getCurrent()->yield();
 

@@ -230,7 +230,7 @@ struct Context
 	unative_t status;
 };
 
-enum Cause {
+enum CauseMasks {
 	CAUSE_IP_MASK  = 0x0000ff00,
   CAUSE_IP0_MASK = 0x00000100,
   CAUSE_IP1_MASK = 0x00000200,
@@ -239,9 +239,24 @@ enum Cause {
   CAUSE_IP4_MASK = 0x00001000,
   CAUSE_IP5_MASK = 0x00002000,
   CAUSE_IP6_MASK = 0x00004000,
-  CAUSE_IP7_MASK = 0x00008000,
+  CAUSE_IP7_MASK = 0x00008000, 
 
 	CAUSE_BD_MASK  = 0x80000000
+};
+
+
+static const uint INTERRUPT_COUNT = 8;
+static const uint IP_SHIFT = 8;         /*!< The lowest byte is skipped. */
+static const unative_t INTERRUPT_MASKS[INTERRUPT_COUNT] =
+{
+	0x01 <<	IP_SHIFT,
+	0x02 << IP_SHIFT,
+	0x04 << IP_SHIFT,
+	0x08 << IP_SHIFT,
+	0x10 << IP_SHIFT,
+	0x20 << IP_SHIFT,
+	0x40 << IP_SHIFT,
+	0x80 << IP_SHIFT
 };
 
 enum Status {

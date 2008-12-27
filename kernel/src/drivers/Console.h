@@ -33,6 +33,7 @@
 
 #include "OutputCharacterDevice.h"
 #include "InputCharacterDevice.h"
+#include "InterruptHandler.h"
 #include "structures/List.h"
 
 class Thread;
@@ -45,7 +46,8 @@ typedef List<Thread *> ThreadList;
  * Console handles character output and keyboard input
  * inherits classes OutputCharacterDevice and InputCharacterDevice
  */
-class Console:public OutputCharacterDevice, public InputCharacterDevice
+class Console:
+	public OutputCharacterDevice, public InputCharacterDevice, public InterruptHandler
 {
 public:
 	/*! @brief Initializes parent classes for input and output. */
@@ -75,7 +77,7 @@ public:
 	 *
 	 * Fills the buffer, wakes the threads.
 	 */
-	void interrupt();
+	void handleInterrupt();
 
 private:
 	/*! @brief List of threads wating for input */
