@@ -31,18 +31,34 @@
  */
 
 #include "api.h"
-#include "mem/FrameAllocator.h"
-
+#include "SysCall.h"
+#include "proc/UserThread.h"
 
 extern "C" void* test1(void*);
 extern "C" void* test2(void*);
 
-void* test(void*)
+void* test(void* data)
 {
 	#ifdef KERNEL_TEST
 		run_test();
+		return NULL;
 	#else
 		puts( "No test specified !!!\n" );
 	#endif
+
+	if (data) {
+		char text[4];
+		text[0] = 'f';
+		text[1] = 'o';
+		text[2] = 'o';
+		text[3] = 0;
+
+		int count = SysCall::puts( text );
+		printf ("\ntext at %p is %s(%u).\n", text, text, count);
+	} else {
+		thread_t user_t;
+		Thread* user = UserThread::create(&user_t, test, (void*)0xff, TF_NEW_VMM);
+		printf ("created thread: %p.\n", user);
+	} // */
 	return NULL;
 }

@@ -63,6 +63,7 @@ void IVirtualMemoryMap::switchTo()
 	}
 	PRINT_DEBUG ("Switching to VMM %p with ASID: %u\n", this, m_asid);
 	Kernel::instance().tlb().switchAsid( m_asid );
+	getCurrent() = this;
 }
 /*----------------------------------------------------------------------------*/
 IVirtualMemoryMap::~IVirtualMemoryMap()
@@ -75,7 +76,7 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 	PRINT_DEBUG ("Copying from VMM: %p to %p. addr: %p toaddr %p, count: %u asid: %u asid:%u .\n",
 		this, dest_map.data(), src_addr, dst_addr, size, m_asid, dest_map->asid());
 
-	byte old_asid = Kernel::instance().tlb().currentAsid();
+	Pointer<IVirtualMemoryMap> old_map = getCurrent();
 	const size_t BUFFER_SIZE = 512;
 	byte buffer[BUFFER_SIZE];
 	char* dest = (char*)dst_addr;
@@ -101,8 +102,9 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 		size -= count;
 	}
 
+	if (old_map)
+		old_map->switchTo();
 
-	Kernel::instance().tlb().switchAsid( old_asid );
 	PRINT_DEBUG ("Thread copy complete, copied %u B of data.\n", dest - (char*)dst_addr);
 //	Kernel::instance().stop();
 	return EOK;

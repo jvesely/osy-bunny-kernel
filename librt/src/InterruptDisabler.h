@@ -34,22 +34,12 @@
 
 #pragma once
 
-#include "types.h"
-
-inline uint roundUp( uint number, uint factor )
+/* this is just a dummy disabler to make Allocator compile into librt,
+ * better way will have to be thought of.
+ */
+class InterruptDisabler
 {
-	return ((number + factor - 1) / factor) * factor;
-}
-/*----------------------------------------------------------------------------*/
-inline uint roundDown( uint number, uint factor )
-{
-	return (number / factor) * factor;
-}
-/*----------------------------------------------------------------------------*/
-uint rand();
-/*----------------------------------------------------------------------------*/
-template <typename T>
-inline T min( T a, T b )
-{
-	return (a < b) ? a : b;
-}
+public:
+	InterruptDisabler() {};
+	~InterruptDisabler() {};
+};

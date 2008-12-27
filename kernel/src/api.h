@@ -33,6 +33,8 @@
 
 #include "types.h"
 #include "flags.h"
+#include "assert.h"
+#include "dprintf.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,19 +51,19 @@ void enable_interrupts();
  * @param c character to be printed
  * @return number of printed chars (0 or 1)
  */
-size_t putc(const char c);
+size_t putc( const char c );
 
 /*! puts outputs strings.
  * checks whether param is not null, prints chars until "\0" is found
  * @param str pointer to the first char of the string
  * @return number of printed chars
  */
-size_t puts(const char * str);
+size_t puts( const char * str );
 
 /*! printf and printk are the same thing */
-#define printf printk
+#define printk printf
 
-/*! printk prints formated string on the console.
+/*! printf prints formated string on the console.
  * formating string may include:
  * %c: corresponding input variable is treated as char
  * %s: corresponding input variale is treated as char *
@@ -74,27 +76,29 @@ size_t puts(const char * str);
  * @... variable number of paramters used in the format string
  * @return number of printed chars
  */
-size_t printk(const char * format, ...);
+size_t printf( const char * format, ... );
 
-/*! getc reads one char fromthe device buffer.
+/*! @brief Reads one char from the device buffer.
+ * @return Read char.
  * If there is no char in the input buffer requesting thread is blocked.
- * @return read char
  */
 char getc();
 
-/*! getc_try tries to read one char from the device buffer.
+/*! @brief Tries to read one char from the device buffer.
+ * @return Read char or EWOULDBLOCK on empty buffer.
  * If there is no char in the input buffer returns EWOULDBLOCK instead
  * of blocking.
- * @return read char or EWOULDBLOCK on empty buffer
  */
 int getc_try();
 
-/*! gets tries to read multiple chars from the device buffer.
+/*! @brief Tries to read multiple chars from the device buffer.
+ *
  * If len is 0 returns EINVAL. Reads from the buffer until '\n'
  * is read or len characters were read. \\0 is always put at the end.
  * @param str pointer to the buffer to be filled.
  * @param len number of chars to be read if no \\n is encountered.
- * @return number of chars filled into buffer str
+ * @retval number of chars filled into buffer str.
+ * @retval EINVAL if len == 0.
  */
 ssize_t gets( char* str, const size_t len );
 
@@ -109,38 +113,8 @@ void* malloc( const size_t size );
  */
 void free( const void* ptr );
 
-/*! assert and ASSERT are the same thing. */
-#define assert ASSERT
-
-/*! ASSERT macro.
- * Macro tests condition and calls panic, if condition is false.
- * This macro only works when compiled without NDEBUG macro defined.
- * @param test Condition to be tested.
- */
-#ifndef NDEBUG
-#	define ASSERT(test) \
-	if (! (test) ) { \
-		panic("ASSERTION FAILED: \"%s\" in %s on line %d\n", (char*)#test, __FILE__, __LINE__); \
-	}
-#else
-#	define ASSERT(x)
-#endif
-
 /*! dprintf and dprintk are the same thing. */
-#define dprintf dprintk
-
-/*! dprintk macro.
- * Macro prints some debuging info before output.
- * This macro only works without NDEBUG macro defined
- * @param ARGS multiple vars beginning with format string, see printk
- */
-#ifndef NDEBUG
-#	define dprintk(ARGS...) \
-	printf("Function %s on line %d: \n\t", __PRETTY_FUNCTION__, __LINE__);\
-	printf(ARGS);
-#else
-#	define dprintk(ARGS...)
-#endif
+#define dprintk dprintf
 
 /*! panic macro.
  * Macro dumps registers, prints out message that beggins with "Kernel panic: "
@@ -149,15 +123,9 @@ void free( const void* ptr );
 #define panic(ARGS...) \
 	{	void* _panic_top_ = (void*)0xF00;\
 	switch_cpu_context(&_panic_top_, (void**)NULL);\
-	kpanic(&_panic_top_, ARGS); } // still needs tu dump those registers
+	kpanic(&_panic_top_, ARGS); } while (0) // still needs tu dump those registers
 
 void kpanic(void** context, const char* format, ... );
-
-/*! reg_dump macro.
- * Dumps processor registers, now uses msim special instruction,
- * should be changed later
- */
-#define reg_dump()
 
 /*! Creates and runs a new thread. Stores its identifier.
  * @param thread_ptr pointer to place where identifier would be stored.

@@ -30,13 +30,14 @@
  * File contains Kernel class implementation.
  */
 #include "Kernel.h"
-#include "proc/KernelThread.h"
+#include "proc/UserThread.h"
 #include "api.h"
 #include "devices.h"
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
+#include "SysCallHandler.h"
 
 //#define KERNEL_DEBUG
 
@@ -64,8 +65,11 @@ static const uint BUNNY_LINES = 5;
 
 
 Kernel::Kernel() :
-	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK) {
+	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK)
+{
 	Processor::reg_write_status(0);
+	registerInterruptHandler( &m_console, CHARACTER_INPUT_INTERRUPT );
+	registerInterruptHandler( &Timer::instance(), TIMER_INTERRUPT );
 }
 extern void* test(void*);
 
@@ -128,8 +132,6 @@ void Kernel::run()
 	m_physicalMemorySize = getPhysicalMemorySize((uintptr_t)&_kernel_end + total_stacks);
 	printf("Detected %d MB of accessible memory\n", m_physicalMemorySize / (1024 *1024) );
 
-
-	Timer::instance();
 
 	// init frame allocator
 		printf("Kernel ends at: %p.\n", &_kernel_end );
@@ -202,10 +204,10 @@ void Kernel::handle(Processor::Context* registers)
 
 	switch (reason){
 		case CAUSE_EXCCODE_INT:
-			handleInterrupts(registers);
+			handleInterrupts( registers );
 			break;
 		case CAUSE_EXCCODE_SYS:
-			panic("Syscall.\n");
+			SysCallHandler( registers ).handle();
 			break;
 		case CAUSE_EXCCODE_TLBL:
 		case CAUSE_EXCCODE_TLBS:
@@ -240,20 +242,23 @@ void Kernel::handle(Processor::Context* registers)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void Kernel::registerInterruptHandler( InterruptHandler* handler, uint inter)
+{
+	ASSERT (inter < Processor::INTERRUPT_COUNT);
+	m_interrupts[inter] = handler;
+}
+/*----------------------------------------------------------------------------*/
 void Kernel::handleInterrupts(Processor::Context* registers)
 {
 	using namespace Processor;
 	InterruptDisabler inter;
 
-	if (registers->cause & CAUSE_IP1_MASK) { //keyboard
-		m_console.interrupt();
-	}
-
-	if (registers->cause & CAUSE_IP7_MASK) { //timer interrupt
-		reg_write_cause(0);
-		Timer::instance().interupt();
-	}
-
+	for (uint i = 0; i < INTERRUPT_COUNT; ++i)
+		if (registers->cause & INTERRUPT_MASKS[i]) {
+			ASSERT (m_interrupts[i]);
+			m_interrupts[i]->handleInterrupt();
+		}
+	
 	if (Thread::shouldSwitch())
 		Thread::getCurrent()->yield();
 
@@ -276,26 +281,29 @@ void Kernel::setTimeInterrupt(const Time& time)
 	} else {
 		reg_write_compare( current );
 	}
-		PRINT_DEBUG(" [%u:%u]Set time interrupt in %u usecs current: %x, planned: %x.\n",
-			now.secs(), now.usecs(), usec, current, reg_read_compare());
+		PRINT_DEBUG
+			("[%u:%u] Set time interrupt in %u usecs current: %x, planned: %x.\n",
+				now.secs(), now.usecs(), usec, current, reg_read_compare());
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::refillTLB()
 {
   InterruptDisabler inter;
 
-  Thread* thread = Thread::getCurrent();
-  ASSERT (thread);
-
 	using namespace Processor;
 
-  bool success = m_tlb.refill(thread->getVMM().data(), reg_read_badvaddr());
+  bool success = m_tlb.refill(IVirtualMemoryMap::getCurrent().data(), reg_read_badvaddr());
 	
-	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n", reg_read_badvaddr(), success ? "SUCESS" : "FAILURE" );
+	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n",
+		reg_read_badvaddr(), success ? "SUCESS" : "FAILURE");
 
   if (!success) {
-		printf( "Access to invalid address %p, KILLING offending thread.\n", reg_read_badvaddr() );
-    thread->kill();
+		printf( "Access to invalid address %p, KILLING offending thread.\n",
+			reg_read_badvaddr() );
+    if (Thread::getCurrent())
+			Thread::getCurrent()->kill();
+		else
+			panic( "No thread and invalid tlb refill.\n" );
 	}
 
 }

@@ -47,6 +47,10 @@
 class IVirtualMemoryMap: public Object
 {
 public:
+
+	static Pointer<IVirtualMemoryMap>& getCurrent()
+		{ static Pointer<IVirtualMemoryMap> current; return current; }
+
 	/*! @brief Gets ASID assigned to this map.
 	 * @return ASID assigned.
 	 */

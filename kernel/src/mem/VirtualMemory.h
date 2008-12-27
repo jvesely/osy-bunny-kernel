@@ -61,7 +61,7 @@ public:
 	// translate fnc
 	bool translate(void*& address, size_t& frameSize);
 
-	static const size_t MAX_VIRTUAL_ADDRESS = 0x80000000;
+	//static const size_t MAX_VIRTUAL_ADDRESS = 0x80000000;
 
 protected:
 	bool checkIfFree(const void* from, const size_t size);

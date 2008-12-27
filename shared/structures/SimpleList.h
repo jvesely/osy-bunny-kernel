@@ -32,7 +32,7 @@
  * at least people can understand it.
  */
 #pragma once
-#include <structures/SimpleListItem.h>
+#include "SimpleListItem.h"
 
 
 /** @brief minimal cyclical list

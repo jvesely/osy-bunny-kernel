@@ -86,7 +86,7 @@ ssize_t Console::readString(char* str, const size_t len)
 	return c - str;
 }
 /*----------------------------------------------------------------------------*/
-void Console::interrupt()
+void Console::handleInterrupt()
 {
 	/* read character */
 	insert();

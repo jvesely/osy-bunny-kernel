@@ -36,13 +36,12 @@
 
 extern "C" size_t putc(const char c);
 extern "C" size_t puts(const char * str);
-extern "C" size_t printk(const char * format, ...);
 
 /*! prints number as unsigned decimal
  * @param number number to be printed
  * @return number of printed decimal digits
  */
-size_t print_udecimal( uint32_t number)
+static size_t print_udecimal( uint32_t number)
 {
   /* too many digits for the reverting algorithm */
   if ( number > ( (uint)(-1) / 10 ))
@@ -68,7 +67,7 @@ size_t print_udecimal( uint32_t number)
  * @return number of printed decimal digits (+ sign)
  */
 
-size_t print_decimal(const int32_t number)
+static size_t print_decimal(const int32_t number)
 {
   if (number < 0){
     return putc('-') + print_udecimal(-number);
@@ -82,7 +81,7 @@ size_t print_decimal(const int32_t number)
  * @param align set to @a true to ouput leading zeros
  * @return number of printed hexadigits
  */
-size_t print_hexa(uint32_t number, bool align)
+static size_t print_hexa(uint32_t number, bool align)
 {
   puts("0x");
   size_t count = 2;
@@ -119,7 +118,7 @@ size_t print_hexa(uint32_t number, bool align)
  * @param args list of variables used in format
  * @return number of printed chars
  */
-size_t vprintk(const char * format, va_list args)
+size_t vprintf(const char * format, va_list args)
 {
   bool align = false;
   size_t count = 0;
@@ -155,13 +154,14 @@ size_t vprintk(const char * format, va_list args)
   return count;
 }
 /*----------------------------------------------------------------------------*/
-size_t printk(const char * format, ...)
+extern "C"
+size_t printf(const char * format, ...)
 {
   if (!format) return 0;
 
   va_list args;
   va_start(args, format);
-  size_t written = vprintk(format, args);
+  size_t written = vprintf(format, args);
   va_end(args);
 
   return written;

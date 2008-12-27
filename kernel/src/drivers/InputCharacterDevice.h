@@ -40,7 +40,7 @@
  * @brief Buffered character input class.
  *
  * Class reads character from given address and stores them in the buffer.
- * It needs to take kick in the form of insert metho to do that.
+ * It needs to take kick in the form of insert function to do that.
  */
 class InputCharacterDevice
 {

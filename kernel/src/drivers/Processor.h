@@ -106,7 +106,9 @@ static const Page pages[7] = {
 
 /*! reverted bit usage mask in TLB according to page size */
 enum PageSize {
-	PAGE_4K = 0, PAGE_16K, PAGE_64K, PAGE_256K,	PAGE_1M, PAGE_4M, PAGE_16M
+	PAGE_MIN = 0, 
+	PAGE_4K  = 0, PAGE_16K, PAGE_64K, PAGE_256K,	PAGE_1M, PAGE_4M, PAGE_16M,
+	PAGE_MAX = PAGE_16M 
 };
 
 extern "C" void switch_cpu_context(void** old_top, void** new_top);
@@ -173,6 +175,10 @@ inline void reg_write_epc( unative_t value )      { write_register(14, value); }
 /*! named register write wrapper */
 inline void reg_write_eepc( unative_t value )     { write_register(30, value); }
 
+inline uint random()
+{
+	return Processor::reg_read_count() * Processor::reg_read_random();
+}
 
 /*! @struct Context Processor.h "drivers/Processor.h"
  * @brief Helper structure that helps address separate registers.
@@ -228,7 +234,7 @@ struct Context
 	unative_t status;
 };
 
-enum Cause {
+enum CauseMasks {
 	CAUSE_IP_MASK  = 0x0000ff00,
   CAUSE_IP0_MASK = 0x00000100,
   CAUSE_IP1_MASK = 0x00000200,
@@ -237,9 +243,24 @@ enum Cause {
   CAUSE_IP4_MASK = 0x00001000,
   CAUSE_IP5_MASK = 0x00002000,
   CAUSE_IP6_MASK = 0x00004000,
-  CAUSE_IP7_MASK = 0x00008000,
+  CAUSE_IP7_MASK = 0x00008000, 
 
 	CAUSE_BD_MASK  = 0x80000000
+};
+
+
+static const uint INTERRUPT_COUNT = 8;
+static const uint IP_SHIFT = 8;         /*!< The lowest byte is skipped. */
+static const unative_t INTERRUPT_MASKS[INTERRUPT_COUNT] =
+{
+	0x01 <<	IP_SHIFT,
+	0x02 << IP_SHIFT,
+	0x04 << IP_SHIFT,
+	0x08 << IP_SHIFT,
+	0x10 << IP_SHIFT,
+	0x20 << IP_SHIFT,
+	0x40 << IP_SHIFT,
+	0x80 << IP_SHIFT
 };
 
 enum Status {

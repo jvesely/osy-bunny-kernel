@@ -32,11 +32,35 @@
  * at least people can understand it. 
  */
 
-#include "tools.h"
-#include "drivers/Processor.h"
+#pragma once
 
-/*----------------------------------------------------------------------------*/
-uint rand()
+#include "proc/KernelThread.h"
+
+/*!
+ * @class UserThread UserThread.h "proc/UserThread.h"
+ * @brief Thread class with stack in USEG segment.
+ *
+ * Runs given function in separate thread, stack is mapped through 
+ * virtual memory.
+ * TODO: switch to userspace before executing function
+ */
+class UserThread: public KernelThread
 {
-	return Processor::reg_read_count() * Processor::reg_read_random();
-}
+public:
+	/*!
+	 * @brief Ensures correct UserThread creation.
+	 */
+	static Thread* create( thread_t* thread_ptr, void* (*thread_start)(void*),
+		void* data = NULL, const unsigned int flags = 0 );
+
+private:
+	UserThread();
+	UserThread( const UserThread& other );
+	const UserThread& operator = ( const UserThread& other );
+
+	/*!
+	 * @brief Prepares stack and initial context.
+	 */
+	UserThread( void* (*func)(void*), void* data, 
+		native_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
+};

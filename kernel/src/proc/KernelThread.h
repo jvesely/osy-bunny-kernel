@@ -47,7 +47,8 @@ class KernelThread: public Thread
 public:
 
 	virtual ~KernelThread();
-	/*! @brief Creates thread using given paramters.
+
+	/*! @brief Creates thread using given parameters.
 	 *
 	 * Ensures that the thread is correctly created, in case of error
 	 * is the all the work rolled back.
@@ -62,11 +63,11 @@ public:
 protected:
 	void* (*m_runFunc)(void*);           /*!< @brief I'm supposed to run this. */
 	void* m_runData;                     /*!< @brief runFunc expects this.     */
+	void* m_retData;
 
-private:
 	KernelThread(); /*!< no constructing without params */
 	KernelThread(const KernelThread& other); /*!< no copying */
-	const Thread& operator=(const KernelThread& other);	/*!< no assigning */
+	const KernelThread& operator=(const KernelThread& other);	/*!< no assigning */
 
 	/*! @brief Creates thread.
 	 * @param func function to be executed in the separate thread

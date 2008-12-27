@@ -32,6 +32,9 @@
 #include "api.h"
 #include "cpp.h"
 #include "Kernel.h"
+
+#include "proc/KernelThread.h"
+
 #include "synchronization/MutexManager.h"
 #include "synchronization/Semaphore.h"
 #include "synchronization/Spinlock.h"
@@ -81,7 +84,7 @@ ssize_t gets(char* str, const size_t len)
 	return Kernel::instance().console().readString(str, len);
 }
 /*----------------------------------------------------------------------------*/
-extern size_t vprintk(const char * format, va_list args);
+extern size_t vprintf(const char * format, va_list args);
 
 void kpanic(void** context, const char* format, ...){
 	using namespace Processor;
@@ -109,7 +112,7 @@ void kpanic(void** context, const char* format, ...){
 	if (format) {
 		va_list args;
 		va_start(args, format);
-		vprintk(format, args);
+		vprintf(format, args);
 		va_end(args);
 	}
 
@@ -348,7 +351,6 @@ void spinlock_unlock(spinlock_t* s) {
 }
 
 /*----------------------------------------------------------------------------*/
-
 int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags)
 {
 	if (cnt == 0)
@@ -359,9 +361,7 @@ int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags)
 	
 	return EOK;
 }
-
 /*----------------------------------------------------------------------------*/
-
 int frame_free(const void *paddr, const size_t cnt)
 {
 	if (cnt == 0)
@@ -372,9 +372,7 @@ int frame_free(const void *paddr, const size_t cnt)
 
 	return EOK;
 }
-
 /*----------------------------------------------------------------------------*/
-
 int vma_alloc(void **from, const size_t size, const unsigned int flags)
 {
 	KernelThread* thread = (KernelThread*)Thread::getCurrent();
@@ -382,7 +380,7 @@ int vma_alloc(void **from, const size_t size, const unsigned int flags)
 	ASSERT (thread->getVMM());
 	return thread->getVMM()->allocate(from, size, flags);
 }
-
+/*----------------------------------------------------------------------------*/
 int vma_free(const void *from)
 {
 	KernelThread* thread = (KernelThread*)Thread::getCurrent();
@@ -390,29 +388,24 @@ int vma_free(const void *from)
 	if (!thread->getVMM()) return EINVAL;
 	return thread->getVMM()->free(from);
 }
-
 /*----------------------------------------------------------------------------*/
-
 int vma_resize(const void *from, const size_t size)
 {
 	return ENOMEM;
 }
-
+/*----------------------------------------------------------------------------*/
 int vma_remap(const void *from, const void *to)
 {
 	return ENOMEM;
 }
-
+/*----------------------------------------------------------------------------*/
 int vma_merge(const void *area1, const void *area2)
 {
 	return ENOMEM;
 }
-
+/*----------------------------------------------------------------------------*/
 int vma_split(const void *from, const void *split)
 {
 	return ENOMEM;
 }
-
 /*----------------------------------------------------------------------------*/
-
-
