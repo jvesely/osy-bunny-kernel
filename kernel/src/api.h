@@ -49,14 +49,14 @@ void enable_interrupts();
  * @param c character to be printed
  * @return number of printed chars (0 or 1)
  */
-size_t putc(const char c);
+size_t putc( const char c );
 
 /*! puts outputs strings.
  * checks whether param is not null, prints chars until "\0" is found
  * @param str pointer to the first char of the string
  * @return number of printed chars
  */
-size_t puts(const char * str);
+size_t puts( const char * str );
 
 /*! printf and printk are the same thing */
 #define printk printf
@@ -74,7 +74,7 @@ size_t puts(const char * str);
  * @... variable number of paramters used in the format string
  * @return number of printed chars
  */
-size_t printf(const char * format, ...);
+size_t printf( const char * format, ... );
 
 /*! @brief Reads one char from the device buffer.
  * @return Read char.
