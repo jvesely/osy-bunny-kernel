@@ -48,7 +48,7 @@ public:
 
 	virtual ~KernelThread();
 
-	/*! @brief Creates thread using given paramters.
+	/*! @brief Creates thread using given parameters.
 	 *
 	 * Ensures that the thread is correctly created, in case of error
 	 * is the all the work rolled back.

@@ -32,29 +32,29 @@
  * at least people can understand it. 
  */
 
-#include "SysCall.h"
+#include "SysCallHandler.h"
 #include "proc/Thread.h"
 #include "address.h"
 
-SysCall::SysCall(Processor::Context* registers): m_registers( registers )
+SysCallHandler::SysCallHandler(Processor::Context* registers): m_registers( registers )
 {
-	call      = (SysCalls::SysCalls)((*(unative_t*)registers->epc)>>6);
+	call      = ((*(unative_t*)registers->epc)>>6);
 	params[0] = registers->a0;
 	params[1] = registers->a1;
 	params[2] = registers->a2;
 	params[3] = registers->a3;
 }
 /*----------------------------------------------------------------------------*/
-void SysCall::handle()
+void SysCallHandler::handle()
 {
 	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
 		call, params[0], params[1], params[2], params[3]);
 
 	switch ( call ) {
-		case SysCalls::SC_PUTS:
+		case 1: //SysCalls::SC_PUTS:
 			handlePuts();
 			break;
-		case SysCalls::SC_GETS:
+		case 2: //SysCalls::SC_GETS:
 			handleGets();
 			break;
 		default:
@@ -64,7 +64,7 @@ void SysCall::handle()
 	m_registers->epc += 4;
 }
 /*----------------------------------------------------------------------------*/
-void SysCall::handlePuts()
+void SysCallHandler::handlePuts()
 {
 /*	printf ("Should output string at %p(%p):%s.\n", 
 		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */

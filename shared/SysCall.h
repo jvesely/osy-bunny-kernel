@@ -32,19 +32,44 @@
  * at least people can understand it. 
  */
 #pragma once
-#include "syscalls.h"
-#include "drivers/Processor.h"
-
-class SysCall {
-public:
-	SysCall(Processor::Context* registers);
-
-	void handle();
-private:
-	SysCalls::SysCalls call;
-	unative_t params[4];
-	Processor::Context* m_registers;
-
-	void handlePuts();
-	void handleGets(){};
+#include "types.h"
+/*!
+ * @namespace SysCall
+ * @brief SysCall invoking functions.
+ *
+ * See @a SysCall class for implementation of syscalls
+ */
+namespace SysCall
+{
+enum SysCalls {
+	SC_PUTS = 1, SC_GETS
 };
+
+#define syscall( call, p0, p1, p2, p3) \
+({ \
+	register unative_t __a0 asm("$4") = (unative_t) p0;\
+	register unative_t __a1 asm("$5") = (unative_t) p1;\
+	register unative_t __a2 asm("$6") = (unative_t) p2;\
+	register unative_t __a3 asm("$7") = (unative_t) p3;\
+	\
+	register native_t __v0 asm("$2");\
+	\
+	asm volatile ( \
+		"syscall "#call" \n"\
+		:"=r"(__v0)\
+		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
+		:\
+	);\
+	__v0;\
+})
+
+inline size_t puts( const char* str ) {
+	return syscall( 1, str, 0, 0, 0 );
+}
+
+inline size_t gets( char* str, size_t count ){
+	//syscall( SC_GETS, (unative_t)str, count );
+	return 0;
+}
+
+}

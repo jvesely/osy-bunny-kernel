@@ -37,7 +37,7 @@
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
-#include "SysCall.h"
+#include "SysCallHandler.h"
 
 //#define KERNEL_DEBUG
 
@@ -204,11 +204,10 @@ void Kernel::handle(Processor::Context* registers)
 
 	switch (reason){
 		case CAUSE_EXCCODE_INT:
-			handleInterrupts(registers);
+			handleInterrupts( registers );
 			break;
 		case CAUSE_EXCCODE_SYS:
-			SysCall( registers ).handle();
-//			panic("Syscall.\n");
+			SysCallHandler( registers ).handle();
 			break;
 		case CAUSE_EXCCODE_TLBL:
 		case CAUSE_EXCCODE_TLBS:

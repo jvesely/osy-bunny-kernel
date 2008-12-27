@@ -31,36 +31,19 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
-
 #pragma once
+#include "drivers/Processor.h"
 
-#include "proc/KernelThread.h"
-
-/*!
- * @class UserThread UserThread.h "proc/UserThread.h"
- * @brief Thread class with stack in USEG segment.
- *
- * Runs given function in separate thread, stack is mapped through 
- * virtual memory.
- * TODO: switch to userspace before executing function
- */
-class UserThread: public KernelThread
-{
+class SysCallHandler {
 public:
-	/*!
-	 * @brief Ensures correct UserThread creation.
-	 */
-	static Thread* create( thread_t* thread_ptr, void* (*thread_start)(void*),
-		void* data = NULL, const unsigned int flags = 0 );
+	SysCallHandler(Processor::Context* registers);
 
+	void handle();
 private:
-	UserThread();
-	UserThread( const UserThread& other );
-	const UserThread& operator = ( const UserThread& other );
+	uint call;
+	unative_t params[4];
+	Processor::Context* m_registers;
 
-	/*!
-	 * @brief Prepares stack and initial context.
-	 */
-	UserThread( void* (*func)(void*), void* data, 
-		native_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
+	void handlePuts();
+	void handleGets(){};
 };

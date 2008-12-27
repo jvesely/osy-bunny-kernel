@@ -31,7 +31,7 @@
  */
 
 #include "api.h"
-#include "syscalls.h"
+#include "SysCall.h"
 #include "proc/UserThread.h"
 
 extern "C" void* test1(void*);
@@ -53,7 +53,7 @@ void* test(void* data)
 		text[2] = 'o';
 		text[3] = 0;
 
-		int count = SysCalls::puts( text );
+		int count = SysCall::puts( text );
 		printf ("\ntext at %p is %s(%u).\n", text, text, count);
 	} else {
 		thread_t user_t;

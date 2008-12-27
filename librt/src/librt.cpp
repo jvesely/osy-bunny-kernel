@@ -33,25 +33,25 @@
  */
 
 #include "librt.h"
-#include "syscalls.h"
+#include "SysCall.h"
 
 /* Basic IO */
 size_t putc( const char c )
 {
 	static char buffer[2];
 	buffer[0] = c;
-	return SysCalls::puts( buffer );
+	return SysCall::puts( buffer );
 }
 /*----------------------------------------------------------------------------*/
 size_t puts( const char* str )
 {
-	return SysCalls::puts( str );
+	return SysCall::puts( str );
 }
 /*----------------------------------------------------------------------------*/
 char getc()
 {
 	static char buffer;
-	if (SysCalls::gets( &buffer, 1 ) == 1)
+	if (SysCall::gets( &buffer, 1 ) == 1)
 		return buffer;
 	else
 		return EOTHER;
@@ -61,5 +61,5 @@ ssize_t gets( char* str, const size_t len )
 {
 	/* we don't need to call syscall just to report error */
 	if (!len) return EINVAL;  
-	return SysCalls::gets( str, len );
+	return SysCall::gets( str, len );
 }

@@ -33,9 +33,16 @@
  */
 
 #pragma once
-
+/*!
+ * @class InterruptHandler InterruptHandler.h "drivers/InterruptHandler.h"
+ * @brief Interface class for handling interrupts.
+ *
+ * Contains just one pure virtual member function, use as parent for device
+ * drivers (and other things) that should be able to handle interrupts.
+ */
 class InterruptHandler
 {
 public:
+	/*! @brief Interface function. */
 	virtual void handleInterrupt() = 0;
 };

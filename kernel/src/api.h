@@ -34,6 +34,7 @@
 #include "types.h"
 #include "flags.h"
 #include "assert.h"
+#include "dprintf.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,21 +115,6 @@ void free( const void* ptr );
 
 /*! dprintf and dprintk are the same thing. */
 #define dprintk dprintf
-
-/*! dprintk macro.
- * Macro prints some debuging info before output.
- * This macro only works without NDEBUG macro defined
- * @param ARGS multiple vars beginning with format string, see printk
- */
-#ifndef NDEBUG
-#	define dprintf(ARGS...) \
-	{\
-	printf("Function %s on line %d: \n\t", __PRETTY_FUNCTION__, __LINE__);\
-	printf(ARGS);\
-	} while (0)
-#else
-#	define dprintf(ARGS...)
-#endif
 
 /*! panic macro.
  * Macro dumps registers, prints out message that beggins with "Kernel panic: "
