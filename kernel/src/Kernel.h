@@ -32,6 +32,7 @@
 #pragma once
 
 #include "Singleton.h"
+#include "timer/Time.h"
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
 #include "mem/TLB.h"

@@ -33,6 +33,7 @@
 
 #include "types.h"
 #include "flags.h"
+#include "assert.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,23 +111,6 @@ void* malloc( const size_t size );
  * @param ptr pointer to the block
  */
 void free( const void* ptr );
-
-/*! assert and ASSERT are the same thing. */
-#define assert ASSERT
-
-/*! ASSERT macro.
- * Macro tests condition and calls panic, if condition is false.
- * This macro only works when compiled without NDEBUG macro defined.
- * @param test Condition to be tested.
- */
-#ifndef NDEBUG
-#	define ASSERT(test) \
-	if (! (test) ) { \
-		panic("ASSERTION FAILED: \"%s\" in %s on line %d\n", (char*)#test, __FILE__, __LINE__); \
-	}
-#else
-#	define ASSERT(x)
-#endif
 
 /*! dprintf and dprintk are the same thing. */
 #define dprintk dprintf
