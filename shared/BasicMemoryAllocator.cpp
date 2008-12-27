@@ -156,7 +156,7 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 	InterruptDisabler lock;
 #ifdef BMA_DEBUG
 	if ((m_mylock)){//debug
-		printk("The way is shut. You cannot pass!\n");
+		printf("The way is shut. You cannot pass!\n");
 	}
 	while (m_mylock){};
 	m_mylock = 1;
@@ -182,7 +182,7 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 		resHeader = getBlock( realSize/*= real size of minimal allocated block*/ );
 		if (resHeader == NULL)
 		{
-			printk("------------OUT OF MEMORY------------\n");
+			printf("------------OUT OF MEMORY------------\n");
 #ifdef BMA_DEBUG
 			m_mylock = 0;//debug
 #endif
@@ -212,7 +212,7 @@ void BasicMemoryAllocator::freeMemory(const void * address)
 
 #ifdef BMA_DEBUG
 	if ((m_mylock)){
-		printk("The way is shut. You cannot pass!\n");
+		printf("The way is shut. You cannot pass!\n");
 	}
 	while (m_mylock){};
 	m_mylock = 1;

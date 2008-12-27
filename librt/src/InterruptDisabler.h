@@ -34,35 +34,12 @@
 
 #pragma once
 
-#define panic printf
-
-
-#include "types.h"
-#include "flags.h"
-#include "assert.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Basic IO */
-size_t putc( const char c );
-
-size_t puts( const char* str );
-
-size_t printf( const char* format, ...  );
-
-char getc();
-
-ssize_t gets( char* str, const size_t len );
-
-/* Memory */
-void *malloc(const size_t size);
-
-void free(const void *ptr);
-
-
-
-#ifdef __cplusplus
-}
-#endif
+/* this is just a dummy disabler to make Allocator compile into librt,
+ * better way will have to be thought of.
+ */
+class InterruptDisabler
+{
+public:
+	InterruptDisabler() {};
+	~InterruptDisabler() {};
+};
