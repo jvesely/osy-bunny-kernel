@@ -40,6 +40,7 @@
 //#include "mem/FrameAllocator.h"
 
 //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //debug reports
 //all debug messsages
 //#define ALLOCATOR_DEBUG_ALL
@@ -65,7 +66,15 @@
 //debug messages about used allocation strategy
 //#define ALLOCATOR_DEBUG_STRATEGY
 
-#ifndef ALLOCATOR_DEBUG_ALL
+#ifdef ALLOCATOR_DEBUG_ALL
+#define ALLOCATOR_DEBUG_DIVIDE
+#define ALLOCATOR_DEBUG_FRAME
+#define ALLOCATOR_DEBUG_FREE
+#define ALLOCATOR_DEBUG_JOIN
+#define ALLOCATOR_DEBUG_OTHER
+#define ALLOCATOR_DEBUG_SIZE
+#define ALLOCATOR_DEBUG_STRATEGY
+#endif
 
 #ifndef ALLOCATOR_DEBUG_FREE
 #define PRINT_DEBUG_FREE(...)
@@ -122,37 +131,6 @@
 	printf("[ ALLOCATOR_DEBUG ]: "); \
 	printf(ARGS);
 #endif
-
-//if defined debug all
-#else
-#define PRINT_DEBUG_FREE(ARGS...) \
-  printf("[ ALLOCATOR_DEBUG_FREE ]: "); \
-  printf(ARGS);
-
-#define PRINT_DEBUG_JOIN(ARGS...) \
-  printf("[ ALLOCATOR_DEBUG_JOIN ]: "); \
-  printf(ARGS);
-
-#define PRINT_DEBUG_DIVIDE(ARGS...) \
-  printf("[ ALLOCATOR_DEBUG_DIVIDE ]: "); \
-  printf(ARGS);
-
-#define PRINT_DEBUG_FRAME(ARGS...) \
-  printf("[ ALLOCATOR_DEBUG_FRAME ]: "); \
-  printf(ARGS);
-
-#define PRINT_DEBUG_SIZE(ARGS...) \
-	printf("[ ALLOCATOR_DEBUG_SIZE ]: "); \
-	printf(ARGS);
-
-#define PRINT_DEBUG_STRATEGY(ARGS...) \
-  printf("[ ALLOCATOR_DEBUG_STRATEGY ]: "); \
-  printf(ARGS);
-
-#define PRINT_DEBUG_OTHER(ARGS...) \
-  printf("[ ALLOCATOR_DEBUG ]: "); \
-  printf(ARGS);
-#endif
 //------------------------------------------------------------------------------
 
 BasicMemoryAllocator::BasicMemoryAllocator():
@@ -185,34 +163,17 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 #endif
 
 	//init
-	size_t size = alignUp(ammount, ALIGMENT);
+	const size_t size = alignUp(ammount, ALIGMENT);
 	const size_t realSize = size + sizeof(BlockHeader) + sizeof(BlockFooter);
 
 	PRINT_DEBUG_SIZE("need real size block: %x B \n", realSize);
 
-	void * res = NULL;
 	BlockHeader * resHeader = NULL;
 	//check
-	if ( size > m_freeSize ){
-		PRINT_DEBUG_FRAME("must get new frame \n");
-		//get new frame from frame allocator (in case of user allocator
-		//enlarging block).
-		//now it is clear that new used block will be at address got from frame
-		//allocator: allocator will not search trough other blocks
-		resHeader = getBlock( realSize/*= real size of minimal allocated block*/ );
-		if ( resHeader == NULL )
-		{
-			printk( "------------OUT OF MEMORY(TOTAL)------------\n" );
-#ifdef BMA_DEBUG
-			m_mylock = 0;//debug
-#endif
-			return NULL;
-		}
+	if ( size <= m_freeSize ) {
+		//finding free block using actual allocation strategy
+		resHeader = (this->*getFreeBlockFunction)(realSize);
 	}
-
-	//finding free block using actual allocation strategy
-	resHeader = (this->*getFreeBlockFunction)(realSize);
-	//resHeader = getFreeBlockDefault(realSize);
 
 	//now res points either to NULL or to header of free block large enough
 	if (resHeader == NULL)//will need new block
@@ -233,7 +194,7 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 	//creating used block in free block (and reconnecting free remaining part)
 	resHeader = useFreeBlock(resHeader, realSize);
 	PRINT_DEBUG_OTHER("resHeader = %x\n", resHeader);
-	res = (void*)((uintptr_t)resHeader + sizeof(BlockHeader));
+	void * res = (void*)((uintptr_t)resHeader + sizeof(BlockHeader));
 	PRINT_DEBUG_OTHER("res       = %x\n", res);
 
 #ifdef BMA_DEBUG
@@ -258,6 +219,7 @@ void BasicMemoryAllocator::freeMemory(const void * address)
 #endif
 
 	BlockHeader * header = (BlockHeader*)((uintptr_t)address - sizeof(BlockHeader));
+
 	assert(header);
 	assert(header->isUsed());
 
@@ -424,7 +386,7 @@ const
 		//if header is header of first block (and therefore we cycled trough list)
 		//set it to null
 		if (((SimpleListItem*)header) == (m_freeBlocks.getMainItem()))
-		{
+		{//though it seems a bit strange, it is hm..most flexible code for available list
 			header = NULL;
 		}
 	}
@@ -432,7 +394,6 @@ const
 	//now res points either to NULL or to header of free block large enough
 	return resHeader;
 }
-
 
 
 //------------------------------------------------------------------------------
@@ -470,14 +431,15 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::freeUsedBlock
 
 	BlockFooter * beforeFooter = (BlockFooter*)((uintptr_t)header - sizeof(BlockFooter));
 	BlockHeader * afterHeader =	(BlockHeader*)((uintptr_t)header->getFooter() + sizeof(BlockFooter));
+	assert((uint32_t)afterHeader > (uint32_t)beforeFooter);
 
 	//increasing free size by ammount of memory inside of block(without header/footer
 	m_freeSize += header->size() - sizeof(BlockHeader) - sizeof(BlockFooter);
 	PRINT_DEBUG_SIZE("freeing block with size %x \n", header->size());
 
 	//handling block after
-	//if there is any
-	if ((afterHeader) && (afterHeader->isFree()))//is border safe
+	//if there is any...
+	if (afterHeader->isFree())//is border safe
 	{
 		//join blocks: second block is valid
 		PRINT_DEBUG_JOIN("after header size = %x \n", afterHeader->size());
@@ -490,7 +452,8 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::freeUsedBlock
 
 	//handling block before
 	//if there is any block before
-	if ((beforeFooter) && (beforeFooter->isFree()))//is border safe
+	assert(beforeFooter);
+	if (beforeFooter->isFree())//is border safe
 	{
 		//join blocks: first block is valid
 		PRINT_DEBUG_JOIN("before footer size = %x \n", beforeFooter->size());
@@ -530,11 +493,12 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::divideBlock(
 
 	//setting 1st block
 	/*	changing size of 1st block (still has old size):
-	*	If header if free and is changed to free block, then resize with reintegration of block
-	*	is executed
-	*	else it is needed only to change size (reintegration in used blocks list
-	*	is not needed, reintegration if block will be moved to used blocks is not needed
-	*	and changing state from used to free also integrates block correctly).
+	*	If header if free and 1st block will be free,
+	*	then resize with reintegration of block is executed.
+	*	Else it is needed only to change size:
+	*		reintegration in used blocks list is not needed
+	*		reintegration if block will be moved to used blocks is not needed
+	*		changing state from used to free also integrates block correctly
 	*/
 	if ((header->isFree()) && (free1)){
 		PRINT_DEBUG_DIVIDE("changing size of free block\n");
@@ -560,6 +524,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::joinFreeBlocks(
 	assert(!first->isBorder());
 	assert(!second->isBorder());
 	assert(first != second);
+	assert( (BlockHeader*)(first->getFooter()+1) == second);
 
 	PRINT_DEBUG_JOIN("Joining two blocks\n");
 	PRINT_DEBUG_SIZE("size of first %x B\n", first->size());
@@ -575,9 +540,9 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::joinFreeBlocks(
 		first->next = second->next;
 		first->prev = second->prev;
 		first->setFree();
-		//disconnecting valid header, which is no more valid
+		//disconnecting valid header, which will be no more valid
 		second->disconnect();
-		//connecting new header, which is now valid
+		//connecting new header, which will be now valid again
 		first->reconnect();
 	}else{
 		assert(first->isFree());
@@ -624,15 +589,12 @@ void BasicMemoryAllocator::setState( BasicMemoryAllocator::BlockHeader * header,
 void BasicMemoryAllocator::insertIntoFreeListDefault
 (BasicMemoryAllocator::BlockHeader * header)
 {
-	//for yet unknown reason, any print in this function causes fail in
-	//mallocator01 test. do not use any debug print here.
 	assert(header);
 	assert(!header->isBorder());
 	//PRINT_DEBUG_STRATEGY("insertIntoFreeListDefault\n");
 
 	//only inserts at the end of list
 	m_freeBlocks.insert(header);
-	//printk("experiment print\n");
 }
 
 //------------------------------------------------------------------------------

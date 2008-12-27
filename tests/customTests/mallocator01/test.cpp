@@ -34,7 +34,7 @@
 
 #include <api.h>
 #include "../include/defs.h"
-#include <mem/BasicMemoryAllocator.h>
+#include <mem/KernelMemoryAllocator.h>
 #include <Kernel.h>
 
 void printHeaderState(BasicMemoryAllocator::BlockHeader * header)
@@ -77,7 +77,7 @@ run_test (void)
 	printk("starting test..\n");
 	//FrameAllocator<7>::instance().init(1024*1024,(uintptr_t) & _kernel_end);
 
-	BasicMemoryAllocator myAllocator;
+	KernelMemoryAllocator myAllocator;
 	int count =10;
 
 	printk("texting list..\n");
