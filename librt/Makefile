@@ -13,7 +13,7 @@ LIBRT_BIN = librt.a
 #KERNEL_RAW = kernel.raw
 #KERNEL_MAP = kernel.map
 #LDS_FILE = kernel.lds
-OBJS += $(shell find src ../shared/printf.cpp -name "*.cpp" -o -name "*.S" -o -name "*.c")
+OBJS += $(shell find src ../shared/ -name "*.cpp" -o -name "*.S" -o -name "*.c")
 
 
 # Define DEBUG_MUTEX for mutex5 test

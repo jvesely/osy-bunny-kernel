@@ -29,7 +29,7 @@
  *
  */
 
-#include <structures/SimpleList.h>
+#include "SimpleList.h"
 
 //------------------------------------------------------------------------------
 SimpleList::SimpleList()//:

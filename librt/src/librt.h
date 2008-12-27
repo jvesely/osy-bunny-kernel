@@ -56,6 +56,12 @@ char getc();
 
 ssize_t gets( char* str, const size_t len );
 
+/* Memory */
+void *malloc(const size_t size)
+
+void free(const void *ptr);
+
+
 
 #ifdef __cplusplus
 }

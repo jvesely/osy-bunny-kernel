@@ -4,7 +4,7 @@
 
 #use all paths
 VPATH = $(shell find src -type d | grep src | grep -v \.svn)
-VPATH += ../shared/
+VPATH += ../shared/ ../shared/structures/
 
 CC = $(shell which mipsel-linux-gnu-gcc)
 OBJCOPY = $(shell which mipsel-linux-gnu-objcopy)

@@ -46,7 +46,7 @@ inline uint roundDown( uint number, uint factor )
 	return (number / factor) * factor;
 }
 /*----------------------------------------------------------------------------*/
-uint rand();
+inline uint rand(){ return 0;};
 /*----------------------------------------------------------------------------*/
 template <typename T>
 inline T min( T a, T b )
