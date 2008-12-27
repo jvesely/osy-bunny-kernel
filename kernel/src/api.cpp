@@ -85,7 +85,7 @@ ssize_t gets(char* str, const size_t len)
 	return Kernel::instance().console().readString(str, len);
 }
 /*----------------------------------------------------------------------------*/
-extern size_t vprintk(const char * format, va_list args);
+extern size_t vprintf(const char * format, va_list args);
 
 void kpanic(void** context, const char* format, ...){
 	using namespace Processor;
@@ -113,7 +113,7 @@ void kpanic(void** context, const char* format, ...){
 	if (format) {
 		va_list args;
 		va_start(args, format);
-		vprintk(format, args);
+		vprintf(format, args);
 		va_end(args);
 	}
 

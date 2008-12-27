@@ -61,6 +61,7 @@ void SysCall::handle()
 			puts("Unknown SYSCALL killing thread.\n");
 			Thread::getCurrent()->kill();
 	}
+	m_registers->epc += 4;
 }
 /*----------------------------------------------------------------------------*/
 void SysCall::handlePuts()

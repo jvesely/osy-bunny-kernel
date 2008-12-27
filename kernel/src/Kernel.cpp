@@ -208,7 +208,6 @@ void Kernel::handle(Processor::Context* registers)
 			break;
 		case CAUSE_EXCCODE_SYS:
 			SysCall( registers ).handle();
-			registers->epc += 4;
 //			panic("Syscall.\n");
 			break;
 		case CAUSE_EXCCODE_TLBL:
@@ -256,12 +255,10 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 	InterruptDisabler inter;
 
 	for (uint i = 0; i < INTERRUPT_COUNT; ++i)
-	{
 		if (registers->cause & INTERRUPT_MASKS[i]) {
-			if (m_interrupts[i])
-				m_interrupts[i]->handleInterrupt();
+			ASSERT (m_interrupts[i]);
+			m_interrupts[i]->handleInterrupt();
 		}
-	}
 	
 	if (Thread::shouldSwitch())
 		Thread::getCurrent()->yield();

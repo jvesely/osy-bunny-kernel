@@ -59,9 +59,9 @@ size_t putc(const char c);
 size_t puts(const char * str);
 
 /*! printf and printk are the same thing */
-#define printf printk
+#define printk printf
 
-/*! printk prints formated string on the console.
+/*! printf prints formated string on the console.
  * formating string may include:
  * %c: corresponding input variable is treated as char
  * %s: corresponding input variale is treated as char *
@@ -74,27 +74,29 @@ size_t puts(const char * str);
  * @... variable number of paramters used in the format string
  * @return number of printed chars
  */
-size_t printk(const char * format, ...);
+size_t printf(const char * format, ...);
 
-/*! getc reads one char fromthe device buffer.
+/*! @brief Reads one char from the device buffer.
+ * @return Read char.
  * If there is no char in the input buffer requesting thread is blocked.
- * @return read char
  */
 char getc();
 
-/*! getc_try tries to read one char from the device buffer.
+/*! @brief Tries to read one char from the device buffer.
+ * @return Read char or EWOULDBLOCK on empty buffer.
  * If there is no char in the input buffer returns EWOULDBLOCK instead
  * of blocking.
- * @return read char or EWOULDBLOCK on empty buffer
  */
 int getc_try();
 
-/*! gets tries to read multiple chars from the device buffer.
+/*! @brief Tries to read multiple chars from the device buffer.
+ *
  * If len is 0 returns EINVAL. Reads from the buffer until '\n'
  * is read or len characters were read. \\0 is always put at the end.
  * @param str pointer to the buffer to be filled.
  * @param len number of chars to be read if no \\n is encountered.
- * @return number of chars filled into buffer str
+ * @retval number of chars filled into buffer str.
+ * @retval EINVAL if len == 0.
  */
 ssize_t gets( char* str, const size_t len );
 
@@ -127,7 +129,7 @@ void free( const void* ptr );
 #endif
 
 /*! dprintf and dprintk are the same thing. */
-#define dprintf dprintk
+#define dprintk dprintf
 
 /*! dprintk macro.
  * Macro prints some debuging info before output.
@@ -135,11 +137,13 @@ void free( const void* ptr );
  * @param ARGS multiple vars beginning with format string, see printk
  */
 #ifndef NDEBUG
-#	define dprintk(ARGS...) \
+#	define dprintf(ARGS...) \
+	{\
 	printf("Function %s on line %d: \n\t", __PRETTY_FUNCTION__, __LINE__);\
-	printf(ARGS);
+	printf(ARGS);\
+	} while (0)
 #else
-#	define dprintk(ARGS...)
+#	define dprintf(ARGS...)
 #endif
 
 /*! panic macro.
@@ -149,15 +153,9 @@ void free( const void* ptr );
 #define panic(ARGS...) \
 	{	void* _panic_top_ = (void*)0xF00;\
 	switch_cpu_context(&_panic_top_, (void**)NULL);\
-	kpanic(&_panic_top_, ARGS); } // still needs tu dump those registers
+	kpanic(&_panic_top_, ARGS); } while (0) // still needs tu dump those registers
 
 void kpanic(void** context, const char* format, ... );
-
-/*! reg_dump macro.
- * Dumps processor registers, now uses msim special instruction,
- * should be changed later
- */
-#define reg_dump()
 
 /*! Creates and runs a new thread. Stores its identifier.
  * @param thread_ptr pointer to place where identifier would be stored.
