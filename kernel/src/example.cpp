@@ -45,12 +45,16 @@ void* test(void* data)
 		puts( "No test specified !!!\n" );
 	#endif
 
-//	if (data) {
-		char * text = (char*)"FOO";
-		printf ("text at %p is %s.\n", text, text);
+	if (data) {
+		char text[4];
+		text[0] = 'f';
+		text[1] = 'o';
+		text[2] = 'o';
+		text[3] = 0;
 
-		SysCalls::puts( "FOO\n" );
-/*	} else {
+		int count = SysCalls::puts( text );
+		printf ("\ntext at %p is %s(%u).\n", text, text, count);
+	} else {
 		thread_t user_t;
 		Thread* user = UserThread::create(&user_t, test, (void*)0xff, TF_NEW_VMM);
 		printf ("created thread: %p.\n", user);

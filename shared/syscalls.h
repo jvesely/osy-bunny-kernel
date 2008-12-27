@@ -47,14 +47,14 @@ enum SysCalls {
 	register unative_t __a2 asm("$6") = (unative_t) p2;\
 	register unative_t __a3 asm("$7") = (unative_t) p3;\
 	\
-	native_t __v0;\
+	register native_t __v0 asm("$2");\
 	\
 	asm volatile ( \
 		".set noreorder \n"\
 		"syscall "#call" \n"\
 		".set reorder \n"\
 		:"=r"(__v0)\
-		:"r"(call), "r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
+		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
 		:\
 	);\
 	__v0;\
@@ -62,8 +62,6 @@ enum SysCalls {
 
 inline size_t puts( const char* str ) {
 	return syscall( 1, str, 0, 0, 0 );
-//	register unative_t __a0 asm("$4") = (unative_t)str;
-//	native_t __v0;
 }
 
 inline size_t gets( char* str, size_t count ){

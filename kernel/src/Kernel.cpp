@@ -201,8 +201,6 @@ void Kernel::handle(Processor::Context* registers)
 	using namespace Processor;
 	const Exceptions reason = get_exccode(registers->cause);
 
-	stop();
-
 	switch (reason){
 		case CAUSE_EXCCODE_INT:
 			handleInterrupts(registers);

@@ -38,7 +38,7 @@
 
 SysCall::SysCall(Processor::Context* registers): m_registers( registers )
 {
-	call      = (SysCalls::SysCalls)((*(unative_t*)Processor::reg_read_epc())>>6);
+	call      = (SysCalls::SysCalls)((*(unative_t*)registers->epc)>>6);
 	params[0] = registers->a0;
 	params[1] = registers->a1;
 	params[2] = registers->a2;
@@ -69,7 +69,7 @@ void SysCall::handlePuts()
 		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */
 //	Processor::msim_stop();
 //	if (ADDR_TO_USEG(params[0]) == params[0]) {
-		m_registers->a0 = puts( (const char*)params[0] );
+		m_registers->v0 = puts( (const char*)params[0] );
 //	} else {
 //		Thread::getCurrent()->kill();
 //	}
