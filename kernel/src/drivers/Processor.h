@@ -128,7 +128,7 @@ inline unative_t reg_read_index()     { return read_register(0);  }
 /*! named register read wrapper */
 inline unative_t reg_read_random()    { return read_register(1);  }
 /*! named register read wrapper */
-inline unative_t reg_read_pagemask()	{ return read_register(5);  }
+inline unative_t reg_read_pagemask()  { return read_register(5);  }
 /*! named register read wrapper */
 inline unative_t reg_read_badvaddr()  { return read_register(8);  }
 /*! named register read wrapper */

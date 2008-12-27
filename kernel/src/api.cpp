@@ -40,7 +40,6 @@
 #include "synchronization/Spinlock.h"
 #include "InterruptDisabler.h"
 
-
 //timer includes
 #include "timer/TimerManager.h"
 #include "timer/ClassTimer.h"
