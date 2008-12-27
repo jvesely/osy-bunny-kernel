@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id: header.tmpl 41 2008-10-26 18:00:14Z vesely $
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php

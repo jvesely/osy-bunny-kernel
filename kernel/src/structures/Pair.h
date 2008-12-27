@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *
- *   @version $Id: Pair.h 343 2008-12-08 21:12:55Z dekanek $
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
