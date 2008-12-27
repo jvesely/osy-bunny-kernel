@@ -37,27 +37,37 @@
 namespace SysCalls
 {
 enum SysCalls {
-	SC_PUTS, SC_GETS
+	SC_PUTS = 1, SC_GETS
 };
 
-inline void syscall( SysCalls call, unative_t p0 = 0, unative_t p1 = 0, unative_t p2 = 0 ) {
-	register unative_t __a0 asm("$4") = (unative_t) call;
-	register unative_t __a1 asm("$5") = (unative_t) p0;
-	register unative_t __a2 asm("$6") = (unative_t) p1;
-	register unative_t __a3 asm("$7") = (unative_t) p2;
-
-	asm volatile ("syscall");
-
-	 __a0 = __a1 = __a2 = __a3;
-}
+#define syscall( call, p0, p1, p2, p3) \
+({ \
+	register unative_t __a0 asm("$4") = (unative_t) p0;\
+	register unative_t __a1 asm("$5") = (unative_t) p1;\
+	register unative_t __a2 asm("$6") = (unative_t) p2;\
+	register unative_t __a3 asm("$7") = (unative_t) p3;\
+	\
+	native_t __v0;\
+	\
+	asm volatile ( \
+		".set noreorder \n"\
+		"syscall "#call" \n"\
+		".set reorder \n"\
+		:"=r"(__v0)\
+		:"r"(call), "r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
+		:\
+	);\
+	__v0;\
+})
 
 inline size_t puts( const char* str ) {
-	syscall( SC_PUTS, (unative_t)str );
-	return 0;
+	return syscall( 1, str, 0, 0, 0 );
+//	register unative_t __a0 asm("$4") = (unative_t)str;
+//	native_t __v0;
 }
 
 inline size_t gets( char* str, size_t count ){
-	syscall( SC_GETS, (unative_t)str, count );
+	//syscall( SC_GETS, (unative_t)str, count );
 	return 0;
 }
 

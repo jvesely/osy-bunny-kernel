@@ -106,7 +106,9 @@ static const Page pages[7] = {
 
 /*! reverted bit usage mask in TLB according to page size */
 enum PageSize {
-	PAGE_4K = 0, PAGE_16K, PAGE_64K, PAGE_256K,	PAGE_1M, PAGE_4M, PAGE_16M
+	PAGE_MIN = 0, 
+	PAGE_4K  = 0, PAGE_16K, PAGE_64K, PAGE_256K,	PAGE_1M, PAGE_4M, PAGE_16M,
+	PAGE_MAX = PAGE_16M 
 };
 
 extern "C" void switch_cpu_context(void** old_top, void** new_top);

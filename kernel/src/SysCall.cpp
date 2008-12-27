@@ -38,17 +38,18 @@
 
 SysCall::SysCall(Processor::Context* registers): m_registers( registers )
 {
-	call      = (SysCalls::SysCalls)registers->a0;
-	params[0] = registers->a1;
-	params[1] = registers->a2;
-	params[2] = registers->a3;
+	call      = (SysCalls::SysCalls)((*(unative_t*)Processor::reg_read_epc())>>6);
+	params[0] = registers->a0;
+	params[1] = registers->a1;
+	params[2] = registers->a2;
+	params[3] = registers->a3;
 }
 /*----------------------------------------------------------------------------*/
 void SysCall::handle()
 {
-/*	printf( "Handling syscall: %u, with params %x,%x,%x.\n",
-		call, params[0], params[1], params[2]);
-*/
+	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
+		call, params[0], params[1], params[2], params[3]);
+
 	switch ( call ) {
 		case SysCalls::SC_PUTS:
 			handlePuts();

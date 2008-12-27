@@ -42,7 +42,7 @@ public:
 	void handle();
 private:
 	SysCalls::SysCalls call;
-	unative_t params[3];
+	unative_t params[4];
 	Processor::Context* m_registers;
 
 	void handlePuts();
