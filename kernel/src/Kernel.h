@@ -128,7 +128,7 @@ private:
 	uint m_timeToTicks;                /*!< Converting constant.   */
 	
 	/*! Vector of handlers.    */
-	InterruptHandler* m_interrupts[Processor::INTERRUPT_COUNT]; 
+	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 
 
 	/*! @brief Detects accessible memory.
 	 *

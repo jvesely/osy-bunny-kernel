@@ -54,14 +54,14 @@ Processor::PageSize TLB::suggestPageSize(
 	using namespace Processor;
 	uint min_res = -1;
 	PageSize victor = PAGE_MIN;
-	for (PageSize page = PAGE_MIN; page <= PAGE_MAX; page = (PageSize)(page + 1) )
+	for (PageSize page = PAGE_MIN; page <= PAGE_MAX; ++page  )
 	{
 		size_t aligned = roundUp(chunk_size, pages[page].size);
 		uint loss = ( (aligned - chunk_size) * 100) / aligned;
 		uint count = (aligned / pages[page].size) ;
 		uint result = loss * prefer_size + count * prefer_entries;
-		PRINT_DEBUG ("%u: %u => %u (%u,%u) %u.\n", pages[page].size, chunk_size, aligned,
-			loss, count, result);
+		PRINT_DEBUG ("%u: %u => %u (%u,%u) %u.\n",
+			pages[page].size, chunk_size, aligned, loss, count, result);
 		if (result < min_res) {
 			min_res = result;
 			victor = page;

@@ -299,6 +299,8 @@ inline void revert_interrupt_state(ipl_t state)
 		reg_write_status(reg_read_status() | STATUS_IE_MASK);
 }
 /*----------------------------------------------------------------------------*/
+
+
 /*! @brief Exception codes */
 enum Exceptions {
 	CAUSE_EXCCODE_INT,  /*!< Interrupt */
@@ -373,3 +375,9 @@ inline void msim_stop (void)
 }
 
 } // namespace Processor
+
+inline Processor::PageSize& operator++(Processor::PageSize& me)
+{
+	me = (Processor::PageSize)(me + 1);
+	return me;
+}

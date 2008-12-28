@@ -163,17 +163,14 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 	size_t size = 0;
 	const size_t range = 0x100000/sizeof(uint32_t); /* 1MB */
 	volatile uint32_t* front = (uint32_t*)(ADDR_TO_USEG(from) );
-	volatile uint32_t* back = (volatile uint32_t *)( (range - 1) * sizeof(uint32_t) );
+	volatile uint32_t* back = (uint32_t *)range - 1;
 	volatile uint32_t* point = front;
 
-
 	while (true) {
-		TLB::instance().setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, 0);
-	//	PRINT_DEBUG( "Mapped %x to %x range = %d kB.\n", front, point, (range * sizeof(uint32_t)/1024) );
-
+		TLB::instance().setMapping(
+			(uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, false );
 		(*front) = MAGIC; //write
 		(*back) = MAGIC; //write
-	//	PRINT_DEBUG("Proof read %x:%x %x:%x\n", front, *front, back, *back);
 		if ( (*front != MAGIC) || (*back != MAGIC) ) break; //check
 		size += range * sizeof(uint32_t);
 		point += range; //add
@@ -246,18 +243,18 @@ void Kernel::handle(Processor::Context* registers)
 void Kernel::registerInterruptHandler( InterruptHandler* handler, uint inter)
 {
 	ASSERT (inter < Processor::INTERRUPT_COUNT);
-	m_interrupts[inter] = handler;
+	m_interruptHandlers[inter] = handler;
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::handleInterrupts(Processor::Context* registers)
+void Kernel::handleInterrupts( Processor::Context* registers )
 {
 	using namespace Processor;
 	InterruptDisabler inter;
 
 	for (uint i = 0; i < INTERRUPT_COUNT; ++i)
 		if (registers->cause & INTERRUPT_MASKS[i]) {
-			ASSERT (m_interrupts[i]);
-			m_interrupts[i]->handleInterrupt();
+			ASSERT (m_interruptHandlers[i]);
+			m_interruptHandlers[i]->handleInterrupt();
 		}
 	
 	if (Thread::shouldSwitch())
@@ -267,24 +264,23 @@ void Kernel::handleInterrupts(Processor::Context* registers)
 /*----------------------------------------------------------------------------*/
 void Kernel::setTimeInterrupt(const Time& time)
 {
-	using namespace Processor;
 	InterruptDisabler interrupts;
 
-	Time now = Time::getCurrent();
-	Time relative = ( time > now ) ? time - now : Time( 0,0 );
+	const Time now = Time::getCurrent();
+	const Time relative = ( time > now ) ? time - now : Time( 0, 0 );
 
+	unative_t current = Processor::reg_read_count();
+	const uint usec = relative.toUsecs();
 
-	const unative_t current = reg_read_count();
-	const uint usec = (relative.secs() * Time::MILLION) + relative.usecs();
-
- 	if (time.usecs() || time.secs()) {
-		reg_write_compare( roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND) );
-	} else {
-		reg_write_compare( current );
+ 	if (time) {
+		current = roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND);
 	}
-		PRINT_DEBUG
-			("[%u:%u] Set time interrupt in %u usecs current: %x, planned: %x.\n",
-				now.secs(), now.usecs(), usec, current, reg_read_compare());
+	
+	Processor::reg_write_compare( current );
+	
+	PRINT_DEBUG
+		("[%u:%u] Set time interrupt in %u usecs current: %x, planned: %x.\n",
+			now.secs(), now.usecs(), usec, current, Processor::reg_read_compare());
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::refillTLB()
