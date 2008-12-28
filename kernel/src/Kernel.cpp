@@ -38,6 +38,7 @@
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
 #include "SysCallHandler.h"
+#include "mem/TLB.h"
 
 //#define KERNEL_DEBUG
 
@@ -91,7 +92,7 @@ void Kernel::run()
 {
 	using namespace Processor;
 
-	m_tlb.mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
+	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
 
 	puts("HELLO WORLD!\n");
 
@@ -156,7 +157,7 @@ void Kernel::run()
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 	printf("Probing memory range...");
-	m_tlb.switchAsid( 0 );
+	TLB::instance().switchAsid( 0 );
 	const uint32_t MAGIC = 0xDEADBEEF;
 
 	size_t size = 0;
@@ -167,7 +168,7 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 
 
 	while (true) {
-		m_tlb.setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, 0);
+		TLB::instance().setMapping((uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, 0);
 	//	PRINT_DEBUG( "Mapped %x to %x range = %d kB.\n", front, point, (range * sizeof(uint32_t)/1024) );
 
 		(*front) = MAGIC; //write
@@ -178,7 +179,7 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 		point += range; //add
 	}
 	printk("OK\n");
-	m_tlb.clearAsid( 0 );
+	TLB::instance().clearAsid( 0 );
 	return size;
 }
 /*----------------------------------------------------------------------------*/
@@ -290,20 +291,18 @@ void Kernel::refillTLB()
 {
   InterruptDisabler inter;
 
-	using namespace Processor;
-
-  bool success = m_tlb.refill(IVirtualMemoryMap::getCurrent().data(), reg_read_badvaddr());
+  bool success = TLB::instance().refill(
+		IVirtualMemoryMap::getCurrent().data(), Processor::reg_read_badvaddr());
 	
 	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n",
-		reg_read_badvaddr(), success ? "SUCESS" : "FAILURE");
+		Processor::reg_read_badvaddr(), success ? "SUCESS" : "FAILURE");
 
   if (!success) {
 		printf( "Access to invalid address %p, KILLING offending thread.\n",
-			reg_read_badvaddr() );
+			Processor::reg_read_badvaddr() );
     if (Thread::getCurrent())
 			Thread::getCurrent()->kill();
 		else
 			panic( "No thread and invalid tlb refill.\n" );
 	}
-
 }

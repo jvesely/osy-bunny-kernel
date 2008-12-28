@@ -35,8 +35,7 @@
 #include "timer/Time.h"
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
-#include "mem/TLB.h"
-//#include "mem/Allocator.h"
+#include "drivers/Processor.h"
 #include "mem/KernelMemoryAllocator.h"
 
 /*! symbol specified in linker script */
@@ -109,7 +108,7 @@ public:
 	 * @param registers pointer to the stored registers at the time
 	 * when exception occured.
 	 */
-	void handle(Processor::Context* registers);
+	void handle( Processor::Context* registers );
 
 	/*! @brief Sets interrupt on given time or sooner.
 	 * @param time Desired time of interrupt
@@ -117,8 +116,6 @@ public:
 	void setTimeInterrupt( const Time& time );
 
 	void refillTLB();
-
-	inline TLB& tlb() { return m_tlb; }
 
 	void registerInterruptHandler( InterruptHandler* handler, uint inter );
 
@@ -128,7 +125,6 @@ private:
 	Console m_console;                 /*!< Console device.        */
 	const RTC m_clock;                 /*!< Clock device.          */
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
-	TLB m_tlb;                         /*!< TLB managing.          */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
 	
 	/*! Vector of handlers.    */

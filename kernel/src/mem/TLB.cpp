@@ -34,6 +34,7 @@
 #include "api.h"
 #include "InterruptDisabler.h"
 #include "tools.h"
+#include "mem/IVirtualMemoryMap.h"
 
 //#define TLB_DEBUG
 
@@ -52,8 +53,8 @@ Processor::PageSize TLB::suggestPageSize(
 	PRINT_DEBUG ("Analyzing %u B memory chunk.\n", chunk_size);
 	using namespace Processor;
 	uint min_res = -1;
-	PageSize victor = PAGE_4K;
-	for (PageSize page = PAGE_4K; page <= PAGE_16M; page = (PageSize)(page + 1) )
+	PageSize victor = PAGE_MIN;
+	for (PageSize page = PAGE_MIN; page <= PAGE_MAX; page = (PageSize)(page + 1) )
 	{
 		size_t aligned = roundUp(chunk_size, pages[page].size);
 		uint loss = ( (aligned - chunk_size) * 100) / aligned;

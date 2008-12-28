@@ -32,7 +32,9 @@
 #pragma once
 #include "drivers/Processor.h"
 #include "structures/Buffer.h"
-#include "mem/IVirtualMemoryMap.h"
+#include "Singleton.h"
+
+class IVirtualMemoryMap;
 
 /*!
  * @class TLB mem/TLB.h "mem/TLB.h"
@@ -41,7 +43,7 @@
  * This class should hanle all operations done on TLB, not much so far,
  * but stuff will eventually come.
  */
-class TLB
+class TLB:public Singleton<TLB>
 {
 public:
 
@@ -90,7 +92,7 @@ public:
 	 * @brief Gets currently used ASID.
 	 * @return Currently used ASID.
 	 */
-	byte currentAsid()
+	inline byte currentAsid()
 		{ return Processor::reg_read_entryhi() & Processor::ASID_MASK; }
 	
 	/*!
