@@ -63,7 +63,14 @@ enum SysCalls {
 	__v0;\
 })
 
+template<int SC>
+native_t sc( unative_t par0, unative_t par1, unative_t par2, unative_t par3 )
+{
+	return syscall(SC, par0, par1, par2, par3);
+}
+
 inline size_t puts( const char* str ) {
+	//return sc<1>((unative_t)str,0,0,0);
 	return syscall( 1, str, 0, 0, 0 );
 }
 

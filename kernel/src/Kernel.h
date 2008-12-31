@@ -32,6 +32,7 @@
 #pragma once
 
 #include "Singleton.h"
+#include "ExceptionHandler.h"
 #include "timer/Time.h"
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
@@ -47,7 +48,7 @@ extern uint32_t _kernel_end;
  *
  * Kernel will handle all stuff that kernel should :)
  */
-class Kernel:public Singleton<Kernel>
+class Kernel:public Singleton<Kernel>, public ExceptionHandler
 {
 
 public:
@@ -108,7 +109,12 @@ public:
 	 * @param registers pointer to the stored registers at the time
 	 * when exception occured.
 	 */
-	void handle( Processor::Context* registers );
+	void exception( Processor::Context* registers );
+
+	bool handleException( Processor::Context* registers );
+
+	void registerExceptionHandler( 
+		ExceptionHandler* handler, Processor::Exceptions exception );
 
 	/*! @brief Sets interrupt on given time or sooner.
 	 * @param time Desired time of interrupt

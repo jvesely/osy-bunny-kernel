@@ -69,8 +69,18 @@ Kernel::Kernel() :
 	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK)
 {
 	Processor::reg_write_status(0);
+
 	registerInterruptHandler( &m_console, CHARACTER_INPUT_INTERRUPT );
 	registerInterruptHandler( &Timer::instance(), TIMER_INTERRUPT );
+
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBL );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBS );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP );
 }
 extern void* test(void*);
 
@@ -195,7 +205,17 @@ void Kernel::free(const void * address) //const
 		m_alloc.freeMemory(address);
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::handle(Processor::Context* registers)
+void Kernel::exception( Processor::Context* registers )
+{
+	const Processor::Exceptions reason = Processor::get_exccode(registers->cause);
+	if (Processor::EXCEPTIONS[reason].handler)
+		(*Processor::EXCEPTIONS[reason].handler)( registers );
+	else
+		panic("Unhandled exception(%u) %s.\n", 
+			reason, Processor::EXCEPTIONS[reason].name );
+}
+/*----------------------------------------------------------------------------*/
+bool Kernel::handleException( Processor::Context* registers )
 {
 	using namespace Processor;
 	const Exceptions reason = get_exccode(registers->cause);
@@ -238,6 +258,14 @@ void Kernel::handle(Processor::Context* registers)
 		default:
 			panic("Exception: Unknown.\n");
 	}
+	return true;
+}
+/*----------------------------------------------------------------------------*/
+void Kernel::registerExceptionHandler( 
+	ExceptionHandler* handler, Processor::Exceptions exception)
+{
+	using namespace Processor;
+	const_cast<Exception*>(&EXCEPTIONS[exception])->handler = handler;
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::registerInterruptHandler( InterruptHandler* handler, uint inter)

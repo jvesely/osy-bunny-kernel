@@ -33,6 +33,8 @@
 
 #include "api.h"
 
+class ExceptionHandler;
+
 /*! reads value from given register */
 #define read_register(reg)\
 ({ \
@@ -283,7 +285,7 @@ enum Status {
 	STATUS_CU_MASK  = 0xf0000000
 
 };
-
+/*----------------------------------------------------------------------------*/
 /*! return current status of interrupts and disable them, taken from Kalisto */
 inline ipl_t save_and_disable_interrupts()
 {
@@ -291,7 +293,7 @@ inline ipl_t save_and_disable_interrupts()
 	reg_write_status(status & ~STATUS_IE_MASK);
 	return (status & STATUS_IE_MASK);
 }
-
+/*----------------------------------------------------------------------------*/
 /*! revert to previous interrupt status */
 inline void revert_interrupt_state(ipl_t state)
 {
@@ -299,8 +301,12 @@ inline void revert_interrupt_state(ipl_t state)
 		reg_write_status(reg_read_status() | STATUS_IE_MASK);
 }
 /*----------------------------------------------------------------------------*/
-
-
+struct Exception
+{
+	uint code;
+	char* name;
+	ExceptionHandler* handler;
+};
 /*! @brief Exception codes */
 enum Exceptions {
 	CAUSE_EXCCODE_INT,  /*!< Interrupt */
@@ -319,9 +325,30 @@ enum Exceptions {
 	CAUSE_EXCCODE_TR    /*!< Trap */
 };
 
+const uint EXCEPTION_COUNT = 14;
+
+static const Exception EXCEPTIONS[EXCEPTION_COUNT] =
+{
+	{ CAUSE_EXCCODE_INT,  (char*)"Interrupt exception", NULL },
+	{ CAUSE_EXCCODE_MOD,  (char*)"TLB modification exception", NULL },
+	{ CAUSE_EXCCODE_TLBL, (char*)"TLB load exception", NULL },
+	{ CAUSE_EXCCODE_TLBS, (char*)"TLB save exception", NULL },
+	{ CAUSE_EXCCODE_ADEL, (char*)"Address error load exception", NULL },
+	{ CAUSE_EXCCODE_ADES, (char*)"Address error save exception", NULL },
+	{ CAUSE_EXCCODE_IBE,  (char*)"Instruction bus error exception", NULL },
+	{ CAUSE_EXCCODE_DBE,  (char*)"Data bus error exception", NULL },
+	{ CAUSE_EXCCODE_SYS,  (char*)"Syscall exception", NULL },
+	{ CAUSE_EXCCODE_BP,   (char*)"Breakpoint exception", NULL },
+	{ CAUSE_EXCCODE_RI,   (char*)"Reserved instruction exception", NULL },
+	{ CAUSE_EXCCODE_CPU,  (char*)"Coprocessor unusable exception", NULL },
+	{ CAUSE_EXCCODE_OV,   (char*)"Integer overflow exception", NULL },
+	{ CAUSE_EXCCODE_TR,   (char*)"Trap instruction exception", NULL }
+};
+
 const unative_t	CAUSE_EXCCODE_MASK  = 0x0000007c;
 const unative_t	CAUSE_EXCCODE_SHIFT = 2;
 
+/*----------------------------------------------------------------------------*/
 inline Exceptions get_exccode(unative_t cause_reg)
 {
 	unative_t exc = (cause_reg & CAUSE_EXCCODE_MASK) >> CAUSE_EXCCODE_SHIFT;

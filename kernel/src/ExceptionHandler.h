@@ -19,41 +19,27 @@
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *
+ *   
  *   @date 2008-2009
  */
 
 /*!
  * @file 
- * @brief Kernel entry points.
+ * @brief Short description.
  *
- * Entry point implementation, most of them just gets Kernel instance and calls
- * its member function.
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
 
-#include "main.h"
-#include "Kernel.h"
-#include "api.h"
+#pragma once
 
-volatile unative_t COUNT_CPU;
+#include "drivers/Processor.h"
 
-/*! bootstrap entry point */
-void wrapped_start(void)
+class ExceptionHandler
 {
-	Kernel::instance().run();
-
-//	Kernel::instance().stop();
-//	msim_stop();
-}
-
-/*! entry point for general_exceptions */
-void wrapped_general(Processor::Context* registers)
-{
-	Kernel::instance().exception( registers );
-}
-
-/*! TLB miss handler */
-void wrapped_tlbrefill(void)
-{
-	Kernel::instance().refillTLB();
-}
+public:
+	virtual bool handleException( Processor::Context* registers ) = 0;
+	inline bool operator()( Processor::Context* registers )
+		{ return handleException( registers ); }
+};
