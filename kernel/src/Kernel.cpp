@@ -208,11 +208,16 @@ void Kernel::free(const void * address) //const
 void Kernel::exception( Processor::Context* registers )
 {
 	const Processor::Exceptions reason = Processor::get_exccode(registers->cause);
-	if (Processor::EXCEPTIONS[reason].handler)
-		(*Processor::EXCEPTIONS[reason].handler)( registers );
-	else
+	if (Processor::EXCEPTIONS[reason].handler) {
+		if (!(*Processor::EXCEPTIONS[reason].handler)( registers )) {
+			printf( "Exception handling for EXCEPTION: %s(%u) FAILED => TRHEAD KILLED.\n",
+				Processor::EXCEPTIONS[reason].name, reason);
+			Thread::getCurrent()->kill();
+		}
+	} else {
 		panic("Unhandled exception(%u) %s.\n", 
 			reason, Processor::EXCEPTIONS[reason].name );
+	}
 }
 /*----------------------------------------------------------------------------*/
 bool Kernel::handleException( Processor::Context* registers )
@@ -233,13 +238,14 @@ bool Kernel::handleException( Processor::Context* registers )
 			break;
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
+			return false;
 			printf("Exception: Address error exception. THREAD KILLED\n");
 			Thread::getCurrent()->kill();
 			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
-			if (!(reason & CAUSE_BD_MASK) ) {
+			if (!(registers->cause & CAUSE_BD_MASK) ) {
 				registers->epc += 4; // go to the next instruction
-				break;
+				return true;
 			}
 			panic("Exception: Break.\n");
 		case CAUSE_EXCCODE_TR:
@@ -249,6 +255,7 @@ bool Kernel::handleException( Processor::Context* registers )
 		case CAUSE_EXCCODE_CPU:
 			panic("Exception: Coprocessor unusable.\n");
 		case CAUSE_EXCCODE_RI:
+			return false;
 			printf("Exception: Reserved Instruction exception. THREAD KILLED\n");
 			Thread::getCurrent()->kill();
 			panic("Exception: Reserved Instruction.\n");

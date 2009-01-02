@@ -30,7 +30,6 @@
  */
 
 #include "Console.h"
-#include "Kernel.h"
 #include "proc/Thread.h"
 
 //#define CONSOLE_DEBUG

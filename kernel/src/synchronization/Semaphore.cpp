@@ -34,7 +34,6 @@
  */
 
 #include "Semaphore.h"
-#include "Kernel.h"
 
 void Semaphore::up(const unative_t number) {
 	// disable interrupts

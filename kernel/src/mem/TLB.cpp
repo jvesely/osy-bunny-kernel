@@ -199,6 +199,11 @@ void TLB::returnAsid( const byte asid )
 	m_asidMap[asid] = NULL;
 }
 /*----------------------------------------------------------------------------*/
+bool  TLB::handleException( Processor::Context* registers )
+{
+	return refill( IVirtualMemoryMap::getCurrent().data(), registers->badva );
+}
+/*----------------------------------------------------------------------------*/
 void TLB::setMapping(
 	const uintptr_t virtAddr,	
 	const uintptr_t physAddr,	

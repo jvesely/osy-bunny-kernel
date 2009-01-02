@@ -33,6 +33,7 @@
 #include "drivers/Processor.h"
 #include "structures/Buffer.h"
 #include "Singleton.h"
+#include "ExceptionHandler.h"
 
 class IVirtualMemoryMap;
 
@@ -43,7 +44,7 @@ class IVirtualMemoryMap;
  * This class should hanle all operations done on TLB, not much so far,
  * but stuff will eventually come.
  */
-class TLB:public Singleton<TLB>
+class TLB:public Singleton<TLB>, public ExceptionHandler
 {
 public:
 
@@ -56,7 +57,9 @@ public:
 
 	/*! @brief Prepares the TLB, by @a flushing it. */
 	TLB();
-	
+
+	bool handleException( Processor::Context* registers );
+
 	/*! @brief Uses input memory map and address to insert its translation.
 	 *
 	 * Given address is looked up in the VirtualMemoryMap and translation is
@@ -66,7 +69,7 @@ public:
 	 * @return @a true if translation was found and inserrted into the TLB
 	 * 		@a false otherwise.
 	 */
-	bool refill(IVirtualMemoryMap* vmm, native_t bad_addr);
+	bool refill( IVirtualMemoryMap* vmm, native_t bad_addr );
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *

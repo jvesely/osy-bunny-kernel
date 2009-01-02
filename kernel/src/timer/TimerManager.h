@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include <Kernel.h>
 #include <proc/Scheduler.h>
 #include <structures/List.h>
 #include <structures/Heap.h>
