@@ -310,7 +310,7 @@ class BlockFooter
 	 * 	@param amount size of requested block
 	 * 	@return pointer to allocated block, NULL on failure
 	 */
-	void* getMemory(size_t ammount);
+	virtual void* getMemory( size_t ammount );
 
 	/*! @brief returns used block to the heap
 	 *
@@ -318,7 +318,7 @@ class BlockFooter
 	 * (if there are any), checks whether address is from given chunk.
 	 * @param address of the returned block
 	 */
-	void freeMemory(const void* address);
+	virtual void freeMemory( const void* address );
 
 	/** @brief frees all allocated memory and returns it to frame allocator
 	*
