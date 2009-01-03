@@ -183,7 +183,7 @@ byte TLB::getAsid( IVirtualMemoryMap* map )
 		m_asidMap[new_asid]->setAsid( 0 );
 		clearAsid( new_asid );
 	}
-	PRINT_DEBUG ("Selected ASID: %d.\n", new_asid);
+	PRINT_DEBUG ("VMM: %p got ASID: %d.\n", map, new_asid);
 	m_asidMap[new_asid] = map;
 	map->setAsid( new_asid );
 	
@@ -205,11 +205,8 @@ bool  TLB::handleException( Processor::Context* registers )
 }
 /*----------------------------------------------------------------------------*/
 void TLB::setMapping(
-	const uintptr_t virtAddr,	
-	const uintptr_t physAddr,	
-	const Processor::PageSize pageSize,
-	const byte asid,
-	bool global
+	const uintptr_t virtAddr,	const uintptr_t physAddr,
+	const Processor::PageSize pageSize,	const byte asid, const bool global
 	) 
 {
 	using namespace Processor;
@@ -223,11 +220,10 @@ void TLB::setMapping(
 
 	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
 		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
-	reg_write_pagemask (page_mask); //set the right pageSize
 
-	reg_write_entrylo0( global_flag );
-	reg_write_entrylo1( global_flag );
-
+	reg_write_pagemask (page_mask);                //set the right pageSize
+	reg_write_entrylo0( global_flag );             //set global if necessary
+	reg_write_entrylo1( global_flag );             //set global if necessary
 	reg_write_entryhi( pageToVPN2( page, asid ) ); // set address, ASID = asid
 
 	/* try find mapping */
@@ -279,6 +275,9 @@ void TLB::setMapping(
 /*----------------------------------------------------------------------------*/
 bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
 {
+#ifdef TLB_DEBUG
+	const unative_t start_count = Processor::reg_read_count();	
+#endif
 	ASSERT (vmm);
 
 	byte asid = vmm->asid();
@@ -288,15 +287,20 @@ bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
 	PRINT_DEBUG ("Refilling virtual address %p ASID: %u.\n", bad_addr, asid);
 	
 	void* phys_addr = (void*)bad_addr;
-	size_t size;
-	bool success = vmm->translate( phys_addr, size );
+	Processor::PageSize page_size;
+	bool success = vmm->translate( phys_addr, page_size );
 
-	PRINT_DEBUG ("Virtual Address %p translated into %p %s.\n", bad_addr, phys_addr, success ? "OK" : "FAIL");
+	PRINT_DEBUG ("Virtual Address %p translated into %p using size %d %s.\n",
+		bad_addr, phys_addr, page_size, success ? "OK" : "FAIL");
 
 	if (!success) 
 		return false;
 
-	setMapping((uintptr_t)bad_addr, (uintptr_t)phys_addr, Processor::PAGE_4K, asid);
+	setMapping((uintptr_t)bad_addr, (uintptr_t)phys_addr, page_size, asid);
+#ifdef TLB_DEBUG
+	const unative_t end_count = Processor::reg_read_count();
+	PRINT_DEBUG ("Start count: %u end count: %u, used cycles: %u.\n",
+		start_count, end_count, end_count - start_count);
+#endif
 	return true;
-
 }

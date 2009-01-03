@@ -75,8 +75,8 @@ Kernel::Kernel() :
 
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBL );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBS );
+	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBL );
+	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
@@ -103,6 +103,8 @@ void Kernel::run()
 	using namespace Processor;
 
 	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
+	registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBL );
+	registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBS );
 
 	puts("HELLO WORLD!\n");
 

@@ -84,10 +84,8 @@ public:
 	 * @param global Say true if you wish to make the mapping accessible to all.
 	 */
 	void setMapping(
-		const uintptr_t virtual_address, 
-		const uintptr_t physical_address, 
-		const Processor::PageSize page_size,
-		const byte asid,
+		const uintptr_t virtual_address, const uintptr_t physical_address, 
+		const Processor::PageSize page_size, const byte asid, 
 		const bool global = false
 		);
 

@@ -38,6 +38,7 @@
 
 #include "mem/FrameAllocator.h"
 #include "mem/VirtualMemorySubarea.h"
+#include "drivers/Processor.h"
 
 typedef List<VirtualMemorySubarea *> VirtualMemorySubareaContainer;
 typedef List<VirtualMemorySubarea *>::Iterator VirtualMemorySubareaIterator;
@@ -61,7 +62,7 @@ public:
 	int allocate(const unsigned int flags);
 	void free();
 
-	bool find(void*& address, size_t& frameSize) const;
+	bool find(void*& address, Processor::PageSize& frameSize) const;
 
 	bool operator== (const VirtualMemoryArea& other) const;
 	bool operator< (const VirtualMemoryArea& other) const;

@@ -40,6 +40,7 @@
 #include "structures/Trees.h"
 #include "mem/VirtualMemoryArea.h"
 #include "mem/IVirtualMemoryMap.h"
+#include "drivers/Processor.h"
 
 typedef Trees<VirtualMemoryArea>::SplayTree VirtualMemoryMap;
 typedef SplayBinaryNode<VirtualMemoryArea> VirtualMemoryMapEntry;
@@ -59,7 +60,7 @@ public:
 	int free(const void* from);
 
 	// translate fnc
-	bool translate(void*& address, size_t& frameSize);
+	bool translate(void*& address, Processor::PageSize& frameSize);
 
 	//static const size_t MAX_VIRTUAL_ADDRESS = 0x80000000;
 

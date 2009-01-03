@@ -34,6 +34,7 @@
 #include "types.h"
 #include "Object.h"
 #include "Pointer.h"
+#include "drivers/Processor.h"
 
 /*! @class IVirtualMemoryMap IVirtualMemoryMap.h "mem/IVirtualMemoryMap.h"
  *
@@ -102,7 +103,7 @@ public:
 	 * @return @a true on success, @a false otherwise.
 	 * @note See documentation of child class, that implements this function.
 	 */
-	virtual bool translate(void*& address, size_t& frame_size) = 0;
+	virtual bool translate(void*& address, Processor::PageSize& frame_size) = 0;
 
 	/*! @brief Returns used ASID. */
 	virtual ~IVirtualMemoryMap();

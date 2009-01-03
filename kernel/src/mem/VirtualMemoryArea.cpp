@@ -63,16 +63,18 @@ int VirtualMemoryArea::allocate(const unsigned int flags)
 	}
 
 	//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
-	size_t frameSize = 4096;
+	Processor::PageSize frameSize = Processor::PAGE_MIN;
 
 	if ((VF_ADDR_TYPE(flags) == VF_AT_KSEG0) || (VF_ADDR_TYPE(flags) == VF_AT_KSEG1)) {
 		// VF_VA_USER here means it has to have the same physical address (KSEG0-1)
 
 		m_address = (void *)ADDR_OFFSET((size_t)m_address);
 		// calculate the frame count (ceil it)
-		size_t count = (m_size / frameSize) + (m_size % frameSize ? 1 : 0);
+		size_t count = (m_size / Processor::pages[frameSize].size) + 
+				(m_size % Processor::pages[frameSize].size ? 1 : 0);
 		// allocate one piece of memory
-		if (MyFrameAllocator::instance().allocateAtAddress(m_address, count, frameSize) < count) {
+		if (MyFrameAllocator::instance().allocateAtAddress(m_address, count, 
+			Processor::pages[frameSize].size) < count) {
 			return ENOMEM;
 		}
 
@@ -101,11 +103,13 @@ int VirtualMemoryArea::allocate(const unsigned int flags)
 				oldCount = newCount;
 			} else {
 				// if they equals, calculate how much frames we need
-				oldCount = (allocate / frameSize) + (allocate % frameSize ? 1 : 0);
+				oldCount = (allocate / Processor::pages[frameSize].size) +
+					(allocate % Processor::pages[frameSize].size ? 1 : 0);
 			}
 
 			// allocate
-			newCount = MyFrameAllocator::instance().frameAlloc(&address, oldCount, frameSize, flags);
+			newCount = MyFrameAllocator::instance().frameAlloc(&address, oldCount, 
+				Processor::pages[frameSize].size, flags);
 
 			// check for ENOMEM
 			if (newCount == 0) {
@@ -119,7 +123,7 @@ int VirtualMemoryArea::allocate(const unsigned int flags)
 				// add it to the list
 				s->append(m_subAreas);
 				// decrease the amount of "still needed" memory
-				allocate -= (frameSize * newCount);
+				allocate -= (Processor::pages[frameSize].size * newCount);
 				// clear the address pointer
 				address = NULL;
 			}
@@ -146,12 +150,18 @@ void VirtualMemoryArea::free()
 
 /* --------------------------------------------------------------------- */
 
-bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
+bool VirtualMemoryArea::find(void*& address, Processor::PageSize& frameSize) const
 {
 	if (m_subAreas == NULL) return false;
 
 	PRINT_DEBUG("Searching address %p in VMA %p (size %x with %u subareas).\n",
 		address, m_address, m_size, m_subAreas->size());
+
+	/* Skip searching if it is not in my range. */
+	if (address < m_address || address >= (void*)((uintptr_t)m_address + m_size))
+		return false;
+
+	PRINT_DEBUG ("Should be in this area.\n");
 
 	// virtualAddress we are searching
 	const void *va = address;
@@ -166,8 +176,9 @@ bool VirtualMemoryArea::find(void*& address, size_t& frameSize) const
 		vaEnd = (void *)((size_t)vaStart + (*subarea)->size());
 		// check if the virtual address is in the range (in subarea)
 		if ((va >= vaStart) && (va < vaEnd)) {
+			PRINT_DEBUG ("Searching in subarea from %p to %p.\n", vaStart, vaEnd);
 			// if so, set output parameters and return true
-			address = (*subarea)->address((((size_t)va - (size_t)vaStart) / (*subarea)->frameSize()));
+			address = (*subarea)->address((((size_t)va - (size_t)vaStart) / Processor::pages[(*subarea)->frameSize()].size));
 			frameSize = (*subarea)->frameSize();
 			return true;
 		}

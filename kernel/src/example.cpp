@@ -34,9 +34,6 @@
 #include "SysCall.h"
 #include "proc/UserThread.h"
 
-extern "C" void* test1(void*);
-extern "C" void* test2(void*);
-
 void* test(void* data)
 {
 	#ifdef KERNEL_TEST
@@ -54,7 +51,9 @@ void* test(void* data)
 		text[3] = 0;
 
 		int count = SysCall::puts( text );
-		printf ("\ntext at %p is %s(%u).\n", text, text, count);
+		printf( "\ntext at %p is %s(%u).\n", text, text, count );
+		//*(char*)NULL = 0;
+		printf( "%p %c\n",((uintptr_t)text - 4096), *(char*)((uintptr_t)text - 4096) );
 	} else {
 		thread_t user_t;
 		Thread* user = UserThread::create(&user_t, test, (void*)0xff, TF_NEW_VMM);
