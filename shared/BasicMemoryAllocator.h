@@ -74,7 +74,7 @@ public:
 	*	This is minimal 'data' size in allocated block. Smaller blocks
 	*	will be aligned to nearest ALIGMENT multiple.
 	*/
-	static const uint8_t ALIGMENT = 4;
+	static const uint8_t ALIGMENT = sizeof(native_t);
 
 	/** @brief deafuls size of newly allocated memory from frame allocator
 	*
@@ -86,7 +86,7 @@ public:
 	*
 	*	Now implemented allocator uses only 4kB frames.
 	*/
-	static const size_t DEFAULT_FRAME_SIZE = 4*1024;
+//	static const size_t DEFAULT_FRAME_SIZE = 4*1024;
 
 	//forward declaration
 	class BlockFooter;
@@ -310,7 +310,7 @@ class BlockFooter
 	 * 	@param amount size of requested block
 	 * 	@return pointer to allocated block, NULL on failure
 	 */
-	virtual void* getMemory( size_t ammount );
+	virtual void* getMemory( size_t amount );
 
 	/*! @brief returns used block to the heap
 	 *
