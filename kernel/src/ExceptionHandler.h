@@ -34,12 +34,12 @@
 
 #pragma once
 
-/* this is just a dummy disabler to make Allocator compile into librt,
- * better way will have to be thought of.
- */
-class InterruptDisabler
+#include "drivers/Processor.h"
+
+class ExceptionHandler
 {
 public:
-	InterruptDisabler() {};
-	~InterruptDisabler() {};
+	virtual bool handleException( Processor::Context* registers ) = 0;
+	inline bool operator()( Processor::Context* registers )
+		{ return handleException( registers ); }
 };

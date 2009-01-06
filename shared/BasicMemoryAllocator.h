@@ -74,7 +74,7 @@ public:
 	*	This is minimal 'data' size in allocated block. Smaller blocks
 	*	will be aligned to nearest ALIGMENT multiple.
 	*/
-	static const uint8_t ALIGMENT = 4;
+	static const uint8_t ALIGMENT = sizeof(native_t);
 
 	/** @brief deafuls size of newly allocated memory from frame allocator
 	*
@@ -86,7 +86,7 @@ public:
 	*
 	*	Now implemented allocator uses only 4kB frames.
 	*/
-	static const size_t DEFAULT_FRAME_SIZE = 4*1024;
+//	static const size_t DEFAULT_FRAME_SIZE = 4*1024;
 
 	//forward declaration
 	class BlockFooter;
@@ -101,7 +101,8 @@ public:
 	*	freed by user.
 	*	(note that next memory block is not allways neighbour block)
 	*/
-class BlockHeader: public SimpleListItem{
+class BlockHeader: public SimpleListItem
+{
 	public:
 		/** @brief value representing 'free' state of block
 		*
@@ -126,46 +127,46 @@ class BlockHeader: public SimpleListItem{
 		static const uint32_t BORDER = IDENTIFIER + 2;
 
 		/** @brief getter for m_size*/
-		inline size_t size() const{return m_size;}
+		inline size_t size() const { return m_size; }
 
 		/** @brief setter for m_size*/
-		inline void setSize(size_t size){m_size = size;}
+		inline void setSize(size_t size) { m_size = size; }
 
 		/** @brief free state indicator*/
-		inline bool isFree(){return m_state == FREE;}
+		inline bool isFree() { return m_state == FREE; }
 
 		/** @brief used state indicator*/
-		inline bool isUsed(){return m_state == USED;}
+		inline bool isUsed() { return m_state == USED; }
 
 		/** @brief border state indicator*/
-		inline bool isBorder(){return m_state == BORDER;}
+		inline bool isBorder() { return m_state == BORDER; }
 
 		/** @brief only changes m_state to FREE
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setFree(){m_state = FREE;}
+		inline void setFree() { m_state = FREE; }
 
 		/** @brief only changes m_state to FREE
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setUsed(){m_state = USED;}
+		inline void setUsed() { m_state = USED; }
 
 		/** @brief only changes m_state to BORDER
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setBorder(){m_state = BORDER;}
+		inline void setBorder() { m_state = BORDER; }
 
 		/** @brief only changes m_state to NULL
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setUndefined(){m_state = NULL;}
+		inline void setUndefined() { m_state = NULL; }
 
 		/** @brief get block footer*/
-		inline BlockFooter * getFooter(){
+		inline BlockFooter * getFooter() {
 			assert(!isBorder());
 			return (BlockFooter*)
 			       ((uintptr_t)this + m_size - sizeof(BlockFooter));
@@ -196,7 +197,8 @@ class BlockHeader: public SimpleListItem{
 	*
 	*	Holds size and state value.
 	*/
-	class BlockFooter{
+class BlockFooter
+{
 	public:
 		/** @brief value representing 'free' state of block
 		*
@@ -221,43 +223,43 @@ class BlockHeader: public SimpleListItem{
 		static const uint32_t BORDER = IDENTIFIER + 2;
 
 		/** @brief getter for m_size*/
-		inline size_t size() const{return m_size;}
+		inline size_t size() const { return m_size; }
 
 		/** @brief setter for m_size*/
-		inline void setSize(size_t size){m_size = size;}
+		inline void setSize(size_t size) { m_size = size; }
 
 		/** @brief free state indicator*/
-		inline bool isFree(){return m_state == FREE;}
+		inline bool isFree() { return m_state == FREE; }
 
 		/** @brief used state indicator*/
-		inline bool isUsed(){return m_state == USED;}
+		inline bool isUsed() { return m_state == USED; }
 
 		/** @brief border state indicator*/
-		inline bool isBorder(){return m_state == BORDER;}
+		inline bool isBorder() { return m_state == BORDER; }
 
 		/** @brief only changes m_state to FREE
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setFree(){m_state = FREE;}
+		inline void setFree() { m_state = FREE; }
 
 		/** @brief only changes m_state to FREE
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setUsed(){m_state = USED;}
+		inline void setUsed() { m_state = USED; }
 
 		/** @brief only changes m_state to BORDER
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setBorder(){m_state = BORDER;}
+		inline void setBorder() { m_state = BORDER; }
 
 		/** @brief only changes m_state to NULL
 		*
 		*	Leaves block in inconsistent state
 		*/
-		inline void setUndefined(){m_state = NULL;}
+		inline void setUndefined() { m_state = 0; }
 
 		/** @brief get block header	*/
 		inline BlockHeader * getHeader()
@@ -308,7 +310,7 @@ class BlockHeader: public SimpleListItem{
 	 * 	@param amount size of requested block
 	 * 	@return pointer to allocated block, NULL on failure
 	 */
-	void* getMemory(size_t ammount);
+	virtual void* getMemory( size_t amount );
 
 	/*! @brief returns used block to the heap
 	 *
@@ -316,7 +318,7 @@ class BlockHeader: public SimpleListItem{
 	 * (if there are any), checks whether address is from given chunk.
 	 * @param address of the returned block
 	 */
-	void freeMemory(const void* address);
+	virtual void freeMemory( const void* address );
 
 	/** @brief frees all allocated memory and returns it to frame allocator
 	*
@@ -329,24 +331,24 @@ class BlockHeader: public SimpleListItem{
 	 * @param align align amount
 	 * @return aligned address
 	 */
-	static inline unsigned int alignUp(
+/*	static inline unsigned int alignUp(
 	    const unsigned int number, const unsigned int factor)
 	{ return  (number + (factor - 1) ) & ~(factor - 1); };
-
+*/
 	/*! aligns address to nearest smaller 4byte block
 	 * @param address address to be aligned
 	 * @param align align amount
 	 * @return aligned address
 	 */
-	static inline unsigned int alignDown(
+/*	static inline unsigned int alignDown(
 	    const unsigned int number, const unsigned int factor)
 	{ return number & ~(factor - 1); }
-
+*/
 	/** @brief getter for m_freeSize
 	*
 	*	Debug function
 	*/
-	inline size_t getFreeSize() const {return m_freeSize;}
+	inline size_t getFreeSize() const { return m_freeSize; }
 
 
 protected:
@@ -383,10 +385,13 @@ protected:
 	*/
 	inline bool returnBlockIfPossible(BlockHeader * header){
 		assert(!header->isBorder());
-		BlockFooter * frontBorder = (BlockFooter*)((uintptr_t)header - sizeof(BlockFooter));
-		BlockHeader * backBorder = (BlockHeader*)((uintptr_t)(header->getFooter()) + sizeof(BlockFooter));
-		if(!frontBorder->isBorder()) return false;
-		if(!backBorder->isBorder()) return false;
+		
+		BlockFooter * frontBorder = ((BlockFooter*)header) - 1;
+		if (!frontBorder->isBorder()) return false;
+
+		BlockHeader * backBorder = (BlockHeader*)(header->getFooter() + 1);
+		if (!backBorder->isBorder()) return false;
+		
 		returnBlock(header);
 		return true;
 	}
@@ -588,8 +593,6 @@ protected:
 	int m_mylock;
 #endif
 };
-
-
 
 //------------------------------------------------------------------------------
 inline void BasicMemoryAllocator::initBlock

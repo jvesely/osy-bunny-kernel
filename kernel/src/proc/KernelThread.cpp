@@ -31,7 +31,6 @@
  */
 
 #include "KernelThread.h"
-#include "Kernel.h"
 #include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"

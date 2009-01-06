@@ -32,7 +32,10 @@
 #pragma once
 #include "drivers/Processor.h"
 #include "structures/Buffer.h"
-#include "mem/IVirtualMemoryMap.h"
+#include "Singleton.h"
+#include "ExceptionHandler.h"
+
+class IVirtualMemoryMap;
 
 /*!
  * @class TLB mem/TLB.h "mem/TLB.h"
@@ -41,7 +44,7 @@
  * This class should hanle all operations done on TLB, not much so far,
  * but stuff will eventually come.
  */
-class TLB
+class TLB:public Singleton<TLB>, public ExceptionHandler
 {
 public:
 
@@ -54,7 +57,9 @@ public:
 
 	/*! @brief Prepares the TLB, by @a flushing it. */
 	TLB();
-	
+
+	bool handleException( Processor::Context* registers );
+
 	/*! @brief Uses input memory map and address to insert its translation.
 	 *
 	 * Given address is looked up in the VirtualMemoryMap and translation is
@@ -64,7 +69,7 @@ public:
 	 * @return @a true if translation was found and inserrted into the TLB
 	 * 		@a false otherwise.
 	 */
-	bool refill(IVirtualMemoryMap* vmm, native_t bad_addr);
+	bool refill( IVirtualMemoryMap* vmm, native_t bad_addr );
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *
@@ -79,10 +84,8 @@ public:
 	 * @param global Say true if you wish to make the mapping accessible to all.
 	 */
 	void setMapping(
-		const uintptr_t virtual_address, 
-		const uintptr_t physical_address, 
-		const Processor::PageSize page_size,
-		const byte asid,
+		const uintptr_t virtual_address, const uintptr_t physical_address, 
+		const Processor::PageSize page_size, const byte asid, 
 		const bool global = false
 		);
 
@@ -90,7 +93,7 @@ public:
 	 * @brief Gets currently used ASID.
 	 * @return Currently used ASID.
 	 */
-	byte currentAsid()
+	inline byte currentAsid()
 		{ return Processor::reg_read_entryhi() & Processor::ASID_MASK; }
 	
 	/*!

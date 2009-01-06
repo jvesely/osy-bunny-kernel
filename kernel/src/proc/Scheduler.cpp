@@ -31,11 +31,9 @@
  */
 
 #include "Scheduler.h"
-#include "Kernel.h"
 #include "Thread.h"
 #include "IdleThread.h"
 #include "InterruptDisabler.h"
-#include "timer/Timer.h"
 
 //#define SCHEDULER_DEBUG
 

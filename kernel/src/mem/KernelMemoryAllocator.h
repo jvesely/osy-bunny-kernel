@@ -44,6 +44,9 @@
  */
 class KernelMemoryAllocator: public BasicMemoryAllocator
 {
+public:
+	virtual void* getMemory( size_t ammount );
+	virtual void freeMemory( const void* address );
 protected:
 	/*! @brief Gets new block from the FrameAllocator.
 	 * @param realSize size of the requested block

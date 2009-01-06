@@ -46,6 +46,16 @@ inline uint roundDown( uint number, uint factor )
 	return (number / factor) * factor;
 }
 /*----------------------------------------------------------------------------*/
+inline uint alignUp( const uint number, const uint factor)
+{ 
+	return  (number + (factor - 1) ) & ~(factor - 1); 
+}
+/*----------------------------------------------------------------------------*/
+inline uint alignDown( const uint number, const uint factor)
+{ 
+  return  number & ~(factor - 1); 
+}
+/*----------------------------------------------------------------------------*/
 inline uint rand(){ return 0;};
 /*----------------------------------------------------------------------------*/
 template <typename T>

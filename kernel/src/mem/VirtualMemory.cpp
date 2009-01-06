@@ -35,7 +35,7 @@
 #include "flags.h"
 #include "VirtualMemory.h"
 
-//#define VMA_DEBUG
+#define VMA_DEBUG
 
 #ifndef VMA_DEBUG
 #define PRINT_DEBUG(...)
@@ -159,13 +159,13 @@ int VirtualMemory::free(const void *from)
 
 /* --------------------------------------------------------------------- */
 
-bool VirtualMemory::translate(void*& address, size_t& frameSize)
+bool VirtualMemory::translate(void*& address, Processor::PageSize& frameSize)
 {
 	PRINT_DEBUG("Virtual memory map tree size %u.\n", m_virtualMemoryMap.count());
 
 	// search for the address and get the VMA
 	const VirtualMemoryMapEntry* entry = 
-		m_virtualMemoryMap.findItem(VirtualMemoryArea(address));
+		m_virtualMemoryMap.findItem( VirtualMemoryArea(address) );
 
 	// if VMA not found, address is not allocated
 	if (entry == NULL) {
@@ -174,6 +174,7 @@ bool VirtualMemory::translate(void*& address, size_t& frameSize)
 	}
 
 	// find the address translation on the found VMA
+	frameSize = Processor::PAGE_MIN;
 	return entry->data().find(address, frameSize);
 }
 

@@ -38,7 +38,7 @@
 /* Basic IO */
 size_t putc( const char c )
 {
-	static char buffer[2];
+	static char buffer[2] = { '\0', '\0' };
 	buffer[0] = c;
 	return SysCall::puts( buffer );
 }

@@ -33,7 +33,20 @@
  */
 #include "KernelMemoryAllocator.h"
 #include "mem/FrameAllocator.h"
+#include "InterruptDisabler.h"
 
+void* KernelMemoryAllocator::getMemory( size_t amount )
+{
+	InterruptDisabler inter;
+	return this->BasicMemoryAllocator::getMemory( amount ); 
+}
+/*----------------------------------------------------------------------------*/
+void KernelMemoryAllocator::freeMemory( const void* address )
+{
+	InterruptDisabler inter;
+	return this->BasicMemoryAllocator::freeMemory( address );
+}
+/*----------------------------------------------------------------------------*/
 BasicMemoryAllocator::BlockHeader * KernelMemoryAllocator::getBlock(size_t realSize)
 {
   //expecting that realsize > 0 - otherwise it does not have sense

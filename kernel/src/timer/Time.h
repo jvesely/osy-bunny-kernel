@@ -46,14 +46,17 @@ class Time
 {
 public:
 	/** @brief million*/
-	static const uint MILLION = 1000000;
+	static const uint MILLION = 1000000;  /* deprecated constant */
+
+	static const uint MILLI_SECOND = 1000;    /*!< @brief Microsecs in 1 ms. */
+	static const uint SECOND       = 1000000; /*!< @brief Microsecs in 1 s.  */
 
 	/** @brief max seconds in unsigned int microseconds
 	*
 	*	maxint-1 / 1000000. Is not maxint, to ensure that
-	*	MAX_USEC_SECS * MILLION + 999999 < maxint
+	*	MAX_USEC_SECS * SECOND + 999999 < maxint
 	*/
-	static const uint MAX_USEC_SECS = -2 / MILLION;
+	static const uint MAX_USEC_SECS = -2 / SECOND;
 
 	/** @brief no brief comment
 	*
@@ -78,8 +81,8 @@ public:
 	*	@return *this const
 	*/
 	inline const Time& operator += ( const Time& other ) {
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
 		setTime( other.m_secs + m_secs, other.m_usecs + m_usecs );
 		return *this;
@@ -94,10 +97,10 @@ public:
 	*/
 	inline const Time& operator -= ( const Time& other )
 	{
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
-		setTime( (m_secs - other.m_secs) - 1, (MILLION + m_usecs) - other.m_usecs );
+		setTime( (m_secs - other.m_secs) - 1, (SECOND + m_usecs) - other.m_usecs );
 		return *this;
 	}
 	/** @brief
@@ -108,8 +111,8 @@ public:
 	*/
 	inline bool operator == ( const Time& other ) const
 	{
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
 		return ( (m_secs == other.m_secs) && (m_usecs == other.m_usecs) );
 	}
@@ -121,8 +124,8 @@ public:
 	*	function is wrapper for !(operator==)
 	*/
 	inline bool operator != ( const Time& other ) const {
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
 		return !( operator == ( other ) );
 	}
@@ -134,8 +137,8 @@ public:
 	*	than other's.
 	*/
 	inline bool operator < ( const Time& other ) const {
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
 		return ( m_secs < other.m_secs )
 	      || ( ( m_secs  == other.m_secs ) && ( m_usecs <  other.m_usecs ) );
@@ -149,8 +152,8 @@ public:
 	*	@note Implementation uses bool operator < (const Time& other) const ;
 	*/
 	inline bool operator > ( const Time& other ) const {
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
 		return other < *this;	
 	}
@@ -163,8 +166,8 @@ public:
 	*	@note Implementation uses bool operator < (const Time& other) const;
 	*/
 	bool operator >= ( const Time& other ) const {
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
 		return !( operator < ( other ) );
 	}
@@ -176,9 +179,9 @@ public:
 	*	useconds part is greater than or equals other's.
 	*	@note Implementation uses bool operator > (const Time& other) const;
 	*/
-	bool operator <= ( const Time& other ) const {
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+	inline bool operator <= ( const Time& other ) const {
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 
 		return !(other < *this);
 	}
@@ -199,10 +202,10 @@ public:
 	*	Each component is added separately and then they are normalized.
 	*	@note Implementation uses Time& operator += (const Time& other);
 	*/
-	Time operator + ( const Time& other ) const
+	inline Time operator + ( const Time& other ) const
 	{
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 		
 		Time result( *this );
 		result += other;
@@ -216,8 +219,8 @@ public:
 	*/
 	inline Time operator - ( const Time& other ) const
 	{
-		ASSERT (m_usecs < MILLION);
-		ASSERT (other.m_usecs < MILLION);
+		ASSERT (m_usecs < SECOND);
+		ASSERT (other.m_usecs < SECOND);
 	
 		Time result( *this );
 		result -= other;
@@ -237,6 +240,8 @@ public:
 
 	/** @brief Gets useconds part. wrapper for secs. */
 	inline uint getUsecs() const { return usecs(); }
+
+	inline uint toUsecs() const  { return m_secs * SECOND + m_usecs; };
 
 	/** @brief Gets current time.
 	 *
@@ -270,8 +275,8 @@ protected:
 	*/
 	inline void correctTime()
 	{
-		m_secs += ( m_usecs / MILLION );
-		m_usecs = m_usecs % MILLION;
+		m_secs  += (m_usecs / SECOND);
+		m_usecs %= SECOND;
 	}
 
 	/** @brief seconds time */

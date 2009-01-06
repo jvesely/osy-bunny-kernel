@@ -25,7 +25,7 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Timer class implementation.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
  * It would stay that way. Not that this comment is by any means ingenious but 
@@ -56,7 +56,7 @@ void Timer::plan(Thread* thread, const Time& time)
 	/* Mangling with shared structure. */
 	InterruptDisabler inter;
 
-	/* Convert relative time to abslute and insert into time heap. */
+	/* Convert relative time to absolute and insert into time heap. */
 	const Time now = Time::getCurrent();
 	const Time planned = (now + time);
 	
@@ -69,14 +69,14 @@ void Timer::plan(Thread* thread, const Time& time)
 
 	/* if the newest event is sooner than the former 
 	 * it is needed to replan interupts 
-	 * we may safely use top() as ther must be at least one (currently inserted)
-	 * element
+	 * we may safely use top() as there must be at least one 
+	 * (the inserted one) element
 	 */
 	if ( thread == m_heap.top() ) {
 		PRINT_DEBUG ("Replanning interupt to time: %u:%u.\n", 
 			thread->key().secs(), thread->key().usecs());
 
-		Kernel::instance().setTimeInterrupt(thread->key());
+		Kernel::instance().setTimeInterrupt( thread->key() );
 	}
 
 	PRINT_DEBUG ("Pending events: %u.\n %s\n", 
@@ -95,7 +95,7 @@ void Timer::handleInterrupt()
 	
 	Thread * thr = NULL;
 
-	/* While there are events that are due execute them */
+	/* While there are events that are due, execute them */
 	while ( (thr = static_cast<Thread*>(m_heap.topItem())) && (thr->key() < now) )
 	{
 				
@@ -118,7 +118,7 @@ void Timer::handleInterrupt()
 	/* Get the next event */
 	thr = static_cast<Thread*>(m_heap.topItem());
 
-	Time nextEvent = thr ? thr->key() : Time();
+	const Time nextEvent = thr ? thr->key() : Time();
 
 	PRINT_DEBUG ("Next event in %u,%u.\n", nextEvent.secs(), nextEvent.usecs());
 

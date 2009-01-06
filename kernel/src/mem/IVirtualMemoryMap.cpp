@@ -33,7 +33,7 @@
  */
 
 #include "IVirtualMemoryMap.h"
-#include "Kernel.h"
+#include "mem/TLB.h"
 #include "InterruptDisabler.h"
 #include "tools.h"
 
@@ -52,23 +52,23 @@
 void IVirtualMemoryMap::freed()
 {
 	ASSERT (m_asid);
-	Kernel::instance().tlb().clearAsid( m_asid );
+	TLB::instance().clearAsid( m_asid );
 }
 /*----------------------------------------------------------------------------*/
 void IVirtualMemoryMap::switchTo()
 {
 
 	if (!m_asid) {
-		m_asid = Kernel::instance().tlb().getAsid( this );
+		m_asid = TLB::instance().getAsid( this );
 	}
 	PRINT_DEBUG ("Switching to VMM %p with ASID: %u\n", this, m_asid);
-	Kernel::instance().tlb().switchAsid( m_asid );
+	TLB::instance().switchAsid( m_asid );
 	getCurrent() = this;
 }
 /*----------------------------------------------------------------------------*/
 IVirtualMemoryMap::~IVirtualMemoryMap()
 {
-	if (m_asid) Kernel::instance().tlb().returnAsid(m_asid);
+	if (m_asid) TLB::instance().returnAsid(m_asid);
 }
 /*----------------------------------------------------------------------------*/
 int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> dest_map, void* dst_addr, size_t size)
@@ -86,8 +86,8 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 
 	while (size) {
 		InterruptDisabler inter;
-		Kernel::instance().tlb().switchAsid( m_asid );
 		size_t count = min(BUFFER_SIZE, size);
+		switchTo();
 		PRINT_DEBUG ("First 4B to copy: %x.\n", *src);
 		memcpy((void*)buffer, (void*)src, count);
 		
@@ -95,7 +95,7 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 			count, *(uint*)src,*(uint*) buffer);
 		PRINT_DEBUG ("Copied from %p to buffer %p count %u.\n", src, buffer, count);
 		
-		Kernel::instance().tlb().switchAsid( dest_map->asid() );
+		dest_map->switchTo();
 		memcpy((void*)dest, (void*)buffer, count);
 		src  += count;
 		dest += count;
@@ -105,7 +105,8 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 	if (old_map)
 		old_map->switchTo();
 
-	PRINT_DEBUG ("Thread copy complete, copied %u B of data.\n", dest - (char*)dst_addr);
-//	Kernel::instance().stop();
+	PRINT_DEBUG ("Thread copy complete, copied %u B of data.\n", 
+		dest - (char*)dst_addr);
+	
 	return EOK;
 }

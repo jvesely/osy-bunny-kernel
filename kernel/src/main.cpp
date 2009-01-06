@@ -49,7 +49,7 @@ void wrapped_start(void)
 /*! entry point for general_exceptions */
 void wrapped_general(Processor::Context* registers)
 {
-	Kernel::instance().handle(registers);
+	Kernel::instance().exception( registers );
 }
 
 /*! TLB miss handler */

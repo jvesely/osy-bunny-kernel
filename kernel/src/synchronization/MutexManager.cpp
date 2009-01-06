@@ -35,7 +35,6 @@
 #include "MutexManager.h"
 
 #include "cpp.h"
-#include "Kernel.h"
 #include "InterruptDisabler.h"
 #include "proc/Thread.h"
 #include "structures/List.h"
