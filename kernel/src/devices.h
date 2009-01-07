@@ -45,4 +45,10 @@
 #define CHARACTER_INPUT_INTERRUPT 1
 
 /*! rtc */
-#define CLOCK (uint32_t*)(0xFFFFFFF8)
+#define CLOCK (unative_t*)(0xFFFFFFF8)
+
+/*! hdd */
+#define HDD_DATA_ADDR    (uintptr_t*)(0xffffff00)
+#define HDD_SEC_NO_ADDR  (uint*)(0xffffff04)
+#define HDD_STATUS_ADDR  (unative_t*)(0xffffff08)
+#define HDD_BLOCK_SIZE   512
