@@ -37,28 +37,33 @@
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "proc/Thread.h"
+#include "synchronization/MutexLocker.h"
 
 bool DiskDevice::read( char* buffer, uint count, uint secno, uint start_pos )
 {
 	InterruptDisabler inter;
+	MutexLocker guard(m_guard);
 
-	if (pending()) return false;
+	ASSERT (!pending());
+	//if (pending()) return false;
+
+	uint copy_count = 0;
+
 	while (count) {
 		/* from the begining and large enough block read directly */
 		if ( start_pos == 0 && count >= HDD_BLOCK_SIZE ) {
 			diskOp( secno, buffer, OP_READ ); 
-			count -= HDD_BLOCK_SIZE; 
-			buffer += HDD_BLOCK_SIZE;
+			copy_count = HDD_BLOCK_SIZE;
 		} else {
 			diskOp( secno, m_buffer, OP_READ );
-			uint copy_count = min( count, HDD_BLOCK_SIZE - start_pos );
+			copy_count = min( count, HDD_BLOCK_SIZE - start_pos );
 			memcpy( buffer, m_buffer + start_pos, copy_count );
-			count  -= copy_count;
-			buffer += copy_count;
 			
 			/* If it did not read til the end of the block it won't be used again. */
 			start_pos = 0;
 		}
+		count  -= copy_count;
+		buffer += copy_count;
 		++secno; /* read next sector. */
 		block();
 	}	

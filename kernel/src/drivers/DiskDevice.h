@@ -35,16 +35,16 @@
 #pragma once
 
 #include "InterruptHandler.h"
-#include "structures/List.h"
 #include "devices.h"
+#include "synchronization/Mutex.h"
 
 class Thread;
 
 class DiskDevice: public InterruptHandler
 {
 public:
-	DiskDevice( char** data_address, uint* secno_addr, native_t* status_addr ):
-		m_addr( data_address ), m_secno_addr( secno_addr ), m_status( status_addr )
+	DiskDevice( char** data_addr, uint* secno_addr, native_t* status_addr ):
+		m_addr( data_addr ), m_secno_addr( secno_addr ), m_status( status_addr )
 		{};
 	bool read( char* buffer, uint count, uint block, uint start_pos );
 	bool write( char* buffer, uint count, uint block, uint start_pos );
@@ -71,4 +71,5 @@ private:
 	Thread* m_waitingThread;
 
 	char m_buffer[HDD_BLOCK_SIZE];
+	Mutex m_guard;
 };

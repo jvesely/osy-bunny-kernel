@@ -42,10 +42,10 @@
  * @param test Condition to be tested.
  */
 #ifndef NDEBUG
-# define ASSERT(test) \
+#define ASSERT(test) \
   if (! (test) ) { \
     panic("ASSERTION FAILED: \"%s\" in %s on line %d\n", (char*)#test, __FILE__, __LINE__); \
-  }
+  } else void(0)
 #else
 # define ASSERT(x)
 #endif
