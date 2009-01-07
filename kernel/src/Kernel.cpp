@@ -39,6 +39,7 @@
 #include "mem/FrameAllocator.h"
 #include "SysCallHandler.h"
 #include "mem/TLB.h"
+#include "drivers/DiscDevice.h"
 
 //#define KERNEL_DEBUG
 
@@ -338,4 +339,10 @@ void Kernel::refillTLB()
 		else
 			panic( "No thread and invalid tlb refill.\n" );
 	}
+}
+/*----------------------------------------------------------------------------*/
+void Kernel::attachDiscs()
+{
+	m_discs = new DiscDevice( 
+		HDD0_DATA_ADDR, HDD0_SEC_NO_ADDR, HDD0_STATUS_ADDR, HDD0_BLOCK_SIZE);
 }

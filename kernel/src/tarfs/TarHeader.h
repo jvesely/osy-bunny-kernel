@@ -25,30 +25,27 @@
 
 /*!
  * @file 
- * @brief Device addresses.
+ * @brief Short description.
  *
- * Device addresses and interrupts are defined in this place.
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
 
 #pragma once
+
 #include "types.h"
 
-#define DEVICES_MAP_START 0xFFFFFFF0
-
-#define TIMER_INTERRUPT 7
-
-/*! simple character output */
-#define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
-
-/*! keyboard */
-#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFF4)
-#define CHARACTER_INPUT_INTERRUPT 1
-
-/*! rtc */
-#define CLOCK (unative_t*)(0xFFFFFFF8)
-
-/*! hdd */
-#define HDD0_DATA_ADDR    (char**)(0xffffff00)
-#define HDD0_SEC_NO_ADDR  (uint*)(0xffffff04)
-#define HDD0_STATUS_ADDR  (unative_t*)(0xffffff08)
-#define HDD0_BLOCK_SIZE   512
+struct TarHeader
+{
+	char fileName[100];
+	char mod[8];
+	char uid[8];
+	char gid[8];
+	char fileSize[12];
+	char modTime[12];
+	char checksum[8];
+	char link;
+	char linkName[100];
+	byte zeros[255];
+};

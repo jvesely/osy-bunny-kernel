@@ -42,6 +42,8 @@
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
 
+class DiscDevice;
+
 /*!
  * @class Kernel Kernel.h "Kernel.h"
  * @brief Main class.
@@ -132,6 +134,7 @@ private:
 	const RTC m_clock;                 /*!< Clock device.          */
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
+	DiscDevice* m_discs[];									 /*!< Disks.                 */
 	
 	/*! Vector of handlers.    */
 	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 
@@ -148,6 +151,8 @@ private:
 	 * when interrupt occured.
 	 */
 	void handleInterrupts(Processor::Context* registers);
+
+	void attachDiscs();
 
 	/*! @brief Initializes structures.
 	 *
