@@ -25,29 +25,18 @@
 
 /*!
  * @file 
- * @brief Device addresses.
+ * @brief Short description.
  *
- * Device addresses and interrupts are defined in this place.
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
 
 #pragma once
-#include "types.h"
 
-#define DEVICES_MAP_START 0xFFFFFFF0
-
-#define TIMER_INTERRUPT 7
-
-/*! simple character output */
-#define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
-
-/*! keyboard */
-#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFF4)
-#define CHARACTER_INPUT_INTERRUPT 1
-
-/*! rtc */
-#define CLOCK (unative_t*)(0xFFFFFFF8)
-
-/*! hdd */
-#define HDD0_DATA_ADDR    (char**)(0xffffff00)
-#define HDD0_SEC_NO_ADDR  (uint*)(0xffffff04)
-#define HDD0_STATUS_ADDR  (unative_t*)(0xffffff08)
+class DiscDevice
+{
+public:
+	virtual bool read( char* buffer, uint count, uint block, uint start_pos ) = 0;
+	virtual bool write( char* buffer, uint count, uint block, uint start_pos );
+};

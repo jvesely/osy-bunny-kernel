@@ -31,15 +31,14 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
-
-#include "DiskDevice.h"
+#include "MsimDisc.h"
 #include "api.h"
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "proc/Thread.h"
 #include "synchronization/MutexLocker.h"
 
-bool DiskDevice::read( char* buffer, uint count, uint secno, uint start_pos )
+bool MsimDisc::read( char* buffer, uint count, uint secno, uint start_pos )
 {
 	InterruptDisabler inter;
 	MutexLocker guard(m_guard);
@@ -51,12 +50,12 @@ bool DiskDevice::read( char* buffer, uint count, uint secno, uint start_pos )
 
 	while (count) {
 		/* from the begining and large enough block read directly */
-		if ( start_pos == 0 && count >= HDD_BLOCK_SIZE ) {
+		if ( start_pos == 0 && count >= BLOCK_SIZE ) {
 			diskOp( secno, buffer, OP_READ ); 
-			copy_count = HDD_BLOCK_SIZE;
+			copy_count = BLOCK_SIZE;
 		} else {
 			diskOp( secno, m_buffer, OP_READ );
-			copy_count = min( count, HDD_BLOCK_SIZE - start_pos );
+			copy_count = min( count, BLOCK_SIZE - start_pos );
 			memcpy( buffer, m_buffer + start_pos, copy_count );
 			
 			/* If it did not read til the end of the block it won't be used again. */
@@ -70,7 +69,7 @@ bool DiskDevice::read( char* buffer, uint count, uint secno, uint start_pos )
 	return true;
 }
 /*----------------------------------------------------------------------------*/
-void DiskDevice::block()
+void MsimDisc::block()
 {
 	m_waitingThread = Thread::getCurrent();
 	if (m_waitingThread) {
@@ -82,7 +81,7 @@ void DiskDevice::block()
 
 }
 /*----------------------------------------------------------------------------*/
-bool DiskDevice::write( char* buffer, uint count, uint block, uint start_pos )
+bool MsimDisc::write( char* buffer, uint count, uint block, uint start_pos )
 {
 	InterruptDisabler inter;
 
@@ -92,11 +91,15 @@ bool DiskDevice::write( char* buffer, uint count, uint block, uint start_pos )
   return false;
 }
 /*----------------------------------------------------------------------------*/
-void DiskDevice::diskOp( uint block_num, char buffer[], OperationMask op)
+void MsimDisc::diskOp( uint block_num, char buffer[], OperationMask op)
 {
 	ASSERT (!pending());
 	*m_addr       = buffer;
 	*m_secno_addr = block_num;
 	*m_status     = op;
+}
+/*----------------------------------------------------------------------------*/
+void MsimDisc::handleInterrupt()
+{
 }
 /*----------------------------------------------------------------------------*/

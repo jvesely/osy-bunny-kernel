@@ -39,7 +39,7 @@
 #include "mem/FrameAllocator.h"
 #include "SysCallHandler.h"
 #include "mem/TLB.h"
-#include "drivers/DiscDevice.h"
+#include "drivers/MsimDisc.h"
 
 //#define KERNEL_DEBUG
 
@@ -64,6 +64,9 @@ static const char* BUNNY_STR[5] = {
 static const uint BUNNIES_PER_LINE = 10;
 static const uint BUNNY_LINES = 5;
 
+extern void* first_thread(void*);
+extern unative_t COUNT_CPU;
+
 
 
 Kernel::Kernel() :
@@ -76,16 +79,11 @@ Kernel::Kernel() :
 
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT );
-	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBL );
-	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP );
 }
-extern void* test(void*);
-
-extern unative_t COUNT_CPU;
 /*----------------------------------------------------------------------------*/
 void Kernel::printBunnies( uint count )
 {
@@ -161,7 +159,7 @@ void Kernel::run()
 
 	//init and run the main thread
 	thread_t mainThread;
-	Thread* main = KernelThread::create(&mainThread, test, NULL, TF_NEW_VMM);
+	Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
 	ASSERT (main);
 	main->switchTo();
 
@@ -343,6 +341,7 @@ void Kernel::refillTLB()
 /*----------------------------------------------------------------------------*/
 void Kernel::attachDiscs()
 {
-	m_discs = new DiscDevice( 
-		HDD0_DATA_ADDR, HDD0_SEC_NO_ADDR, HDD0_STATUS_ADDR, HDD0_BLOCK_SIZE);
+	DiscDevice* disc = new MsimDisc(
+		HDD0_DATA_ADDR, HDD0_SEC_NO_ADDR, HDD0_STATUS_ADDR );
+	ASSERT (disc);
 }

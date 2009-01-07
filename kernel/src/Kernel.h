@@ -38,11 +38,15 @@
 #include "drivers/RTC.h"
 #include "drivers/Processor.h"
 #include "mem/KernelMemoryAllocator.h"
+#include "structures/List.h"
+
 
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
 
 class DiscDevice;
+
+typedef List<DiscDevice*> DiscList;
 
 /*!
  * @class Kernel Kernel.h "Kernel.h"
@@ -134,7 +138,7 @@ private:
 	const RTC m_clock;                 /*!< Clock device.          */
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
-	DiscDevice* m_discs[];									 /*!< Disks.                 */
+	DiscList m_discs;									 /*!< Disks.                 */
 	
 	/*! Vector of handlers.    */
 	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 

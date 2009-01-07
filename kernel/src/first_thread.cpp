@@ -34,7 +34,7 @@
 #include "SysCall.h"
 #include "proc/UserThread.h"
 
-void* test(void* data)
+void* first_thread(void* data)
 {
 	#ifdef KERNEL_TEST
 		run_test();
@@ -56,7 +56,7 @@ void* test(void* data)
 		printf( "%p %c\n",((uintptr_t)text - 4096), *(char*)((uintptr_t)text - 4096) );
 	} else {
 		thread_t user_t;
-		Thread* user = UserThread::create(&user_t, test, (void*)0xff, TF_NEW_VMM);
+		Thread* user = UserThread::create(&user_t, first_thread, (void*)0xff, TF_NEW_VMM);
 		printf ("created thread: %p.\n", user);
 	} // */
 	return NULL;

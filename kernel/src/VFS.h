@@ -37,7 +37,7 @@
 #include "types.h"
 
 
-class DiskDevice;
+class DiscDevice;
 typedef uint file_t;
 
 class VFS
@@ -47,7 +47,7 @@ public:
 		POS_START, POS_CURRENT, POS_END
 	};
 	VFS(){};
-	virtual bool mount( DiskDevice* disk ) = 0;
+	virtual bool mount( DiscDevice* disk ) = 0;
 	virtual file_t openFile( char file_name[], char mode ) = 0;
 	virtual void closeFile( file_t file ) = 0;
 	virtual ssize_t readFile( file_t src, void* buffer, size_t size ) = 0;

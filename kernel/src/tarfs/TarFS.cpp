@@ -34,7 +34,7 @@
 
 #include "TarFS.h"
 #include "TarHeader.h"
-#include "drivers/DiskDevice.h"
+#include "drivers/DiscDevice.h"
 
 #ifndef TARFS_DEBUG
 #define PRINT_DEBUG(...)
@@ -45,12 +45,12 @@
 #endif
 
 
-TarFS::TarFS( DiskDevice* disk )
+TarFS::TarFS( DiscDevice* disk )
 {
 	mount( disk );
 }
 /*----------------------------------------------------------------------------*/
-bool TarFS::mount( DiskDevice<512>* disk )
+bool TarFS::mount( DiscDevice* disk )
 {
 	if (!disk) return false;
 
