@@ -33,10 +33,12 @@
  */
 
 #pragma once
+#include "InterruptHandler.h"
 
-class DiscDevice
+class DiscDevice: public InterruptHandler
 {
 public:
 	virtual bool read( char* buffer, uint count, uint block, uint start_pos ) = 0;
 	virtual bool write( char* buffer, uint count, uint block, uint start_pos );
+	virtual size_t size();
 };

@@ -103,7 +103,7 @@ public:
 	 * @param size requested size
 	 * @return adress to the block of given size, NULL on failure
 	 */
-	void* malloc( size_t size );// const;
+	void* malloc( size_t size );// const
 
 	/*! @brief Kernel heap free.
 	 * @param address adress of the returned block
@@ -130,6 +130,8 @@ public:
 	void refillTLB();
 
 	void registerInterruptHandler( InterruptHandler* handler, uint inter );
+
+	DiscDevice* disk() { return m_discs.getFront(); };
 
 private:
 	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */

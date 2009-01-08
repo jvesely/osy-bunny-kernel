@@ -81,7 +81,7 @@ Kernel::Kernel() :
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
+	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP );
 }
 /*----------------------------------------------------------------------------*/
@@ -156,6 +156,8 @@ void Kernel::run()
 //		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
 	//m_alloc.setup(ADDR_TO_KSEG0(m_physicalMemorySize - 0x100000), 0x100000);
 	ASSERT(MyFrameAllocator::instance().isInitialized());
+
+	attachDiscs();
 
 	//init and run the main thread
 	thread_t mainThread;
@@ -292,7 +294,6 @@ void Kernel::handleInterrupts( Processor::Context* registers )
 			ASSERT (m_interruptHandlers[i]);
 			m_interruptHandlers[i]->handleInterrupt();
 		}
-	
 	if (Thread::shouldSwitch())
 		Thread::getCurrent()->yield();
 
@@ -341,7 +342,8 @@ void Kernel::refillTLB()
 /*----------------------------------------------------------------------------*/
 void Kernel::attachDiscs()
 {
-	DiscDevice* disc = new MsimDisc(
-		HDD0_DATA_ADDR, HDD0_SEC_NO_ADDR, HDD0_STATUS_ADDR );
+	DiscDevice* disc = new MsimDisc( HDD0_ADDR );
+	registerInterruptHandler( disc, HDD0_INTERRUPT );
 	ASSERT (disc);
+	m_discs.pushBack( disc );
 }

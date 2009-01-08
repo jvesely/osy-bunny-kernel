@@ -34,7 +34,6 @@
 
 #pragma once
 
-#include "InterruptHandler.h"
 #include "devices.h"
 #include "synchronization/Mutex.h"
 #include "DiscDevice.h"
@@ -43,14 +42,15 @@
 
 class Thread;
 
-class MsimDisc: public InterruptHandler, public DiscDevice
+class MsimDisc: public DiscDevice
 {
 public:
-	MsimDisc( char** data_addr, uint* secno_addr, unative_t* status_addr ):
-		m_addr( data_addr ), m_secno_addr( secno_addr ), m_status( status_addr )
+	MsimDisc( unative_t* address ):
+		m_registers( address )
 		{};
 	bool read( char* buffer, uint count, uint block, uint start_pos );
 	bool write( char* buffer, uint count, uint block, uint start_pos );
+	size_t size() { return m_registers[SIZE]; };
 	void handleInterrupt();
 
 private:
@@ -59,17 +59,20 @@ private:
 		OP_WRITE = 0x2      /*!< Second bit. */
 	};
 	static const unative_t DONE_MASK  = 0x4;     /*!< Third bit.  */
+	static const unative_t ERROR_MASK = 0x8;     /*!< Fourth bit. */
 
-	void diskOp( uint block_num, char buffer[BLOCK_SIZE], OperationMask op );
+	enum Offsets {
+		DATA, SECTOR, STATUS, SIZE, LIMIT
+	};
+
+	void diskOp( uint block_num, unative_t buffer, OperationMask op );
 	void block();
 
 	inline bool pending()
-		{ return !(*m_status & DONE_MASK); };
+		{ return m_registers[STATUS] && !(m_registers[STATUS] & DONE_MASK); };
 
+	volatile unative_t* m_registers;
 
-	char** m_addr;
-	uint* m_secno_addr;
-	unative_t* m_status;
 	Thread* m_waitingThread;
 
 	char m_buffer[BLOCK_SIZE];

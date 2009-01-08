@@ -35,17 +35,35 @@
 #pragma once
 
 #include "types.h"
+#include "api.h"
 
-struct TarHeader
+class TarHeader
 {
-	char fileName[100];
-	char mod[8];
-	char uid[8];
-	char gid[8];
-	char fileSize[12];
-	char modTime[12];
-	char checksum[8];
-	char link;
-	char linkName[100];
+public:
+	inline char* fileName() { return m_fileName; };
+	inline uint  fileSize();
+private:
+	char m_fileName[100];
+	char m_mod[8];
+	char m_uid[8];
+	char m_gid[8];
+	char m_fileSize[12];
+	char m_modTime[12];
+	char m_checksum[8];
+	char m_link;
+	char m_linkName[100];
 	byte zeros[255];
 };
+
+/*----------------------------------------------------------------------------*/
+/* DEFINITIONS ---------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+uint TarHeader::fileSize()
+{
+	uint res = 0;
+	for (int i = 1; i < 11; ++i){
+	//	printf("<%c,%u> ", m_fileSize[i], m_fileSize[i]);
+		res = (res * 8) + (m_fileSize[i] - '0');
+	}
+	return res;
+}

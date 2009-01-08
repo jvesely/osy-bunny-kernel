@@ -33,15 +33,18 @@
 #include "api.h"
 #include "SysCall.h"
 #include "proc/UserThread.h"
+#include "Kernel.h"
+#include "tarfs/TarFS.h"
 
 void* first_thread(void* data)
 {
 	#ifdef KERNEL_TEST
 		run_test();
-		return NULL;
+		Kernel::instance().halt();
 	#else
 		puts( "No test specified !!!\n" );
 	#endif
+
 
 	if (data) {
 		char text[4];
@@ -53,11 +56,14 @@ void* first_thread(void* data)
 		int count = SysCall::puts( text );
 		printf( "\ntext at %p is %s(%u).\n", text, text, count );
 		//*(char*)NULL = 0;
-		printf( "%p %c\n",((uintptr_t)text - 4096), *(char*)((uintptr_t)text - 4096) );
+	//	printf( "%p %c\n",((uintptr_t)text - 4096), *(char*)((uintptr_t)text - 4096) );
+		Kernel::instance().stop();
 	} else {
-		thread_t user_t;
-		Thread* user = UserThread::create(&user_t, first_thread, (void*)0xff, TF_NEW_VMM);
-		printf ("created thread: %p.\n", user);
+		TarFS fs(Kernel::instance().disk());
+//		thread_t user_t;
+//		Thread* user = UserThread::create(&user_t, first_thread, (void*)0xff, TF_NEW_VMM);
+	//	printf ("created thread: %p.\n", user);
 	} // */
+	Kernel::instance().stop();
 	return NULL;
 }

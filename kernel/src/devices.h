@@ -33,7 +33,7 @@
 #pragma once
 #include "types.h"
 
-#define DEVICES_MAP_START 0xFFFFFFF0
+#define DEVICES_MAP_START 0xFFFFFF00
 
 #define TIMER_INTERRUPT 7
 
@@ -48,6 +48,5 @@
 #define CLOCK (unative_t*)(0xFFFFFFF8)
 
 /*! hdd */
-#define HDD0_DATA_ADDR    (char**)(0xffffff00)
-#define HDD0_SEC_NO_ADDR  (uint*)(0xffffff04)
-#define HDD0_STATUS_ADDR  (unative_t*)(0xffffff08)
+#define HDD0_ADDR    (unative_t*)(0xffffff00)
+#define HDD0_INTERRUPT    2

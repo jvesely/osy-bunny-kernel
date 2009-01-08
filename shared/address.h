@@ -30,7 +30,7 @@
  * Defines segment offset mask, prefix mask, kseg0 and kseg1 prefix.
  * All taken from the Kalisto file.
  */
-
+#pragma once
 
 #define ADDR_PREFIX_MASK 	0xe0000000	/*!< upper 3 bits */
 #define ADDR_OFFSET_MASK 	0x1fffffff	/*!< lower 29 bits */
@@ -44,6 +44,9 @@
 #define ADDR_OFFSET(addr)	( (addr) & ADDR_OFFSET_MASK ) /*! take the offset */
 
 /*! replace prefix by kseg0 prefix */
+/*template<typename T>
+inline T ADDR_TO_KSEG0(T addr) 
+	{ return (addr & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG0; };*/
 #define ADDR_TO_KSEG0(addr)	( ((addr) & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG0 )
 /*! replace prefix by kseg1 prefix */
 #define ADDR_TO_KSEG1(addr) ( ((addr) & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG1 )
