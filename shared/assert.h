@@ -25,11 +25,8 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Contains ASSERT and assert macros.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
  */
 
 #pragma once
@@ -45,8 +42,8 @@
 #define ASSERT(test) \
   if (! (test) ) { \
     panic("ASSERTION FAILED: \"%s\" in %s on line %d\n", (char*)#test, __FILE__, __LINE__); \
-  } else void(0)
+  } else ((void) 0)
 #else
-# define ASSERT(x)
+# define ASSERT(x) ((void) 0)
 #endif
 

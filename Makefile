@@ -1,9 +1,9 @@
 #
-#Kernel & Loader global Makefile 1st version
+#Kernel & Loader global Makefile n-th version
 #
 
-all: kernel loader librt
-.PHONY: kernel loader librt
+all: kernel loader librt disc
+.PHONY: kernel loader librt disc
 kernel:
 	@echo "Building kernel";
 	$(MAKE) -C kernel kernel "KERNEL_TEST=$(KERNEL_TEST)"
@@ -16,9 +16,13 @@ librt:
 	@echo "Building librt"
 	$(MAKE) -C librt librt
 
+disc:
+	@echo "Creating disc"
+	@tar -C disc -cf disc.tar `ls disc`
+
 ### cleaning stuff ###
 .PHONY: clean
-clean: clean-kernel clean-loader clean-librt
+clean: clean-kernel clean-loader clean-librt clean-disc
 clean-kernel:
 	@echo "Cleaning kernel";
 	$(MAKE) -C kernel clean
@@ -28,10 +32,13 @@ clean-loader:
 clean-librt:
 	@echo "Cleaning librt"
 	$(MAKE) -C librt clean
+clean-disc:
+	@echo "Cleaning disc"
+	@rm -f disc.tar
 
 ### distcleaning stuff ###
 .PHONY: distclean
-distclean: distclean-kernel distclean-loader distclean-librt
+distclean: distclean-kernel distclean-loader distclean-librt clean-disc
 distclean-kernel:
 	@echo "Distcleaning kernel"
 	$(MAKE) -C kernel distclean

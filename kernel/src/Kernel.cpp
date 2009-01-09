@@ -81,7 +81,7 @@ Kernel::Kernel() :
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
-	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP );
 }
 /*----------------------------------------------------------------------------*/
