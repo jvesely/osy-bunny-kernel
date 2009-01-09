@@ -48,8 +48,8 @@ public:
 	MsimDisc( unative_t* address ):
 		m_registers( address )
 		{};
-	bool read( char* buffer, uint count, uint block, uint start_pos );
-	bool write( char* buffer, uint count, uint block, uint start_pos );
+	bool read( void* buffer, uint count, uint block, uint start_pos );
+	bool write( void* buffer, uint count, uint block, uint start_pos );
 	size_t size() { return m_registers[SIZE]; };
 	void handleInterrupt();
 

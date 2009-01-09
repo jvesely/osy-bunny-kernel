@@ -37,5 +37,6 @@ enum errors {
 	EKILLED     = -3, /*!< Requested thread heas been killed */
 	ETIMEDOUT   = -4, /*!< Time limit reached */
 	EWOULDBLOCK = -5, /*!< Operation would block */
-	EOTHER      = -6
+	EOTHER      = -6,
+	EIO         = -7
 };

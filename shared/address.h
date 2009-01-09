@@ -53,6 +53,8 @@ inline T ADDR_TO_KSEG0(T addr)
 /*! remove prefix (move to useg) */
 #define ADDR_TO_USEG(addr)  ( ((addr) & ADDR_OFFSET_MASK) )
 
+#define ADDR_IN_KSEG0(addr) ( ADDR_PREFIX_KSEG0 == ADDR_PREFIX((uintptr_t)addr))
+
 #define ADDR_SIZE_KSEG0 (ADDR_PREFIX_KSEG1 - ADDR_PREFIX_KSEG0)	/*! 0.5 GB */
 
 /* Entry points (jumps to C++ code) */

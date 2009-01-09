@@ -40,25 +40,21 @@
 class DiscDevice;
 typedef int file_t;
 
+
+
 class VFS
 {
 public:
-	enum FilePos {
-		POS_START, POS_CURRENT, POS_END
-	};
 
 	VFS(){};
 	virtual bool mount( DiscDevice* disk ) = 0;
-	virtual file_t openFile( char file_name[], char mode ) = 0;
+	virtual file_t openFile( const char file_name[], const char mode ) = 0;
 	virtual void closeFile( file_t file ) = 0;
 	virtual ssize_t readFile( file_t src, void* buffer, size_t size ) = 0;
-	virtual uint seekFile( file_t file, FilePos pos, uint offset ) = 0; 
+	virtual uint seekFile( file_t file, FilePos pos, int offset ) = 0; 
 	virtual bool existsFile( file_t file ) = 0;
 	virtual size_t sizeFile( file_t file ) = 0;
 	virtual bool eof( file_t file ) = 0;
-
-
-
 
 private:
 	

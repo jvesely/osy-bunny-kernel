@@ -54,17 +54,25 @@ bool DirEntry::addSubEntry( char* name, Entry* entry )
 	return true;
 }
 /*----------------------------------------------------------------------------*/
-String DirEntry::firstEntry()
+const String DirEntry::firstEntry()
 {
 	if (m_subEntries.count())
 		return m_subEntries.min().data().first;
 	return String();
 }
 /*----------------------------------------------------------------------------*/
-String DirEntry::nextEntry( String previous )
+const String DirEntry::nextEntry( const String previous )
 {
 	SplayBinaryNode<NamePair> * entry =
 		m_subEntries.findItem( NamePair( previous, NULL ) );
 	if (!entry || !entry->next()) return String();
 	return entry->next()->data().first;
+}
+/*----------------------------------------------------------------------------*/
+Entry* DirEntry::subEntry( const String name )
+{
+	SplayBinaryNode<NamePair> * entry =
+		m_subEntries.findItem( NamePair( name, NULL ) );
+	PRINT_DEBUG ("Found subentry: %s at ptr %p.\n", name.cstr(), entry);
+	return entry ? entry->data().second : NULL;
 }

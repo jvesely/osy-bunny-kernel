@@ -17,7 +17,8 @@ librt:
 	$(MAKE) -C librt librt
 
 disc:
-	@echo "Creating disc"
+	@echo "Creating disc including: " `ls disc`
+	@touch disc/tmp
 	@tar -C disc -cf disc.tar `ls disc`
 
 ### cleaning stuff ###

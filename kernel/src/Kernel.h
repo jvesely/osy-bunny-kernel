@@ -39,7 +39,9 @@
 #include "drivers/Processor.h"
 #include "mem/KernelMemoryAllocator.h"
 #include "structures/List.h"
+#include "VFS.h"
 
+extern void* first_thread(void*);
 
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
@@ -141,6 +143,7 @@ private:
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
 	DiscList m_discs;									 /*!< Disks.                 */
+	VFS* m_rootFS;                     /*!< /.                     */
 	
 	/*! Vector of handlers.    */
 	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 
@@ -167,5 +170,8 @@ private:
 	 */
 	Kernel();
 
-friend class Singleton<Kernel>;
+	friend class Singleton<Kernel>;
+	friend void* first_thread(void*);
 };
+
+#define KERNEL Kernel::instance()

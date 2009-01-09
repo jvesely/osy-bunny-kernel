@@ -49,7 +49,7 @@
   printf(ARGS);
 #endif
 
-bool MsimDisc::read( char* buffer, uint count, uint secno, uint start_pos )
+bool MsimDisc::read( void* buffer, uint count, uint secno, uint start_pos )
 {
 	InterruptDisabler inter;
 	MutexLocker guard(m_guard);
@@ -60,12 +60,13 @@ bool MsimDisc::read( char* buffer, uint count, uint secno, uint start_pos )
 	//if (pending()) return false;
 
 	uint copy_count = 0;
-
+	char* target = (char*)buffer;
+	
 	while (count) {
 		/* from the begining and large enough block read directly */
-		if ( start_pos == 0 && count >= BLOCK_SIZE ) {
-			PRINT_DEBUG ("Reading whole block to buffer %p.\n", buffer);
-			diskOp( secno, (unative_t)buffer, OP_READ ); 
+		if ( start_pos == 0 && count >= BLOCK_SIZE && ADDR_IN_KSEG0(target) ) {
+			PRINT_DEBUG ("Reading whole block to buffer %p.\n", target);
+			diskOp( secno, ADDR_TO_USEG((uintptr_t)target), OP_READ ); 
 			copy_count = BLOCK_SIZE;
 		} else {
 			PRINT_DEBUG ("Partial read to internal buffer %p.\n", m_buffer);	
@@ -83,7 +84,7 @@ bool MsimDisc::read( char* buffer, uint count, uint secno, uint start_pos )
 	  };
 	*/
 		count  -= copy_count;
-		buffer += copy_count;
+		target += copy_count;
 		++secno; /* read next sector. */
 	}
 	PRINT_DEBUG ("Leaving read to buffer: %p.\n", buffer);
@@ -109,7 +110,7 @@ void MsimDisc::block()
 
 }
 /*----------------------------------------------------------------------------*/
-bool MsimDisc::write( char* buffer, uint count, uint block, uint start_pos )
+bool MsimDisc::write( void* buffer, uint count, uint block, uint start_pos )
 {
 	InterruptDisabler inter;
 

@@ -32,22 +32,12 @@
  * at least people can understand it. 
  */
 
-#pragma once
-#include "InnerString.h"
-#include "Pointer.h"
+#include "Entry.h"
+#include "drivers/DiscDevice.h"
+#include "assert.h"
 
-template class Pointer<InnerString>;
-
-class String: protected Pointer<InnerString>
+bool Entry::readFromDevice(void* buffer, size_t count, uint start_block, uint offset)
 {
-public:
-	String( const char* text = NULL);
-	String( const String& other );
-	String& operator = ( const char* text );
-	String& operator = ( const String& other );
-	bool operator == ( const String& other ) const;
-	bool operator < ( const String& other ) const;
-	bool empty() const;
-	uint size() const;
-	const char* cstr() const;
-};
+	ASSERT (m_storage);
+	return m_storage->read(buffer, count, start_block, offset);
+}

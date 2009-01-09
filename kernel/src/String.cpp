@@ -33,6 +33,18 @@
  */
 
 #include "String.h"
+#include "api.h"
+
+//#define STRING_DEBUG
+
+#ifndef STRING_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...)\
+  puts("[ STRING DEBUG ]: ");\
+	  printf(ARGS);
+#endif
+
 
 String::String( const char* text ):
 	Pointer<InnerString>(new InnerString( text ))
@@ -70,6 +82,7 @@ bool String::operator == ( const String& other ) const
 	if (!me || !him) return false; /* one of them is empty */
 	
 	while (*me && *him) {
+		PRINT_DEBUG("comparing %c == %c.\n", *me, *him );
 		if (*me != *him) break;
 		++me; ++him;
 	}
@@ -86,7 +99,8 @@ bool String::operator < ( const String& other ) const
 	const char* him = other.cstr();
 	
 	while (*me && *him) {
-		if (*me < *him) return true;
+		PRINT_DEBUG("comparing %c < %c.\n", *me, *him );
+		if (*me != *him) break;
 		++me; ++him;
 	}
 	return *me < *him;

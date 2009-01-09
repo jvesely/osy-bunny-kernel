@@ -64,10 +64,7 @@ static const char* BUNNY_STR[5] = {
 static const uint BUNNIES_PER_LINE = 10;
 static const uint BUNNY_LINES = 5;
 
-extern void* first_thread(void*);
 extern unative_t COUNT_CPU;
-
-
 
 Kernel::Kernel() :
 	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK)

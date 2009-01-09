@@ -38,7 +38,7 @@
 class DiscDevice: public InterruptHandler
 {
 public:
-	virtual bool read( char* buffer, uint count, uint block, uint start_pos ) = 0;
-	virtual bool write( char* buffer, uint count, uint block, uint start_pos );
+	virtual bool read( void* buffer, uint count, uint block, uint start_pos ) = 0;
+	virtual bool write( void* buffer, uint count, uint block, uint start_pos );
 	virtual size_t size();
 };

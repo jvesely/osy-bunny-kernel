@@ -35,14 +35,23 @@
 #pragma once
 
 #include "types.h"
-
+class DiscDevice;
 
 class Entry
 {
-	public:
-		Entry(){};
-		virtual bool addSubEntry( char* name, Entry* entry )
-			{ return false; };
-
-		virtual ~Entry(){};
+public:
+	Entry(DiscDevice* storage): m_storage( storage ) {};
+	virtual size_t size() const = 0;
+	virtual ssize_t read( void* buffer, int size ) = 0;
+	virtual uint seek( FilePos pos, int offset ) = 0;
+	virtual bool open( const char mode ) { return false; };
+	virtual void close() {};
+	virtual bool addSubEntry( char* name, Entry* entry ) { return false; };
+	virtual ~Entry() {};
+protected:
+	Entry( const Entry& other );
+	Entry& operator = (const Entry& other);
+	bool readFromDevice(void* buffer, size_t count, uint start_block, uint offset);
+private:
+	DiscDevice* m_storage;
 };

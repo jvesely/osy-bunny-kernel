@@ -41,29 +41,40 @@ void* first_thread(void* data)
 	#ifdef KERNEL_TEST
 		run_test();
 		Kernel::instance().halt();
+	#endif
+	
+	#ifdef USER_TEST
+		const char* file = "test.bin";
 	#else
-		puts( "No test specified !!!\n" );
+		const char* file = "init.bin";
 	#endif
 
+	printf( "Mounting root fs..." );
+	TarFS* fs = new TarFS();
 
-	if (data) {
-		char text[4];
-		text[0] = 'f';
-		text[1] = 'o';
-		text[2] = 'o';
-		text[3] = 0;
-
-		int count = SysCall::puts( text );
-		printf( "\ntext at %p is %s(%u).\n", text, text, count );
-		//*(char*)NULL = 0;
-	//	printf( "%p %c\n",((uintptr_t)text - 4096), *(char*)((uintptr_t)text - 4096) );
-		Kernel::instance().stop();
+	if (fs && fs->mount( KERNEL.disk() )) {
+		KERNEL.m_rootFS = fs;
+		printf( "done\n" );
 	} else {
-		TarFS fs(Kernel::instance().disk());
+		printf( "Disk mounting failed. Shutting down.\n" );
+		KERNEL.halt();
+	}
+	
+	file_t bin_file = fs->openFile( file, OPEN_R );
+	if (bin_file < 0) {
+		printf("Failed to open file: %s.\n", file);
+		KERNEL.halt();
+	}
+	size_t filesize = fs->sizeFile( bin_file );
+	printf( "Reading from file %s of size %u.\n", file, filesize );
+	char* content = (char*)malloc( filesize + 1);
+	content[filesize] = 0;
+	fs->readFile( bin_file, content, filesize );
+	printf( "Contents: %s.\n", content );
 //		thread_t user_t;
 //		Thread* user = UserThread::create(&user_t, first_thread, (void*)0xff, TF_NEW_VMM);
 	//	printf ("created thread: %p.\n", user);
-	} // */
-	Kernel::instance().stop();
+	//} // */
+	KERNEL.stop();
 	return NULL;
 }

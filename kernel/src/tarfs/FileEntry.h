@@ -36,16 +36,28 @@
 #include "TarHeader.h"
 #include "Entry.h"
 
+class DiscDevice;
 
 class FileEntry: public Entry
 {
-	public:
-		FileEntry( TarHeader& tarHeader, uint block );
-	private:
-		uint m_uid;
-		uint m_gid;
-		uint m_size;
-		uint m_startPos;
-		uint m_modTime;
-		uint m_type;
+public:
+	FileEntry( TarHeader& tarHeader, uint block, DiscDevice* disc );
+	size_t size() const { return m_size; };
+	ssize_t read( void* buffer, int size );
+	uint seek( FilePos pos, int offset );
+	bool open( const char mode );
+	void close();
+	~FileEntry();
+		
+private:
+	uint m_uid;
+	uint m_gid;
+	uint m_size;
+	uint m_startPos;
+	uint m_modTime;
+	uint m_readCount;
+	uint m_pos;
+		
+	FileEntry( const FileEntry& other );
+	FileEntry& operator = ( const FileEntry& other );
 };

@@ -50,32 +50,33 @@
 #endif
 
 #define TAR_BLOCK_SIZE (sizeof(TarHeader))
+#define SIGNED_BITS_MASK (0x7fffffff)
 
 
-TarFS::TarFS( DiscDevice* disk = NULL )
+TarFS::TarFS( DiscDevice* disk ): m_lastDescriptor( 0 )
 {
 	PRINT_DEBUG ("Creating tarfs on disk %p...\n", disk);
 	mount( disk );
 }
 /*----------------------------------------------------------------------------*/
-bool TarFS::mount( DiscDevice* disk )
+bool TarFS::mount( DiscDevice* disc )
 {
 
-	if (!disk) return false;
+	if (!disc || !disc->size()) return false;
 
-	m_mountedDisk = disk;
+	m_mountedDisc = disc;
 	TarHeader header;
 	uint block = 0;
 
-	PRINT_DEBUG ("Mounting device %p of size %u B.\n", disk, disk->size());
+	PRINT_DEBUG ("Mounting device %p of size %u B.\n", disc, disc->size());
 	
-	while (disk->read( (char*)ADDR_TO_USEG((uint)&header), TAR_BLOCK_SIZE, block, 0 )) {
+	while (disc->read( &header, TAR_BLOCK_SIZE, block, 0 )) {
 		/* if there is no name it might only be the end*/
 		if (header.fileName()[0] == '\0') break;
 		
 		if (header.fileType() == TarHeader::File) {
 				PRINT_DEBUG ("Found file: %s (%d).\n", header.fileName(), header.fileSize() );
-				FileEntry* file = new FileEntry( header, block );
+				FileEntry* file = new FileEntry( header, block, disc );
 				m_rootDir.addSubEntry( header.fileName(), file );
 		}
 
@@ -83,9 +84,9 @@ bool TarFS::mount( DiscDevice* disk )
 
 		PRINT_DEBUG ("Next Block: %d.\n", block);
 	}
+#ifdef TARFS_DEBUG
 	PRINT_DEBUG ("Mount end.\n");
 	PRINT_DEBUG ("Mounted:\n");
-#ifdef TARFS_DEBUG
 	String str = m_rootDir.firstEntry();
 	while (!str.empty()) {
 			PRINT_DEBUG ("%s\n", str.cstr());
@@ -95,34 +96,54 @@ bool TarFS::mount( DiscDevice* disk )
 	return true;
 }
 /*----------------------------------------------------------------------------*/
-file_t TarFS::openFile( char file_name[], char mode )
+file_t TarFS::openFile( const char file_name[], char mode )
 {
-	return 0;
+	Entry* file = m_rootDir.subEntry( file_name );
+	PRINT_DEBUG ("Opening file %s(%p) mode: %i.\n", file_name, file, mode);
+	if (!file) return -1;
+	if (!file->open( mode )) return -2;
+		
+	file_t fd = ++m_lastDescriptor & SIGNED_BITS_MASK;
+	while (m_entryMap.exists( fd )){
+		fd = ++m_lastDescriptor & SIGNED_BITS_MASK;
+	}
+	
+	m_entryMap.insert( fd, file );
+	return fd;	
 }
 /*----------------------------------------------------------------------------*/
 void TarFS::closeFile( file_t file )
 {
+	Entry* entry = getFile( file );
+	if (entry) entry->close();
+	
 }
 /*----------------------------------------------------------------------------*/
 ssize_t TarFS::readFile( file_t src, void* buffer, size_t size )
 {
-	return -1;
+	Entry* entry = getFile( src );
+	if (entry) 
+		return entry->read( buffer, size );
+	return EIO;
 }
 /*----------------------------------------------------------------------------*/
-uint TarFS::seekFile( file_t file, FilePos pos, uint offset )
+uint TarFS::seekFile( file_t file, FilePos pos, int offset )
 {
+	Entry* entry = getFile( file );
+	if (entry) 
+		return entry->seek( pos, offset );
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
 bool TarFS::existsFile( file_t file )
 {
-	return false;
+	return (bool) getFile( file );
 }
 /*----------------------------------------------------------------------------*/
 size_t TarFS::sizeFile( file_t file )
 {
-	Entry* entry = m_entryMap.at( file );
-	if (entry) return 5;   //size here
+	Entry* entry = getFile( file );
+	if (entry) return entry->size();
 		else     return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -131,4 +152,9 @@ bool TarFS::eof( file_t file )
 	Entry* entry = m_entryMap.at( file );
 	if (entry) return true;
 		else     return false;
+}
+/*----------------------------------------------------------------------------*/
+Entry* TarFS::getFile( file_t fd )
+{
+	return m_entryMap.at( fd );
 }

@@ -47,10 +47,14 @@ typedef Trees<NamePair>::SplayTree EntryList;
 class DirEntry: public Entry
 {
 public:
-	DirEntry(){};
+	DirEntry():Entry( NULL ){};
 	bool addSubEntry( char* name, Entry* entry );
-	String firstEntry();
-	String nextEntry( String previous );
+	const String firstEntry();
+	const String nextEntry( const String previous );
+	Entry* subEntry( const String name );
+	size_t size() const { return m_subEntries.count(); };
+	ssize_t read( void* buffer, int size ) { return -1; };
+	uint seek( FilePos pos, int offset ) { return 0; };
 private:
 	EntryList m_subEntries;
 };
