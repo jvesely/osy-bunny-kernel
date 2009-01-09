@@ -50,27 +50,21 @@ bool DirEntry::addSubEntry( char* name, Entry* entry )
 {
 	String str( name );
 	PRINT_DEBUG ("Adding SubEntry %s.\n", str.cstr() );
-	m_subEntries.pushBack(NamePair(str, entry));
+	m_subEntries.insert( NamePair(str, entry) );
 	return true;
 }
 /*----------------------------------------------------------------------------*/
 String DirEntry::firstEntry()
 {
-	if (m_subEntries.size())
-		return m_subEntries.begin()->first;
+	if (m_subEntries.count())
+		return m_subEntries.min().data().first;
 	return String();
 }
 /*----------------------------------------------------------------------------*/
 String DirEntry::nextEntry( String previous )
 {
-	EntryList::Iterator it = m_subEntries.begin();
-	for (; it != m_subEntries.end(); ++it) {
-		if (it->first == previous ){
-				++it; break;
-		}
-	}
-	if (it == m_subEntries.end())
-		return String();
-	else
-		return it->first;
+	SplayBinaryNode<NamePair> * entry =
+		m_subEntries.findItem( NamePair( previous, NULL ) );
+	if (!entry || !entry->next()) return String();
+	return entry->next()->data().first;
 }

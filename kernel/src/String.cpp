@@ -35,13 +35,13 @@
 #include "String.h"
 
 String::String( const char* text ):
-	Pointer<InnerString>(new InnerString( text )), END( 0 )
+	Pointer<InnerString>(new InnerString( text ))
 {
 	ASSERT (data());
 }
 /*----------------------------------------------------------------------------*/
 String::String( const String& other ):
-	Pointer<InnerString>(const_cast<InnerString*>(other.data()) ), END( 0 )
+	Pointer<InnerString>(const_cast<InnerString*>(other.data()) )
 {
 	ASSERT (data() == other.data());
 };
@@ -60,26 +60,47 @@ String& String::operator = ( const String& other )
 	return *this;
 }
 /*----------------------------------------------------------------------------*/
-bool String::operator == ( const String& other )
+bool String::operator == ( const String& other ) const
 {
 	if (cstr() == other.cstr()) return true; /* same text */
+	
 	const char* me  = cstr();
 	const char* him = other.cstr();
+	
 	if (!me || !him) return false; /* one of them is empty */
-	while (*me && *him){
+	
+	while (*me && *him) {
 		if (*me != *him) break;
 		++me; ++him;
 	}
 	return *me == *him;
 }
 /*----------------------------------------------------------------------------*/
+bool String::operator < ( const String& other ) const
+{
+	if (cstr()  == other.cstr()) return false;
+	if (!cstr() && other.cstr()) return false;
+	if (cstr()  && !other.cstr()) return true;
+	
+	const char* me  = cstr();
+	const char* him = other.cstr();
+	
+	while (*me && *him) {
+		if (*me < *him) return true;
+		++me; ++him;
+	}
+	return *me < *him;
+}
+/*----------------------------------------------------------------------------*/
 bool String::empty() const
 {
-		return (!data() || ! cstr());
+		ASSERT (data());
+		return !cstr();
 }
 /*----------------------------------------------------------------------------*/
 const char* String::cstr() const
 {
-	return (data() ? data()->data() : NULL);
+	ASSERT (data());
+	return data()->data();
 }
 /*----------------------------------------------------------------------------*/

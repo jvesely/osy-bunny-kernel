@@ -36,10 +36,13 @@
 #include "Entry.h"
 #include "String.h"
 #include "structures/Pair.h"
-#include "structures/List.h"
+#include "structures/Trees.h"
+
+template class Pair<String, Entry*>;
+template class Tree< SplayBinaryNode<Pair<String, Entry*> > >;
 
 typedef Pair<String, Entry*> NamePair;
-typedef List<NamePair> EntryList;
+typedef Trees<NamePair>::SplayTree EntryList;
 
 class DirEntry: public Entry
 {

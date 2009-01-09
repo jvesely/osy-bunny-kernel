@@ -83,7 +83,8 @@ bool TarFS::mount( DiscDevice* disk )
 
 		PRINT_DEBUG ("Next Block: %d.\n", block);
 	}
-	PRINT_DEBUG ("Mount end.\nMounted:\n");
+	PRINT_DEBUG ("Mount end.\n");
+	PRINT_DEBUG ("Mounted:\n");
 #ifdef TARFS_DEBUG
 	String str = m_rootDir.firstEntry();
 	while (!str.empty()) {

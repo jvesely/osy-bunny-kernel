@@ -41,14 +41,12 @@ template class Pointer<InnerString>;
 class String: protected Pointer<InnerString>
 {
 public:
-	String():END(0) {};
-	String( const char* text );
+	String( const char* text = NULL);
 	String( const String& other );
 	String& operator = ( const char* text );
 	String& operator = ( const String& other );
-	bool operator == (const String& other);
+	bool operator == ( const String& other ) const;
+	bool operator < ( const String& other ) const;
 	bool empty() const;
 	const char* cstr() const;
-private:
-	const char END;
 };

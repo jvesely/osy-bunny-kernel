@@ -39,7 +39,7 @@
 #include "synchronization/MutexLocker.h"
 #include "address.h"
 
-#define DISC_DEBUG
+//#define DISC_DEBUG
 
 #ifndef DISC_DEBUG
 #define PRINT_DEBUG(...)
