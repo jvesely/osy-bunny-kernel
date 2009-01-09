@@ -34,27 +34,26 @@
 
 #pragma once
 
-#include "VFS.h"
-#include "structures/HashMap.h"
-#include "DirEntry.h"
+#include "Object.h"
+#include "api.h"
 
-typedef HashMap<file_t, Entry*> EntryMap;
-
-class TarFS: public VFS
+class InnerString: public Object
 {
 public:
-	TarFS( DiscDevice* disk );
-	bool mount( DiscDevice* disk );
-	file_t openFile( char file_name[], char mode );
-	void closeFile( file_t file );
-	ssize_t readFile( file_t src, void* buffer, size_t size );
-	uint seekFile( file_t file, FilePos pos, uint offset);
-	bool existsFile( file_t file );
-	size_t sizeFile( file_t file );
-	bool eof( file_t file );
-
+	inline InnerString( const char* text );
+	inline const char* data() const { return m_text; }
+	//InnerString& operator = ( char* text );
 private:
-	EntryMap m_entryMap;
-	DirEntry m_rootDir;
-	DiscDevice* m_mountedDisk;
+	InnerString( const InnerString& other );
+	InnerString& operator = ( InnerString& other );
+	char* m_text;
 };
+
+inline InnerString::InnerString( const char* text )
+{
+	size_t count;
+	for ( count = 0; text[count]; ++count ) {};
+	++count; /* count the last \0 */
+	m_text = (char*)malloc( count );
+	memcpy( m_text, text, count );
+}

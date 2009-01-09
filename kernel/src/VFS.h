@@ -38,7 +38,7 @@
 
 
 class DiscDevice;
-typedef uint file_t;
+typedef int file_t;
 
 class VFS
 {
@@ -46,6 +46,7 @@ public:
 	enum FilePos {
 		POS_START, POS_CURRENT, POS_END
 	};
+
 	VFS(){};
 	virtual bool mount( DiscDevice* disk ) = 0;
 	virtual file_t openFile( char file_name[], char mode ) = 0;

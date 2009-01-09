@@ -33,28 +33,22 @@
  */
 
 #pragma once
+#include "InnerString.h"
+#include "Pointer.h"
 
-#include "VFS.h"
-#include "structures/HashMap.h"
-#include "DirEntry.h"
+template class Pointer<InnerString>;
 
-typedef HashMap<file_t, Entry*> EntryMap;
-
-class TarFS: public VFS
+class String: protected Pointer<InnerString>
 {
 public:
-	TarFS( DiscDevice* disk );
-	bool mount( DiscDevice* disk );
-	file_t openFile( char file_name[], char mode );
-	void closeFile( file_t file );
-	ssize_t readFile( file_t src, void* buffer, size_t size );
-	uint seekFile( file_t file, FilePos pos, uint offset);
-	bool existsFile( file_t file );
-	size_t sizeFile( file_t file );
-	bool eof( file_t file );
-
+	String():END(0) {};
+	String( const char* text );
+	String( const String& other );
+	String& operator = ( const char* text );
+	String& operator = ( const String& other );
+	bool operator == (const String& other);
+	bool empty() const;
+	const char* cstr() const;
 private:
-	EntryMap m_entryMap;
-	DirEntry m_rootDir;
-	DiscDevice* m_mountedDisk;
+	const char END;
 };

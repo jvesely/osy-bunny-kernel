@@ -33,28 +33,19 @@
  */
 
 #pragma once
+#include "TarHeader.h"
+#include "Entry.h"
 
-#include "VFS.h"
-#include "structures/HashMap.h"
-#include "DirEntry.h"
 
-typedef HashMap<file_t, Entry*> EntryMap;
-
-class TarFS: public VFS
+class FileEntry: public Entry
 {
-public:
-	TarFS( DiscDevice* disk );
-	bool mount( DiscDevice* disk );
-	file_t openFile( char file_name[], char mode );
-	void closeFile( file_t file );
-	ssize_t readFile( file_t src, void* buffer, size_t size );
-	uint seekFile( file_t file, FilePos pos, uint offset);
-	bool existsFile( file_t file );
-	size_t sizeFile( file_t file );
-	bool eof( file_t file );
-
-private:
-	EntryMap m_entryMap;
-	DirEntry m_rootDir;
-	DiscDevice* m_mountedDisk;
+	public:
+		FileEntry( TarHeader& tarHeader, uint block );
+	private:
+		uint m_uid;
+		uint m_gid;
+		uint m_size;
+		uint m_startPos;
+		uint m_modTime;
+		uint m_type;
 };

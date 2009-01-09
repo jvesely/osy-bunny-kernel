@@ -33,28 +33,21 @@
  */
 
 #pragma once
+#include "Entry.h"
+#include "String.h"
+#include "structures/Pair.h"
+#include "structures/List.h"
 
-#include "VFS.h"
-#include "structures/HashMap.h"
-#include "DirEntry.h"
+typedef Pair<String, Entry*> NamePair;
+typedef List<NamePair> EntryList;
 
-typedef HashMap<file_t, Entry*> EntryMap;
-
-class TarFS: public VFS
+class DirEntry: public Entry
 {
 public:
-	TarFS( DiscDevice* disk );
-	bool mount( DiscDevice* disk );
-	file_t openFile( char file_name[], char mode );
-	void closeFile( file_t file );
-	ssize_t readFile( file_t src, void* buffer, size_t size );
-	uint seekFile( file_t file, FilePos pos, uint offset);
-	bool existsFile( file_t file );
-	size_t sizeFile( file_t file );
-	bool eof( file_t file );
-
+	DirEntry(){};
+	bool addSubEntry( char* name, Entry* entry );
+	String firstEntry();
+	String nextEntry( String previous );
 private:
-	EntryMap m_entryMap;
-	DirEntry m_rootDir;
-	DiscDevice* m_mountedDisk;
+	EntryList m_subEntries;
 };
