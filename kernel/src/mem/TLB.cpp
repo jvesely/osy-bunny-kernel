@@ -54,7 +54,7 @@ Processor::PageSize TLB::suggestPageSize(
 	using namespace Processor;
 	uint min_res = -1;
 	PageSize victor = PAGE_MIN;
-	for (PageSize page = PAGE_MIN; page <= PAGE_MAX; ++page  )
+	for (PageSize page = PAGE_MIN; ; ++page)
 	{
 		size_t aligned = roundUp(chunk_size, pages[page].size);
 		uint loss = ( (aligned - chunk_size) * 100) / aligned;
@@ -66,6 +66,7 @@ Processor::PageSize TLB::suggestPageSize(
 			min_res = result;
 			victor = page;
 		}
+		if (page == PAGE_MAX) break;
 	}
 	PRINT_DEBUG ("Suggest pages of size: %u.\n", pages[victor].size);
 	return victor;
@@ -118,7 +119,9 @@ void TLB::clearAsid( const byte asid )
 
 	using namespace Processor;
 
-  for (uint i = 0; i < ENTRY_COUNT; ++i) {
+	native_t old_asid = reg_read_entryhi();
+  
+	for (uint i = 0; i < ENTRY_COUNT; ++i) {
     reg_write_index( i );
 		TLB_read();	
 		if ((reg_read_entryhi() & ASID_MASK) == asid) {
@@ -128,7 +131,8 @@ void TLB::clearAsid( const byte asid )
 			reg_write_entrylo1( 0 );
     	TLB_write_index();
 		}
-  }	
+  }
+	reg_write_entryhi( old_asid );
 }
 /*----------------------------------------------------------------------------*/
 void TLB::switchAsid( byte asid )
@@ -283,6 +287,7 @@ bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
 	byte asid = vmm->asid();
 
 	ASSERT (asid);
+	ASSERT (asid != 255);
 
 	PRINT_DEBUG ("Refilling virtual address %p ASID: %u.\n", bad_addr, asid);
 	
