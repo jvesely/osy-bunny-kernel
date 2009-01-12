@@ -104,11 +104,13 @@ public:
 
 	/*!
 	 * @brief Exception handling member function.
-	 * @param registers pointer to the stored registers at the time
+	 * @param registers Pointer to the stored registers at the time
 	 * when exception occured.
 	 */
 	void exception( Processor::Context* registers );
 
+	/*! 
+	 * @brief Handler for exceptions that are handled directly by the kernel
 	bool handleException( Processor::Context* registers );
 
 	void registerExceptionHandler( 
@@ -120,9 +122,14 @@ public:
 	void setTimeInterrupt( const Time& time );
 
 	void refillTLB();
+	
+	/*! @brief Registers handler for the given interrupt.
+	 *	@param handler Run this handler when interrupt occurs.
+	 *	@param intn Associate with this interrupt.
+	 */
+	void registerInterruptHandler( InterruptHandler* handler, uint intn );
 
-	void registerInterruptHandler( InterruptHandler* handler, uint inter );
-
+	/*! @brief Gets the first disk. */
 	DiscDevice* disk() { return m_discs.getFront(); };
 
 private:
@@ -134,7 +141,7 @@ private:
 	DiscList m_discs;									 /*!< Disks.                 */
 	VFS* m_rootFS;                     /*!< /.                     */
 	
-	/*! Vector of handlers.    */
+	/*! Vector of the Interrupt handlers. */
 	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 
 
 	/*! @brief Detects accessible memory.

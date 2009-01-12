@@ -153,9 +153,6 @@ void Kernel::run()
 	MyFrameAllocator::instance().init( 
 		m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
 
-//	printf("Frame allocator initialized: %s\n",
-//		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
-	//m_alloc.setup(ADDR_TO_KSEG0(m_physicalMemorySize - 0x100000), 0x100000);
 	ASSERT (MyFrameAllocator::instance().isInitialized());
 
 	attachDiscs();
