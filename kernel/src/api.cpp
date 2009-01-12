@@ -45,6 +45,7 @@
 #include "timer/ClassTimer.h"
 
 #include "mem/FrameAllocator.h"
+#include "mem/KernelMemoryAllocator.h"
 
 void disable_interrupts()
 {
@@ -123,12 +124,12 @@ void kpanic(void** context, const char* format, ...){
 /*----------------------------------------------------------------------------*/
 void* malloc( size_t size )
 {
-	return Kernel::instance().malloc( size );
+	return KernelMemoryAllocator::instance().getMemory( size );
 }
 /*----------------------------------------------------------------------------*/
 void free( const void* ptr )
 {
-	Kernel::instance().free( ptr );
+	KernelMemoryAllocator::instance().freeMemory( ptr );
 }
 /*----------------------------------------------------------------------------*/
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),

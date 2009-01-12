@@ -34,10 +34,11 @@
 #include "Singleton.h"
 #include "ExceptionHandler.h"
 #include "timer/Time.h"
+
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
 #include "drivers/Processor.h"
-#include "mem/KernelMemoryAllocator.h"
+
 #include "structures/List.h"
 #include "VFS.h"
 
@@ -101,17 +102,6 @@ public:
 	static inline void block() 
 		{ Processor::save_and_disable_interrupts(); while(true) ;; };
 
-	/*! @brief Kernel heap alloc.
-	 * @param size requested size
-	 * @return adress to the block of given size, NULL on failure
-	 */
-	void* malloc( size_t size );// const
-
-	/*! @brief Kernel heap free.
-	 * @param address adress of the returned block
-	 */
-	void free( const void* address );// const;
-
 	/*!
 	 * @brief Exception handling member function.
 	 * @param registers pointer to the stored registers at the time
@@ -137,7 +127,6 @@ public:
 
 private:
 	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
-	KernelMemoryAllocator m_alloc;     /*!< Kernel heap manager.   */
 	Console m_console;                 /*!< Console device.        */
 	const RTC m_clock;                 /*!< Clock device.          */
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
@@ -153,20 +142,20 @@ private:
 	 * Detects accesible memory by moving mapping of the first MB.
 	 * @return size of detected memory.
 	 */
-	size_t getPhysicalMemorySize(uintptr_t from);
+	size_t getPhysicalMemorySize( uintptr_t from );
 
 	/*! @brief Interrupt hanling member function.
 	 * @param registers pointer to the stored registers at the time
 	 * when interrupt occured.
 	 */
-	void handleInterrupts(Processor::Context* registers);
+	void handleInterrupts( Processor::Context* registers );
 
 	void attachDiscs();
 
 	/*! @brief Initializes structures.
 	 *
-	 * Resets status register to turn on useg mapping.
-	 * Sets clock and console addresses.
+	 * Resets status register to turn on useg mapping. Sets clock and console 
+	 * addresses. Registers self as the interrupt handler for interrupts.
 	 */
 	Kernel();
 
