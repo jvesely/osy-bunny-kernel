@@ -73,13 +73,13 @@ Kernel::Kernel() :
 	registerInterruptHandler( &m_console, CHARACTER_INPUT_INTERRUPT );
 	registerInterruptHandler( &Timer::instance(), TIMER_INTERRUPT );
 
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS  );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT  );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP );
-		
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI   );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP   );
+
 	Processor::reg_write_status( 0 );
 }
 /*----------------------------------------------------------------------------*/

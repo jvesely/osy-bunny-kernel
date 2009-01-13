@@ -32,7 +32,10 @@
  * at least people can understand it. 
  */
 #pragma once
+
 #include "types.h"
+#include "syscallcodes.h"
+
 /*!
  * @namespace SysCall
  * @brief SysCall invoking functions.
@@ -41,11 +44,9 @@
  */
 namespace SysCall
 {
-enum SysCalls {
-	SC_PUTS = 1, SC_GETS
-};
 
-#define syscall( call, p0, p1, p2, p3) \
+#define QUOT(expr) #expr
+#define SYSCALL( call, p0, p1, p2, p3 ) \
 ({ \
 	register unative_t __a0 asm("$4") = (unative_t) p0;\
 	register unative_t __a1 asm("$5") = (unative_t) p1;\
@@ -55,7 +56,7 @@ enum SysCalls {
 	register native_t __v0 asm("$2");\
 	\
 	asm volatile ( \
-		"syscall "#call" \n"\
+		"syscall "QUOT(call)" \n"\
 		:"=r"(__v0)\
 		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
 		:\
@@ -63,20 +64,15 @@ enum SysCalls {
 	__v0;\
 })
 
-template<int SC>
-native_t sc( unative_t par0, unative_t par1, unative_t par2, unative_t par3 )
+inline size_t puts( const char* str )
 {
-	return syscall(SC, par0, par1, par2, par3);
-}
-
-inline size_t puts( const char* str ) {
-	//return sc<1>((unative_t)str,0,0,0);
-	return syscall( 1, str, 0, 0, 0 );
+	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
 }
 
 inline size_t gets( char* str, size_t count ){
-	//syscall( SC_GETS, (unative_t)str, count );
-	return 0;
+	return SYSCALL( SYS_GETS, str, count, 0, 0 );
 }
 
+#undef QUOT
+#undef SYSCALL
 }

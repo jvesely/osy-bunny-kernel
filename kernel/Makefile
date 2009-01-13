@@ -13,22 +13,28 @@ INC_DIR = ../shared
 KERNEL_BIN = kernel.bin
 KERNEL_RAW = kernel.raw
 KERNEL_MAP = kernel.map
-LDS_FILE = kernel.lds
+LDS_FILE   = kernel.lds
+
 OBJS += $(shell find src ../shared -name "*.cpp" -o -name "*.S" -o -name "*.c")
 TEST_DIRS = 
 
 ifneq ($(KERNEL_TEST),)
-
-	OBJS += $(KERNEL_TEST)
-	CPPFLAGS += -DKERNEL_TEST
+	OBJS      += $(KERNEL_TEST)
+	CPPFLAGS  += -DKERNEL_TEST
+	CFLAGS    += -DKERNEL_TEST
 	TEST_DIRS += $(dir $(addprefix ../, $(KERNEL_TEST)))
-	VPATH += $(TEST_DIRS)
+	VPATH     += $(TEST_DIRS)
+endif
+
+ifneq ($(USER_TEST),)
+	CPPFLAGS += -DUSER_TEST
+	CFLAGS   += -DUSER_TEST
 endif
 
 # Define DEBUG_MUTEX for mutex5 test
 ifneq (, $(findstring mutex5,$(KERNEL_TEST)))
 	CPPFLAGS += -DDEBUG_MUTEX
-	CFLAGS += -DDEBUG_MUTEX
+	CFLAGS   += -DDEBUG_MUTEX
 endif
 
 OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(OBJS)))))
