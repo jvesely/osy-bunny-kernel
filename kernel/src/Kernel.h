@@ -33,6 +33,7 @@
 
 #include "Singleton.h"
 #include "ExceptionHandler.h"
+#include "proc/Thread.h"
 #include "timer/Time.h"
 
 #include "drivers/Console.h"
@@ -57,7 +58,8 @@ typedef List<DiscDevice*> DiscList;
  *
  * Kernel will handle all stuff that kernel should :)
  */
-class Kernel:public Singleton<Kernel>, public ExceptionHandler
+class Kernel:
+public Singleton<Kernel>, public ExceptionHandler, public Thread
 {
 
 public:
@@ -110,7 +112,8 @@ public:
 	void exception( Processor::Context* registers );
 
 	/*! 
-	 * @brief Handler for exceptions that are handled directly by the kernel
+	 * @brief Handler for exceptions that are handled directly by the kernel.
+	 */
 	bool handleException( Processor::Context* registers );
 
 	void registerExceptionHandler( 

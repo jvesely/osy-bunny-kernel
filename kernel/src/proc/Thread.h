@@ -192,9 +192,6 @@ public:
 	 */
 	inline void setStatus( Status status ) { m_status = status; };
 	
-	/*! @brief Prepares stack and sets status to initialized. */
-	Thread();
-
 	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
 
 protected:
