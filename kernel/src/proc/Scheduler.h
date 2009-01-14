@@ -42,7 +42,6 @@
  */
 
 class Thread;
-class IdleThread;
 class KernelThread;
 class UserThread;
 class Timer;
@@ -109,7 +108,7 @@ class Scheduler: public Singleton<Scheduler>
 	uint m_threadCount;
 
 	/*! @brief Thread that runs when no one else will. */
-	IdleThread* m_idle;
+	Thread* m_idle;
 	
 	/*! @brief Remember if switching is due. */
 	bool m_shouldSwitch;

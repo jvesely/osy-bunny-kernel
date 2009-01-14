@@ -32,8 +32,8 @@
 
 #include "Scheduler.h"
 #include "Thread.h"
-#include "IdleThread.h"
 #include "InterruptDisabler.h"
+#include "Kernel.h"
 
 //#define SCHEDULER_DEBUG
 
@@ -50,8 +50,8 @@
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
 	/* create idle thread */
-	m_idle = new IdleThread();
-	
+	m_idle = &KERNEL; //new IdleThread();
+	m_currentThread = &KERNEL;
 	/* reserve thread_t 0 to be out of the reach for other threads */
 	m_threadMap.insert(0, NULL);
 
@@ -71,7 +71,7 @@ thread_t Scheduler::getId( Thread* newThread )
 
 	/* if it is taken repeat */
 	int result;
-	while ( (result = m_threadMap.insert(id, newThread)) == EINVAL) {
+	while ( !id || (result = m_threadMap.insert(id, newThread)) == EINVAL) {
 		PRINT_DEBUG("ID %u already in use getting new one.\n", id);
 		id = m_nextThreadId++;
 	}

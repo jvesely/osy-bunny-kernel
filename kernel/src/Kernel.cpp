@@ -100,70 +100,75 @@ void Kernel::run()
 {
 	using namespace Processor;
 
-	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
-	registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBL );
-	registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBS );
+	if (*DORDER_ADDRESS)
+		goto sleep;
+	{	
+		printf( "HELLO WORLD! from processor: %d\n", *DORDER_ADDRESS );
+		ASSERT (COUNT_CPU);
 
-	puts( "HELLO WORLD!\n" );
+		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBL );
+		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBS );
+		
+		printBunnies( COUNT_CPU );
+		printf( "Running on %d processors\n", COUNT_CPU );
 
-	ASSERT (COUNT_CPU);
+		if (COUNT_CPU > 1)
+			puts( "Warning: It's nice to have more processors, but we currently support only one.\n" );
 
-	printBunnies( COUNT_CPU );
-	printf( "Running on %d processors\n", COUNT_CPU );
+		const unative_t cpu_type = reg_read_prid();
+		printf( "Running on MIPS R%d000 revision %d.%d \n",
+						cpu_type >> CPU_IMPLEMENTATION_SHIFT,
+						(cpu_type >> CPU_REVISION_SHIFT) & CPU_REVISION_MASK,
+						cpu_type & CPU_REVISION_MASK );
 
-	if (COUNT_CPU > 1)
-		puts( "Warning: It's nice to have more processors, but we currently support only one.\n" );
+		native_t to = 0;
+		const unsigned int start = m_clock.time();
+		printf( "Detecting freq..." );
+		while (m_clock.time() == start) ;
+		const native_t from = reg_read_count();
+		while (m_clock.time() - (start + 1) < 1) { //1 s
+			putc( '.' );
+			to = reg_read_count();
+			putc( '\b' );
+		}
+		m_timeToTicks = (to - from) / 1000000;
 
-	const unative_t cpu_type = reg_read_prid();
-	printf( "Running on MIPS R%d000 revision %d.%d \n",
-	        cpu_type >> CPU_IMPLEMENTATION_SHIFT,
-	        (cpu_type >> CPU_REVISION_SHIFT) & CPU_REVISION_MASK,
-				  cpu_type & CPU_REVISION_MASK );
+		/* I would use constants here but they would not be used
+		 * in any other part of the program and still it's clear what this does.
+		 * (counts Mhz :) )
+		 */
 
-	native_t to = 0;
-	const unsigned int start = m_clock.time();
-	printf( "Detecting freq..." );
-	while (m_clock.time() == start) ;
-	const native_t from = reg_read_count();
-	while (m_clock.time() - (start + 1) < 1) { //1 s
-		putc( '.' );
-		to = reg_read_count();
-		putc( '\b' );
+		printf( "%d.%d MHz\n", m_timeToTicks, (to - from) % 1000 );
+		const uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
+
+		// detect memory
+		m_physicalMemorySize = getPhysicalMemorySize( (uintptr_t)&_kernel_end + total_stacks );
+		printf( "Detected %d MB of accessible memory\n",
+			m_physicalMemorySize / (1024 * 1024) );
+
+
+		// init frame allocator
+		printf( "Kernel ends at: %p.\n", &_kernel_end );
+		printf( "Stacks(%x) end at: %p.\n",
+			total_stacks, (uintptr_t)&_kernel_end + total_stacks );
+
+		MyFrameAllocator::instance().init( 
+			m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
+
+		ASSERT (MyFrameAllocator::instance().isInitialized());
+
+		attachDiscs();
+		//init and run the main thread
+		thread_t mainThread;
+		Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
+		ASSERT (main);
+		yield();
+		//main->switchTo();
 	}
-	m_timeToTicks = (to - from) / 1000000;
-
-	/* I would use constants here but they would not be used
-	 * in any other part of the program and still it's clear what this does.
-	 * (counts Mhz :) )
-	 */
-
-	printf( "%d.%d MHz\n", m_timeToTicks, (to - from) % 1000 );
-	uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
-
-	// detect memory
-	m_physicalMemorySize = getPhysicalMemorySize( (uintptr_t)&_kernel_end + total_stacks );
-	printf( "Detected %d MB of accessible memory\n",
-		m_physicalMemorySize / (1024 * 1024) );
-
-
-	// init frame allocator
-	printf( "Kernel ends at: %p.\n", &_kernel_end );
-	printf( "Stacks(%x) end at: %p.\n",
-		total_stacks, (uintptr_t)&_kernel_end + total_stacks );
-
-	MyFrameAllocator::instance().init( 
-		m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
-
-	ASSERT (MyFrameAllocator::instance().isInitialized());
-
-	attachDiscs();
-
-	//init and run the main thread
-	thread_t mainThread;
-	Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
-	ASSERT (main);
-	main->switchTo();
-
+sleep:
+	while (1) {
+		asm volatile ("wait");
+	}
 	panic( "Should never reach this.\n" );
 }
 /*----------------------------------------------------------------------------*/
@@ -323,5 +328,27 @@ void Kernel::attachDiscs()
 /*----------------------------------------------------------------------------*/
 void Kernel::switchTo()
 {
-	run();
+	using namespace Processor;
+	
+	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
+	
+	m_stack = &_kernel_end + (KERNEL_STATIC_STACK_SIZE * (*DORDER_ADDRESS));
+	m_stackSize = KERNEL_STATIC_STACK_SIZE;
+	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
+	Context * context = (Context*)(m_stackTop);
+	
+	/* Pointer to my member function that just calls virtual run()
+	 * http://www.goingware.com/tips/member-pointers.html
+	 * taking adress converting pointer and dereferencing trick 
+	 * was advised by M. Burda
+	 */
+	void (Thread::*runPtr)(void) = &Thread::start; 
+	
+	context->ra = *(unative_t*)(&runPtr);  /* return address (run this)       */
+
+	context->a0 = (unative_t)this;         /* the first and the only argument */
+	context->gp = ADDR_TO_KSEG0(0);        /* global pointer                  */
+	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
+	m_status = INITIALIZED;
+	Processor::switch_cpu_context( NULL, &m_stackTop);
 }

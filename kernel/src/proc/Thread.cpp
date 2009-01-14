@@ -111,7 +111,7 @@ void Thread::switchTo()
 	InterruptDisabler interrupts;
 		
 	static const Time DEFAULT_QUANTUM(0, 20000);
-
+	
 	Thread* old_thread = getCurrent();
 	void** old_stack = NULL;
 	void** new_stack = &m_stackTop;
@@ -142,7 +142,7 @@ void Thread::switchTo()
 
 	if (this != (Thread*) Scheduler::instance().m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
-			getCurrent()->id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
+			m_id, DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
 		Timer::instance().plan( this, DEFAULT_QUANTUM );
 	}
 

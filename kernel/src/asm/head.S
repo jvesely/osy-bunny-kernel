@@ -180,7 +180,7 @@ start:
   sc    $t2, ($t0)
   beqz  $t2, 9b
   nop
-
+/*
 	la    $t2, KERNEL_STATIC_STACK_SIZE
   multu $t1, $t2
   nop
@@ -188,14 +188,15 @@ start:
   addi  $t3, $t0, KERNEL_STATIC_STACK_SIZE
   la    $t4, _kernel_end
   add   $sp, $t4, $t3
-
+*/
+	
   beqz  $t1, 8f
   nop
   wait
 8:
 	
 	/* Set the statically allocated stack. */
-	/* la $sp, ADDR_TO_KSEG0 (KERNEL_STATIC_STACK_TOP) */
+	la $sp, ADDR_TO_KSEG0 (KERNEL_STATIC_STACK_TOP)
 
 	/* Set the global pointer to the kernel segment. */
 	la $gp, ADDR_TO_KSEG0 (0) 
