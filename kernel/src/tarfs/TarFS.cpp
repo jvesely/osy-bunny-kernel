@@ -39,7 +39,7 @@
 #include "address.h"
 #include "tools.h"
 
-#define TARFS_DEBUG
+//#define TARFS_DEBUG
 
 #ifndef TARFS_DEBUG
 #define PRINT_DEBUG(...)

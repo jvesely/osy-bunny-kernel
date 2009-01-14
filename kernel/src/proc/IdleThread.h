@@ -52,7 +52,7 @@ private:
 	static const uint IDLE_STACK_SIZE = 1024;
 
 	/*! @brief Send just flags and changed stack size. */
-	IdleThread():Thread(0, IDLE_STACK_SIZE) {}; 
+	IdleThread():Thread( IDLE_STACK_SIZE ) {}; 
 	
 	friend class Scheduler;
 };

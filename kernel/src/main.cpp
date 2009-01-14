@@ -39,7 +39,7 @@ volatile unative_t COUNT_CPU;
 /*! bootstrap entry point */
 void wrapped_start( void )
 {
-	KERNEL.run();
+	KERNEL.switchTo();
 
 //	Kernel::instance().stop();
 //	msim_stop();

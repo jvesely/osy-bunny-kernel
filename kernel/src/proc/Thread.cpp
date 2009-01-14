@@ -68,7 +68,7 @@ bool Thread::shouldSwitch()
 	return Scheduler::instance().m_shouldSwitch;
 }
 /*----------------------------------------------------------------------------*/
-Thread::Thread( unative_t flags, uint stackSize):
+Thread::Thread( uint stackSize ):
 	ListInsertable<Thread>(),
 	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(),
 	m_stackSize( stackSize ),	m_detached( false ), m_status( UNINITIALIZED ), 
@@ -95,9 +95,10 @@ Thread::Thread( unative_t flags, uint stackSize):
 	 */
 	void (Thread::*runPtr)(void) = &Thread::start; 
 	
-	context->ra = *(unative_t*)(&runPtr);  /* return address (run this) */
+	context->ra = *(unative_t*)(&runPtr);  /* return address (run this)       */
+
 	context->a0 = (unative_t)this;         /* the first and the only argument */
-	context->gp = ADDR_TO_KSEG0(0);        /* global pointer */
+	context->gp = ADDR_TO_KSEG0(0);        /* global pointer                  */
 	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
 	
 	PRINT_DEBUG ("Successfully created thread.\n");

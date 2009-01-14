@@ -132,18 +132,20 @@ public:
 	 */
 	void registerInterruptHandler( InterruptHandler* handler, uint intn );
 
+	void switchTo();
+
 	/*! @brief Gets the first disk. */
 	DiscDevice* disk() { return m_discs.getFront(); };
 
 private:
-	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
 	Console m_console;                 /*!< Console device.        */
 	const RTC m_clock;                 /*!< Clock device.          */
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
 	DiscList m_discs;									 /*!< Disks.                 */
 	VFS* m_rootFS;                     /*!< /.                     */
-	
+	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
+
 	/*! Vector of the Interrupt handlers. */
 	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 
 
@@ -161,7 +163,7 @@ private:
 	void handleInterrupts( Processor::Context* registers );
 
 	void attachDiscs();
-
+	
 	/*! @brief Initializes structures.
 	 *
 	 * Resets status register to turn on useg mapping. Sets clock and console 

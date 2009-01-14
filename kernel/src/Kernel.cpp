@@ -67,7 +67,7 @@ static const uint BUNNY_LINES = 5;
 extern unative_t COUNT_CPU;
 
 Kernel::Kernel() :
-	Thread( 0, 0 ),
+	Thread( 0 ),   /* We don't need no stack. */
 	m_console( CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS ),
 	m_clock( CLOCK )
 {
@@ -319,4 +319,9 @@ void Kernel::attachDiscs()
 	registerInterruptHandler( disc, HDD0_INTERRUPT );
 	ASSERT (disc);
 	m_discs.pushBack( disc );
+}
+/*----------------------------------------------------------------------------*/
+void Kernel::switchTo()
+{
+	run();
 }
