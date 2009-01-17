@@ -48,6 +48,10 @@
 */
 #define BMA_DEBUG
 
+/*	do not try to extend memory chunks
+*
+*/
+
 
 //------------------------------------------------------------------------------
 /** @brief Class responsible for memory allocation
@@ -76,17 +80,20 @@ public:
 	*/
 	static const uint8_t ALIGMENT = sizeof(native_t);
 
-	/** @brief deafuls size of newly allocated memory from frame allocator
+	/** @brief default size of newly allocated memory from frame allocator
 	*
 	*	1/2 MB
 	*/
 	static const size_t DEFAULT_SIZE = 1024 * 512;
 
-	/** @brief block size which is taken from frame allocator
+	/** @brief minimal ammount of free memory
 	*
-	*	Now implemented allocator uses only 4kB frames.
+	*	Allocator will not return physical/vitual memory to frame/vma allocator,
+	*	if size of free blocks is less than this value.
+	*
+	*	1/4 MB
 	*/
-//	static const size_t DEFAULT_FRAME_SIZE = 4*1024;
+	static const size_t MIN_FREE_SIZE = 1024 * 256;
 
 	//forward declaration
 	class BlockFooter;
@@ -102,7 +109,7 @@ public:
 	*	(note that next memory block is not allways neighbour block)
 	*/
 class BlockHeader: public SimpleListItem
-{
+	{
 	public:
 		/** @brief value representing 'free' state of block
 		*
@@ -166,7 +173,8 @@ class BlockHeader: public SimpleListItem
 		inline void setUndefined() { m_state = NULL; }
 
 		/** @brief get block footer*/
-		inline BlockFooter * getFooter() {
+		inline BlockFooter * getFooter()
+		{
 			assert(!isBorder());
 			return (BlockFooter*)
 			       ((uintptr_t)this + m_size - sizeof(BlockFooter));
@@ -197,8 +205,8 @@ class BlockHeader: public SimpleListItem
 	*
 	*	Holds size and state value.
 	*/
-class BlockFooter
-{
+	class BlockFooter
+	{
 	public:
 		/** @brief value representing 'free' state of block
 		*
@@ -331,19 +339,19 @@ class BlockFooter
 	 * @param align align amount
 	 * @return aligned address
 	 */
-/*	static inline unsigned int alignUp(
-	    const unsigned int number, const unsigned int factor)
-	{ return  (number + (factor - 1) ) & ~(factor - 1); };
-*/
+	/*	static inline unsigned int alignUp(
+		    const unsigned int number, const unsigned int factor)
+		{ return  (number + (factor - 1) ) & ~(factor - 1); };
+	*/
 	/*! aligns address to nearest smaller 4byte block
 	 * @param address address to be aligned
 	 * @param align align amount
 	 * @return aligned address
 	 */
-/*	static inline unsigned int alignDown(
-	    const unsigned int number, const unsigned int factor)
-	{ return number & ~(factor - 1); }
-*/
+	/*	static inline unsigned int alignDown(
+		    const unsigned int number, const unsigned int factor)
+		{ return number & ~(factor - 1); }
+	*/
 	/** @brief getter for m_freeSize
 	*
 	*	Debug function
@@ -358,24 +366,91 @@ protected:
 	*	DEFAULT_SIZE sized block(plus block header and footer), except cases
 	*	when larger block is needed.
 	*	@return adress of new block (block header). If not successfull,
-		NULL is returned.
+	*	NULL is returned.
 	*	@param realSize minimum size of new block. Usually should not affect the
-		size of new block, because default size is greater (1/2 MB).
+	*	size of new block, because default size is greater (1/2 MB).
 	*/
-	virtual BlockHeader * getBlock(size_t realSize) = 0;
+	BlockHeader * getBlock(size_t realSize);
 
-	/** @brief return memory block to frame allocator
+	/** @brief get brand new chunk of memory
 	*
-	*	Both header after and footer before block must be border types, that means
-	*	returned block is only one in chunk of memory given by frame allocator.
-	*	Then it returns whole chunk to frame allocator and correctly disconnects block.
-	*	Block can be free or used. Function does not handle freeSize, only totalSize.
-	*	Block is correctly disconnected from list.
-	*	@param header header of returned block
+	*	Virtual function responsible for getting memory from either frame or vma allocator.
+	*	@note does not insert new chunk to list, nor creates structures on new memory
+	*	@param finalSize size of required memory (alligned to some pagesize)
+	*	@return if successfull, returns address of new memory chunk, else NULL.
+	*	Return address is virtual address.
 	*/
-	virtual void returnBlock(BlockHeader * header) = 0;
+	virtual void * getNewChunk(size_t finalSize) = 0;
 
-	/** @brief return physical memory block to frame allocator if possible
+	/** @brief extend existing chunk of memory
+	*
+	*	Virtual function responsible for extending existing memory chunk. Result should be,
+	*	that new piece of usable(yet unformatted) memory is right behind old chunk of memory.
+	*	@param oldChunk old chunk FOOTER pointer
+	*	@param finalSize required size of new memory (alligned to some pagesize)
+	*	@return if succesfull beginning of new memory piece, else NULL.
+	*	Return address is virtual address.
+	*/
+	virtual void * extendExistingChunk(BlockFooter * oldChunk, size_t finalSize)
+	{
+		return NULL;
+	}
+
+	/** @brief return memory chunk around given block if needed
+	*
+	*	If condition for returning whole memory chunk is met (like there will be left enough
+	*	free memory etc.) then correctly disconnects only one block in chunk from block list,
+	*	removes chunk from chunk list, reduces free and total size values and does all the
+	*	other logic behind such operation. Calls returnChunk member function.
+	*
+	*	If such condition is not met, only ensures, that block is free.
+	*	If block is not the only one in memory chunk, does nothing.
+	*	@param header blockheader, block should be only one in his memory chunk
+	*	@return TRUE if any operation was performed (block was freed, or chunk returned),
+	*		FALSE otherwise(block was not the only one in chunk)
+	*/
+	bool returnChunkWithBlockIfNeeded(BlockHeader * header);
+
+	/** @brief reduce memory chunk with all the logic behind if needed
+	*
+	*	If conditions for shrinking memory chunk is met, then correctly resizes memory chunk,
+	*	in which is given block. Block is expected to be free, and last one in chunk.
+	*	Calls reduceChunk function.
+	*	If such condition is not met, or such operation was not succesfull, does nothing.
+	*	If block is not the last one in chunk, nothing happens as well, and the same pays if
+	*	block is not free.
+	*	@param header blockheader
+	*	@return TRUE if chunk was shrinked, FALSE otherwise
+	*/
+	bool reduceChunkWithBlockIfNeeded(BlockHeader * header);
+
+	/** @brief return memory chunk to frame/vma allocator
+	*
+	*	Returns whole chunk to the frame/vma allocator. No work with allocator
+	*	structures.
+	*	@note Does not disconnect it from list of chunks.
+	*	@param frontBorder front border of returned chunk
+	*	@param finalSize size of chunk (must be alligned)
+	*/
+	virtual void returnChunk(BlockFooter * frontBorder, size_t finalSize) = 0;
+
+	/** @brief shrink existing memory chunk to given size
+	*
+	*	Virtual function responsible for shrinking existing memory chunk, function
+	*	should be called only if such shrink is possible.
+	*	Function reduces chunk from the end.
+	*	Function does not handle chunk borders and structures, only returns part of
+	*	memory chunk!!! Also does not do any checks.
+	*	@param frontBorder memory chunk front border pointer
+	*	@param finalSize size which should remaining chunk have (must be alligned)
+	*	@return TRUE if succesful, FALSE otherwise (function might not be implemented)
+	*/
+	virtual bool reduceChunk(BlockFooter * frontBorder, size_t finalSize)
+	{
+		return false;
+	}
+
+	/** @brief return physical memory chunk to frame allocator if possible
 	*
 	*	Is only conditional wrapper to returnBlock member function.
 	*	Checks whether block is only one in chunk of physical memory
@@ -383,19 +458,38 @@ protected:
 	*	@param header header of returned block
 	*	@return true if block was returned, false otherwise
 	*/
-	inline bool returnBlockIfPossible(BlockHeader * header){
+	inline bool returnChunkIfPossible(BlockHeader * header)
+	{
 		assert(!header->isBorder());
-		
+
 		BlockFooter * frontBorder = ((BlockFooter*)header) - 1;
 		if (!frontBorder->isBorder()) return false;
 
 		BlockHeader * backBorder = (BlockHeader*)(header->getFooter() + 1);
 		if (!backBorder->isBorder()) return false;
-		
-		returnBlock(header);
+
+		returnChunk(frontBorder,frontBorder->size());
 		return true;
 	}
 
+	/** @brief try to expand some memory chunk and create correct structures
+	*
+	*	Tries to expand some existing memory chunk. If it is possible, also creates correct
+	*	structures on that chunk and handles it`s integrity with chunk list.
+	*	@param totalSize required size. Memory extension will be at least totalSize.
+	*	@return newly created/expanded free block if succesfull, NULL otherwise
+	*/
+	BlockHeader * tryExpandSomeChunk(size_t totalSize);
+
+	/** @brief try to get brand new memory chunk and create correct structures
+	*
+	*	Tries to get brand new memory chunk. If it is possible, also creates correct structures
+	*	on new chunk and inserts it into chunk list.
+	*	@param totalSize required size, must be aligned to minimum page size.
+	*		Memory extension will be exactly totalSize
+	*	@return newly created free block if succesfull, NULL otherwise
+	*/
+	BlockHeader * tryToGetNewChunk(size_t totalSize);
 
 	/** @brief creates used block in free block
 	*
@@ -422,7 +516,7 @@ protected:
 
 	/** @brief initializes chunk of memory
 	*
-	*	Creates one big FREE block PLUS footer on beginning an header
+	*	Creates one big FREE block PLUS footer on beginning and header
 	*	on end with BORDER status (and size of block + size of header and footer),
 	*	so that allocator will not try to use space outside created block.
 	*	@param start beginning of new block
@@ -430,8 +524,23 @@ protected:
 			resultant block will have realSize = size - size of block header and footer
 	*	@return block of header inside used chunk of memory
 	*/
-	BlockHeader * createBlock(
-	    uintptr_t start, size_t size);
+	BlockHeader * initChunk(
+	    void * start, size_t size);
+
+	/** @brief integrates chunk of memory to neighbouring chunk
+	*
+	*	Pushes back border of chunk to new position, and reintegrates it in chunk list.
+	*	Former back border will be header of newly created free block, which will, if
+	*	possible, join with previously last block in memory chunk.
+	*	Function expects correct parameters, that means, that behind given memory chunk really
+	*	is expected available memory from frame/vma allocator.
+	*	@param frontBorder front border of memory chunk
+	*	@param backBorder old back border of chunk
+	*	@param totalSize size of memory chunk extension (NOT new memory chunk size)
+	*	@return pointer to newly created/joined free block
+	*/
+	BlockHeader * joinChunk(
+	    BlockFooter * frontBorder, BlockHeader * backBorder, size_t totalSize);
 
 	/** @brief changes block`s state to used/free and connects it appropriately
 	*
@@ -551,7 +660,9 @@ protected:
 	/** @brief pointer to function which changes size of block
 	*
 	*	This function is used everytime a block changes it`s size.
-	*	Function changes accoring to strategy, sometimes cahnge of size of free block
+	*	Function should correctly create BlockFooter for block and ignore old
+	*	BlockFooter. If needed, reintegrates it into free blocks list.
+	*	Function changes accoring to strategy, sometimes change of size of free block
 	*	requires reintegration of block into list of free blocks.
 	*	@note This function changes according to used allocation strategy.
 	*	Should be changed only via changeStrategy...() member function.
@@ -568,11 +679,18 @@ protected:
 	*/
 	size_t m_freeSize;
 
-	/** @brief size of total memory from frame allocator
+	/** @brief size of total memory from frame/vma allocator
 	*
-	* 	Is used to decide, whether allocator has enough memory from frame allocator.
+	* 	Is used to decide, whether allocator has enough memory from frame/vma allocator.
 	*/
 	size_t m_totalSize;
+
+	/** @brief value indicating whether chunk resizing is supported
+	*
+	*	If false, then allocator will not try to resize memory chunks when returning or
+	*	getting new memory from either frame or vma allocator.
+	*/
+	bool m_chunkResizingEnabled;
 
 	/** @brief list of free blocks
 	*/
@@ -583,6 +701,13 @@ protected:
 	*	List is used only to deallocate all blocks at the end of process.
 	*/
 	SimpleList m_usedBloks;
+
+	/** @brief list of chunks of memory
+	*
+	*	List is used to store memory chunks (in which are stored memory blocks).
+	*/
+	SimpleList m_chunks;
+
 
 #ifdef BMA_DEBUG
 	/** @brief debug variable substituting lock
