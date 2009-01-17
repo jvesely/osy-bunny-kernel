@@ -57,13 +57,17 @@ void IVirtualMemoryMap::freed()
 /*----------------------------------------------------------------------------*/
 void IVirtualMemoryMap::switchTo()
 {
-
 	if (!m_asid) {
 		m_asid = TLB::instance().getAsid( this );
 	}
 	PRINT_DEBUG ("Switching to VMM %p with ASID: %u\n", this, m_asid);
 	TLB::instance().switchAsid( m_asid );
 	getCurrent() = this;
+}
+/*----------------------------------------------------------------------------*/
+void IVirtualMemoryMap::switchOff()
+{
+	TLB::instance().switchAsid( TLB::BAD_ASID );
 }
 /*----------------------------------------------------------------------------*/
 IVirtualMemoryMap::~IVirtualMemoryMap()
@@ -88,7 +92,7 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 		InterruptDisabler inter;
 		size_t count = min(BUFFER_SIZE, size);
 		switchTo();
-		PRINT_DEBUG ("First 4B to copy: %x.\n", *src);
+		PRINT_DEBUG ("First 4B to copy: %x.\n", *(int*)src);
 		memcpy((void*)buffer, (void*)src, count);
 		
 		PRINT_DEBUG ("Copying %uB data %x vs. %x.\n",
@@ -102,11 +106,12 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 		size -= count;
 	}
 
-	if (old_map)
-		old_map->switchTo();
 
 	PRINT_DEBUG ("Thread copy complete, copied %u B of data.\n", 
 		dest - (char*)dst_addr);
+
+	if (old_map)
+		old_map->switchTo();
 	
 	return EOK;
 }

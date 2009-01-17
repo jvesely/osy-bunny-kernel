@@ -84,9 +84,9 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 	unative_t vm_flags = VF_VA_USER << VF_VA_SHIFT;
 	vm_flags |= VF_AT_KUSEG << VF_AT_SHIFT;
 
-	m_stack = (void*)(ADDR_PREFIX_KSEG0 - stack_size);
+	m_userstack = (void*)(ADDR_PREFIX_KSEG0 - stack_size);
 
-	if (m_virtualMap->allocate( &m_stack, stack_size, vm_flags ) != EOK)
+	if (m_virtualMap->allocate( &m_userstack, stack_size, vm_flags ) != EOK)
 		return;
 	m_stackSize = stack_size;
 	
@@ -94,7 +94,7 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 
 	using namespace Processor;
 
-	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
+	m_stackTop = (void*)((uintptr_t)m_userstack + m_stackSize - sizeof(Context));
 	Context * context = (Context*)(m_stackTop);
 	void (Thread::*runPtr)(void) = &Thread::start;
 

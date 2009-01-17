@@ -59,7 +59,7 @@ public:
 	inline T* data() { return m_obj; }
 
 	/*! @brief Assigns instance to guard. */
-	inline Pointer<T>& operator = ( T * other_obj )
+	inline Pointer<T>& operator = ( T* other_obj )
 	{
 		if (m_obj != other_obj) {
 			releaseObj();
@@ -69,7 +69,7 @@ public:
 	}
 
 	/*! @brief Standard opertor, keeps count */
-	inline Pointer<T>& operator = ( Pointer<T>& other )
+	inline Pointer<T>& operator = ( const Pointer<T>& other )
 	{ 
 		if (m_obj != other.m_obj) {
 			releaseObj();

@@ -54,6 +54,8 @@ public:
 		void* data = NULL, const unsigned int flags = 0 );
 
 private:
+	void* m_userstack;
+
 	UserThread();
 	UserThread( const UserThread& other );
 	const UserThread& operator = ( const UserThread& other );

@@ -277,7 +277,7 @@ void TLB::setMapping(
 	reg_write_entryhi( old_asid );
 }
 /*----------------------------------------------------------------------------*/
-bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
+bool TLB::refill( IVirtualMemoryMap* vmm, native_t bad_addr )
 {
 #ifdef TLB_DEBUG
 	const unative_t start_count = Processor::reg_read_count();	
@@ -287,7 +287,7 @@ bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
 	byte asid = vmm->asid();
 
 	ASSERT (asid);
-	ASSERT (asid != 255);
+	if (asid == BAD_ASID) return false;
 
 	PRINT_DEBUG ("Refilling virtual address %p ASID: %u.\n", bad_addr, asid);
 	

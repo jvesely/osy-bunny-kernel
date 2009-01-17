@@ -102,7 +102,7 @@ void Kernel::run()
 
 	if (*DORDER_ADDRESS)
 		goto sleep;
-	{	
+	{
 		printf( "HELLO WORLD! from processor: %d\n", *DORDER_ADDRESS );
 		ASSERT (COUNT_CPU);
 
@@ -131,6 +131,7 @@ void Kernel::run()
 			to = reg_read_count();
 			putc( '\b' );
 		}
+		puts( "done" );
 		m_timeToTicks = (to - from) / 1000000;
 
 		/* I would use constants here but they would not be used
@@ -152,6 +153,7 @@ void Kernel::run()
 		printf( "Stacks(%x) end at: %p.\n",
 			total_stacks, (uintptr_t)&_kernel_end + total_stacks );
 
+
 		MyFrameAllocator::instance().init( 
 			m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
 
@@ -159,14 +161,15 @@ void Kernel::run()
 
 		attachDiscs();
 		//init and run the main thread
+	}
+	{
 		thread_t mainThread;
 		Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
 		ASSERT (main);
 		yield();
-		//main->switchTo();
 	}
 sleep:
-	while (1) {
+	while (true) {
 		asm volatile ("wait");
 	}
 	panic( "Should never reach this.\n" );
@@ -224,7 +227,9 @@ bool Kernel::handleException( Processor::Context* registers )
 			handleInterrupts( registers );
 			break;
 		case CAUSE_EXCCODE_SYS:
+			return false;
 		case CAUSE_EXCCODE_RI:
+			panic("exc %x", registers->epc);
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
 			return false;
@@ -303,8 +308,8 @@ void Kernel::refillTLB()
   bool success = TLB::instance().refill(
 		IVirtualMemoryMap::getCurrent().data(), Processor::reg_read_badvaddr());
 	
-	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n",
-		Processor::reg_read_badvaddr(), success ? "SUCESS" : "FAILURE");
+	PRINT_DEBUG ("TLB refill for address: %p (%u) was a %s.\n",
+		Processor::reg_read_badvaddr(), Thread::getCurrent()->id(), success ? "SUCESS" : "FAILURE");
 
   if (!success) {
 		printf( "Access to invalid address %p, KILLING offending thread.\n",

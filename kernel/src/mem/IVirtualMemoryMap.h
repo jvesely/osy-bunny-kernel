@@ -69,6 +69,8 @@ public:
 	 */
 	void switchTo();
 
+	static void switchOff();
+
 	/*! @brief InterMap memcpy.
 	 *	@param src_addr Address to copy from.
 	 *	@param dest_map Virtual map of the destination pointer.
