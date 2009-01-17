@@ -33,6 +33,7 @@
 
 #include "Singleton.h"
 #include "ExceptionHandler.h"
+#include "SyscallHandler.h"
 #include "proc/Thread.h"
 #include "timer/Time.h"
 
@@ -144,6 +145,7 @@ private:
 	uint m_timeToTicks;                /*!< Converting constant.   */
 	DiscList m_discs;									 /*!< Disks.                 */
 	VFS* m_rootFS;                     /*!< /.                     */
+	SyscallHandler m_syscalls;         /*!< Handles Syscalls.      */
 	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
 
 	/*! Vector of the Interrupt handlers. */

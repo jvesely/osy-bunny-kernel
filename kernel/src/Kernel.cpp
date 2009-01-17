@@ -30,14 +30,13 @@
  * File contains Kernel class implementation.
  */
 #include "Kernel.h"
-#include "proc/UserThread.h"
+#include "proc/KernelThread.h"
 #include "api.h"
 #include "devices.h"
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
-#include "SysCallHandler.h"
 #include "mem/TLB.h"
 #include "drivers/MsimDisc.h"
 
@@ -74,7 +73,8 @@ Kernel::Kernel() :
 	registerInterruptHandler( &m_console, CHARACTER_INPUT_INTERRUPT );
 	registerInterruptHandler( &Timer::instance(), TIMER_INTERRUPT );
 
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS  );
+//	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS  );
+	registerExceptionHandler( &m_syscalls, Processor::CAUSE_EXCCODE_SYS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT  );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
@@ -224,8 +224,6 @@ bool Kernel::handleException( Processor::Context* registers )
 			handleInterrupts( registers );
 			break;
 		case CAUSE_EXCCODE_SYS:
-			SysCallHandler( registers ).handle();
-			break;
 		case CAUSE_EXCCODE_RI:
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:

@@ -32,45 +32,49 @@
  * at least people can understand it. 
  */
 
-#include "SysCallHandler.h"
-#include "proc/Thread.h"
+#include "SyscallHandler.h"
 #include "address.h"
+#include "syscallcodes.h"
 
-SysCallHandler::SysCallHandler(Processor::Context* registers): m_registers( registers )
+SyscallHandler::SyscallHandler()
 {
-	call      = ((*(unative_t*)registers->epc)>>6);
-	params[0] = registers->a0;
-	params[1] = registers->a1;
-	params[2] = registers->a2;
-	params[3] = registers->a3;
+	
 }
 /*----------------------------------------------------------------------------*/
-void SysCallHandler::handle()
+bool SyscallHandler::handleException( Processor::Context* registers )
 {
-	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
-		call, params[0], params[1], params[2], params[3]);
+	m_call    = ((*(unative_t*)registers->epc)>>6);
 
-	switch ( call ) {
-		case 1: //SysCalls::SC_PUTS:
-			handlePuts();
+	m_params[0] = registers->a0;
+	m_params[1] = registers->a1;
+	m_params[2] = registers->a2;
+	m_params[3] = registers->a3;
+
+	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
+		m_call, m_params[0], m_params[1], m_params[2], m_params[3]);
+	
+	switch ( m_call ) {
+		case 1: //Syscalls::SC_PUTS:
+			registers->v0 = handlePuts();
 			break;
-		case 2: //SysCalls::SC_GETS:
-			handleGets();
+		case 2: //Syscalls::SC_GETS:
+			registers->v0 = handleGets();
 			break;
 		default:
 			puts("Unknown SYSCALL killing thread.\n");
-			Thread::getCurrent()->kill();
+			return false;
 	}
-	m_registers->epc += 4;
+	registers->epc += 4;
+	return true;
 }
 /*----------------------------------------------------------------------------*/
-void SysCallHandler::handlePuts()
+unative_t SyscallHandler::handlePuts()
 {
 /*	printf ("Should output string at %p(%p):%s.\n", 
 		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */
 //	Processor::msim_stop();
 //	if (ADDR_TO_USEG(params[0]) == params[0]) {
-		m_registers->v0 = puts( (const char*)params[0] );
+		return puts( (const char*)m_params[0] );
 //	} else {
 //		Thread::getCurrent()->kill();
 //	}

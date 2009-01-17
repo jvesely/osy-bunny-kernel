@@ -35,7 +35,7 @@
 #include "DirEntry.h"
 #include "api.h"
 
-#define DIRENTRY_DEBUG
+//#define DIRENTRY_DEBUG
 
 #ifndef DIRENTRY_DEBUG
 

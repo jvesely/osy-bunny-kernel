@@ -33,17 +33,18 @@
  */
 #pragma once
 #include "drivers/Processor.h"
+#include "ExceptionHandler.h"
 
-class SysCallHandler {
+class SyscallHandler: public ExceptionHandler {
 public:
-	SysCallHandler(Processor::Context* registers);
+	SyscallHandler();
+	bool handleException( Processor::Context* registers );
 
-	void handle();
 private:
-	uint call;
-	unative_t params[4];
-	Processor::Context* m_registers;
+	
+	unative_t m_call;
+	unative_t m_params[4];
 
-	void handlePuts();
-	void handleGets(){};
+	unative_t handlePuts();
+	unative_t handleGets() { return 0; };
 };
