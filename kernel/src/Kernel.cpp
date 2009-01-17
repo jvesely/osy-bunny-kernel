@@ -242,7 +242,7 @@ bool Kernel::handleException( Processor::Context* registers )
 		case CAUSE_EXCCODE_IBE:
 		case CAUSE_EXCCODE_DBE:
 		default:
-			panic( "Called for intcorrect exception: %d.\n", reason );
+			panic( "Called for incorrect exception: %d.\n", reason );
 	}
 	return true;
 }

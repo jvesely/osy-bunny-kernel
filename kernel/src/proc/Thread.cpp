@@ -111,7 +111,7 @@ void Thread::switchTo()
 	InterruptDisabler interrupts;
 		
 	static const Time DEFAULT_QUANTUM(0, 20000);
-	
+
 	Thread* old_thread = getCurrent();
 	void** old_stack = NULL;
 	void** new_stack = &m_stackTop;
