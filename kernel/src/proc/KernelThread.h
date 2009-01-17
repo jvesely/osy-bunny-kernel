@@ -39,7 +39,7 @@
  * @brief Thread class.
  *
  * Thread class handles stack and routine that is to be executed
- * in the separate threadd.
+ * in the separate thread.
  */
 class KernelThread: public Thread
 {

@@ -38,6 +38,7 @@
 
 SyscallHandler::SyscallHandler()
 {
+	m_handles[1] = (&SyscallHandler::handlePuts);
 	
 }
 /*----------------------------------------------------------------------------*/
@@ -52,20 +53,25 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 
 	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
 		m_call, m_params[0], m_params[1], m_params[2], m_params[3]);
-	
+
+	registers->v0   = (this->*m_handles[m_call]) ();
+	registers->epc += 4;
+	return true;
+/*
 	switch ( m_call ) {
-		case 1: //Syscalls::SC_PUTS:
+		case SYS_PUTS: //Syscalls::SC_PUTS:
 			registers->v0 = handlePuts();
 			break;
-		case 2: //Syscalls::SC_GETS:
+		case SYS_GETS: //Syscalls::SC_GETS:
 			registers->v0 = handleGets();
 			break;
 		default:
-			puts("Unknown SYSCALL killing thread.\n");
+			puts("Unknown SYSCALL.\n");
 			return false;
 	}
 	registers->epc += 4;
 	return true;
+*/
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handlePuts()

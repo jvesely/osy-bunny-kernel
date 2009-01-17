@@ -71,10 +71,9 @@ void* first_thread(void* data)
 	content[filesize] = 0;
 	fs->readFile( bin_file, content, filesize );
 	printf( "Contents: %s.\n", content );
-//		thread_t user_t;
-//		Thread* user = UserThread::create(&user_t, first_thread, (void*)0xff, TF_NEW_VMM);
-	//	printf ("created thread: %p.\n", user);
-	//} // */
-	KERNEL.stop();
+
+	const char* foo = "FOO";
+	SysCall::puts( foo );
+	KERNEL.halt();
 	return NULL;
 }

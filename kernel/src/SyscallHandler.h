@@ -44,6 +44,7 @@ private:
 	
 	unative_t m_call;
 	unative_t m_params[4];
+	unative_t (SyscallHandler::*m_handles[17])(void);
 
 	unative_t handlePuts();
 	unative_t handleGets() { return 0; };
