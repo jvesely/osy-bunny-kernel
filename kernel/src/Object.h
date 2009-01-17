@@ -50,13 +50,14 @@ public:
 
 	/*! @brief Increases reference count. */
 	inline uint incCount() { return ++m_refCount; };
+		
 	/*! @brief Decreases reference count, deletes object if it reaches 0. */
 	inline uint decCount() { return (--m_refCount) ? m_refCount : (delete this, 0); };
 
 protected:
-	/*! @brief New instance new count. */
+	/*! @brief New instance, new count. */
 	Object( const Object& other) { m_refCount = 0; }
 
 private:
-	uint m_refCount;   /*!< @brief Reference count */
+	uint m_refCount;   /*!< @brief Reference count. */
 };

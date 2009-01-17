@@ -25,33 +25,19 @@
 
 /*!
  * @file 
- * @brief Device addresses.
+ * @brief Short description.
  *
- * Device addresses and interrupts are defined in this place.
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
 
-#pragma once
-#include "types.h"
+#include "Entry.h"
+#include "drivers/DiscDevice.h"
+#include "assert.h"
 
-#define DEVICES_MAP_START 0xFFFFFF00
-
-#define TIMER_INTERRUPT 7
-
-/*! simple character output */
-#define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
-
-/*! keyboard */
-#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFE0)
-#define CHARACTER_INPUT_INTERRUPT 1
-
-/*! rtc */
-#define CLOCK (unative_t*)(0xFFFFFFD0)
-
-/*! hdd */
-#define HDD0_ADDRESS    (unative_t*)(0xffffffc0)
-#define HDD0_INTERRUPT    2
-
-/*! dorder */
-#define DORDER_ADDRESS (unative_t*)(0xFFFFFFB0)
-#define DORDER_INTERRUPT 3
-
+bool Entry::readFromDevice(void* buffer, size_t count, uint start_block, uint offset)
+{
+	ASSERT (m_storage);
+	return m_storage->read(buffer, count, start_block, offset);
+}

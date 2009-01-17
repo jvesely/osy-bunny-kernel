@@ -92,12 +92,12 @@ public:
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
 	 * Construction involves allocating stack and preparing context.
-	 * If successfull thread's status will be INITIALIZED, if someting went 
+	 * If successfull thread's status will be INITIALIZED, if something went 
 	 * wrong it will be UNITIALIZED.
 	 * @param flags Thread flags -- ingored
 	 * @param stackSize size of requested stack
 	 */
-	Thread(	unative_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE);
+	Thread(	uint stackSize = DEFAULT_STACK_SIZE );
 
 	/*! @enum Status
 	 * @brief Possible states of threads
@@ -192,9 +192,6 @@ public:
 	 */
 	inline void setStatus( Status status ) { m_status = status; };
 	
-	/*! @brief Prepares stack and sets status to initialized. */
-	Thread();
-
 	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
 
 protected:

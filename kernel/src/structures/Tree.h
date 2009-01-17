@@ -172,7 +172,7 @@ public:
 	 *
 	 * @return Number of the Nodes in the tree.
 	 */
-	inline uint count() { return m_count; };
+	inline uint count() const { return m_count; };
 
 protected:
 

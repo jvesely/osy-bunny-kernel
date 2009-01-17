@@ -31,48 +31,32 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
+
 #pragma once
 
 #include "types.h"
-#include "syscallcodes.h"
 
-/*!
- * @namespace SysCall
- * @brief SysCall invoking functions.
- *
- * See @a SysCall class for implementation of syscalls
- */
-namespace SysCall
+
+class DiscDevice;
+typedef int file_t;
+
+
+
+class VFS
 {
+public:
 
-#define QUOT(expr) #expr
-#define SYSCALL( call, p0, p1, p2, p3 ) \
-({ \
-	register unative_t __a0 asm("$4") = (unative_t) p0;\
-	register unative_t __a1 asm("$5") = (unative_t) p1;\
-	register unative_t __a2 asm("$6") = (unative_t) p2;\
-	register unative_t __a3 asm("$7") = (unative_t) p3;\
-	\
-	register native_t __v0 asm("$2");\
-	\
-	asm volatile ( \
-		"syscall "QUOT(call)" \n"\
-		:"=r"(__v0)\
-		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
-		:\
-	);\
-	__v0;\
-})
+	VFS(){};
+	virtual bool mount( DiscDevice* disk ) = 0;
+	virtual file_t openFile( const char file_name[], const char mode ) = 0;
+	virtual void closeFile( file_t file ) = 0;
+	virtual ssize_t readFile( file_t src, void* buffer, size_t size ) = 0;
+	virtual uint seekFile( file_t file, FilePos pos, int offset ) = 0; 
+	virtual bool existsFile( file_t file ) = 0;
+	virtual size_t sizeFile( file_t file ) = 0;
+	virtual bool eof( file_t file ) = 0;
 
-inline size_t puts( const char* str )
-{
-	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
-}
-
-inline size_t gets( char* str, size_t count ){
-	return SYSCALL( SYS_GETS, str, count, 0, 0 );
-}
-
-#undef QUOT
-#undef SYSCALL
-}
+private:
+	
+	VFS( const VFS& );
+};

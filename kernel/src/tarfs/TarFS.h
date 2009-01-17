@@ -31,48 +31,34 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
+
 #pragma once
 
-#include "types.h"
-#include "syscallcodes.h"
+#include "VFS.h"
+#include "structures/HashMap.h"
+#include "DirEntry.h"
 
-/*!
- * @namespace SysCall
- * @brief SysCall invoking functions.
- *
- * See @a SysCall class for implementation of syscalls
- */
-namespace SysCall
+typedef HashMap<file_t, Entry*> EntryMap;
+
+class TarFS: public VFS
 {
+public:
+	TarFS( DiscDevice* disc = NULL );
+	bool mount( DiscDevice* disc );
+	file_t openFile( const char file_name[], const char mode );
+	void closeFile( file_t file );
+	ssize_t readFile( file_t src, void* buffer, size_t size );
+	uint seekFile( file_t file, FilePos pos, int offset);
+	bool existsFile( file_t file );
+	size_t sizeFile( file_t file );
+	bool eof( file_t file );
 
-#define QUOT(expr) #expr
-#define SYSCALL( call, p0, p1, p2, p3 ) \
-({ \
-	register unative_t __a0 asm("$4") = (unative_t) p0;\
-	register unative_t __a1 asm("$5") = (unative_t) p1;\
-	register unative_t __a2 asm("$6") = (unative_t) p2;\
-	register unative_t __a3 asm("$7") = (unative_t) p3;\
-	\
-	register native_t __v0 asm("$2");\
-	\
-	asm volatile ( \
-		"syscall "QUOT(call)" \n"\
-		:"=r"(__v0)\
-		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
-		:\
-	);\
-	__v0;\
-})
-
-inline size_t puts( const char* str )
-{
-	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
-}
-
-inline size_t gets( char* str, size_t count ){
-	return SYSCALL( SYS_GETS, str, count, 0, 0 );
-}
-
-#undef QUOT
-#undef SYSCALL
-}
+private:
+		
+	Entry* getFile( file_t fd );
+		
+	EntryMap m_entryMap;
+	DirEntry m_rootDir;
+	DiscDevice* m_mountedDisc;
+	file_t m_lastDescriptor;
+};

@@ -52,8 +52,10 @@ public:
 		{ if ((m_obj = other.m_obj)) m_obj->incCount(); }
 
 	/*! @brief Correctly destroys pointer. */
-	inline ~Pointer() { releaseObj(); }
+	virtual ~Pointer() { releaseObj(); }
 
+	inline const T* data() const { return m_obj; }
+		
 	inline T* data() { return m_obj; }
 
 	/*! @brief Assigns instance to guard. */

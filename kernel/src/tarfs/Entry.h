@@ -31,48 +31,27 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
+
 #pragma once
 
 #include "types.h"
-#include "syscallcodes.h"
+class DiscDevice;
 
-/*!
- * @namespace SysCall
- * @brief SysCall invoking functions.
- *
- * See @a SysCall class for implementation of syscalls
- */
-namespace SysCall
+class Entry
 {
-
-#define QUOT(expr) #expr
-#define SYSCALL( call, p0, p1, p2, p3 ) \
-({ \
-	register unative_t __a0 asm("$4") = (unative_t) p0;\
-	register unative_t __a1 asm("$5") = (unative_t) p1;\
-	register unative_t __a2 asm("$6") = (unative_t) p2;\
-	register unative_t __a3 asm("$7") = (unative_t) p3;\
-	\
-	register native_t __v0 asm("$2");\
-	\
-	asm volatile ( \
-		"syscall "QUOT(call)" \n"\
-		:"=r"(__v0)\
-		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
-		:\
-	);\
-	__v0;\
-})
-
-inline size_t puts( const char* str )
-{
-	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
-}
-
-inline size_t gets( char* str, size_t count ){
-	return SYSCALL( SYS_GETS, str, count, 0, 0 );
-}
-
-#undef QUOT
-#undef SYSCALL
-}
+public:
+	Entry(DiscDevice* storage): m_storage( storage ) {};
+	virtual size_t size() const = 0;
+	virtual ssize_t read( void* buffer, int size ) = 0;
+	virtual uint seek( FilePos pos, int offset ) = 0;
+	virtual bool open( const char mode ) { return false; };
+	virtual void close() {};
+	virtual bool addSubEntry( char* name, Entry* entry ) { return false; };
+	virtual ~Entry() {};
+protected:
+	Entry( const Entry& other );
+	Entry& operator = (const Entry& other);
+	bool readFromDevice(void* buffer, size_t count, uint start_block, uint offset);
+private:
+	DiscDevice* m_storage;
+};

@@ -36,24 +36,31 @@
 #pragma once
 
 /** @brief pair of key and data, used in Map or HashMap
-*	requires copy ctor of both types and == operator of KeyType
+*	requires copy ctor of both types, operator == and operator < of KeyType
 *	is only basic encapsulation of key and data into one entity
 **/
 template <typename KeyType, typename DataType> class Pair
 {
 public:
 	/**	@brief ctor with values	*/
-	inline Pair ( const KeyType & key , const DataType & value ) : first ( key ), second ( value ) {};
+	inline Pair ( const KeyType & key, const DataType & value ):
+		first ( key ), second ( value ) {};
 
 	/** @brief operator ==
 	*	compares only keys
 	*/
-	inline bool operator == ( const Pair<KeyType, DataType> & item ) const {return first == item.first;}
+	inline bool operator == ( const Pair<KeyType, DataType> & item ) const
+		{ return (first == item.first); }
+		
+	/*! @brief Only first values are compared */
+	inline bool operator < ( const Pair<KeyType, DataType> & other ) const
+		{ return (first < other.first); }
 
 	/** @brief operator !=
 	*	compares only keys
 	*/
-	inline bool operator != ( const Pair<KeyType, DataType> & item ) const {return !operator== ( item );}
+	inline bool operator != ( const Pair<KeyType, DataType> & item ) const
+		{ return !operator== ( item ); }
 
 //these are public also in STL pair, so they are left to public
 	/** @brief key value */

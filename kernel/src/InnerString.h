@@ -32,47 +32,38 @@
  * at least people can understand it. 
  */
 
-#include "SysCallHandler.h"
-#include "proc/Thread.h"
-#include "address.h"
+#pragma once
 
-SysCallHandler::SysCallHandler(Processor::Context* registers): m_registers( registers )
+#include "Object.h"
+#include "api.h"
+
+class InnerString: public Object
 {
-	call      = ((*(unative_t*)registers->epc)>>6);
-	params[0] = registers->a0;
-	params[1] = registers->a1;
-	params[2] = registers->a2;
-	params[3] = registers->a3;
-}
+public:
+	inline InnerString( const char* text );
+	inline ~InnerString();
+	inline const char* data() const { return m_text; }
+	//InnerString& operator = ( char* text );
+private:
+	InnerString( const InnerString& other );
+	InnerString& operator = ( InnerString& other );
+	char* m_text;
+};
 /*----------------------------------------------------------------------------*/
-void SysCallHandler::handle()
+inline InnerString::InnerString( const char* text )
 {
-	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
-		call, params[0], params[1], params[2], params[3]);
-
-	switch ( call ) {
-		case 1: //SysCalls::SC_PUTS:
-			handlePuts();
-			break;
-		case 2: //SysCalls::SC_GETS:
-			handleGets();
-			break;
-		default:
-			puts("Unknown SYSCALL killing thread.\n");
-			Thread::getCurrent()->kill();
+	size_t count;
+	if (!text) {
+		return;
 	}
-	m_registers->epc += 4;
+	ASSERT (text);
+	for ( count = 0; text[count]; ++count ) {};
+	++count; /* count the last \0 */
+	m_text = (char*)malloc( count );
+	memcpy( m_text, text, count );
 }
 /*----------------------------------------------------------------------------*/
-void SysCallHandler::handlePuts()
+inline InnerString::~InnerString()
 {
-/*	printf ("Should output string at %p(%p):%s.\n", 
-		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */
-//	Processor::msim_stop();
-//	if (ADDR_TO_USEG(params[0]) == params[0]) {
-		m_registers->v0 = puts( (const char*)params[0] );
-//	} else {
-//		Thread::getCurrent()->kill();
-//	}
-
+	free( m_text ); // NULL safe	
 }

@@ -30,6 +30,7 @@
  */
 #pragma once
 
+#include "Singleton.h"
 #include "BasicMemoryAllocator.h"
 
 /*! @class KernelMemoryAllocator KernelMemoryAllocator.h 
@@ -39,14 +40,16 @@
  * the FrameAllocator.
  *
  * KernelMemoryAllocator inherits handling of the allocated and free blocks
- * from the BasicMemoryAllocator, but gets new memoyr blocks directly from
+ * from the BasicMemoryAllocator, but gets new memory blocks directly from
  * the FrameAllocator.
  */
-class KernelMemoryAllocator: public BasicMemoryAllocator
+class KernelMemoryAllocator:
+	public BasicMemoryAllocator, public Singleton<KernelMemoryAllocator>
 {
 public:
 	virtual void* getMemory( size_t ammount );
 	virtual void freeMemory( const void* address );
+		
 protected:
 	/*! @brief Gets new block from the FrameAllocator.
 	 * @param realSize size of the requested block

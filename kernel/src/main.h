@@ -27,7 +27,7 @@
  * @file 
  * @brief Kernel entry points.
  *
- * Provides kernel entry points called by assembelr routines.
+ * Provides kernel entry points called by assembler routines.
  */
 #pragma once
 #include "drivers/Processor.h"

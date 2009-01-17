@@ -33,14 +33,25 @@
 
 #include "Singleton.h"
 #include "ExceptionHandler.h"
+#include "SyscallHandler.h"
+#include "proc/Thread.h"
 #include "timer/Time.h"
+
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
 #include "drivers/Processor.h"
-#include "mem/KernelMemoryAllocator.h"
+
+#include "structures/List.h"
+#include "VFS.h"
+
+extern void* first_thread(void*);
 
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
+
+class DiscDevice;
+
+typedef List<DiscDevice*> DiscList;
 
 /*!
  * @class Kernel Kernel.h "Kernel.h"
@@ -48,7 +59,8 @@ extern uint32_t _kernel_end;
  *
  * Kernel will handle all stuff that kernel should :)
  */
-class Kernel:public Singleton<Kernel>, public ExceptionHandler
+class Kernel:
+public Singleton<Kernel>, public ExceptionHandler, public Thread
 {
 
 public:
@@ -93,24 +105,16 @@ public:
 	static inline void block() 
 		{ Processor::save_and_disable_interrupts(); while(true) ;; };
 
-	/*! @brief Kernel heap alloc.
-	 * @param size requested size
-	 * @return adress to the block of given size, NULL on failure
-	 */
-	void* malloc( size_t size );// const;
-
-	/*! @brief Kernel heap free.
-	 * @param address adress of the returned block
-	 */
-	void free( const void* address );// const;
-
 	/*!
 	 * @brief Exception handling member function.
-	 * @param registers pointer to the stored registers at the time
+	 * @param registers Pointer to the stored registers at the time
 	 * when exception occured.
 	 */
 	void exception( Processor::Context* registers );
 
+	/*! 
+	 * @brief Handler for exceptions that are handled directly by the kernel.
+	 */
 	bool handleException( Processor::Context* registers );
 
 	void registerExceptionHandler( 
@@ -122,18 +126,29 @@ public:
 	void setTimeInterrupt( const Time& time );
 
 	void refillTLB();
+	
+	/*! @brief Registers handler for the given interrupt.
+	 *	@param handler Run this handler when interrupt occurs.
+	 *	@param intn Associate with this interrupt.
+	 */
+	void registerInterruptHandler( InterruptHandler* handler, uint intn );
 
-	void registerInterruptHandler( InterruptHandler* handler, uint inter );
+	void switchTo();
+
+	/*! @brief Gets the first disk. */
+	DiscDevice* disk() { return m_discs.getFront(); };
 
 private:
-	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
-	KernelMemoryAllocator m_alloc;     /*!< Kernel heap manager.   */
 	Console m_console;                 /*!< Console device.        */
 	const RTC m_clock;                 /*!< Clock device.          */
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
-	
-	/*! Vector of handlers.    */
+	DiscList m_discs;									 /*!< Disks.                 */
+	VFS* m_rootFS;                     /*!< /.                     */
+	SyscallHandler m_syscalls;         /*!< Handles Syscalls.      */
+	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
+
+	/*! Vector of the Interrupt handlers. */
 	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 
 
 	/*! @brief Detects accessible memory.
@@ -141,20 +156,25 @@ private:
 	 * Detects accesible memory by moving mapping of the first MB.
 	 * @return size of detected memory.
 	 */
-	size_t getPhysicalMemorySize(uintptr_t from);
+	size_t getPhysicalMemorySize( uintptr_t from );
 
 	/*! @brief Interrupt hanling member function.
 	 * @param registers pointer to the stored registers at the time
 	 * when interrupt occured.
 	 */
-	void handleInterrupts(Processor::Context* registers);
+	void handleInterrupts( Processor::Context* registers );
 
+	void attachDiscs();
+	
 	/*! @brief Initializes structures.
 	 *
-	 * Resets status register to turn on useg mapping.
-	 * Sets clock and console addresses.
+	 * Resets status register to turn on useg mapping. Sets clock and console 
+	 * addresses. Registers self as the interrupt handler for interrupts.
 	 */
 	Kernel();
 
-friend class Singleton<Kernel>;
+	friend class Singleton<Kernel>;
+	friend void* first_thread(void*);
 };
+
+#define KERNEL Kernel::instance()

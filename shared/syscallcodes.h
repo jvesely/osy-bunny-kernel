@@ -25,33 +25,13 @@
 
 /*!
  * @file 
- * @brief Device addresses.
+ * @brief Syscall codes.
  *
- * Device addresses and interrupts are defined in this place.
+ * Contains translation macros from syscall names to codes.
  */
 
 #pragma once
-#include "types.h"
 
-#define DEVICES_MAP_START 0xFFFFFF00
-
-#define TIMER_INTERRUPT 7
-
-/*! simple character output */
-#define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
-
-/*! keyboard */
-#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFE0)
-#define CHARACTER_INPUT_INTERRUPT 1
-
-/*! rtc */
-#define CLOCK (unative_t*)(0xFFFFFFD0)
-
-/*! hdd */
-#define HDD0_ADDRESS    (unative_t*)(0xffffffc0)
-#define HDD0_INTERRUPT    2
-
-/*! dorder */
-#define DORDER_ADDRESS (unative_t*)(0xFFFFFFB0)
-#define DORDER_INTERRUPT 3
-
+#define SYS_PUTS 1
+#define SYS_GETS 2
+#define SYS_LAST 3

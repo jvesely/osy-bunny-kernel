@@ -31,48 +31,30 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
+
 #pragma once
+#include "Entry.h"
+#include "String.h"
+#include "structures/Pair.h"
+#include "structures/Trees.h"
 
-#include "types.h"
-#include "syscallcodes.h"
+template class Pair<String, Entry*>;
+template class Tree< SplayBinaryNode<Pair<String, Entry*> > >;
 
-/*!
- * @namespace SysCall
- * @brief SysCall invoking functions.
- *
- * See @a SysCall class for implementation of syscalls
- */
-namespace SysCall
+typedef Pair<String, Entry*> NamePair;
+typedef Trees<NamePair>::SplayTree EntryList;
+
+class DirEntry: public Entry
 {
-
-#define QUOT(expr) #expr
-#define SYSCALL( call, p0, p1, p2, p3 ) \
-({ \
-	register unative_t __a0 asm("$4") = (unative_t) p0;\
-	register unative_t __a1 asm("$5") = (unative_t) p1;\
-	register unative_t __a2 asm("$6") = (unative_t) p2;\
-	register unative_t __a3 asm("$7") = (unative_t) p3;\
-	\
-	register native_t __v0 asm("$2");\
-	\
-	asm volatile ( \
-		"syscall "QUOT(call)" \n"\
-		:"=r"(__v0)\
-		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
-		:\
-	);\
-	__v0;\
-})
-
-inline size_t puts( const char* str )
-{
-	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
-}
-
-inline size_t gets( char* str, size_t count ){
-	return SYSCALL( SYS_GETS, str, count, 0, 0 );
-}
-
-#undef QUOT
-#undef SYSCALL
-}
+public:
+	DirEntry():Entry( NULL ){};
+	bool addSubEntry( char* name, Entry* entry );
+	const String firstEntry();
+	const String nextEntry( const String previous );
+	Entry* subEntry( const String name );
+	size_t size() const { return m_subEntries.count(); };
+	ssize_t read( void* buffer, int size ) { return -1; };
+	uint seek( FilePos pos, int offset ) { return 0; };
+private:
+	EntryList m_subEntries;
+};

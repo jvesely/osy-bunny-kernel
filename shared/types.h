@@ -72,6 +72,17 @@ typedef __builtin_va_list va_list;
 typedef uint8_t bool;
 #endif
 
+enum FileMode {
+	OPEN_R  = 1,
+	OPEN_W  = 2,
+	OPEN_RW = 3,
+	OPEN_A  = 4
+	};
+enum FilePos {
+	POS_START, POS_CURRENT, POS_END
+};
+
+
 /*----------------------------------------------------------------------------*/
 #ifndef NULL
 #ifdef __cplusplus

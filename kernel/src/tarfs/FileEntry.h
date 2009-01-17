@@ -31,48 +31,33 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
+
 #pragma once
+#include "TarHeader.h"
+#include "Entry.h"
 
-#include "types.h"
-#include "syscallcodes.h"
+class DiscDevice;
 
-/*!
- * @namespace SysCall
- * @brief SysCall invoking functions.
- *
- * See @a SysCall class for implementation of syscalls
- */
-namespace SysCall
+class FileEntry: public Entry
 {
-
-#define QUOT(expr) #expr
-#define SYSCALL( call, p0, p1, p2, p3 ) \
-({ \
-	register unative_t __a0 asm("$4") = (unative_t) p0;\
-	register unative_t __a1 asm("$5") = (unative_t) p1;\
-	register unative_t __a2 asm("$6") = (unative_t) p2;\
-	register unative_t __a3 asm("$7") = (unative_t) p3;\
-	\
-	register native_t __v0 asm("$2");\
-	\
-	asm volatile ( \
-		"syscall "QUOT(call)" \n"\
-		:"=r"(__v0)\
-		:"r"(__a0), "r"(__a1), "r"(__a2), "r"(__a3)\
-		:\
-	);\
-	__v0;\
-})
-
-inline size_t puts( const char* str )
-{
-	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
-}
-
-inline size_t gets( char* str, size_t count ){
-	return SYSCALL( SYS_GETS, str, count, 0, 0 );
-}
-
-#undef QUOT
-#undef SYSCALL
-}
+public:
+	FileEntry( TarHeader& tarHeader, uint block, DiscDevice* disc );
+	size_t size() const { return m_size; };
+	ssize_t read( void* buffer, int size );
+	uint seek( FilePos pos, int offset );
+	bool open( const char mode );
+	void close();
+	~FileEntry();
+		
+private:
+	uint m_uid;
+	uint m_gid;
+	uint m_size;
+	uint m_startPos;
+	uint m_modTime;
+	uint m_readCount;
+	uint m_pos;
+		
+	FileEntry( const FileEntry& other );
+	FileEntry& operator = ( const FileEntry& other );
+};

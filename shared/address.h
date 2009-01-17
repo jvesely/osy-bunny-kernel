@@ -30,7 +30,7 @@
  * Defines segment offset mask, prefix mask, kseg0 and kseg1 prefix.
  * All taken from the Kalisto file.
  */
-
+#pragma once
 
 #define ADDR_PREFIX_MASK 	0xe0000000	/*!< upper 3 bits */
 #define ADDR_OFFSET_MASK 	0x1fffffff	/*!< lower 29 bits */
@@ -44,11 +44,16 @@
 #define ADDR_OFFSET(addr)	( (addr) & ADDR_OFFSET_MASK ) /*! take the offset */
 
 /*! replace prefix by kseg0 prefix */
+/*template<typename T>
+inline T ADDR_TO_KSEG0(T addr) 
+	{ return (addr & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG0; };*/
 #define ADDR_TO_KSEG0(addr)	( ((addr) & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG0 )
 /*! replace prefix by kseg1 prefix */
 #define ADDR_TO_KSEG1(addr) ( ((addr) & ADDR_OFFSET_MASK) | ADDR_PREFIX_KSEG1 )
 /*! remove prefix (move to useg) */
 #define ADDR_TO_USEG(addr)  ( ((addr) & ADDR_OFFSET_MASK) )
+
+#define ADDR_IN_KSEG0(addr) ( ADDR_PREFIX_KSEG0 == ADDR_PREFIX((uintptr_t)addr))
 
 #define ADDR_SIZE_KSEG0 (ADDR_PREFIX_KSEG1 - ADDR_PREFIX_KSEG0)	/*! 0.5 GB */
 
@@ -84,5 +89,5 @@
 /*! just under the kernel and writing down */
 #define KERNEL_STATIC_STACK_TOP         ADDR_TO_KSEG0 (0x400)
 /*! 1KB kernel stack */
-#define KERNEL_STATIC_STACK_SIZE        0x400       
+#define KERNEL_STATIC_STACK_SIZE        0x1000       
 

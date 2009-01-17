@@ -25,33 +25,28 @@
 
 /*!
  * @file 
- * @brief Device addresses.
+ * @brief Short description.
  *
- * Device addresses and interrupts are defined in this place.
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
-
 #pragma once
-#include "types.h"
+#include "drivers/Processor.h"
+#include "ExceptionHandler.h"
+#include "syscallcodes.h"
 
-#define DEVICES_MAP_START 0xFFFFFF00
+class SyscallHandler: public ExceptionHandler {
+public:
+	SyscallHandler();
+	bool handleException( Processor::Context* registers );
 
-#define TIMER_INTERRUPT 7
+private:
+	
+	unative_t m_call;
+	unative_t m_params[4];
+	unative_t (SyscallHandler::*m_handles[SYS_LAST])(void);
 
-/*! simple character output */
-#define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
-
-/*! keyboard */
-#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFE0)
-#define CHARACTER_INPUT_INTERRUPT 1
-
-/*! rtc */
-#define CLOCK (unative_t*)(0xFFFFFFD0)
-
-/*! hdd */
-#define HDD0_ADDRESS    (unative_t*)(0xffffffc0)
-#define HDD0_INTERRUPT    2
-
-/*! dorder */
-#define DORDER_ADDRESS (unative_t*)(0xFFFFFFB0)
-#define DORDER_INTERRUPT 3
-
+	unative_t handlePuts();
+	unative_t handleGets() { return 0; };
+};

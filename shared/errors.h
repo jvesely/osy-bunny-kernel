@@ -22,20 +22,22 @@
  *   
  *   @date 2008-2009
  */
-
 /*!
  * @file 
  * @brief Some error constants.
  *
- * All error constants are <0, except for EOK, but EOK is no error. ;)
+ * All error constants are < 0, except for EOK, but EOK is no error. ;)
  */
+
 #pragma once
+
 enum errors {
-	EOK         =  0, /*!< everything OK */
-	ENOMEM      = -1, /*!< no more memory */
-	EINVAL      = -2, /*!< Invalid argument */
-	EKILLED     = -3, /*!< Requested thread heas been killed */
-	ETIMEDOUT   = -4, /*!< Time limit reached */
-	EWOULDBLOCK = -5, /*!< Operation would block */
-	EOTHER      = -6
+	EOK         =  0, /*!< Everything is OK.                 */
+	ENOMEM      = -1, /*!< No more memory.                   */
+	EINVAL      = -2, /*!< Invalid argument.                 */
+	EKILLED     = -3, /*!< Requested thread has been killed. */
+	ETIMEDOUT   = -4, /*!< Time limit reached.               */
+	EWOULDBLOCK = -5, /*!< Operation would block.            */
+	EOTHER      = -6,
+	EIO         = -7  /*!< Error in I/O operation.           */
 };

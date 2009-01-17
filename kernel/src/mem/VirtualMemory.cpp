@@ -35,7 +35,7 @@
 #include "flags.h"
 #include "VirtualMemory.h"
 
-#define VMA_DEBUG
+//#define VMA_DEBUG
 
 #ifndef VMA_DEBUG
 #define PRINT_DEBUG(...)

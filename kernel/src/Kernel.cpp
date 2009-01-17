@@ -30,15 +30,15 @@
  * File contains Kernel class implementation.
  */
 #include "Kernel.h"
-#include "proc/UserThread.h"
+#include "proc/KernelThread.h"
 #include "api.h"
 #include "devices.h"
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
-#include "SysCallHandler.h"
 #include "mem/TLB.h"
+#include "drivers/MsimDisc.h"
 
 //#define KERNEL_DEBUG
 
@@ -63,28 +63,26 @@ static const char* BUNNY_STR[5] = {
 static const uint BUNNIES_PER_LINE = 10;
 static const uint BUNNY_LINES = 5;
 
-
+extern unative_t COUNT_CPU;
 
 Kernel::Kernel() :
-	m_console(CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS), m_clock(CLOCK)
+	Thread( 0 ),   /* We don't need no stack. */
+	m_console( CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS ),
+	m_clock( CLOCK )
 {
-	Processor::reg_write_status(0);
-
 	registerInterruptHandler( &m_console, CHARACTER_INPUT_INTERRUPT );
 	registerInterruptHandler( &Timer::instance(), TIMER_INTERRUPT );
 
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT );
-	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBL );
-	//registerExceptionHandler( this, Processor::CAUSE_EXCCODE_TLBS );
+//	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS  );
+	registerExceptionHandler( &m_syscalls, Processor::CAUSE_EXCCODE_SYS );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT  );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP );
-}
-extern void* test(void*);
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI   );
+	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP   );
 
-extern unative_t COUNT_CPU;
+	Processor::reg_write_status( 0 );
+}
 /*----------------------------------------------------------------------------*/
 void Kernel::printBunnies( uint count )
 {
@@ -102,79 +100,87 @@ void Kernel::run()
 {
 	using namespace Processor;
 
-	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
-	registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBL );
-	registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBS );
+	if (*DORDER_ADDRESS)
+		goto sleep;
+	{	
+		printf( "HELLO WORLD! from processor: %d\n", *DORDER_ADDRESS );
+		ASSERT (COUNT_CPU);
 
-	puts("HELLO WORLD!\n");
+		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBL );
+		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBS );
+		
+		printBunnies( COUNT_CPU );
+		printf( "Running on %d processors\n", COUNT_CPU );
 
-	ASSERT (COUNT_CPU);
+		if (COUNT_CPU > 1)
+			puts( "Warning: It's nice to have more processors, but we currently support only one.\n" );
 
-	printBunnies( COUNT_CPU );
-	printf("Running on %d processors\n", COUNT_CPU);
+		const unative_t cpu_type = reg_read_prid();
+		printf( "Running on MIPS R%d000 revision %d.%d \n",
+						cpu_type >> CPU_IMPLEMENTATION_SHIFT,
+						(cpu_type >> CPU_REVISION_SHIFT) & CPU_REVISION_MASK,
+						cpu_type & CPU_REVISION_MASK );
 
-	if (COUNT_CPU > 1)
-		puts("Warning: It's nice to have more processors, but we currently support only one.\n");
+		native_t to = 0;
+		const unsigned int start = m_clock.time();
+		printf( "Detecting freq..." );
+		while (m_clock.time() == start) ;
+		const native_t from = reg_read_count();
+		while (m_clock.time() - (start + 1) < 1) { //1 s
+			putc( '.' );
+			to = reg_read_count();
+			putc( '\b' );
+		}
+		m_timeToTicks = (to - from) / 1000000;
 
-	const unative_t cpu_type = reg_read_prid();
-	printf("Running on MIPS R%d000 revision %d.%d \n",
-	        cpu_type >> CPU_IMPLEMENTATION_SHIFT,
-	        (cpu_type >> CPU_REVISION_SHIFT) & CPU_REVISION_MASK,
-				  cpu_type & CPU_REVISION_MASK );
+		/* I would use constants here but they would not be used
+		 * in any other part of the program and still it's clear what this does.
+		 * (counts Mhz :) )
+		 */
 
-	native_t to = 0;
-	const unsigned int start = m_clock.time();
-	printf("Detecting freq....");
-	while (m_clock.time() == start) ;
-	const native_t from = reg_read_count();
-	while (m_clock.time() - (start + 1) < 1) { //1 s
-		printf("\b.");
-		to = reg_read_count();
+		printf( "%d.%d MHz\n", m_timeToTicks, (to - from) % 1000 );
+		const uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
+
+		// detect memory
+		m_physicalMemorySize = getPhysicalMemorySize( (uintptr_t)&_kernel_end + total_stacks );
+		printf( "Detected %d MB of accessible memory\n",
+			m_physicalMemorySize / (1024 * 1024) );
+
+
+		// init frame allocator
+		printf( "Kernel ends at: %p.\n", &_kernel_end );
+		printf( "Stacks(%x) end at: %p.\n",
+			total_stacks, (uintptr_t)&_kernel_end + total_stacks );
+
+		MyFrameAllocator::instance().init( 
+			m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
+
+		ASSERT (MyFrameAllocator::instance().isInitialized());
+
+		attachDiscs();
+		//init and run the main thread
+		thread_t mainThread;
+		Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
+		ASSERT (main);
+		yield();
+		//main->switchTo();
 	}
-	m_timeToTicks = (to - from) / 1000000;
-
-	/* I would use constants here but they would not be used
-	 * in any other part of the program and still it's clear what this does.
-	 * (counts Mhz :) )
-	 */
-
-	printf("%d.%d MHz\n", m_timeToTicks, (to - from) % 1000 );
-	uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
-
-	// detect memory
-	m_physicalMemorySize = getPhysicalMemorySize((uintptr_t)&_kernel_end + total_stacks);
-	printf("Detected %d MB of accessible memory\n", m_physicalMemorySize / (1024 *1024) );
-
-
-	// init frame allocator
-		printf("Kernel ends at: %p.\n", &_kernel_end );
-		printf("Stacks(%x) end at: %p.\n", total_stacks, (uintptr_t)&_kernel_end + total_stacks);
-
-	MyFrameAllocator::instance().init( 
-		m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
-
-//	printf("Frame allocator initialized: %s\n",
-//		(MyFrameAllocator::instance().isInitialized()) ? "Yes" : "No" );
-	//m_alloc.setup(ADDR_TO_KSEG0(m_physicalMemorySize - 0x100000), 0x100000);
-	ASSERT(MyFrameAllocator::instance().isInitialized());
-
-	//init and run the main thread
-	thread_t mainThread;
-	Thread* main = KernelThread::create(&mainThread, test, NULL, TF_NEW_VMM);
-	ASSERT (main);
-	main->switchTo();
-
-	panic("Should never reach this.\n");
+sleep:
+	while (1) {
+		asm volatile ("wait");
+	}
+	panic( "Should never reach this.\n" );
 }
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(uintptr_t from){
-	printf("Probing memory range...");
+	printf( "Probing memory range..." );
+	
 	TLB::instance().switchAsid( 0 );
 	const uint32_t MAGIC = 0xDEADBEEF;
 
 	size_t size = 0;
 	const size_t range = 0x100000/sizeof(uint32_t); /* 1MB */
-	volatile uint32_t* front = (uint32_t*)(ADDR_TO_USEG(from) );
+	volatile uint32_t* front = (uint32_t*)ADDR_TO_USEG(from);
 	volatile uint32_t* back = (uint32_t *)range - 1;
 	volatile uint32_t* point = front;
 
@@ -192,27 +198,13 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from){
 	return size;
 }
 /*----------------------------------------------------------------------------*/
-void* Kernel::malloc(const size_t size) //const
-{
-	PRINT_DEBUG ("Malloc request for: %u.\n", size);
-	void* ret =  m_alloc.getMemory(size);
-	PRINT_DEBUG ("Malloc %u %p.\n", size, ret);
-	return ret;
-}
-/*----------------------------------------------------------------------------*/
-void Kernel::free(const void * address) //const
-{
-	PRINT_DEBUG ("Free %p.\n", address);
-	if (address)
-		m_alloc.freeMemory(address);
-}
-/*----------------------------------------------------------------------------*/
 void Kernel::exception( Processor::Context* registers )
 {
 	const Processor::Exceptions reason = Processor::get_exccode(registers->cause);
+	
 	if (Processor::EXCEPTIONS[reason].handler) {
 		if (!(*Processor::EXCEPTIONS[reason].handler)( registers )) {
-			printf( "Exception handling for EXCEPTION: %s(%u) FAILED => TRHEAD KILLED.\n",
+			printf( "Exception handling for: %s(%u) FAILED => TRHEAD KILLED.\n",
 				Processor::EXCEPTIONS[reason].name, reason);
 			Thread::getCurrent()->kill();
 		}
@@ -225,47 +217,32 @@ void Kernel::exception( Processor::Context* registers )
 bool Kernel::handleException( Processor::Context* registers )
 {
 	using namespace Processor;
-	const Exceptions reason = get_exccode(registers->cause);
+	const Exceptions reason = get_exccode( registers->cause );
 
 	switch (reason){
 		case CAUSE_EXCCODE_INT:
 			handleInterrupts( registers );
 			break;
 		case CAUSE_EXCCODE_SYS:
-			SysCallHandler( registers ).handle();
-			break;
-		case CAUSE_EXCCODE_TLBL:
-		case CAUSE_EXCCODE_TLBS:
-			refillTLB();
-			break;
+		case CAUSE_EXCCODE_RI:
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
 			return false;
-			printf("Exception: Address error exception. THREAD KILLED\n");
-			Thread::getCurrent()->kill();
-			panic("Exception: Address error exception.\n");
 		case CAUSE_EXCCODE_BP:
 			if (!(registers->cause & CAUSE_BD_MASK) ) {
 				registers->epc += 4; // go to the next instruction
 				return true;
 			}
 			panic("Exception: Break.\n");
+		case CAUSE_EXCCODE_TLBL:
+		case CAUSE_EXCCODE_TLBS:
 		case CAUSE_EXCCODE_TR:
-			panic("Exception: Conditional instruction.\n");
 		case CAUSE_EXCCODE_OV:
-			panic("Exception: Arithmetic overflow.\n");
 		case CAUSE_EXCCODE_CPU:
-			panic("Exception: Coprocessor unusable.\n");
-		case CAUSE_EXCCODE_RI:
-			return false;
-			printf("Exception: Reserved Instruction exception. THREAD KILLED\n");
-			Thread::getCurrent()->kill();
-			panic("Exception: Reserved Instruction.\n");
 		case CAUSE_EXCCODE_IBE:
 		case CAUSE_EXCCODE_DBE:
-			panic("Exception: Invalid address.\n");
 		default:
-			panic("Exception: Unknown.\n");
+			panic( "Called for incorrect exception: %d.\n", reason );
 	}
 	return true;
 }
@@ -293,7 +270,6 @@ void Kernel::handleInterrupts( Processor::Context* registers )
 			ASSERT (m_interruptHandlers[i]);
 			m_interruptHandlers[i]->handleInterrupt();
 		}
-	
 	if (Thread::shouldSwitch())
 		Thread::getCurrent()->yield();
 
@@ -338,4 +314,39 @@ void Kernel::refillTLB()
 		else
 			panic( "No thread and invalid tlb refill.\n" );
 	}
+}
+/*----------------------------------------------------------------------------*/
+void Kernel::attachDiscs()
+{
+	DiscDevice* disc = new MsimDisc( HDD0_ADDRESS );
+	registerInterruptHandler( disc, HDD0_INTERRUPT );
+	ASSERT (disc);
+	m_discs.pushBack( disc );
+}
+/*----------------------------------------------------------------------------*/
+void Kernel::switchTo()
+{
+	using namespace Processor;
+	
+	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
+	
+	m_stack = &_kernel_end + (KERNEL_STATIC_STACK_SIZE * (*DORDER_ADDRESS));
+	m_stackSize = KERNEL_STATIC_STACK_SIZE;
+	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
+	Context * context = (Context*)(m_stackTop);
+	
+	/* Pointer to my member function that just calls virtual run()
+	 * http://www.goingware.com/tips/member-pointers.html
+	 * taking adress converting pointer and dereferencing trick 
+	 * was advised by M. Burda
+	 */
+	void (Thread::*runPtr)(void) = &Thread::start; 
+	
+	context->ra = *(unative_t*)(&runPtr);  /* return address (run this)       */
+
+	context->a0 = (unative_t)this;         /* the first and the only argument */
+	context->gp = ADDR_TO_KSEG0(0);        /* global pointer                  */
+	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
+	m_status = INITIALIZED;
+	Processor::switch_cpu_context( NULL, &m_stackTop);
 }

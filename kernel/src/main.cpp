@@ -33,27 +33,26 @@
 
 #include "main.h"
 #include "Kernel.h"
-#include "api.h"
 
 volatile unative_t COUNT_CPU;
 
 /*! bootstrap entry point */
-void wrapped_start(void)
+void wrapped_start( void )
 {
-	Kernel::instance().run();
+	KERNEL.switchTo();
 
 //	Kernel::instance().stop();
 //	msim_stop();
 }
 
 /*! entry point for general_exceptions */
-void wrapped_general(Processor::Context* registers)
+void wrapped_general( Processor::Context* registers )
 {
-	Kernel::instance().exception( registers );
+	KERNEL.exception( registers );
 }
 
 /*! TLB miss handler */
-void wrapped_tlbrefill(void)
+void wrapped_tlbrefill( void )
 {
-	Kernel::instance().refillTLB();
+	KERNEL.refillTLB();
 }

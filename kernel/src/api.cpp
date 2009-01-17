@@ -45,6 +45,7 @@
 #include "timer/ClassTimer.h"
 
 #include "mem/FrameAllocator.h"
+#include "mem/KernelMemoryAllocator.h"
 
 void disable_interrupts()
 {
@@ -118,17 +119,16 @@ void kpanic(void** context, const char* format, ...){
 
 	Kernel::instance().stop();
 	Kernel::instance().block();
-
 }
 /*----------------------------------------------------------------------------*/
 void* malloc( size_t size )
 {
-	return Kernel::instance().malloc( size );
+	return KernelMemoryAllocator::instance().getMemory( size );
 }
 /*----------------------------------------------------------------------------*/
 void free( const void* ptr )
 {
-	Kernel::instance().free( ptr );
+	KernelMemoryAllocator::instance().freeMemory( ptr );
 }
 /*----------------------------------------------------------------------------*/
 int thread_create( thread_t* thread_ptr, void* (*thread_start)(void*),
@@ -148,6 +148,7 @@ thread_t thread_get_current()
 int thread_join(thread_t thr)
 {
 	InterruptDisabler inter;
+
 	Thread* thread = Thread::fromId( thr );
 	return Thread::getCurrent()->join( thread );
 }
@@ -155,8 +156,8 @@ int thread_join(thread_t thr)
 int thread_join_timeout(thread_t thr, const uint usec)
 {
 	InterruptDisabler inter;
-	Thread* thread = Thread::fromId( thr );
 
+	Thread* thread = Thread::fromId( thr );
 	return 
 		Thread::getCurrent()->join( thread, true, Time::fromMicroSeconds( usec ) );
 }
@@ -164,8 +165,8 @@ int thread_join_timeout(thread_t thr, const uint usec)
 int thread_detach( thread_t thr )
 {
 	InterruptDisabler inter;
+
 	Thread* thread = Thread::fromId( thr );
-	
 	if (thread && thread->detach()) return EOK;
 	return EINVAL;
 }
@@ -310,42 +311,40 @@ void sem_init(semaphore_t* s, const int value) {
 	ASSERT(sizeof(semaphore_t) >= sizeof(Semaphore));
 	new (s) Semaphore((const unsigned int)value);
 }
-
+/*----------------------------------------------------------------------------*/
 void sem_destroy(semaphore_t* s) {
 	((Semaphore *)s)->~Semaphore();
 }
-
+/*----------------------------------------------------------------------------*/
 int sem_get_value(semaphore_t* s) {
 	return ((Semaphore *)s)->get();
 }
-
+/*----------------------------------------------------------------------------*/
 void sem_up(semaphore_t* s) {
 	((Semaphore *)s)->up();
 }
-
+/*----------------------------------------------------------------------------*/
 void sem_down(semaphore_t* s) {
 	((Semaphore *)s)->down();
 }
-
+/*----------------------------------------------------------------------------*/
 int sem_down_timeout(semaphore_t* s, const unsigned int usec) {
 	return ((Semaphore *)s)->downTimeout(1, Time(0, usec));
 }
-
 /*----------------------------------------------------------------------------*/
-
 void spinlock_init(spinlock_t* s) {
 	ASSERT(sizeof(spinlock_t) >= sizeof(Spinlock));
 	new (s) Spinlock();
 }
-
+/*----------------------------------------------------------------------------*/
 void spinlock_destroy(spinlock_t* s) {
 	((Spinlock *)s)->~Spinlock();
 }
-
+/*----------------------------------------------------------------------------*/
 void spinlock_lock(spinlock_t* s) {
 	((Spinlock *)s)->lock();
 }
-
+/*----------------------------------------------------------------------------*/
 void spinlock_unlock(spinlock_t* s) {
 	((Spinlock *)s)->unlock();
 }

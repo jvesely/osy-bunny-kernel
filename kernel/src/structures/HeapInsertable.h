@@ -159,10 +159,9 @@ template <class T, typename Key, int Children>
 void HeapInsertable<T, Key, Children>::insertIntoHeap(
 	Heap<T*, Children>* heap, const Key &key)
 {
-	ASSERT (!m_owner) 
-		m_key = key;
-		(m_owner = heap)->insert(this);
-	
+	ASSERT (!m_owner);
+	m_key = key;
+	(m_owner = heap)->insert(this);	
 }
 
 /*---------------------------------------------------------------------------*/

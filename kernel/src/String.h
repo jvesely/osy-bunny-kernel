@@ -31,19 +31,23 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
+
 #pragma once
-#include "drivers/Processor.h"
+#include "InnerString.h"
+#include "Pointer.h"
 
-class SysCallHandler {
+template class Pointer<InnerString>;
+
+class String: protected Pointer<InnerString>
+{
 public:
-	SysCallHandler(Processor::Context* registers);
-
-	void handle();
-private:
-	uint call;
-	unative_t params[4];
-	Processor::Context* m_registers;
-
-	void handlePuts();
-	void handleGets(){};
+	String( const char* text = NULL);
+	String( const String& other );
+	String& operator = ( const char* text );
+	String& operator = ( const String& other );
+	bool operator == ( const String& other ) const;
+	bool operator < ( const String& other ) const;
+	bool empty() const;
+	uint size() const;
+	const char* cstr() const;
 };
