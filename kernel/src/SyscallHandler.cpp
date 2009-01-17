@@ -38,7 +38,8 @@
 
 SyscallHandler::SyscallHandler()
 {
-	m_handles[1] = (&SyscallHandler::handlePuts);
+	m_handles[SYS_PUTS] = (&SyscallHandler::handlePuts);
+	m_handles[SYS_GETS] = (&SyscallHandler::handleGets);
 	
 }
 /*----------------------------------------------------------------------------*/
@@ -54,6 +55,7 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
 		m_call, m_params[0], m_params[1], m_params[2], m_params[3]);
 
+	if (!m_handles[m_call]) return false;
 	registers->v0   = (this->*m_handles[m_call]) ();
 	registers->epc += 4;
 	return true;
