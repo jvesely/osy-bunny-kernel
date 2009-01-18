@@ -2,11 +2,11 @@
 #Kernel & Loader global Makefile n-th version
 #
 
-all: kernel loader librt disk
-.PHONY: kernel loader librt disk
+all: kernel loader librt apps disk
+.PHONY: kernel loader librt apps disk
 kernel:
 	@echo "Building kernel";
-	$(MAKE) -C kernel kernel "KERNEL_TEST=$(KERNEL_TEST)"
+	$(MAKE) -C kernel kernel "KERNEL_TEST=$(KERNEL_TEST)" "USER_TEST=$(USER_TEST)"
 
 loader:
 	@echo "Building loader"
@@ -16,10 +16,14 @@ librt:
 	@echo "Building librt"
 	$(MAKE) -C librt librt
 
-disk:
-	@echo "Creating disk including: " `ls disk`
-	@touch disk/tmp
-	@tar -C disk -cf disk.tar `ls disk`
+apps: librt
+	@echo "Building apps"
+	$(MAKE) -C apps apps "USER_TEST=$(USER_TEST)"
+
+disk: apps
+	@ls apps/bin/*.bin > /dev/null 2>&1 || touch apps/bin/tmp.bin
+	@echo "Creating disk including: " `ls apps/bin/*.bin`
+	@tar -C apps/bin -cf disk.tar `ls apps/bin/*.bin | cut -f 3 -d "/"`
 
 ### cleaning stuff ###
 .PHONY: clean

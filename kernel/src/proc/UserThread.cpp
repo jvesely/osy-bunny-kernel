@@ -75,7 +75,7 @@ Thread* UserThread::create( thread_t* thread_ptr, void* (*thread_start)(void*),
 /*----------------------------------------------------------------------------*/
 UserThread::UserThread( void* (*thread_start)(void*), void* data,
   native_t flags, uint stack_size ):
-	KernelThread( thread_start, data, flags, 0 )
+	KernelThread( thread_start, data, flags )
 {
 	m_status = UNINITIALIZED;
 

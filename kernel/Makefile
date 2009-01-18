@@ -54,6 +54,8 @@ $(BIN_DIR)/$(KERNEL_RAW): depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 -include Makefile.depend
 .SUFFIXES:
 
+.INTERMEDIATE: $(OBJ_DIR)/test.o $(OBJ_DIR)/first_thread.o
+
 $(OBJ_DIR)/%.o : %.cpp
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_BLUE)$< $(COL_END)"
 	@$(CC) $(CPPFLAGS) -c -o $@ $<
