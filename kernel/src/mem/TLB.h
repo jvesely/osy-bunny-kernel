@@ -34,6 +34,7 @@
 #include "structures/Buffer.h"
 #include "Singleton.h"
 #include "ExceptionHandler.h"
+#include "Pointer.h"
 
 class IVirtualMemoryMap;
 
@@ -49,6 +50,8 @@ class TLB:public Singleton<TLB>, public ExceptionHandler
 public:
 
 	static const uint ASID_COUNT = 256;
+
+	static const uint BAD_ASID   = 255;
 
 	/*! @brief Counts best suited page size for the given size. */
 	static Processor::PageSize suggestPageSize( 
@@ -69,7 +72,7 @@ public:
 	 * @return @a true if translation was found and inserrted into the TLB
 	 * 		@a false otherwise.
 	 */
-	bool refill( IVirtualMemoryMap* vmm, native_t bad_addr );
+	bool refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr );
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *
@@ -131,7 +134,6 @@ public:
 	void mapDevices( uintptr_t physical_address, uintptr_t virtual_address,
 		Processor::PageSize page_size );
 
-private:
 
 	/*! @brief Removes all entries from the TLB
 	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
@@ -139,13 +141,14 @@ private:
 	 */
 	void flush();
 
+private:
 	/*!
 	 * @brief Gets page(or frame)	number of the given address.
 	 * @param address Address to convert.
 	 * @param page_size Size of pages to use.
 	 * @return Returns upper 20 bits of the starting address of the page.
 	 */
-	inline unative_t addrToPage( uintptr_t address, Processor::PageSize page_size )
+	static inline unative_t addrToPage( uintptr_t address, Processor::PageSize page_size )
 		{ return address >> Processor::pages[Processor::PAGE_4K].shift & ~Processor::pages[page_size].mask; }
 
 	/*!
@@ -154,7 +157,7 @@ private:
 	 * @param page_size Size of the page.
 	 * @return  @a true if page number is even, @a false otherwise.
 	 */
-	inline bool isEven( unative_t page, Processor::PageSize page_size )
+	static inline bool isEven( unative_t page, Processor::PageSize page_size )
 		{ return !((page >> (Processor::pages[page_size].shift - Processor::pages[Processor::PAGE_4K].shift)) & 1); }
 
 	/*!
@@ -163,7 +166,7 @@ private:
 	 * @param flags Flags to add
 	 * @return registry Lo value to store in TLB.
 	 */
-	inline unative_t frameToPFN( unative_t frame, byte flags)
+	static inline unative_t frameToPFN( unative_t frame, byte flags)
 		{ return ((frame << Processor::PFN_SHIFT) & Processor::PFN_ADDR_MASK) | flags; }
 
 	/*!

@@ -35,8 +35,8 @@
 #include "FileEntry.h"
 #include "VFS.h"
 
-FileEntry::FileEntry( TarHeader& header, uint start_block, DiscDevice* disc ):
-	Entry( disc )
+FileEntry::FileEntry( TarHeader& header, uint start_block, DiskDevice* disk ):
+	Entry( disk )
 {
 	m_size = header.fileSize();
 	m_startPos = start_block + 1;

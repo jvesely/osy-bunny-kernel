@@ -34,10 +34,18 @@
 
 #pragma once
 
-#include "UserThread.h"
+//#include "UserThread.h"
+#include "structures/List.h"
 
-class Process: public UserProcess
+class UserThread*;
+template List<UserThread*>;
+typedef List<UserThread*> ThreadList;
+
+class Process
 {
 public:
 	static create();
+private:
+	UserThread* m_mainThread;
+	ThreadList m_list;
 }

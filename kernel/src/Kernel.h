@@ -49,9 +49,9 @@ extern void* first_thread(void*);
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
 
-class DiscDevice;
+class DiskDevice;
 
-typedef List<DiscDevice*> DiscList;
+typedef List<DiskDevice*> DiskList;
 
 /*!
  * @class Kernel Kernel.h "Kernel.h"
@@ -71,7 +71,7 @@ public:
 	 * that needs initializing, except that which is already initialized and
 	 * schedules first thread.
 	 */
-	void run();
+	void run() __attribute__ ((noreturn));
 
 	/*!
 	 * @brief Gets current I/O device.
@@ -133,17 +133,15 @@ public:
 	 */
 	void registerInterruptHandler( InterruptHandler* handler, uint intn );
 
-	void switchTo();
-
 	/*! @brief Gets the first disk. */
-	DiscDevice* disk() { return m_discs.getFront(); };
+	DiskDevice* disk() { return m_disks.getFront(); };
 
 private:
 	Console m_console;                 /*!< Console device.        */
 	const RTC m_clock;                 /*!< Clock device.          */
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
-	DiscList m_discs;									 /*!< Disks.                 */
+	DiskList m_disks;									 /*!< Disks.                 */
 	VFS* m_rootFS;                     /*!< /.                     */
 	SyscallHandler m_syscalls;         /*!< Handles Syscalls.      */
 	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
@@ -164,7 +162,7 @@ private:
 	 */
 	void handleInterrupts( Processor::Context* registers );
 
-	void attachDiscs();
+	void attachDisks();
 	
 	/*! @brief Initializes structures.
 	 *

@@ -53,7 +53,7 @@ inline native_t swap(volatile native_t& variable, native_t value) {
 		".set noreorder\n"
 
 		"1:\n"
-		"  ll %[temp], %[value]\n"
+		"  lw %[temp], %[value]\n"
 		"  ll %[ret], %[variable]\n"
 		"  sc %[temp], %[variable]\n"
 		"  beqz %[temp], 1b\n"

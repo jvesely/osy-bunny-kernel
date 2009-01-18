@@ -39,8 +39,9 @@
 void* first_thread(void* data)
 {
 	#ifdef KERNEL_TEST
+		//KERNEL.stop();
 		run_test();
-		Kernel::instance().halt();
+		KERNEL.halt();
 	#endif
 	
 	#ifdef USER_TEST
@@ -67,13 +68,13 @@ void* first_thread(void* data)
 	}
 	size_t filesize = fs->sizeFile( bin_file );
 	printf( "Reading from file %s of size %u.\n", file, filesize );
-	char* content = (char*)malloc( filesize + 1);
+	char* content = (char*)malloc( filesize + 1 );
 	content[filesize] = 0;
 	fs->readFile( bin_file, content, filesize );
 	printf( "Contents: %s.\n", content );
 
 	const char* foo = "FOO";
 	SysCall::puts( foo );
-	KERNEL.halt();
+	KERNEL.stop();
 	return NULL;
 }

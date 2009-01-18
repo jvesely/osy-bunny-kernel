@@ -35,12 +35,12 @@
 #pragma once
 
 #include "types.h"
-class DiscDevice;
+class DiskDevice;
 
 class Entry
 {
 public:
-	Entry(DiscDevice* storage): m_storage( storage ) {};
+	Entry(DiskDevice* storage): m_storage( storage ) {};
 	virtual size_t size() const = 0;
 	virtual ssize_t read( void* buffer, int size ) = 0;
 	virtual uint seek( FilePos pos, int offset ) = 0;
@@ -53,5 +53,5 @@ protected:
 	Entry& operator = (const Entry& other);
 	bool readFromDevice(void* buffer, size_t count, uint start_block, uint offset);
 private:
-	DiscDevice* m_storage;
+	DiskDevice* m_storage;
 };

@@ -33,16 +33,17 @@
 
 #include "main.h"
 #include "Kernel.h"
+#include "asm/atomic.h"
 
-volatile unative_t COUNT_CPU;
+volatile unative_t COUNT_CPU = 0;
+volatile native_t SIMPLE_LOCK = 0;
 
 /*! bootstrap entry point */
 void wrapped_start( void )
 {
-	KERNEL.switchTo();
-
-//	Kernel::instance().stop();
-//	msim_stop();
+	while ( swap(SIMPLE_LOCK, 1) ) ;
+	KERNEL.run();
+	while (1) ;
 }
 
 /*! entry point for general_exceptions */

@@ -109,7 +109,9 @@ Thread::Thread( uint stackSize ):
 void Thread::switchTo()
 {
 	InterruptDisabler interrupts;
-		
+	
+	PRINT_DEBUG ("Switching to thread %u.\n", m_id);
+
 	static const Time DEFAULT_QUANTUM(0, 20000);
 
 	Thread* old_thread = getCurrent();
@@ -137,16 +139,21 @@ void Thread::switchTo()
 
 	PRINT_DEBUG ("Switching VMM to: %p.\n", m_virtualMap.data());
 
-	if (m_virtualMap)
+	if (m_virtualMap) {
 		m_virtualMap->switchTo();
+	} else {
+		IVirtualMemoryMap::switchOff();
+	}
 
-	if (this != (Thread*) Scheduler::instance().m_idle) {
+	if (this != Scheduler::instance().m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
 			m_id, DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
 		Timer::instance().plan( this, DEFAULT_QUANTUM );
 	}
 
-	Processor::switch_cpu_context(old_stack, new_stack);
+	PRINT_DEBUG ("Switching stacks: %p, %p.\n", old_stack, new_stack);
+
+	Processor::switch_cpu_context( old_stack, new_stack );
 }
 /*----------------------------------------------------------------------------*/
 void Thread::yield()

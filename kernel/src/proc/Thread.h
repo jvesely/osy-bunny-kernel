@@ -39,7 +39,7 @@
 #include "Pointer.h"
 
 template class Pointer<IVirtualMemoryMap>;
-
+class Process;
 
 #define THREAD_HEAP_CHILDREN 4
 
@@ -110,13 +110,16 @@ public:
 	virtual ~Thread();
 
 	/*! @brief This will be run in the separate thread, includes some management */
-	virtual void run() = 0;
+	virtual void run() __attribute__ ((noreturn)) = 0;
 
 	/*! Suspend thread for the given time, no status is set */
 	void alarm( const Time& alarm_time );
 
-	/*! @brief new thread entry point */
+	/*! @brief New thread entry point. */
 	void start() { run(); };
+
+	/*! @brief Process I belong to. */
+	Process* process() { return m_process; };
 
 	/*! @brief Rescheduling member function.
 	 *
@@ -198,6 +201,7 @@ protected:
 	void* m_stack;	                           /*!< that's my stack            */
 	void* m_stackTop;                          /*!< top of my stack            */
 	unsigned int m_stackSize;                  /*!< size of my stack           */
+	Process*  m_process;                       /*!< my process                 */
 
 	bool m_detached;                           /*!< detached flag              */
 	Status m_status;                           /*!< my status                  */
@@ -206,8 +210,8 @@ protected:
 	Pointer<IVirtualMemoryMap> m_virtualMap;   /*!< @brief Virtual Memory Map. */
 
 private:
-	Thread(const Thread& other);                  /*!< no copying   */
-	const Thread& operator=(const Thread& other); /*!< no assigning */
+	Thread(const Thread& other);                    /*!< no copying   */
+	const Thread& operator = (const Thread& other); /*!< no assigning */
 
 };
 

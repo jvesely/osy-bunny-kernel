@@ -36,16 +36,16 @@
 
 #include "devices.h"
 #include "synchronization/Mutex.h"
-#include "DiscDevice.h"
+#include "DiskDevice.h"
 
 #define BLOCK_SIZE 512
 
 class Thread;
 
-class MsimDisc: public DiscDevice
+class MsimDisk: public DiskDevice
 {
 public:
-	MsimDisc( unative_t* address ):
+	MsimDisk( unative_t* address ):
 		m_registers( address )
 		{};
 	bool read( void* buffer, uint count, uint block, uint start_pos );

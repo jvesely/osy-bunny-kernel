@@ -32,6 +32,6 @@
 #pragma once
 #include "drivers/Processor.h"
 
-extern "C" void wrapped_start(void);
+extern "C" void wrapped_start(void) __attribute__ ((noreturn));
 extern "C" void wrapped_general(Processor::Context* registers);
 extern "C" void wrapped_tlbrefill(void);

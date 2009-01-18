@@ -36,6 +36,7 @@
 #include "mem/TLB.h"
 #include "InterruptDisabler.h"
 #include "tools.h"
+#include "drivers/Processor.h"
 
 //#define IVMM_DEBUG
 
@@ -57,13 +58,18 @@ void IVirtualMemoryMap::freed()
 /*----------------------------------------------------------------------------*/
 void IVirtualMemoryMap::switchTo()
 {
-
 	if (!m_asid) {
 		m_asid = TLB::instance().getAsid( this );
 	}
 	PRINT_DEBUG ("Switching to VMM %p with ASID: %u\n", this, m_asid);
 	TLB::instance().switchAsid( m_asid );
 	getCurrent() = this;
+}
+/*----------------------------------------------------------------------------*/
+void IVirtualMemoryMap::switchOff()
+{
+	TLB::instance().switchAsid( TLB::BAD_ASID );
+	getCurrent() = NULL;
 }
 /*----------------------------------------------------------------------------*/
 IVirtualMemoryMap::~IVirtualMemoryMap()
@@ -77,6 +83,9 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 		this, dest_map.data(), src_addr, dst_addr, size, m_asid, dest_map->asid());
 
 	Pointer<IVirtualMemoryMap> old_map = getCurrent();
+
+	ASSERT (old_map);
+
 	const size_t BUFFER_SIZE = 512;
 	byte buffer[BUFFER_SIZE];
 	char* dest = (char*)dst_addr;
@@ -88,25 +97,24 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 		InterruptDisabler inter;
 		size_t count = min(BUFFER_SIZE, size);
 		switchTo();
-		PRINT_DEBUG ("First 4B to copy: %x.\n", *src);
-		memcpy((void*)buffer, (void*)src, count);
+		PRINT_DEBUG ("First 4B to copy: %x.\n", *(int*)src);
+		memcpy( (void*)buffer, (void*)src, count );
 		
 		PRINT_DEBUG ("Copying %uB data %x vs. %x.\n",
 			count, *(uint*)src,*(uint*) buffer);
 		PRINT_DEBUG ("Copied from %p to buffer %p count %u.\n", src, buffer, count);
 		
 		dest_map->switchTo();
-		memcpy((void*)dest, (void*)buffer, count);
+		memcpy( (void*)dest, (void*)buffer, count );
+
 		src  += count;
 		dest += count;
 		size -= count;
 	}
 
-	if (old_map)
-		old_map->switchTo();
-
 	PRINT_DEBUG ("Thread copy complete, copied %u B of data.\n", 
 		dest - (char*)dst_addr);
-	
+
+	old_map->switchTo();
 	return EOK;
 }
