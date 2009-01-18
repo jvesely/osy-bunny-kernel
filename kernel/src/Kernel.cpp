@@ -166,9 +166,9 @@ void Kernel::run()
 		ASSERT (MyFrameAllocator::instance().isInitialized());
 
 		attachDisks();
-		//init and run the main thread
 	}
 	{
+		//init and run the main thread
 		thread_t mainThread;
 		Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
 		ASSERT (main);

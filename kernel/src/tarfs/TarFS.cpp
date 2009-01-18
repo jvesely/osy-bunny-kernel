@@ -122,6 +122,7 @@ void TarFS::closeFile( file_t file )
 ssize_t TarFS::readFile( file_t src, void* buffer, size_t size )
 {
 	Entry* entry = getFile( src );
+	PRINT_DEBUG ("Reading file: %u.\n", src);
 	if (entry) 
 		return entry->read( buffer, size );
 	return EIO;

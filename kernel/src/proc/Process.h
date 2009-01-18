@@ -37,15 +37,16 @@
 //#include "UserThread.h"
 #include "structures/List.h"
 
-class UserThread*;
-template List<UserThread*>;
-typedef List<UserThread*> ThreadList;
+class UserThread;
+template class List<UserThread*>;
+typedef List<UserThread*> UserThreadList;
 
 class Process
 {
 public:
-	static create();
+	static Process* create( const char* filename );
+	inline UserThread* mainThread() { return m_mainThread; };
 private:
 	UserThread* m_mainThread;
-	ThreadList m_list;
-}
+	UserThreadList m_list;
+};
