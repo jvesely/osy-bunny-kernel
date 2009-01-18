@@ -25,26 +25,44 @@
 
 /*!
  * @file 
- * @brief Contains ASSERT and assert macros.
+ * @brief Short description.
  *
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but 
+ * at least people can understand it. 
  */
 
 #pragma once
 
-/*! assert and ASSERT are the same thing. */
-#define assert ASSERT
+#define panic printf
 
-/*! ASSERT macro.
- * Macro tests condition and calls panic, if condition is false.
- * This macro only works when compiled without NDEBUG macro defined.
- * @param test Condition to be tested.
- */
-#ifndef NDEBUG
-#define ASSERT(test) \
-  if (! (test) ) { \
-    panic("ASSERTION FAILED: \"%s\" in %s on line %d\n", (char*)#test, __FILE__, __LINE__); \
-  } else ((void) 0)
-#else
-# define ASSERT(x) ((void) 0)
+
+#include "types.h"
+#include "flags.h"
+#include "assert.h"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
+/* Basic IO */
+size_t putc( const char c );
+
+size_t puts( const char* str );
+
+size_t printf( const char* format, ...  );
+
+char getc();
+
+ssize_t gets( char* str, const size_t len );
+
+/* Memory */
+void *malloc(const size_t size);
+
+void free(const void *ptr);
+
+
+
+#ifdef __cplusplus
+}
+#endif

@@ -21,6 +21,7 @@ ifneq ($(USER_TEST),)
 	CFLAGS    += -DUSER_TEST
 	TEST_DIRS += $(dir $(addprefix ../, $(USER_TEST)))
 	VPATH     += $(TEST_DIRS)
+	OBJS      += $(USER_TEST)
 endif
 
 # Define DEBUG_MUTEX for mutex5 test
