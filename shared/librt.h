@@ -67,7 +67,7 @@ ssize_t gets( char* str, const size_t len );
  * @retval pointer to the allocated block.
  * @retval NULL on failure.
  */
-void *malloc( const size_t size );
+void* malloc( const size_t size );
 
 /*! 
  * @brief Returns no longer needed block back to the heap.
@@ -217,13 +217,7 @@ typedef struct mutex {
 } mutex_t;
 
 /*! @brief Function for checking if the mutex identifier is valid. */
-inline uint mtx_ok( struct mutex* mtx ) 
-{
-	if (!mtx)
-		return EINVAL;
-
-	return EOK;
-}
+int mtx_ok( struct mutex* mtx );
 
 /*!
  * @brief Initialize the given mutex struct (to unlocked state).
