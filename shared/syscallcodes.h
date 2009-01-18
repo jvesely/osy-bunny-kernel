@@ -34,4 +34,5 @@
 
 #define SYS_PUTS 1
 #define SYS_GETS 2
-#define SYS_LAST 3
+#define SYS_EXIT 3
+#define SYS_LAST 4

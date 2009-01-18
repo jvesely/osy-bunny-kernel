@@ -25,22 +25,22 @@
 
 /*!
  * @file 
- * @brief Linker script.
+ * @brief Applications Linker script.
  *
  * Entire file is copied from the Kalisto kernel as there is little to change.
  */
 OUTPUT_ARCH(mips)
 
 SECTIONS {
-	PROVIDE (_kernel_start = 0x80000000);
+ /*	PROVIDE (__start = 0x01000000); */
 	
 	/* kernel image assembled from text and data sections */
 	
-	.kernel 0x80000000 : {
+	.app 0x01000000 : {
 		/* excvec section is placed at fixed
 		   address starting at 0x80000000 */
 		
-		*(.excvec)
+		*(.__start)
 		
 		/* usual sections */
 		
@@ -49,7 +49,7 @@ SECTIONS {
 		*(.rodata .rodata.*)
 		*(.bss .bss.*)
 		*(COMMON)
-		_kernel_end = .;
+/*		_kernel_end = .; */
 	}
 	
 	/* debugging information copied from default linker script */

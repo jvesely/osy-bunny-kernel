@@ -27,7 +27,7 @@ disk: apps
 
 ### cleaning stuff ###
 .PHONY: clean
-clean: clean-kernel clean-loader clean-librt clean-disk
+clean: clean-kernel clean-loader clean-librt clean-apps clean-disk
 clean-kernel:
 	@echo "Cleaning kernel";
 	$(MAKE) -C kernel clean
@@ -37,6 +37,9 @@ clean-loader:
 clean-librt:
 	@echo "Cleaning librt"
 	$(MAKE) -C librt clean
+clean-apps:
+	@echo "Cleaning apps"
+	$(MAKE) -C apps clean
 clean-disk:
 	@echo "Cleaning disk"
 	@rm -f disk.tar

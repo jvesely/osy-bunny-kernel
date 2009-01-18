@@ -69,8 +69,13 @@ inline size_t puts( const char* str )
 	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
 }
 
-inline size_t gets( char* str, size_t count ){
+inline size_t gets( char* str, size_t count )
+{
 	return SYSCALL( SYS_GETS, str, count, 0, 0 );
+}
+
+inline void exit() {
+	SYSCALL( SYS_EXIT, 0, 0, 0, 0);
 }
 
 #undef QUOT
