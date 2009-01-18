@@ -134,7 +134,6 @@ public:
 	void mapDevices( uintptr_t physical_address, uintptr_t virtual_address,
 		Processor::PageSize page_size );
 
-private:
 
 	/*! @brief Removes all entries from the TLB
 	 * Resets whole TLB with invalid 0->0 4KB ASID:ff invalid entries
@@ -142,6 +141,7 @@ private:
 	 */
 	void flush();
 
+private:
 	/*!
 	 * @brief Gets page(or frame)	number of the given address.
 	 * @param address Address to convert.

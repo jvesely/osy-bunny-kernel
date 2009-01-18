@@ -110,7 +110,7 @@ public:
 	virtual ~Thread();
 
 	/*! @brief This will be run in the separate thread, includes some management */
-	virtual void run() = 0;
+	virtual void run() __attribute__ ((noreturn)) = 0;
 
 	/*! Suspend thread for the given time, no status is set */
 	void alarm( const Time& alarm_time );
