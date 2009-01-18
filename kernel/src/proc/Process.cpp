@@ -108,9 +108,9 @@ Process* Process::create( const char* filename )
 	ASSERT (old_vmm);
 	ASSERT (old_vmm != vmm);
 
-	char* place = (char*)malloc( file_size + 1 );
-	place[file_size] = 0;
+	char* place = (char*)malloc( file_size );
 	fs->readFile( bin_file, place, file_size );
+	printf("First int: %x.\n", *(uint*)place);
 	old_vmm->copyTo( place, vmm, start, file_size );
 
 
@@ -119,4 +119,14 @@ Process* Process::create( const char* filename )
 	me->m_mainThread->resume();
 	me->m_mainThread->m_process = me;
 	return me;
+}
+/*----------------------------------------------------------------------------*/
+void Process::exit()
+{
+	m_mainThread->kill();
+}
+/*----------------------------------------------------------------------------*/
+Process* Process::getCurrent()
+{
+	return Thread::getCurrent()->process();
 }

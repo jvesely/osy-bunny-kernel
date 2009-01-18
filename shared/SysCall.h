@@ -69,9 +69,9 @@ inline size_t puts( const char* str )
 	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
 }
 
-inline size_t gets( char* str, size_t count )
+inline size_t gets( char* buffer, size_t size)
 {
-	return SYSCALL( SYS_GETS, str, count, 0, 0 );
+	return SYSCALL( SYS_GETS, buffer, size, 0, 0 );
 }
 
 inline void exit() {

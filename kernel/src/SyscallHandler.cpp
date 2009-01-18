@@ -35,11 +35,13 @@
 #include "SyscallHandler.h"
 #include "address.h"
 #include "syscallcodes.h"
+#include "proc/Process.h"
 
 SyscallHandler::SyscallHandler()
 {
 	m_handles[SYS_PUTS] = (&SyscallHandler::handlePuts);
 	m_handles[SYS_GETS] = (&SyscallHandler::handleGets);
+	m_handles[SYS_EXIT] = (&SyscallHandler::handleExit);
 	
 }
 /*----------------------------------------------------------------------------*/
@@ -51,13 +53,19 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 	m_params[1] = registers->a1;
 	m_params[2] = registers->a2;
 	m_params[3] = registers->a3;
-
+/*
 	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
 		m_call, m_params[0], m_params[1], m_params[2], m_params[3]);
-
+*/
+	registers->epc += 4;
+	
 	if (!m_handles[m_call]) return false;
 	registers->v0   = (this->*m_handles[m_call]) ();
-	registers->epc += 4;
+/*
+	if (m_call == SYS_GETS)
+		printf("Handled syscall: %u, params: %x %x, res: %x",
+			m_call, m_params[0], m_params[1], registers->v0 );
+	// */
 	return true;
 /*
 	switch ( m_call ) {
@@ -87,4 +95,23 @@ unative_t SyscallHandler::handlePuts()
 //		Thread::getCurrent()->kill();
 //	}
 
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleGets()
+{
+	if (m_params[1] == 1) {
+		*(char*)m_params[0] = getc();
+		return 1;
+	} else {
+		return gets((char*)m_params[0], m_params[1]);
+	}
+
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleExit()
+{
+	Process* current = Process::getCurrent();
+	ASSERT (current);
+	current->exit();
+	return 0;
 }

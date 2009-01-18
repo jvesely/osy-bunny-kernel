@@ -90,6 +90,7 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 		return;
 	
 	PRINT_DEBUG ("Stack at address: %p.\n", m_stack);
+
 	m_status = INITIALIZED;
 	return;
 /*
@@ -129,7 +130,16 @@ void UserThread::run()
 {
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
 
-	printf( "Should run: %s.\n", m_runFunc );
+
+	asm volatile(
+		"jal %0\n"
+		"nop"
+		:
+		:"r" (m_runFunc)
+		: 
+	);
+
+//	m_runFunc(NULL);
 
 	m_status = FINISHED;
 	PRINT_DEBUG ("Finished thread %u.\n", m_id);

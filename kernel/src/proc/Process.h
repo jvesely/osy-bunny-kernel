@@ -34,7 +34,6 @@
 
 #pragma once
 
-//#include "UserThread.h"
 #include "structures/List.h"
 
 class UserThread;
@@ -46,6 +45,8 @@ class Process
 public:
 	static Process* create( const char* filename );
 	inline UserThread* mainThread() { return m_mainThread; };
+	void exit();
+	static Process* getCurrent();
 private:
 	UserThread* m_mainThread;
 	UserThreadList m_list;

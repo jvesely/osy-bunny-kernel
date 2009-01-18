@@ -50,11 +50,9 @@ size_t puts( const char* str )
 /*----------------------------------------------------------------------------*/
 char getc()
 {
-	static char buffer;
-	if (SysCall::gets( &buffer, 1 ) == 1)
-		return buffer;
-	else
-		return EOTHER;
+	char buffer;
+	SysCall::gets( &buffer, 1);
+	return buffer;
 }
 /*----------------------------------------------------------------------------*/
 ssize_t gets( char* str, const size_t len )
@@ -175,8 +173,10 @@ int mutex_unlock( struct mutex* mtx )
 }
 /*----------------------------------------------------------------------------*/
 extern "C" int main();
+extern "C" void __start() __attribute__ ((section (".entry"), noreturn)) ;
 void __start()
 {
 	main();
 	exit();
+	while (1) ;
 }

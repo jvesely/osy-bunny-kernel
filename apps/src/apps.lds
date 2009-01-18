@@ -32,16 +32,13 @@
 OUTPUT_ARCH(mips)
 
 SECTIONS {
- /*	PROVIDE (__start = 0x01000000); */
 	
-	/* kernel image assembled from text and data sections */
+	/* app image assembled from text and data sections */
 	
 	.app 0x01000000 : {
-		/* excvec section is placed at fixed
-		   address starting at 0x80000000 */
-		
-		*(.__start)
-		
+		/* entry section is placed at fixed
+		   address starting at 0x01000000 */
+		*(.entry) 
 		/* usual sections */
 		
 		*(.text .text.*)
@@ -49,7 +46,6 @@ SECTIONS {
 		*(.rodata .rodata.*)
 		*(.bss .bss.*)
 		*(COMMON)
-/*		_kernel_end = .; */
 	}
 	
 	/* debugging information copied from default linker script */

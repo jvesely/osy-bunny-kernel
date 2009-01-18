@@ -47,7 +47,7 @@ void* first_thread(void* data)
 	#ifdef USER_TEST
 		const char* file = "test.bin";
 	#else
-		const char* file = "init.bin";
+		const char* file = "test.bin";
 	#endif
 
 	puts( "Mounting root fs..." );
