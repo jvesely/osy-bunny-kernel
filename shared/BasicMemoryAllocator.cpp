@@ -34,9 +34,17 @@
 
 #include "BasicMemoryAllocator.h"
 #include <api.h>
-//#include <InterruptDisabler.h>
 #include <tools.h>
 #include "address.h"
+#include "../kernel/src/drivers/Processor.h"
+
+/*
+naming convention for memory sizes:
+size, ammount...: just required size
+realSize : required size + blockHeader and BlockFooter (size of block)
+totalSize : realsize + size of borders ( = + blokHeader + blockFooter)
+finalSize : totalSize aligned to min page size
+*/
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -140,6 +148,7 @@ BasicMemoryAllocator::BasicMemoryAllocator():
 #endif
 	m_freeSize = 0;
 	m_totalSize = 0;
+	m_chunkResizingEnabled = false;
 	//default allocation strategy
 	setStrategyDefault();
 }
@@ -152,16 +161,15 @@ BasicMemoryAllocator::~BasicMemoryAllocator()
 
 void * BasicMemoryAllocator::getMemory(size_t ammount)
 {
-	//locking structure of memory manager
-//	InterruptDisabler lock;
+	//inherited classs shoul implement some synchronisation here!!!
 #ifdef BMA_DEBUG
-	if ((m_mylock)){//debug
+	if ((m_mylock)) //debug
+	{
 		printf("The way is shut. You cannot pass!\n");
 	}
 	while (m_mylock){};
 	m_mylock = 1;
 #endif
-
 	//init
 	const size_t size = alignUp(ammount, ALIGMENT);
 	const size_t realSize = size + sizeof(BlockHeader) + sizeof(BlockFooter);
@@ -170,7 +178,8 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 
 	BlockHeader * resHeader = NULL;
 	//check
-	if ( size <= m_freeSize ) {
+	if ( size <= m_freeSize )
+	{
 		//finding free block using actual allocation strategy
 		resHeader = (this->*getFreeBlockFunction)(realSize);
 	}
@@ -178,7 +187,7 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 	//now res points either to NULL or to header of free block large enough
 	if (resHeader == NULL)//will need new block
 	{
-		PRINT_DEBUG_FRAME("must get new frame \n");
+		PRINT_DEBUG_FRAME("must get new memory piece \n");
 		resHeader = getBlock( realSize ); //= real size of minimal allocated block
 		if (resHeader == NULL)
 		{
@@ -196,20 +205,44 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 	PRINT_DEBUG_OTHER("resHeader = %x\n", resHeader);
 	void * res = (void*)((uintptr_t)resHeader + sizeof(BlockHeader));
 	PRINT_DEBUG_OTHER("res       = %x\n", res);
-
 #ifdef BMA_DEBUG
 	m_mylock = 0;//debug
 #endif
 	return res;
 }
+
+//------------------------------------------------------------------------------
+BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::getBlock(size_t realSize)
+{
+	//expecting that realsize > 0 - otherwise it does not have sense
+	assert(realSize);
+
+	//this size will be in future provided by frame allocator
+	size_t totalSize = realSize + sizeof(BlockFooter) + sizeof(BlockHeader);
+	BlockHeader * res;
+
+#ifndef BMA_DEBUG
+	if (totalSize < DEFAULT_SIZE) totalSize = DEFAULT_SIZE;
+#endif
+
+	//try to extend some existing memory chunk
+	if (( res = tryExpandSomeChunk(totalSize) ))
+	{
+		return res;
+	}
+	//else try to get brand new memory chunk
+	return tryToGetNewChunk(totalSize);
+}
+
 //------------------------------------------------------------------------------
 void BasicMemoryAllocator::freeMemory(const void * address)
 {
-	if(!address) return;//according to specification, this should do nothing
+	if (!address) return;//according to specification, this should do nothing
 //	InterruptDisabler lock;
 
 #ifdef BMA_DEBUG
-	if ((m_mylock)){
+	if ((m_mylock))
+	{
 		printf("The way is shut. You cannot pass!\n");
 	}
 	while (m_mylock){};
@@ -221,19 +254,12 @@ void BasicMemoryAllocator::freeMemory(const void * address)
 	assert(header);
 	assert(header->isUsed());
 
-	//if it is only one block in physical memory chunk return it directly
-	if (!returnBlockIfPossible(header))
+	if (!returnChunkWithBlockIfNeeded(header))
 	{
+		//did not return whole chunk
+		//must return block and try to reduce chunk if possible
 		header = freeUsedBlock(header);
-		size_t blockSize = header->size();
-		//still there might be possibility to return the block to frame allocator
-		if (returnBlockIfPossible(header))
-		{//in such case return it and decrease free memory size
-			m_freeSize -= blockSize - sizeof(BlockHeader) - sizeof(BlockFooter);
-			PRINT_DEBUG_FREE("free size decreased to %x (returning block)\n", m_freeSize);
-		}
-	}else{
-		PRINT_DEBUG_FREE("free size unchanged on value %x (returning used block)\n", m_freeSize);
+		reduceChunkWithBlockIfNeeded(header);
 	}
 
 #ifdef BMA_DEBUG
@@ -250,40 +276,215 @@ void BasicMemoryAllocator::freeAll()
 	{
 		header = (BlockHeader*)(m_usedBloks.getMainItem()->next);
 		freeUsedBlock(header);
-		returnBlockIfPossible(header);
+		returnChunkIfPossible(header);
 	}
 }
 //------------------------------------------------------------------------------
-BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::createBlock(
-    uintptr_t start, size_t size)
+BasicMemoryAllocator::BlockHeader *
+BasicMemoryAllocator::tryToGetNewChunk(size_t totalSize)
 {
+	size_t FRAME_SIZE = Processor::pages[0].size;
+	size_t finalSize = roundUp(totalSize, FRAME_SIZE);
+
+	void * start = getNewChunk(finalSize);
+	if (!start) return NULL;//no memory
+
+	BlockHeader * res = initChunk(start, finalSize);
+	m_freeSize += res->size() - sizeof(BlockHeader) - sizeof(BlockFooter);
+	m_totalSize += finalSize;//=res->size + sizeof blockheader + blockfooter
+	return res;
+}
+
+//------------------------------------------------------------------------------
+BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::tryExpandSomeChunk(size_t totalSize)
+{
+	if (!m_chunkResizingEnabled) return NULL;
+	//alignment test
+	size_t FRAME_SIZE = Processor::pages[0].size;
+	size_t finalSize = roundUp(totalSize, FRAME_SIZE);
+
+	//bear in mind that chunk has footer at the front and header at the end
+	BlockFooter * frontBorder;
+	BlockHeader * backBorder = (BlockHeader*)(m_chunks.getMainItem()->next);
+	void * start = NULL;
+
+	//trying to find some chunk to resize
+	while ((!start) && (backBorder != m_chunks.getMainItem()))
+	{
+		frontBorder = (BlockFooter*)((uintptr_t)backBorder - backBorder->size() + sizeof(BlockHeader));
+
+		assert(frontBorder->isBorder());
+
+		start = extendExistingChunk(frontBorder, finalSize);
+		backBorder = (BlockHeader*) backBorder->next;
+	}
+	//else start = NULL and NULL is returned
+
+	if (start)
+	{
+		//expanding was succesful - joining expanded piece
+		PRINT_DEBUG_FRAME("expanding existing chunk was possible\n");
+		backBorder = (BlockHeader*) backBorder->prev;
+		return joinChunk(frontBorder, backBorder, finalSize);
+	}
+	//else
+	PRINT_DEBUG_FRAME("expanding existing chunk was NOT possible\n");
+	return NULL;
+}
+
+//------------------------------------------------------------------------------
+BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::initChunk(
+    void * start, size_t size)
+{
+	assert(start);
 	assert(size > 2*(sizeof(BlockHeader) + sizeof(BlockFooter)));
 	//real size of free block
 	const size_t realSize = size - sizeof(BlockHeader) - sizeof(BlockFooter);
 	//init what is where
-	
+
 	BlockFooter * frontBorder = (BlockFooter*) start;
-	BlockHeader * result = (BlockHeader*)(start + sizeof(BlockFooter));
-	BlockHeader * backBorder = (BlockHeader*)(start + size - sizeof(BlockHeader));
+	BlockHeader * result = (BlockHeader*)((uintptr_t)start + sizeof(BlockFooter));
+	BlockHeader * backBorder = (BlockHeader*)((uintptr_t)start + size - sizeof(BlockHeader));
 	//setting borders
 	//their state and total size of memory frame
 	frontBorder->setBorder();
 	frontBorder->setSize(size);
-	
+
 	backBorder->setBorder();
 	backBorder->setSize(size);
-	
+
 	//setting resultant block
 	PRINT_DEBUG_FRAME("init block with real size %x \n", realSize);
-	
+
 	result->setUndefined();
-	
 	initBlock(result, realSize, true);
-	
-	assert(result->isFree());
-	
 	return result;
 }
+//------------------------------------------------------------------------------
+bool BasicMemoryAllocator::returnChunkWithBlockIfNeeded(BlockHeader * header)
+{
+	BlockFooter * frontBorder = ((BlockFooter*)header) - 1;
+	BlockHeader * backBorder = (BlockHeader*)(header->getFooter() + 1);
+
+	if (!frontBorder->isBorder()) return false;
+	if (!backBorder->isBorder()) return false;
+
+	size_t reduceSize = header->size() - sizeof(BlockHeader) - sizeof(BlockFooter);
+
+	//here comes condition, whether to return block or not
+	if (m_freeSize > MIN_FREE_SIZE)
+	{
+		//invalidate structures on memory chunk
+		header->disconnect();
+		backBorder->disconnect();
+		//return chunk
+		returnChunk(frontBorder, frontBorder->size());
+		//set values
+		m_totalSize -= reduceSize + 2 * (sizeof(BlockFooter) + sizeof(BlockHeader));
+		PRINT_DEBUG_FREE("free size unchanged on value %x (returning chunk)\n", m_freeSize);
+		PRINT_DEBUG_FRAME("memory chunk was returned. his size was %x \n", reduction);
+	}
+	else
+	{
+		//only free the block
+		freeUsedBlock(header);
+	}
+	return true;
+}
+//------------------------------------------------------------------------------
+bool BasicMemoryAllocator::reduceChunkWithBlockIfNeeded(BlockHeader * header)
+{
+	if (!m_chunkResizingEnabled) return false;
+
+	BlockHeader * backBorder = (BlockHeader*)(header->getFooter() + 1);
+	//checking
+	if (!backBorder->isBorder()) return false;
+	if (!header->isFree()) return false;
+
+	BlockFooter * frontBorder = (BlockFooter*)
+	                            ((uintptr_t)backBorder - backBorder->size() + sizeof(BlockHeader));
+	//to reduce memory chunk is required:
+	//	-enough free memory
+	//	-enough free space in reduced chunk to reduce it (has something to do with alignment of adresses)
+	size_t pageAlignment = Processor::pages[0].size;
+	size_t reduceSize = header->size() - sizeof(BlockHeader) - sizeof(BlockFooter);
+	if (((m_freeSize - reduceSize) > MIN_FREE_SIZE) &&
+	        (header->size() > 2*pageAlignment))
+	{
+		//aligning new size of memory chunk - we want some free space left
+		size_t finalSize  = alignUp(
+		                        frontBorder->size() - header->size() + pageAlignment,
+		                        pageAlignment);
+		//setting potential new backBorder - surely is in given block
+		BlockHeader * newChunkEnd = (BlockHeader*)((uintptr_t)(frontBorder) + finalSize - sizeof(BlockHeader));
+		(*newChunkEnd) = (*backBorder);
+		//reducing memory chunk
+		if (reduceChunk(frontBorder, finalSize))
+		{
+			//if it worked, then structures must be restored
+			size_t reduction = frontBorder->size() - finalSize;
+			//chunkend is now valid
+			frontBorder->setSize(finalSize);
+			backBorder = newChunkEnd;
+			backBorder->reconnect();
+			backBorder->setSize(finalSize);
+			//set shrinked free block to new reduced size
+			//(reduction is the same for this block and memory chunk)
+			(this->*setSizeFunction)(header, header->size() - reduction);
+			m_freeSize -= reduction;
+			m_totalSize -= reduction;
+			PRINT_DEBUG_FREE("free size decreased to %x (reducing chunk)\n", m_freeSize);
+			PRINT_DEBUG_FRAME("memory chunk was reduced by size %x \n", reduction);
+			return true;
+		}//else nothing to do, old structures remain valid
+		return false;
+	}//else nothing
+	return false;
+}
+
+//------------------------------------------------------------------------------
+BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::joinChunk(
+    BlockFooter * frontBorder, BlockHeader * backBorder, size_t totalSize)
+{
+	assert(totalSize > 0);
+	assert(frontBorder->isBorder());
+	assert(backBorder->isBorder());
+
+	size_t finalSize = frontBorder->size() + totalSize;
+
+	BlockHeader * finalBackBorder = (BlockHeader*)((uintptr_t)(backBorder) + totalSize);
+	(*finalBackBorder) = (*backBorder);
+
+	assert(finalBackBorder->isBorder());
+
+	//connecting new header into chunk list
+	finalBackBorder->reconnect();
+	//setting borders size value
+	frontBorder->setSize(finalSize);
+	finalBackBorder->setSize(finalSize);
+
+	//creating new free block (resultant) with header on place of backBorder
+	//From now on consider backBorder as a BlockHeader of new free block!
+	backBorder->setUndefined();
+	initBlock(backBorder, totalSize);//free=true
+
+	//extending free and total size allocator is working with
+	m_totalSize += totalSize;
+	m_freeSize += totalSize - sizeof(BlockHeader) - sizeof(BlockFooter);
+	//if possible, join it with neighbour block (= previously last block in chunk)
+	BlockFooter * oldLastFooter = (BlockFooter*)((uintptr_t)backBorder - sizeof(BlockFooter));
+
+	//oldLastFooter CANNOT be border or undefined
+	assert((oldLastFooter->isFree()) || (oldLastFooter->isUsed()));
+
+	if (oldLastFooter->isFree())
+	{
+		backBorder = joinFreeBlocks(oldLastFooter->getHeader(), backBorder, true);
+		m_freeSize += sizeof(BlockHeader) + sizeof(BlockFooter);
+	}
+	return backBorder;
+}
+
 //------------------------------------------------------------------------------
 BasicMemoryAllocator::BlockHeader *
 BasicMemoryAllocator::getFreeBlockDefault(size_t realSize)
@@ -300,7 +501,8 @@ const
 		PRINT_DEBUG_OTHER("Testing block at %x, size %d\n", header, header->size());
 
 		if (header->size() >= realSize)
-		{ // first fit
+		{
+			// first fit
 			resHeader = header;
 		}
 		// next block
@@ -308,7 +510,8 @@ const
 		//if header is header of first block (and therefore we cycled trough list)
 		//set it to null
 		if (((SimpleListItem*)header) == (m_freeBlocks.getMainItem()))
-		{//though it seems a bit strange, it is hm..most flexible code for available list
+		{
+			//though it seems a bit strange, it is hm..most flexible code for available list
 			header = NULL;
 		}
 	}
@@ -336,7 +539,8 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::useFreeBlock(
 		PRINT_DEBUG_FREE("free size decreased to %x (using block)\n", m_freeSize);
 	}
 	else
-	{//block will be divided into used and the rest
+	{
+		//block will be divided into used and the rest
 		PRINT_DEBUG_OTHER("dividing block\n");
 		divideBlock(header, realSize, false, true);
 		assert(m_freeSize >= realSize);
@@ -422,10 +626,13 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::divideBlock(
 	*		reintegration if block will be moved to used blocks is not needed
 	*		changing state from used to free also integrates block correctly
 	*/
-	if ((header->isFree()) && (free1)){
+	if ((header->isFree()) && (free1))
+	{
 		PRINT_DEBUG_DIVIDE("changing size of free block\n");
 		(this->*setSizeFunction)(header, realSize);
-	}else{
+	}
+	else
+	{
 		PRINT_DEBUG_DIVIDE("changing size without reintegration\n");
 		setSizeDefault( header, realSize );
 	}
@@ -446,7 +653,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::joinFreeBlocks(
 	assert(!first->isBorder());
 	assert(!second->isBorder());
 	assert(first != second);
-	assert( (BlockHeader*)(first->getFooter()+1) == second);
+	assert( (BlockHeader*)(first->getFooter() + 1) == second);
 
 	PRINT_DEBUG_JOIN("Joining two blocks\n");
 	PRINT_DEBUG_SIZE("size of first %x B\n", first->size());
@@ -466,7 +673,9 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::joinFreeBlocks(
 		second->disconnect();
 		//connecting new header, which will be now valid again
 		first->reconnect();
-	}else{
+	}
+	else
+	{
 		assert(first->isFree());
 		//disconnect header, which is no more valid
 		second->disconnect();
@@ -499,7 +708,8 @@ void BasicMemoryAllocator::setState( BasicMemoryAllocator::BlockHeader * header,
 		header->setFree();
 		header->getFooter()->setFree();
 		(this->*insertIntoFreeListFunction)(header);//strategy-dependant insert
-	}else//will be used
+	}
+	else//will be used
 	{
 		header->setUsed();
 		header->getFooter()->setUsed();
@@ -530,9 +740,12 @@ inline void BasicMemoryAllocator::setSizeDefault
 	header->setSize(realSize);
 	header->getFooter()->setSize(realSize);
 	//set state
-	if (header->isFree()){
+	if (header->isFree())
+	{
 		header->getFooter()->setFree();
-	}else{
+	}
+	else
+	{
 		header->getFooter()->setUsed();
 	}
 }
