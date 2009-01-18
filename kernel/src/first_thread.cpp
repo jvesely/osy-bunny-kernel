@@ -75,6 +75,6 @@ void* first_thread(void* data)
 
 	const char* foo = "FOO";
 	SysCall::puts( foo );
-	KERNEL.stop();
+	KERNEL.halt();
 	return NULL;
 }
