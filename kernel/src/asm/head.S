@@ -245,9 +245,9 @@ handle_tlbrefill:
 	   current stack pointer on the stack. After that, we
 	   can use $sp as the stack pointer. */
 
-/*	la $k0, ADDR_TO_KSEG0 (KERNEL_STATIC_STACK_TOP) - CONTEXT_SIZE */
+	la $k0, ADDR_TO_KSEG0 (KERNEL_STATIC_STACK_TOP) - CONTEXT_SIZE
 	/* temporarily force the first stack behind the kernel */
-	la $k0, _kernel_end + KERNEL_STATIC_STACK_SIZE - CONTEXT_SIZE
+/*	la $k0, _kernel_end + KERNEL_STATIC_STACK_SIZE - CONTEXT_SIZE */
 	sw $sp, REGS_OFFSET_SP($k0)
 	or $sp, $0, $k0
 

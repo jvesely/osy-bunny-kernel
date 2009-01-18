@@ -45,7 +45,7 @@ class Singleton
 public:
 
 	/*! @return reference to static instance of the class */
-	static T& instance()
+	static inline T& instance()
 	{
 		static T it;
 		return it;

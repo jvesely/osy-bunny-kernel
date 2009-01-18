@@ -153,7 +153,6 @@ void Kernel::run()
 		printf( "Stacks(%x) end at: %p.\n",
 			total_stacks, (uintptr_t)&_kernel_end + total_stacks );
 
-
 		MyFrameAllocator::instance().init( 
 			m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
 
@@ -227,9 +226,7 @@ bool Kernel::handleException( Processor::Context* registers )
 			handleInterrupts( registers );
 			break;
 		case CAUSE_EXCCODE_SYS:
-			return false;
 		case CAUSE_EXCCODE_RI:
-			panic("exc %x", registers->epc);
 		case CAUSE_EXCCODE_ADEL:
 		case CAUSE_EXCCODE_ADES:
 			return false;
@@ -294,11 +291,11 @@ void Kernel::setTimeInterrupt(const Time& time)
 		current = roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND);
 	}
 	
-	Processor::reg_write_compare( current );
-	
 	PRINT_DEBUG
 		("[%u:%u] Set time interrupt in %u usecs current: %x, planned: %x.\n",
 			now.secs(), now.usecs(), usec, current, Processor::reg_read_compare());
+	
+	Processor::reg_write_compare( current );
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::refillTLB()
@@ -306,7 +303,7 @@ void Kernel::refillTLB()
   InterruptDisabler inter;
 
   bool success = TLB::instance().refill(
-		IVirtualMemoryMap::getCurrent().data(), Processor::reg_read_badvaddr());
+		IVirtualMemoryMap::getCurrent(), Processor::reg_read_badvaddr());
 	
 	PRINT_DEBUG ("TLB refill for address: %p (%u) was a %s.\n",
 		Processor::reg_read_badvaddr(), Thread::getCurrent()->id(), success ? "SUCESS" : "FAILURE");

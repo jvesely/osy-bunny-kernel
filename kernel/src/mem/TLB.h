@@ -34,6 +34,7 @@
 #include "structures/Buffer.h"
 #include "Singleton.h"
 #include "ExceptionHandler.h"
+#include "Pointer.h"
 
 class IVirtualMemoryMap;
 
@@ -71,7 +72,7 @@ public:
 	 * @return @a true if translation was found and inserrted into the TLB
 	 * 		@a false otherwise.
 	 */
-	bool refill( IVirtualMemoryMap* vmm, native_t bad_addr );
+	bool refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr );
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *
@@ -147,7 +148,7 @@ private:
 	 * @param page_size Size of pages to use.
 	 * @return Returns upper 20 bits of the starting address of the page.
 	 */
-	inline unative_t addrToPage( uintptr_t address, Processor::PageSize page_size )
+	static inline unative_t addrToPage( uintptr_t address, Processor::PageSize page_size )
 		{ return address >> Processor::pages[Processor::PAGE_4K].shift & ~Processor::pages[page_size].mask; }
 
 	/*!
@@ -156,7 +157,7 @@ private:
 	 * @param page_size Size of the page.
 	 * @return  @a true if page number is even, @a false otherwise.
 	 */
-	inline bool isEven( unative_t page, Processor::PageSize page_size )
+	static inline bool isEven( unative_t page, Processor::PageSize page_size )
 		{ return !((page >> (Processor::pages[page_size].shift - Processor::pages[Processor::PAGE_4K].shift)) & 1); }
 
 	/*!
@@ -165,7 +166,7 @@ private:
 	 * @param flags Flags to add
 	 * @return registry Lo value to store in TLB.
 	 */
-	inline unative_t frameToPFN( unative_t frame, byte flags)
+	static inline unative_t frameToPFN( unative_t frame, byte flags)
 		{ return ((frame << Processor::PFN_SHIFT) & Processor::PFN_ADDR_MASK) | flags; }
 
 	/*!
