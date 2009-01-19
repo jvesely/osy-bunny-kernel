@@ -10,7 +10,7 @@ SRC_DIR = src
 INC_DIR = ../shared
 
 ### Files ###
-LIBRT_A  = ../librt/bin/librt.a
+LIBRT_DIR  = ../librt/bin/
 LDS_FILE   = $(SRC_DIR)/apps.lds
 
 OBJS += $(shell find src -name "*.cpp" -o -name "*.S" -o -name "*.c")
@@ -47,9 +47,9 @@ $(BIN_DIR)/%.bin : $(BIN_DIR)/%.raw
 	@echo -e "$(COL_WHITE)Creating image... $(COL_GREEN)$@$(COL_END) <--$(COL_YELLOW) $^$(COL_END)"
 	@$(OBJCOPY) -O binary  $^ $@
 
-$(BIN_DIR)/%.raw : $(OBJ_DIR)/%.o $(LIBRT_A) $(LDS_FILE)
+$(BIN_DIR)/%.raw : $(OBJ_DIR)/%.o $(LIBRT_DIR)/librt.a $(LDS_FILE)
 	@echo -e "$(COL_WHITE)Linking image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(^)$(COL_END)"
-	@$(LD) $(LDFLAGS) -T $(LDS_FILE) -Map $@.map -o $@ $(<) $(LIBRT_A)
+	@$(LD) $(LDFLAGS) -T $(LDS_FILE) -Map $@.map -o $@ $(<) -L$(LIBRT_DIR) -lrt
 
 $(OBJ_DIR)/%.o : %.cpp
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_BLUE)$< $(COL_END)"

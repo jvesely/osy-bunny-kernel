@@ -105,7 +105,6 @@ unative_t SyscallHandler::handleGets()
 	} else {
 		return gets((char*)m_params[0], m_params[1]);
 	}
-
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleExit()

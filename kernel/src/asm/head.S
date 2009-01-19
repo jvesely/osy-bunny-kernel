@@ -533,3 +533,12 @@ out:
 	mtc0 $k0, $status
 
 .end switch_cpu_context
+
+.globl switch_to_usermode
+.ent   switch_to_usermode
+switch_to_usermode:
+/*	or $sp, $0, $a1 */
+	stop
+	j $a0
+	nop
+.end   switch_to_usermode

@@ -36,7 +36,6 @@
 
 #define panic printf
 
-
 #include "types.h"
 #include "flags.h"
 #include "assert.h"

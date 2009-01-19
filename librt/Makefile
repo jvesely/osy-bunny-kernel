@@ -22,13 +22,20 @@ ifneq (, $(findstring mutex5,$(KERNEL_TEST)))
 	CFLAGS += -DDEBUG_MUTEX
 endif
 
+### Dependencies ###
+DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -I $(INC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
+
+Makefile.depend: $(OBJS)
+	@$(DEPEND) > Makefile.depend
+	@#echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
+
 OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(OBJS)))))
 
 
 ### Rules ###
 librt: $(BIN_DIR)/$(LIBRT_BIN)
 
-$(BIN_DIR)/$(LIBRT_BIN): depend $(OBJS) 
+$(BIN_DIR)/$(LIBRT_BIN): Makefile.depend $(OBJS) 
 	@echo -e "$(COL_WHITE)Creating librt archive...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJS)$(COL_END)"
 	@$(AR) rcs $@ $(OBJS)
 
@@ -46,18 +53,6 @@ $(OBJ_DIR)/%.o : %.c
 $(OBJ_DIR)/%.o : %.S
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_BLACK)$< $(COL_END)"
 	@$(CC) $(ASFLAGS) -c -o $@ $<
-
-
-
-
-### Dependencies ###
-DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -I $(INC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
-.PHONY: depend
-depend:
-	@$(DEPEND) > Makefile.depend
-	@#echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
-		
-
 
 ### Cleaning ###
 .PHONY: clean

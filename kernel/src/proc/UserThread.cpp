@@ -93,29 +93,6 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 
 	m_status = INITIALIZED;
 	return;
-/*
-	using namespace Processor;
-	
-	m_stackTop = (void*)((uintptr_t)m_userstack + m_stackSize - sizeof(Context));
-	Context * context = (Context*)(m_stackTop);
-	void (Thread::*runPtr)(void) = &Thread::start;
-
-	Pointer<IVirtualMemoryMap> old_map = IVirtualMemoryMap::getCurrent();
-
-	m_virtualMap->switchTo();
-
-	context->ra = *(unative_t*)(&runPtr); 
-	context->a0 = (unative_t)this;        
-	context->gp = NULL;
-	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
-
-	if (old_map)
-		old_map->switchTo();
-
-	PRINT_DEBUG ("Stack in USEG created sucessfully.\n");
-
-	m_status = INITIALIZED;
-	*/
 }
 /*----------------------------------------------------------------------------*/
 UserThread::~UserThread()
@@ -126,11 +103,17 @@ UserThread::~UserThread()
 	}
 }
 /*----------------------------------------------------------------------------*/
+extern "C" void switch_to_usermode(void*(*exec)(void*), void* sp);
+
 void UserThread::run()
 {
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
 
+	m_stackTop = (char*)m_userstack + m_stackSize - 12;
+	*(uint*)m_stackTop = 0xdead;
+	switch_to_usermode( m_runFunc, m_stackTop);
 
+/*
 	asm volatile(
 		"jal %0\n"
 		"nop"
@@ -138,7 +121,7 @@ void UserThread::run()
 		:"r" (m_runFunc)
 		: 
 	);
-
+*/
 //	m_runFunc(NULL);
 
 	m_status = FINISHED;
