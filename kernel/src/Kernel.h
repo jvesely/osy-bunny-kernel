@@ -134,7 +134,9 @@ public:
 	void registerInterruptHandler( InterruptHandler* handler, uint intn );
 
 	/*! @brief Gets the first disk. */
-	DiskDevice* disk() { return m_disks.getFront(); };
+	inline DiskDevice* disk() { return m_disks.getFront(); };
+
+	inline VFS* rootFS() { return m_rootFS; };
 
 private:
 	Console m_console;                 /*!< Console device.        */

@@ -72,7 +72,7 @@ bool MsimDisk::read( void* buffer, uint count, uint secno, uint start_pos )
 			PRINT_DEBUG ("Partial read to internal buffer %p.\n", m_buffer);	
 			diskOp( secno, ADDR_TO_USEG((uintptr_t)m_buffer), OP_READ );
 			copy_count = min( count, BLOCK_SIZE - start_pos );
-			memcpy( buffer, m_buffer + start_pos, copy_count );
+			memcpy( target, m_buffer + start_pos, copy_count );
 			/* If it did not read til the end of the block it won't be used again. */
 			start_pos = 0;
 		}

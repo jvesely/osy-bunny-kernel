@@ -53,6 +53,7 @@ public:
 	static Thread* create( thread_t* thread_ptr, void* (*thread_start)(void*),
 		void* data = NULL, const unsigned int flags = 0 );
 
+	~UserThread();
 private:
 	void* m_userstack;
 
@@ -60,9 +61,13 @@ private:
 	UserThread( const UserThread& other );
 	const UserThread& operator = ( const UserThread& other );
 
+	void run();
+
 	/*!
 	 * @brief Prepares stack and initial context.
 	 */
 	UserThread( void* (*func)(void*), void* data, 
 		native_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
+
+	friend class Process;
 };

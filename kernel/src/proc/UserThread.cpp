@@ -36,6 +36,7 @@
 #include "UserThread.h"
 #include "drivers/Processor.h"
 #include "proc/Scheduler.h"
+#include "InterruptDisabler.h"
 
 //#define USER_THREAD_DEBUG
 
@@ -75,7 +76,7 @@ Thread* UserThread::create( thread_t* thread_ptr, void* (*thread_start)(void*),
 /*----------------------------------------------------------------------------*/
 UserThread::UserThread( void* (*thread_start)(void*), void* data,
   native_t flags, uint stack_size ):
-	KernelThread( thread_start, data, flags, 0 )
+	KernelThread( thread_start, data, flags )
 {
 	m_status = UNINITIALIZED;
 
@@ -88,29 +89,45 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 
 	if (m_virtualMap->allocate( &m_userstack, stack_size, vm_flags ) != EOK)
 		return;
-	m_stackSize = stack_size;
 	
 	PRINT_DEBUG ("Stack at address: %p.\n", m_stack);
 
-	using namespace Processor;
-
-	m_stackTop = (void*)((uintptr_t)m_userstack + m_stackSize - sizeof(Context));
-	Context * context = (Context*)(m_stackTop);
-	void (Thread::*runPtr)(void) = &Thread::start;
-
-	Pointer<IVirtualMemoryMap> old_map = IVirtualMemoryMap::getCurrent();
-
-	m_virtualMap->switchTo();
-
-	context->ra = *(unative_t*)(&runPtr);  /* return address (run this) */
-	context->a0 = (unative_t)this;         /* the first and the only argument */
-	context->gp = NULL;
-	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
-
-	if (old_map)
-		old_map->switchTo();
-
-	PRINT_DEBUG ("Stack in USEG created sucessfully.\n");
+	m_otherStackTop = (char*)m_userstack + stack_size;
 
 	m_status = INITIALIZED;
+	return;
+}
+/*----------------------------------------------------------------------------*/
+UserThread::~UserThread()
+{
+	if (m_userstack) {
+		ASSERT(m_virtualMap);
+		m_virtualMap->free( m_userstack );
+	}
+}
+/*----------------------------------------------------------------------------*/
+extern "C" void switch_to_usermode(void*(*exec)(void*), void* sp);
+
+void UserThread::run()
+{
+	InterruptDisabler inter;
+
+	PRINT_DEBUG ("Started thread %u.\n", m_id);
+
+	switch_to_usermode( m_runFunc, m_stackTop);
+
+	m_status = FINISHED;
+	PRINT_DEBUG ("Finished thread %u.\n", m_id);
+
+  if (m_follower) {
+    PRINT_DEBUG ("Waking up JOINING thread(%u) by thread %u.\n",
+      m_id, m_follower->id());
+    ASSERT (m_follower->status() == JOINING);
+    m_follower->resume();
+  }
+
+  block();
+  yield();
+
+  panic("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);
 }

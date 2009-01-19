@@ -48,5 +48,6 @@ private:
 	unative_t (SyscallHandler::*m_handles[SYS_LAST])(void);
 
 	unative_t handlePuts();
-	unative_t handleGets() { return 0; };
+	unative_t handleGets();
+	unative_t handleExit();
 };

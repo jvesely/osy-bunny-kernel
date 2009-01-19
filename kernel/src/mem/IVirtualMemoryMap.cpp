@@ -97,7 +97,6 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 		InterruptDisabler inter;
 		size_t count = min(BUFFER_SIZE, size);
 		switchTo();
-		PRINT_DEBUG ("First 4B to copy: %x.\n", *(int*)src);
 		memcpy( (void*)buffer, (void*)src, count );
 		
 		PRINT_DEBUG ("Copying %uB data %x vs. %x.\n",
@@ -106,7 +105,8 @@ int IVirtualMemoryMap::copyTo(const void* src_addr, Pointer<IVirtualMemoryMap> d
 		
 		dest_map->switchTo();
 		memcpy( (void*)dest, (void*)buffer, count );
-
+		PRINT_DEBUG ("Copying %uB data %x vs. %x.\n",
+			count, *(uint*)buffer, *(uint*)dest);
 		src  += count;
 		dest += count;
 		size -= count;

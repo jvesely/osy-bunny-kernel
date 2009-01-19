@@ -31,8 +31,6 @@
 
 #pragma once
 
-#include "api.h"
-
 /*! assert and ASSERT are the same thing. */
 #define assert ASSERT
 

@@ -66,6 +66,15 @@
 #include "asm.h"
 #include "registers.h"
 
+.macro SWITCH_STACK
+	lw  $k0, (other_stack_ptr)
+	lw  $k1, ($k0)
+	beqz $k1, 1f
+	nop
+	sw  $sp, ($k0)
+	ori $sp, $k1, 0
+1:
+.endm SWITCH_STACK
 
 /***************************************************************************\
 | Code at hardwired addresses                                               |
@@ -234,23 +243,10 @@ start:
 .ent handle_tlbrefill
 
 handle_tlbrefill:
-	
-	/* To avoid writing to user stack, use a temporary kernel
-	   stack pointed to by the K0 scratch register.
-	   
-	   Note that using $k0 here means $k0 must not be used
-	   anywhere else where there is a chance of the
-	   TLB Refill Exception occuring!
-	   
-	   Allocate a frame on the temporary stack and store the
-	   current stack pointer on the stack. After that, we
-	   can use $sp as the stack pointer. */
 
-	la $k0, ADDR_TO_KSEG0 (KERNEL_STATIC_STACK_TOP) - CONTEXT_SIZE
-	/* temporarily force the first stack behind the kernel */
-/*	la $k0, _kernel_end + KERNEL_STATIC_STACK_SIZE - CONTEXT_SIZE */
-	sw $sp, REGS_OFFSET_SP($k0)
-	or $sp, $0, $k0
+	SWITCH_STACK
+
+	addi $sp, $sp, -CONTEXT_SIZE
 
 	/* Save the general registers and the $lo and $hi registers. */
 	
@@ -260,19 +256,12 @@ handle_tlbrefill:
 	sw $t0, REGS_OFFSET_LO($sp)
 	sw $t1, REGS_OFFSET_HI($sp)
 	
-	/* The exception also provides information in
-	   the BadVAddr register, we save it here
-	   for convenience. */
-	
-	la $t1, ADDR_TO_KSEG0 (KERNEL_STATIC_VARS)
-	mfc0 $t0, $badvaddr
-	sw $t0, STATIC_OFFSET_BADVA($t1)
-	
 	/* Call the exception handler in compiled C code, passing
 	   the pointer to the stack frame as an argument. */
 	
 	jal wrapped_tlbrefill
-	or  $a0, $0, $sp
+	nop
+ 	/* or  $a0, $0, $sp */
 	
 	/* Restore the $lo and $hi registers and the general registers. */
 	
@@ -282,9 +271,12 @@ handle_tlbrefill:
 	mthi $t1
 	LOAD_REGISTERS $sp
 	
+	addi $sp, $sp, CONTEXT_SIZE
+	
 	/* Restore the stack pointer last and return from exception. */
 	
-	lw $sp, REGS_OFFSET_SP($sp)
+	SWITCH_STACK
+
 	eret
 
 .end handle_tlbrefill
@@ -365,6 +357,8 @@ handle_general:
 	   the TLB Refill Exception, which means that we must not use
 	   the kernel scratch registers $k0 and $k1. */
 	
+	SWITCH_STACK
+
 	addiu $sp, -CONTEXT_SIZE
 	
 	SAVE_REGISTERS $sp
@@ -420,6 +414,8 @@ handle_general:
 	
 	addiu $sp, CONTEXT_SIZE
 	
+	SWITCH_STACK
+	
 	/* Finally, restore the System Control Coprocessor registers
 	   and return from the exception. The ERET instruction also
 	   restores the processor status.
@@ -433,7 +429,7 @@ handle_general:
 	mtc0 $k0, $epc
 	lw $k0, STATIC_OFFSET_STATUS($k1)
 	mtc0 $k0, $status
-	
+
 	eret
 
 .end handle_general
@@ -533,3 +529,13 @@ out:
 	mtc0 $k0, $status
 
 .end switch_cpu_context
+
+.globl switch_to_usermode
+.ent   switch_to_usermode
+switch_to_usermode:
+	SWITCH_STACK
+	mfc0 $k0, $status
+	ori  $k0, $k0, 0x00000011
+	j $a0
+	mtc0 $k0, $status 
+.end   switch_to_usermode
