@@ -19,7 +19,7 @@ OBJS += $(shell find src ../shared -name "*.cpp" -o -name "*.S" -o -name "*.c")
 TEST_DIRS = 
 
 ifneq ($(KERNEL_TEST),)
-	OBJS      += $(KERNEL_TEST)
+	OBJS      += $(addprefix ../, $(KERNEL_TEST))
 	CPPFLAGS  += -DKERNEL_TEST
 	CFLAGS    += -DKERNEL_TEST
 	TEST_DIRS += $(dir $(addprefix ../, $(KERNEL_TEST)))
