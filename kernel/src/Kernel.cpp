@@ -65,6 +65,7 @@ static const uint BUNNY_LINES = 5;
 
 extern unative_t COUNT_CPU;
 extern native_t SIMPLE_LOCK;
+extern void* volatile* other_stack_ptr;
 
 Kernel::Kernel() :
 	Thread( 0 ),   /* We don't need no stack. */
@@ -104,6 +105,7 @@ void Kernel::run()
 	TLB::instance().flush();
 	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K );
 	reg_write_status( STATUS_CU0_MASK | STATUS_IM_MASK | STATUS_IE_MASK );
+	other_stack_ptr = &m_otherStackTop;
 
 	//printf( "HELLO WORLD! from processor: %d\n", *DORDER_ADDRESS );
 

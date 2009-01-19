@@ -200,6 +200,7 @@ public:
 protected:
 	void* m_stack;	                           /*!< that's my stack            */
 	void* m_stackTop;                          /*!< top of my stack            */
+	void* m_otherStackTop;
 	unsigned int m_stackSize;                  /*!< size of my stack           */
 	Process*  m_process;                       /*!< my process                 */
 

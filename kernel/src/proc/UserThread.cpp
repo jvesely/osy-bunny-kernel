@@ -36,6 +36,7 @@
 #include "UserThread.h"
 #include "drivers/Processor.h"
 #include "proc/Scheduler.h"
+#include "InterruptDisabler.h"
 
 //#define USER_THREAD_DEBUG
 
@@ -91,6 +92,8 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 	
 	PRINT_DEBUG ("Stack at address: %p.\n", m_stack);
 
+	m_otherStackTop = (char*)m_userstack + stack_size;
+
 	m_status = INITIALIZED;
 	return;
 }
@@ -107,22 +110,11 @@ extern "C" void switch_to_usermode(void*(*exec)(void*), void* sp);
 
 void UserThread::run()
 {
+	InterruptDisabler inter;
+
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
 
-	m_stackTop = (char*)m_userstack + m_stackSize - 12;
-	*(uint*)m_stackTop = 0xdead;
 	switch_to_usermode( m_runFunc, m_stackTop);
-
-/*
-	asm volatile(
-		"jal %0\n"
-		"nop"
-		:
-		:"r" (m_runFunc)
-		: 
-	);
-*/
-//	m_runFunc(NULL);
 
 	m_status = FINISHED;
 	PRINT_DEBUG ("Finished thread %u.\n", m_id);
@@ -138,6 +130,4 @@ void UserThread::run()
   yield();
 
   panic("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);
-
-
 }

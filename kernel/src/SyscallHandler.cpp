@@ -56,9 +56,9 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 /*
 	printf( "Handling syscall: %x, with params %x,%x,%x,%x.\n",
 		m_call, m_params[0], m_params[1], m_params[2], m_params[3]);
-*/
+// */
 	registers->epc += 4;
-	
+
 	if (!m_handles[m_call]) return false;
 	registers->v0   = (this->*m_handles[m_call]) ();
 /*
