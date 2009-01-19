@@ -54,7 +54,7 @@ $(BIN_DIR)/$(KERNEL_BIN): $(BIN_DIR)/$(KERNEL_RAW)
 	@echo -e "$(COL_WHITE)Creating kernel.bin image... $(COL_GREEN)$@$(COL_END) <--$(COL_YELLOW) $^$(COL_END)"
 	@$(OBJCOPY) -O binary  $^ $@
 
-$(BIN_DIR)/$(KERNEL_RAW): depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
+$(BIN_DIR)/$(KERNEL_RAW): Makefile.depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 	@echo -e "$(COL_WHITE)Linking kernel RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJS)$(COL_END)"
 	@$(LD) $(LDFLAGS) -T $(INC_DIR)/$(LDS_FILE) -Map $(BIN_DIR)/$(KERNEL_MAP) -o $@ $(OBJS)
 
