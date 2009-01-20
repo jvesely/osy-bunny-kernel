@@ -352,10 +352,9 @@ handle_general:
 	and $k0, $k1
 	mtc0 $k0, $status
 	
-	/* The rest of the registers is saved on the current stack. Note
-	   that when the stack resides in virtual memory, this can cause
-	   the TLB Refill Exception, which means that we must not use
-	   the kernel scratch registers $k0 and $k1. */
+	/* Stack is switched to second stack located in KSEG0 if th thread was
+		 using USEG stack, this is done to avoid TLB refill/load/save exceptions. 
+		 Then the rest of the registers is saved on the stack. */
 	
 	SWITCH_STACK
 

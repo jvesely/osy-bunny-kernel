@@ -188,7 +188,7 @@ void thread_exit( void *thread_retval );
  * All process resources are freed. If there is no other user process, the
  * kernel will end.
  */
-void exit( void );
+void exit( void )  __attribute__ ((noreturn)) ;
 
 /* -------------------------------------------------------------------------- */
 /* -----------------------------   MUTEX   ---------------------------------- */

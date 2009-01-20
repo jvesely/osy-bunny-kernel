@@ -112,6 +112,8 @@ Process* Process::create( const char* filename )
 	fs->readFile( bin_file, place, file_size );
 //	printf( "First int: %x.\n", *(uint*)place );
 	old_vmm->copyTo( place, vmm, start, file_size );
+	
+	free(place);
 
 	Process* me = new Process();
 	me->m_mainThread = main;
@@ -128,4 +130,34 @@ void Process::exit()
 Process* Process::getCurrent()
 {
 	return Thread::getCurrent()->process();
+}
+/*----------------------------------------------------------------------------*/
+UserThread* Process::addThread( thread_t* thread_ptr,
+	void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags )
+{
+  PRINT_DEBUG ("Creating Thread with userland stack...\n");
+
+  UserThread* new_thread = new UserThread( thread_start, thread_data, thread_flags);
+
+  PRINT_DEBUG ("Thread created at address: %p", new_thread);
+
+  if ( (new_thread == NULL) || (new_thread->status() != Thread::INITIALIZED) ) {
+    delete new_thread;
+    return NULL;
+  }
+
+  *thread_ptr = Scheduler::instance().getId( new_thread );
+  if (!(*thread_ptr)) { //id space allocation failed
+    delete new_thread;
+    return NULL;
+  }
+	ListItem<UserThread*>* storage = new ListItem<UserThread*>( new_thread );
+	if (!storage) {
+		delete new_thread;
+		return NULL;
+	}
+	m_list.pushBack( storage );
+	new_thread->m_process = this;
+  new_thread->resume();
+	return new_thread;
 }

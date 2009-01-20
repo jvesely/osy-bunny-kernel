@@ -45,6 +45,8 @@ class Process
 public:
 	static Process* create( const char* filename );
 	inline UserThread* mainThread() { return m_mainThread; };
+	UserThread* addThread( thread_t* thread_ptr, void* (*thread_start)(void*),
+	    void* data = NULL, const unsigned int flags = 0 );
 	void exit();
 	static Process* getCurrent();
 private:

@@ -749,8 +749,3 @@ inline void BasicMemoryAllocator::setSizeDefault
 		header->getFooter()->setUsed();
 	}
 }
-
-
-
-
-

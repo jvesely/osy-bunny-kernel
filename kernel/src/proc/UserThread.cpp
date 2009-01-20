@@ -48,31 +48,6 @@
   printf(ARGS);
 #endif
 
-
-
-Thread* UserThread::create( thread_t* thread_ptr, void* (*thread_start)(void*),
-    void* thread_data, const unsigned int thread_flags )
-{
-	PRINT_DEBUG ("Creating Thread with userland stack...\n");
-
-	Thread* new_thread = new UserThread(thread_start, thread_data, thread_flags);
-
-	PRINT_DEBUG ("Thread created at address: %p", new_thread);
-
-  if ( (new_thread == NULL) || (new_thread->status() != INITIALIZED) ) {
-    delete new_thread;
-    return NULL;
-  }
-
-  *thread_ptr = Scheduler::instance().getId(new_thread);
-  if (!(*thread_ptr)) { //id space allocation failed
-    delete new_thread;
-    return NULL;
-  }
-
-  new_thread->resume();
-  return new_thread;
-}
 /*----------------------------------------------------------------------------*/
 UserThread::UserThread( void* (*thread_start)(void*), void* data,
   native_t flags, uint stack_size ):

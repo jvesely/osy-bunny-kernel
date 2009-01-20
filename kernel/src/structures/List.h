@@ -67,8 +67,8 @@ public:
 		inline const T& operator * () const { return getData(); }	/**< @brief const dereference operator	*/
 		inline T& operator * () { return getData(); } 				/**< @brief dereference operator */
 
-		inline const T * operator -> ( ) const { return &getData(); } 	/**< @brief const dereference postfix operator */
-		inline T * operator -> ( ) { return &getData(); } 				/**< @brief dereference postfix operator */
+		inline const T * operator -> () const { return &getData(); } 	/**< @brief const dereference postfix operator */
+		inline T * operator -> () { return &getData(); } 				/**< @brief dereference postfix operator */
 
 		/** @brief get const data stored in item
 		*	@return const reference to data
