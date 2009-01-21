@@ -37,7 +37,7 @@
 #pragma once
 
 #include "asm/atomic.h"
-#include "proc/Scheduler.h"
+#include "proc/Thread.h"
 
 /**
  * @class Spinlock Spinlock.h "Spinlock.h"
@@ -67,13 +67,10 @@ public:
 	/** Unlock the spinlock. */
 	inline void unlock();
 
-	/** Lock the spinlock with active waiting. Useful on multiprocessor machines. */
-	inline void lockActive();
-
-	/** Lock the spinlock with passive waiting in the Scheduling queue (semiactive). */
-	inline void lockYield();
-
 private:
+	/*! This decides on the waiting style, default si spinning (nothing). */
+	virtual void wait() {};
+
 	/**
 	 * Variable holding the state of the Spinlock. Its size is native for the
 	 * CPU (registers and memory). 1 means locked and 0 means unlocked.
@@ -87,34 +84,16 @@ private:
 	Spinlock& operator=(const Spinlock&);
 
 };
-
 /* --------------------------------------------------------------------- */
-
-inline void Spinlock::lock() {
-#ifdef MULTICPU
-	lockActive();
-#else
-	lockYield();
-#endif
-}
-
-/* --------------------------------------------------------------------- */
-
-inline void Spinlock::unlock() {
-	swap(m_locked, 0);
-}
-
-/* --------------------------------------------------------------------- */
-
-inline void Spinlock::lockActive() {
-	while (swap(m_locked, 1)) {}
-}
-
-/* --------------------------------------------------------------------- */
-
-inline void Spinlock::lockYield() {
+inline void Spinlock::lock()
+{
 	while (swap(m_locked, 1)) {
-		Thread::getCurrent()->yield();
+		wait();
 	}
 }
-
+/* --------------------------------------------------------------------- */
+inline void Spinlock::unlock()
+{
+	swap(m_locked, 0);
+}
+/* --------------------------------------------------------------------- */

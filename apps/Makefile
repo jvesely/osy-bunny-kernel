@@ -33,7 +33,7 @@ endif
 OBJS := $(addsuffix .o, $(basename $(notdir $(OBJS))))
 BINS := $(addprefix $(BIN_DIR)/, $(addsuffix .bin, $(basename $(OBJS))))
 
-.PRECIOUS: $(OBJ_DIR)/%.o $(BIN_DIR)/%.raw
+#.PRECIOUS: $(OBJ_DIR)/%.o $(BIN_DIR)/%.raw
 
 ### Rules ###
 .PHONY: apps

@@ -59,23 +59,23 @@ void enable_interrupts()
 /*----------------------------------------------------------------------------*/
 size_t putc(const char c)
 {
-	return Kernel::instance().console().outputChar(c);
+	return KERNEL.console().outputChar(c);
 }
 /*----------------------------------------------------------------------------*/
 size_t puts(const char * str)
 {
-	return Kernel::instance().console().outputString(str);
+	return KERNEL.console().outputString(str);
 }
 /*----------------------------------------------------------------------------*/
 char getc()
 {
-	return Kernel::instance().console().readChar();
+	return KERNEL.console().readChar();
 }
 /*----------------------------------------------------------------------------*/
 int getc_try()
 {
-	if (Kernel::instance().console().count())
-		return Kernel::instance().console().getChar();
+	if (KERNEL.console().count())
+		return KERNEL.console().getChar();
 	else
 		return EWOULDBLOCK;
 }
@@ -89,7 +89,7 @@ extern size_t vprintf(const char * format, va_list args);
 
 void kpanic(void** context, const char* format, ...){
 	using namespace Processor;
-	Kernel::instance().regDump();
+	KERNEL.regDump();
 /*
 	Context* registers = (Context*)*context;
 	printf("Register DUMP: %p\n", *context );
@@ -117,8 +117,8 @@ void kpanic(void** context, const char* format, ...){
 		va_end(args);
 	}
 
-	Kernel::instance().stop();
-	Kernel::instance().block();
+	KERNEL.stop();
+	KERNEL.block();
 }
 /*----------------------------------------------------------------------------*/
 void* malloc( size_t size )

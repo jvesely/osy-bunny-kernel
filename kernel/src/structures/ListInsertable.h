@@ -87,11 +87,10 @@ private:
 template <class T>
 inline void ListInsertable<T>::append( List<T*>* list )
 {
+	ASSERT (list);
 	remove();
 	ASSERT (!m_myList);
-	m_myList = list;
-
-	m_myList->pushBack(this);
+	(m_myList = list)->pushBack( this );
 }
 /*----------------------------------------------------------------------------*/
 template <class T>
@@ -100,8 +99,7 @@ inline void ListInsertable<T>::prepend( List<T*>* list )
 	ASSERT (list);
 	remove();
 	ASSERT (!m_myList);
-	m_myList = list;
-	m_myList->pushFront( this );
+	(m_myList = list)->pushFront( this );
 }
 /*----------------------------------------------------------------------------*/
 template <class T>

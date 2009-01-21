@@ -99,13 +99,6 @@ Thread* Scheduler::nextThread()
 		return m_idle;
 	}
 
-//	if (m_threadCount == 0) {
-//			/* Only timerManager might be running */
-//			ASSERT (m_activeThreadList.size() <= 1);
-//			PRINT_DEBUG ("No more threads to run.\n");
-//			return NULL;
-//	}
-	
 	/* if the running thread is not the first thread in the list 
 	 * (is not in the list at all), then skip rotating and just plan
 	 * the first thread.
@@ -143,7 +136,7 @@ void Scheduler::enqueue( Thread* thread )
 	
 }
 /*----------------------------------------------------------------------------*/
-void Scheduler::dequeue(Thread* thread)
+void Scheduler::dequeue( Thread* thread )
 {
 	/* queue mangling needs interupts disabled */
 	InterruptDisabler interrupts;

@@ -211,8 +211,8 @@ protected:
 	Pointer<IVirtualMemoryMap> m_virtualMap;   /*!< @brief Virtual Memory Map. */
 
 private:
-	Thread(const Thread& other);                    /*!< no copying   */
-	const Thread& operator = (const Thread& other); /*!< no assigning */
+	Thread( const Thread& other );                    /*!< no copying   */
+	Thread& operator = ( const Thread& other ); /*!< no assigning */
 
 };
 

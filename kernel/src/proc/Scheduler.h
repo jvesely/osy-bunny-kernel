@@ -126,4 +126,4 @@ private:
 	//friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
 
 };
-
+#define SCHEDULER Scheduler::instance()
