@@ -337,3 +337,9 @@ void Kernel::attachDisks()
 	ASSERT (disk);
 	m_disks.pushBack( disk );
 }
+/*----------------------------------------------------------------------------*/
+Time Time::getCurrentTime()
+{
+  return Time( Kernel::instance().clock().time(), Kernel::instance().clock().usec() );
+}
+

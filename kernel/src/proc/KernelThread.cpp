@@ -98,7 +98,7 @@ Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*)
 		return NULL;
 	}
 	
-	*thread_ptr = Scheduler::instance().getId(new_thread);
+	*thread_ptr = SCHEDULER.getId(new_thread);
 	if (!(*thread_ptr)) { //id space allocation failed
 		delete new_thread;
 		return NULL;

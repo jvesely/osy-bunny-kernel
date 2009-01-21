@@ -37,7 +37,7 @@
 #include <structures/Heap.h>
 #include <synchronization/Mutex.h>
 #include <synchronization/Semaphore.h>
-#include <timer/Time.h>
+#include "Time.h"
 #include <timer/ClassTimer.h>
 
 
