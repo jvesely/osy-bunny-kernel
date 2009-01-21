@@ -50,4 +50,13 @@ private:
 	unative_t handlePuts();
 	unative_t handleGets();
 	unative_t handleExit();
+	unative_t handleThreadCreate();
+	unative_t handleThreadJoin();
+	unative_t handleThreadSleep();
+	unative_t handleThreadSuspend();
+	unative_t handleThreadWakeup();
+	unative_t handleThreadSelf();
+	unative_t handleThreadDetach();
+	unative_t handleThreadCancel();
+	unative_t handleThreadExit();
 };

@@ -32,17 +32,19 @@
 
 #pragma once
 
-#define SYS_PUTS 1
-#define SYS_GETS 2
-#define SYS_EXIT 3
+#define SYS_PUTS            1
+#define SYS_GETS            2
+#define SYS_EXIT            3
 
-#define SYS_THREAD_CREATE  5
-#define SYS_THREAD_SELF    6
-#define SYS_THREAD_JOIN    7
-#define SYS_THREAD_DETACH  8
-#define SYS_THREAD_CANCEL  9
-#define SYS_THREAD_WAKEUP 10
-#define SYS_THREAD_EXIT   11
+#define SYS_THREAD_CREATE   5
+#define SYS_THREAD_SELF     6
+#define SYS_THREAD_JOIN     7
+#define SYS_THREAD_DETACH   8
+#define SYS_THREAD_CANCEL   9
+#define SYS_THREAD_SLEEP   10
+#define SYS_THREAD_YIELD   11
+#define SYS_THREAD_SUSPEND 12
+#define SYS_THREAD_WAKEUP  13
+#define SYS_THREAD_EXIT    14
 
-
-#define SYS_LAST 12
+#define SYS_LAST 15

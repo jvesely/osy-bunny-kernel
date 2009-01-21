@@ -107,6 +107,21 @@ inline int thread_cancel( thread_t thr )
 	return SYSCALL( SYS_THREAD_CANCEL, thr, 0, 0, 0 );
 }
 
+inline void thread_sleep( Time time )
+{
+	SYSCALL( SYS_THREAD_SLEEP, &time, 0, 0, 0 );
+}
+
+inline void thread_yield()
+{
+	SYSCALL( SYS_THREAD_YIELD, 0, 0, 0, 0 );
+}
+
+inline void thread_suspend()
+{
+	SYSCALL( SYS_THREAD_SUSPEND, 0, 0, 0, 0 );
+}
+
 inline int thread_wakeup( thread_t thr )
 {
 	return SYSCALL( SYS_THREAD_WAKEUP, thr, 0, 0, 0 );
@@ -116,6 +131,7 @@ inline void thread_exit( void* retval )
 {
 	SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
 }
+
 #undef QUOT
 #undef SYSCALL
 }

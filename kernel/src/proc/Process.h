@@ -36,6 +36,7 @@
 
 #include "structures/List.h"
 
+class Thread;
 class UserThread;
 template class List<UserThread*>;
 typedef List<UserThread*> UserThreadList;
@@ -47,8 +48,12 @@ public:
 	inline UserThread* mainThread() { return m_mainThread; };
 	UserThread* addThread( thread_t* thread_ptr, void* (*thread_start)(void*),
 	    void* data = NULL, const unsigned int flags = 0 );
+	Thread* getThread( thread_t thread );
 	void exit();
+
+	
 	static Process* getCurrent();
+
 private:
 	UserThread* m_mainThread;
 	UserThreadList m_list;

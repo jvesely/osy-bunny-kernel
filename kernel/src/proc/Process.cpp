@@ -161,3 +161,11 @@ UserThread* Process::addThread( thread_t* thread_ptr,
   new_thread->resume();
 	return new_thread;
 }
+/*----------------------------------------------------------------------------*/
+Thread* Process::getThread( thread_t thread )
+{
+	Thread* ptr = Thread::fromId( thread );
+	if (ptr && ptr->process() == this)
+		return ptr;
+	return NULL;
+}

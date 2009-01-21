@@ -36,6 +36,9 @@
 #include "address.h"
 #include "syscallcodes.h"
 #include "proc/Process.h"
+#include "proc/Thread.h"
+
+
 
 SyscallHandler::SyscallHandler()
 {
@@ -112,5 +115,65 @@ unative_t SyscallHandler::handleExit()
 	Process* current = Process::getCurrent();
 	ASSERT (current);
 	current->exit();
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+#define PROCESS_THREAD() \
+	({ \
+	Process* current = Process::getCurrent(); \
+	ASSERT (current); \
+	Thread* thread = current->getThread( m_params[0] ); \
+	if (!thread) return EINVAL; \
+	thread;\
+	})
+
+unative_t SyscallHandler::handleThreadCreate()
+{
+	Process* current = Process::getCurrent();
+	ASSERT (current);
+	bool success = current->addThread( 
+		(thread_t*)m_params[0], (void*(*)(void*))m_params[1], (void*)m_params[2] );
+	return success ? EOK : ENOMEM;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadJoin()
+{
+	Thread* thr = PROCESS_THREAD();
+	Thread::getCurrent()->join( thr, m_params[2], *(Time*)m_params[2] );
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadSelf()
+{
+	return Thread::getCurrent()->id();
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadDetach()
+{
+	Thread* thr = PROCESS_THREAD();
+	thr->detach();
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadWakeup()
+{
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadCancel()
+{
+	Thread* thr = PROCESS_THREAD();
+	thr->kill();
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadExit()
+{
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadSleep()
+{
+	Thread::getCurrent()->sleep(*(Time*)m_params[0]);
 	return 0;
 }

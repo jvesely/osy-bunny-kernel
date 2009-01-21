@@ -78,58 +78,63 @@ void free( const void *ptr )
 int thread_create(
   thread_t *thread_ptr, void *(*thread_start)(void *), void *arg )
 {
-	return 0;
+	return SysCall::thread_create( thread_ptr, thread_start, arg );
 }
 /*----------------------------------------------------------------------------*/
 thread_t thread_self( void )
 {
-	return 0;
+	return SysCall::thread_self();
 }
 /*----------------------------------------------------------------------------*/
 int thread_join( thread_t thr, void **thread_retval )
 {
-	return 0;
+	return SysCall::thread_join( thr, thread_retval );
 }
 /*----------------------------------------------------------------------------*/
 int thread_join_timeout(
   thread_t thr, void **thread_retval, const unsigned int usec )
 {
-	return 0;
+	return SysCall::thread_join( thr, thread_retval, true, Time(0, usec) );
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach( thread_t thr )
 {
-	return 0;
+	return SysCall::thread_detach( thr );
 }
 /*----------------------------------------------------------------------------*/
 int thread_cancel( thread_t thr )
 {
-	return 0;
+	return SysCall::thread_cancel( thr );
 }
 /*----------------------------------------------------------------------------*/
 void thread_sleep( const unsigned int sec )
 {
+	SysCall::thread_sleep( Time(sec, 0) );
 }
 /*----------------------------------------------------------------------------*/
 void thread_usleep( const unsigned int usec )
 {
+	SysCall::thread_sleep( Time(0, usec) );
 }
 /*----------------------------------------------------------------------------*/
 void thread_yield( void )
 {
+	SysCall::thread_yield();
 }
 /*----------------------------------------------------------------------------*/
 void thread_suspend( void )
 {
+	SysCall::thread_suspend();
 }
 /*----------------------------------------------------------------------------*/
 int thread_wakeup( thread_t thr )
 {
-	return 0;
+	return SysCall::thread_wakeup( thr );
 }
 /*----------------------------------------------------------------------------*/
 void thread_exit( void *thread_retval )
 {
+	SysCall::thread_exit( thread_retval );
 }
 /*----------------------------------------------------------------------------*/
 void exit()
