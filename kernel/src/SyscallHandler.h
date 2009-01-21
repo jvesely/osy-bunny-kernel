@@ -53,6 +53,7 @@ private:
 	unative_t handleThreadCreate();
 	unative_t handleThreadJoin();
 	unative_t handleThreadSleep();
+	unative_t handleThreadYield();
 	unative_t handleThreadSuspend();
 	unative_t handleThreadWakeup();
 	unative_t handleThreadSelf();

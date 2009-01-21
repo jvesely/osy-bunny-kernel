@@ -45,6 +45,17 @@ SyscallHandler::SyscallHandler()
 	m_handles[SYS_PUTS] = (&SyscallHandler::handlePuts);
 	m_handles[SYS_GETS] = (&SyscallHandler::handleGets);
 	m_handles[SYS_EXIT] = (&SyscallHandler::handleExit);
+
+	m_handles[SYS_THREAD_CREATE]  = (&SyscallHandler::handleThreadCreate);
+	m_handles[SYS_THREAD_SELF]    = (&SyscallHandler::handleThreadSelf);
+	m_handles[SYS_THREAD_JOIN]    = (&SyscallHandler::handleThreadJoin);
+	m_handles[SYS_THREAD_DETACH]  = (&SyscallHandler::handleThreadDetach);
+	m_handles[SYS_THREAD_CANCEL]  = (&SyscallHandler::handleThreadCancel);
+	m_handles[SYS_THREAD_SLEEP]   = (&SyscallHandler::handleThreadSleep);
+	m_handles[SYS_THREAD_YIELD]   = (&SyscallHandler::handleThreadYield);
+	m_handles[SYS_THREAD_SUSPEND] = (&SyscallHandler::handleThreadSuspend);
+	m_handles[SYS_THREAD_WAKEUP]  = (&SyscallHandler::handleThreadWakeup);
+	m_handles[SYS_THREAD_EXIT]    = (&SyscallHandler::handleThreadExit);
 	
 }
 /*----------------------------------------------------------------------------*/
@@ -155,9 +166,23 @@ unative_t SyscallHandler::handleThreadDetach()
 	return EOK;
 }
 /*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadSuspend()
+{
+	Thread::getCurrent()->suspend();
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadWakeup()
 {
-	return 0;
+	Thread* thr = PROCESS_THREAD();
+	thr->wakeup();
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleThreadYield()
+{
+	Thread::getCurrent()->yield();
+	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadCancel()
