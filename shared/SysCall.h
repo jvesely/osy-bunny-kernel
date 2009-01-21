@@ -112,9 +112,9 @@ inline int thread_wakeup( thread_t thr )
 	return SYSCALL( SYS_THREAD_WAKEUP, thr, 0, 0, 0 );
 }
 
-void thread_exit( void* retval )
+inline void thread_exit( void* retval )
 {
-	return SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
+	SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
 }
 #undef QUOT
 #undef SYSCALL
