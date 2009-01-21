@@ -34,6 +34,7 @@
 #pragma once
 
 #include "types.h"
+#include "Time.h"
 #include "syscallcodes.h"
 
 /*!
@@ -74,10 +75,47 @@ inline size_t gets( char* buffer, size_t size)
 	return SYSCALL( SYS_GETS, buffer, size, 0, 0 );
 }
 
-inline void exit() {
+inline void exit()
+{
 	SYSCALL( SYS_EXIT, 0, 0, 0, 0);
 }
 
+inline int thread_create( 
+	thread_t *thread_ptr, void *(*thread_start)(void *), void *arg )
+{
+	return SYSCALL( SYS_THREAD_CREATE, thread_ptr, thread_start, arg, 0 );
+}
+
+inline thread_t thread_self()
+{
+	return SYSCALL( SYS_THREAD_SELF, 0, 0, 0, 0);
+}
+
+inline int thread_join(
+	thread_t thr, void** retval, bool timed = false, Time time = Time(0, 0))
+{
+	return SYSCALL( SYS_THREAD_JOIN, thr, retval, timed, &time );
+}
+
+inline int thread_detach( thread_t thr )
+{
+	return SYSCALL( SYS_THREAD_DETACH, thr, 0, 0, 0 );
+}
+
+inline int thread_cancel( thread_t thr )
+{
+	return SYSCALL( SYS_THREAD_CANCEL, thr, 0, 0, 0 );
+}
+
+inline int thread_wakeup( thread_t thr )
+{
+	return SYSCALL( SYS_THREAD_WAKEUP, thr, 0, 0, 0 );
+}
+
+void thread_exit( void* retval )
+{
+	return SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
+}
 #undef QUOT
 #undef SYSCALL
 }
