@@ -107,7 +107,7 @@ private:
 	thread_t m_nextThreadId;
 
 	/*! Number of active threads */
-	uint m_threadCount;
+//	uint m_threadCount;
 
 	/*! @brief Thread that runs when no one else will. */
 	Thread* m_idle;

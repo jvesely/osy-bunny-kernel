@@ -31,14 +31,13 @@
  */
 
 #include "Thread.h"
-#include "Kernel.h"
 #include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "timer/Timer.h"
 #include "api.h"
 
-//#define THREAD_DEBUG
+#define THREAD_DEBUG
 
 #ifndef THREAD_DEBUG
 #define PRINT_DEBUG(...)
@@ -173,12 +172,12 @@ void Thread::yield()
 
 	/* switch to the next thread */
 	Thread* next = getNext();
-	if (!next) {
-		PRINT_DEBUG ("Last thread (%u) finished, shutting down.\n", m_id);
-		Kernel::halt();
-	} else {
+	ASSERT (next);
+//	if (!next) {
+//		PRINT_DEBUG ("Last thread (%u) finished, shutting down.\n", m_id);
+//	} else {
 		next->switchTo();
-	}
+//	}
 }
 /*----------------------------------------------------------------------------*/
 void Thread::alarm( const Time& alarm_time )

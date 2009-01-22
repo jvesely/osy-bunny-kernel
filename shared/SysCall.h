@@ -36,6 +36,8 @@
 #include "types.h"
 #include "Time.h"
 #include "syscallcodes.h"
+#include "assert.h"
+#include "api.h"
 
 /*!
  * @namespace SysCall
@@ -107,8 +109,9 @@ inline int thread_cancel( thread_t thr )
 	return SYSCALL( SYS_THREAD_CANCEL, thr, 0, 0, 0 );
 }
 
-inline void thread_sleep( Time time )
+inline void thread_sleep( const Time& time )
 {
+	printf("Address of time: %p.\n", &time);
 	SYSCALL( SYS_THREAD_SLEEP, &time, 0, 0, 0 );
 }
 

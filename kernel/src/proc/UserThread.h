@@ -50,10 +50,10 @@ public:
 	/*!
 	 * @brief Ensures correct UserThread creation.
 	 */
-	static Thread* create( thread_t* thread_ptr, void* (*thread_start)(void*),
-		void* data = NULL, const unsigned int flags = 0 );
+//	static Thread* create( thread_t* thread_ptr, void* (*thread_start)(void*),
+//		void* data = NULL,const unsigned int flags = 0 );
 
-	~UserThread();
+
 private:
 	void* m_userstack;
 
@@ -62,11 +62,12 @@ private:
 	const UserThread& operator = ( const UserThread& other );
 
 	void run();
+	~UserThread();
 
 	/*!
 	 * @brief Prepares stack and initial context.
 	 */
-	UserThread( void* (*func)(void*), void* data, 
+	UserThread( void* (*func)(void*), void* data, void* stack_pos,
 		native_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
 
 	friend class Process;

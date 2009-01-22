@@ -140,7 +140,7 @@ public:
 	/*! @brief Takes the thread off the queue, and if it was detached 
 	 * deletes it on the spot.
 	 */
-	void kill();
+	virtual void kill();
 
 	/*! @brief Detached getter
 	 * @return detached state

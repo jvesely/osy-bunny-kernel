@@ -38,6 +38,15 @@
 #include "proc/Process.h"
 #include "proc/Thread.h"
 
+#define SYSCALL_HANDLER_DEBUG
+
+#ifndef SYSCALL_HANDLER_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+  puts("[ DEBUG SYSCALL ]: "); \
+  printf(ARGS);
+#endif
 
 
 SyscallHandler::SyscallHandler()
@@ -144,14 +153,14 @@ unative_t SyscallHandler::handleThreadCreate()
 	ASSERT (current);
 	bool success = current->addThread( 
 		(thread_t*)m_params[0], (void*(*)(void*))m_params[1], (void*)m_params[2] );
+	PRINT_DEBUG ("Thread create handled : %s.\n", success ? "OK" : "FAIL");
 	return success ? EOK : ENOMEM;
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadJoin()
 {
 	Thread* thr = PROCESS_THREAD();
-	Thread::getCurrent()->join( thr, m_params[2], *(Time*)m_params[2] );
-	return EOK;
+	return Thread::getCurrent()->join( thr, m_params[2], *(Time*)m_params[2] );
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSelf()
@@ -162,8 +171,9 @@ unative_t SyscallHandler::handleThreadSelf()
 unative_t SyscallHandler::handleThreadDetach()
 {
 	Thread* thr = PROCESS_THREAD();
-	thr->detach();
-	return EOK;
+	bool success = thr->detach();
+	PRINT_DEBUG ("Handling detach %s.\n", success ? "OK" : "FAIL");
+	return success ? EOK : EINVAL;
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSuspend()
@@ -199,6 +209,9 @@ unative_t SyscallHandler::handleThreadExit()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSleep()
 {
-	Thread::getCurrent()->sleep(*(Time*)m_params[0]);
+	Time sleep_time(((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
+	PRINT_DEBUG ("Sleep: %u:%u.\n",
+		((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
+	Thread::getCurrent()->sleep( sleep_time );
 	return 0;
 }

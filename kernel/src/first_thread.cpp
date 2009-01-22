@@ -31,7 +31,6 @@
  */
 
 #include "api.h"
-#include "SysCall.h"
 #include "proc/UserThread.h"
 #include "Kernel.h"
 #include "tarfs/TarFS.h"
@@ -40,7 +39,9 @@
 void* first_thread(void* data)
 {
 	#ifdef KERNEL_TEST
-		run_test();
+		thread_t thr;
+		Thread* thread = KernelThread::create( &thr, (void*(*)(void*))run_test );
+		Thread::getCurrent()->join( thread );
 		KERNEL.halt();
 	#endif
 	
@@ -84,8 +85,6 @@ void* first_thread(void* data)
 	fs->readFile( bin_file, content, filesize );
 	printf( "Contents: %s.\n", content );
 
-	const char* foo = "FOO";
-	SysCall::puts( foo );
 	KERNEL.halt();
-	return NULL;
+	return 0;
 }

@@ -109,12 +109,12 @@ int thread_cancel( thread_t thr )
 /*----------------------------------------------------------------------------*/
 void thread_sleep( const unsigned int sec )
 {
-	SysCall::thread_sleep( Time(sec, 0) );
+	SysCall::thread_sleep( Time( sec, 0 )  );
 }
 /*----------------------------------------------------------------------------*/
 void thread_usleep( const unsigned int usec )
 {
-	SysCall::thread_sleep( Time(0, usec) );
+	SysCall::thread_sleep( Time( 0, usec ) );
 }
 /*----------------------------------------------------------------------------*/
 void thread_yield( void )

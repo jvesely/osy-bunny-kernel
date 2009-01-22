@@ -92,6 +92,8 @@ public:
 	inline size_t physicalMemorySize() const 
 		{ return m_physicalMemorySize; };
 
+	void kill() { halt(); };
+
 	/*! @brief Stops execution, returns control to msim. */
 	static inline void stop() { Processor::msim_stop(); };
 	

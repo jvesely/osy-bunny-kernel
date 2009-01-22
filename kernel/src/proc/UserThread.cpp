@@ -50,7 +50,7 @@
 
 /*----------------------------------------------------------------------------*/
 UserThread::UserThread( void* (*thread_start)(void*), void* data,
-  native_t flags, uint stack_size ):
+	void* stack_pos, native_t flags, uint stack_size ):
 	KernelThread( thread_start, data, flags )
 {
 	m_status = UNINITIALIZED;
@@ -60,7 +60,8 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data,
 	unative_t vm_flags = VF_VA_USER << VF_VA_SHIFT;
 	vm_flags |= VF_AT_KUSEG << VF_AT_SHIFT;
 
-	m_userstack = (void*)(ADDR_PREFIX_KSEG0 - stack_size);
+	m_userstack = stack_pos;
+//	(void*)(ADDR_PREFIX_KSEG0 - stack_size);
 
 	if (m_virtualMap->allocate( &m_userstack, stack_size, vm_flags ) != EOK)
 		return;

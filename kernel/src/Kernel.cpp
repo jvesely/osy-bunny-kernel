@@ -218,7 +218,7 @@ void Kernel::exception( Processor::Context* registers )
 	
 	if (Processor::EXCEPTIONS[reason].handler) {
 		if (!(*Processor::EXCEPTIONS[reason].handler)( registers )) {
-			printf( "Exception handling for: %s(%u) FAILED => TRHEAD KILLED.\n",
+			printf( "Exception handling for: %s(%u) FAILED => THREAD KILLED.\n",
 				Processor::EXCEPTIONS[reason].name, reason);
 			Thread::getCurrent()->kill();
 		}
