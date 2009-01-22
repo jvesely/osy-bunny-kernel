@@ -210,7 +210,7 @@ unative_t SyscallHandler::handleThreadExit()
 unative_t SyscallHandler::handleThreadSleep()
 {
 	Time sleep_time(((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
-	PRINT_DEBUG ("Sleep: %u:%u.\n",
+	PRINT_DEBUG ("Sleep:  %p %u:%u.\n", m_params[0],
 		((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
 	Thread::getCurrent()->sleep( sleep_time );
 	return 0;
