@@ -10,31 +10,32 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Short description.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 #pragma once
 
 #include "types.h"
 #include "syscallcodes.h"
+#include "api.h"
 
 class Time;
 
@@ -120,8 +121,44 @@ inline void thread_suspend()
 inline void exit() {
 	SYSCALL( SYS_EXIT, 0, 0, 0, 0);
 }
+/** @brief vma alloc syscall
+*
+*	Because in user space are page sizes unknown, this call differs from kernel vma_alloc.
+*	This function accepts not-alligned size and returns alligned size in (*size).
+*	@param from pointer to return pointer
+*	@param size pointer to required size
+*	@param flags standart vma_alloc flags (see api.h in /kernel/src)
+*	@return result of vma_alloc(see api.h)
+*	@note This function accepts unalligned size.
+*/
 
 
+inline int vma_alloc(void ** from, size_t * size, const unsigned int flags)
+{
+	//this is needed so that these values are correct
+	volatile int lock = 1;
+	volatile void * vfrom;
+	volatile size_t vsize = *size;
+	int res = 0;
+
+	res = SYSCALL( SYS_VMA_ALLOC, &vfrom, &vsize, flags, &lock);
+	*from = (void*)vfrom;
+	*size = vsize;
+
+	return res;
+	//return SYSCALL( SYS_VMA_ALLOC, from, size, flags, 0);
+}
+
+/** @brief vma free syscall
+*
+*	Standart vma_free behaviour. For more details see /kernel/api.h
+*	vma_free specification.
+*	@return result of vma_free(see api.h)
+*/
+inline int vma_free(const void * from)
+{
+	return SYSCALL( SYS_VMA_FREE, from, 0, 0, 0);
+}
 
 #undef QUOT
 #undef SYSCALL

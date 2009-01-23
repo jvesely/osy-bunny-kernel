@@ -25,12 +25,13 @@
 
 /*!
  * @file
- * @brief Short description.
+ * @brief Base class of memory allocator
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Note that this comment is by any means ingenious but
- * at least people can understand it.
- *	\todo needs to be renamed to firstFitMemAllocator...
+ * 	This is base class, from which are derived KernelMemoryAllocator and
+ *	UserMemoryAllocator. Class should implement four basic memory allocation
+ *	strategies, enable to switch them at runtime and resize existing memory.
+ *	Allocator now formats memory as a bunch of free/used blocks, which are
+ *	organized in (sorted) list.
  */
 
 
@@ -46,11 +47,7 @@
 *	problems will be revealed. This setting will not affect interrupt disabling
 *	during allocation/deallocation.
 */
-#define BMA_DEBUG
-
-/*	do not try to extend memory chunks
-*
-*/
+//#define BMA_DEBUG
 
 
 //------------------------------------------------------------------------------
@@ -107,6 +104,9 @@ public:
 	*	This will allow to dealloc all used memory, even if not all was
 	*	freed by user.
 	*	(note that next memory block is not allways neighbour block)
+	*	@note default copy constructor and operator '=' are allowed, but
+	*	copied header is not connected to list (must be either normally added to list
+	*	or reconnected - for more see SimpleList and SimpleListItem).
 	*/
 class BlockHeader: public SimpleListItem
 	{
@@ -187,9 +187,10 @@ class BlockHeader: public SimpleListItem
 		*/
 		BlockHeader();
 
-		/** @brief no comment
+		/** @brief no comment (guess :) )
 		*
-		*	Size of whole block(with header and footer).
+		*	Size of whole block(with header and footer) or whole memory chunk
+		*	(if it is border header).
 		*/
 		size_t m_size;
 
@@ -291,7 +292,8 @@ class BlockHeader: public SimpleListItem
 
 		/** @brief no comment
 		*
-		*	Size of whole block(with header and footer).
+		*	Size of whole block(with header and footer) or whole memory chunk
+		*	(if it is border header).
 		*/
 		size_t m_size;
 
@@ -334,29 +336,35 @@ class BlockHeader: public SimpleListItem
 	*/
 	void freeAll();
 
-	/*! aligns adress to nearest bigger 4byte block.
-	 * @param address address to be aligned
-	 * @param align align amount
-	 * @return aligned address
-	 */
-	/*	static inline unsigned int alignUp(
-		    const unsigned int number, const unsigned int factor)
-		{ return  (number + (factor - 1) ) & ~(factor - 1); };
-	*/
-	/*! aligns address to nearest smaller 4byte block
-	 * @param address address to be aligned
-	 * @param align align amount
-	 * @return aligned address
-	 */
-	/*	static inline unsigned int alignDown(
-		    const unsigned int number, const unsigned int factor)
-		{ return number & ~(factor - 1); }
-	*/
 	/** @brief getter for m_freeSize
 	*
 	*	Debug function
 	*/
 	inline size_t getFreeSize() const { return m_freeSize; }
+
+		/** @brief sets strategy to default
+	*
+	*	Changes pointer to functions only. Is not dependant on any free block order,
+	*	therefore does not rearrange free blocks.
+	*	Changes pointers getFreeBlockFunction, setSizeFunction and
+	*	insertIntoFreeListFunction.
+	*/
+	inline void setStrategyDefault();
+
+	/** @brief set strategy to FirstFit
+	*
+	*	Changes pointer to functions and resorts free blocks list according to
+	*	address.
+	*	Changes pointers getFreeBlockFunction, setSizeFunction and
+	*	insertIntoFreeListFunction.
+	*	For setSizeFunction is enough to use setSizeDefault.
+	*	Inserting into list of free blocks has no effect on allocator work,
+	*	so it is enough to use default implementation.
+	*	getFreeBlockFunction must search blocks according to their addresses.
+	*	This strategy does not use blockLists at all.
+	*/
+	void setStrategyFirstFit();
+
 
 
 protected:
@@ -376,22 +384,26 @@ protected:
 	*
 	*	Virtual function responsible for getting memory from either frame or vma allocator.
 	*	@note does not insert new chunk to list, nor creates structures on new memory
-	*	@param finalSize size of required memory (alligned to some pagesize)
+	*	@param finalSize pointer to size of required memory. Function alligns this value according to
+	*		page size (and returns final size of chunk via pointer).
 	*	@return if successfull, returns address of new memory chunk, else NULL.
-	*	Return address is virtual address.
+	*	Return address is virtual(not HW) address.
 	*/
-	virtual void * getNewChunk(size_t finalSize) = 0;
+	virtual void * getNewChunk(size_t * finalSize) = 0;
 
 	/** @brief extend existing chunk of memory
 	*
 	*	Virtual function responsible for extending existing memory chunk. Result should be,
 	*	that new piece of usable(yet unformatted) memory is right behind old chunk of memory.
 	*	@param oldChunk old chunk FOOTER pointer
-	*	@param finalSize required size of new memory (alligned to some pagesize)
-	*	@return if succesfull beginning of new memory piece, else NULL.
-	*	Return address is virtual address.
+	*	@param finalSize pointer to required size of new memory.Function alligns this value according to
+	*		page size (and returns final size of chunk via pointer).
+	*	@return true if success, false otherwise
+	*	@note Although there is almost no way to get resultant finalSize (alligned to
+	*	actual page size), this can be ignored and structures will be correctly
+	*	created.
 	*/
-	virtual void * extendExistingChunk(BlockFooter * oldChunk, size_t finalSize)
+	virtual bool extendExistingChunk(BlockFooter * oldChunk, size_t * finalSize, size_t originalSize)
 	{
 		return NULL;
 	}
@@ -430,7 +442,7 @@ protected:
 	*	structures.
 	*	@note Does not disconnect it from list of chunks.
 	*	@param frontBorder front border of returned chunk
-	*	@param finalSize size of chunk (must be alligned)
+	*	@param finalSize size of chunk
 	*/
 	virtual void returnChunk(BlockFooter * frontBorder, size_t finalSize) = 0;
 
@@ -442,10 +454,15 @@ protected:
 	*	Function does not handle chunk borders and structures, only returns part of
 	*	memory chunk!!! Also does not do any checks.
 	*	@param frontBorder memory chunk front border pointer
-	*	@param finalSize size which should remaining chunk have (must be alligned)
+	*	@param finalSize pointer to size, which should remaining chunk have.Function alligns this value according to
+	*		page size (and returns final size of chunk via pointer).
+	*	@param originalSize original size of chunk
 	*	@return TRUE if succesful, FALSE otherwise (function might not be implemented)
+	*	@note Although there is almost no way to get resultant finalSize (alligned to
+	*	actual page size), this can be ignored and structures will be correctly
+	*	created.
 	*/
-	virtual bool reduceChunk(BlockFooter * frontBorder, size_t finalSize)
+	virtual bool reduceChunk(BlockFooter * frontBorder, size_t * finalSize, size_t originalSize)
 	{
 		return false;
 	}
@@ -594,15 +611,6 @@ protected:
 	*/
 	inline void initBlock(BlockHeader * header, size_t realSize, bool free = true);
 
-	/** @brief sets strategy to default
-	*
-	*	Changes pointer to functions only. Is not dependant on any free block order,
-	*	therefore does not rearrange free blocks.
-	*	Changes pointers getFreeBlockFunction, setSizeFunction and
-	*	insertIntoFreeListFunction.
-	*/
-	inline void setStrategyDefault();
-
 	/** @brief default memory allocation
 	*
 	*	Only searches list for first matching free block and returns it.
@@ -610,6 +618,15 @@ protected:
 	*	@note should be used only with default memory allocation strategy.
 	*/
 	BlockHeader * getFreeBlockDefault(size_t realSize) const;
+
+	/** @brief first fit memory allocation
+	*
+	*	Searches trough all memory chunks (if needed). Each chunk is linearly
+	*	searched for free block big enough. If such block is found, function
+	*	returns it immediatelly. If nothing is ound, returns NULL.
+	*	@note should be used only with FirstFit memory allocation strategy.
+	*/
+	BlockHeader * getFreeBlockFirstFit(size_t realSize) const;
 
 	/** @brief logicaly resizes block
 	*
