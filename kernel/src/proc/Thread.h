@@ -34,7 +34,7 @@
 
 #include "structures/ListInsertable.h"
 #include "structures/HeapInsertable.h"
-#include "timer/Time.h"
+#include "Time.h"
 #include "mem/IVirtualMemoryMap.h"
 #include "Pointer.h"
 

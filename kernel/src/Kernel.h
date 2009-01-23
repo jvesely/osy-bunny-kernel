@@ -35,7 +35,7 @@
 #include "ExceptionHandler.h"
 #include "SyscallHandler.h"
 #include "proc/Thread.h"
-#include "timer/Time.h"
+#include "Time.h"
 
 #include "drivers/Console.h"
 #include "drivers/RTC.h"

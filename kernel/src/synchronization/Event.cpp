@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id$
+ *   @version $Id: Event.cpp 605 2009-01-22 23:58:59Z slovak $
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -31,31 +31,45 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
-#pragma once
-#include "drivers/Processor.h"
-#include "ExceptionHandler.h"
-#include "syscallcodes.h"
 
-class SyscallHandler: public ExceptionHandler {
-public:
-	SyscallHandler();
-	bool handleException( Processor::Context* registers );
+#include "Event.h"
+#include "InterruptDisabler.h"
+#include "proc/Thread.h"
 
-private:
+Event::~Event()
+{
+	ASSERT(m_list.empty());
+}
+
+void Event::wait() 
+{
+	InterruptDisabler interrupts;
+
+	Thread* thr = Thread::getCurrent();
+	thr->block();
+	thr->append(&m_list);
+
+	thr->yield();
+}
+
+void Event::waitTimeout( const Time& timeout )
+{
+	if (!timeout)
+		return;
 	
-	unative_t m_call;
-	unative_t m_params[4];
-	unative_t (SyscallHandler::*m_handles[SYS_LAST])(void);
+	InterruptDisabler interrupts;
 
-	unative_t handlePuts();
-	unative_t handleGets();
-	unative_t handleExit();
-	unative_t handleEventInit();
-	unative_t handleEventWait();
-	unative_t handleEventWaitTimeout();
-	unative_t handleEventFire();
-	unative_t handleEventDestroy();
-	unative_t handleThreadSleep();
-	unative_t handleThreadYield();
-	unative_t handleThreadSuspend();
-};
+	Thread* thr = Thread::getCurrent();
+	thr->alarm(timeout);
+	thr->append(&m_list);
+
+	thr->yield();
+}
+
+void Event::fire()
+{
+	InterruptDisabler interrupts;
+
+	for (ThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
+		(*it)->resume();
+}

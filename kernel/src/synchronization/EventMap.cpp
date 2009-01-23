@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id$
+ *   @version $Id: EventMap.cpp 605 2009-01-22 23:58:59Z slovak $
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -31,31 +31,28 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
-#pragma once
-#include "drivers/Processor.h"
-#include "ExceptionHandler.h"
-#include "syscallcodes.h"
 
-class SyscallHandler: public ExceptionHandler {
-public:
-	SyscallHandler();
-	bool handleException( Processor::Context* registers );
+#include "EventMap.h"
 
-private:
+/*----------------------------------------------------------------------------*/
+
+EventMap::EventMap(): m_nextEventId(1), m_map(HASHMAP_SIZE) 
+{
+	ASSERT(m_map.getArraySize());
+	int ok = m_map.insert(INVALID_ID, NULL);
+	ASSERT(ok == EOK);
+}
+
+/*----------------------------------------------------------------------------*/
+
+event_t EventMap::map( Event* evnt )
+{
+	int res;
+	while ((res = m_map.insert(m_nextEventId, evnt)) == EINVAL)
+		m_nextEventId++;
 	
-	unative_t m_call;
-	unative_t m_params[4];
-	unative_t (SyscallHandler::*m_handles[SYS_LAST])(void);
-
-	unative_t handlePuts();
-	unative_t handleGets();
-	unative_t handleExit();
-	unative_t handleEventInit();
-	unative_t handleEventWait();
-	unative_t handleEventWaitTimeout();
-	unative_t handleEventFire();
-	unative_t handleEventDestroy();
-	unative_t handleThreadSleep();
-	unative_t handleThreadYield();
-	unative_t handleThreadSuspend();
-};
+	if (res == ENOMEM)
+		return INVALID_ID;
+	
+	return m_nextEventId++;
+}

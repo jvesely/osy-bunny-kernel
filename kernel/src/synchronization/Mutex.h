@@ -35,7 +35,7 @@
 #pragma once
 
 #include "api.h"
-#include "timer/Time.h"
+#include "Time.h"
 #include "synchronization/MutexManager.h"
 
 /**

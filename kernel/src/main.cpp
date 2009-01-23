@@ -33,7 +33,7 @@
 
 #include "main.h"
 #include "Kernel.h"
-#include "asm/atomic.h"
+#include "atomic.h"
 
 volatile unative_t COUNT_CPU = 0;
 volatile native_t SIMPLE_LOCK = 0;

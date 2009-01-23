@@ -38,7 +38,7 @@
 #include "types.h"
 #include "InterruptDisabler.h"
 #include "proc/Thread.h"
-#include "timer/Time.h"
+#include "Time.h"
 
 /**
  * @class Semaphore Semaphore.h "Semaphore.h"

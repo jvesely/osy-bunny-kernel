@@ -36,6 +36,8 @@
 #include "types.h"
 #include "syscallcodes.h"
 
+class Time;
+
 /*!
  * @namespace SysCall
  * @brief SysCall invoking functions.
@@ -74,9 +76,52 @@ inline size_t gets( char* buffer, size_t size)
 	return SYSCALL( SYS_GETS, buffer, size, 0, 0 );
 }
 
+inline int event_init( event_t* id )
+{
+	return (id) ? SYSCALL(SYS_EVENT_INIT, id, 0, 0, 0) : (int)(EINVAL);
+}
+
+inline void event_wait( event_t id, volatile native_t* locked )
+{
+	SYSCALL(SYS_EVENT_WAIT, id, locked, 0, 0);
+}
+
+inline void event_wait_timeout( 
+	event_t id, const Time* time, volatile native_t* locked )
+{
+	SYSCALL(SYS_EVENT_WAIT_TIMEOUT, id, time, locked, 0);
+}
+
+inline void event_fire( event_t id )
+{
+	SYSCALL(SYS_EVENT_FIRE, id, 0, 0, 0);
+}
+
+inline int event_destroy( event_t id )
+{
+	return SYSCALL(SYS_EVENT_DESTROY, id, 0, 0, 0);
+}
+
+inline void thread_sleep( uint sec, uint usec )
+{
+	SYSCALL(SYS_THREAD_SLEEP, sec, usec, 0, 0);
+}
+
+inline void thread_yield()
+{
+	SYSCALL(SYS_THREAD_YIELD, 0, 0, 0, 0);
+}
+
+inline void thread_suspend()
+{
+	SYSCALL(SYS_THREAD_SUSPEND, 0, 0, 0, 0);
+}
+
 inline void exit() {
 	SYSCALL( SYS_EXIT, 0, 0, 0, 0);
 }
+
+
 
 #undef QUOT
 #undef SYSCALL
