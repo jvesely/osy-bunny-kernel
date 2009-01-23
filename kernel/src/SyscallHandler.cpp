@@ -10,26 +10,26 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Short description.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 
 #include "SyscallHandler.h"
@@ -39,6 +39,12 @@
 #include "proc/Thread.h"
 #include "synchronization/EventMap.h"
 #include "synchronization/Event.h"
+#include "Kernel.h"
+#include "proc/KernelThread.h"
+#include "drivers/Processor.h"
+#include "tools.h"
+
+#include "api.h"//debug purposes
 
 SyscallHandler::SyscallHandler()
 {
@@ -54,6 +60,8 @@ SyscallHandler::SyscallHandler()
 	m_handles[SYS_THREAD_YIELD] = (&SyscallHandler::handleThreadYield);
 	m_handles[SYS_THREAD_SUSPEND] = (&SyscallHandler::handleThreadSuspend);
 	
+	m_handles[SYS_VMA_ALLOC] = (&SyscallHandler::handleVMAAlloc);
+	m_handles[SYS_VMA_FREE] = (&SyscallHandler::handleVMAFree);
 }
 /*----------------------------------------------------------------------------*/
 bool SyscallHandler::handleException( Processor::Context* registers )
@@ -97,7 +105,7 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handlePuts()
 {
-/*	printf ("Should output string at %p(%p):%s.\n", 
+/*	printf ("Should output string at %p(%p):%s.\n",
 		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */
 //	Processor::msim_stop();
 //	if (ADDR_TO_USEG(params[0]) == params[0]) {
@@ -248,4 +256,29 @@ unative_t SyscallHandler::handleThreadSuspend()
 {
 	Thread::getCurrent()->suspend();
 	return 0;
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleVMAAlloc()
+{
+	//the same as vma_alloc in api.h
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	ASSERT (thread->getVMM());
+	//round the size according to HW specifications
+	(*((size_t*)m_params[1])) = roundUp(*((size_t*)m_params[1]),Processor::pages[0].size);
+
+	//unative_t res = thread->getVMM()->allocate((void **)m_params[0], *((size_t*)m_params[1]),(unsigned int) m_params[2]);
+	//return res;
+	return thread->getVMM()->allocate((void **)m_params[0], *((size_t*)m_params[1]),(unsigned int) m_params[2]);
+}
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleVMAFree()
+{
+	//the same as vma_free in api.h
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	//unative_t res = thread->getVMM()->free((void *)m_params[0]);
+	//return res;
+	return thread->getVMM()->free((void *)m_params[0]);
 }

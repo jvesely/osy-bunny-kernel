@@ -31,10 +31,13 @@
  * It would stay that way. Not that this comment is by any means ingenious but
  * at least people can understand it.
  */
-#include "KernelMemoryAllocator.h"
-#include "mem/FrameAllocator.h"
-#include "InterruptDisabler.h"
-#include "drivers/Processor.h"
+
+#include "UserMemoryAllocator.h"
+/// \todo synchronisation
+//#include "synchronization/StupidSpinlockLocker.h"
+
+#include "SysCall.h"
+#include "syscallcodes.h"
 #include "api.h"
 
 //debug messages for frame allocation
@@ -49,49 +52,45 @@
 #endif
 
 
-void* KernelMemoryAllocator::getMemory( size_t amount )
+void* UserMemoryAllocator::getMemory( size_t amount )
 {
-	InterruptDisabler inter;
+	/// \todo synchronisation
+	//StupidSpinlockLocker locker(m_lock);
 	return this->BasicMemoryAllocator::getMemory( amount );
 }
 /*----------------------------------------------------------------------------*/
-void KernelMemoryAllocator::freeMemory( const void* address )
+void UserMemoryAllocator::freeMemory( const void* address )
 {
-	InterruptDisabler inter;
+	/// \todo synchronisation
+	//StupidSpinlockLocker locker(m_lock);
 	return this->BasicMemoryAllocator::freeMemory( address );
 }
 
 //------------------------------------------------------------------------------
-void * KernelMemoryAllocator::getNewChunk(size_t * finalSize)
+void * UserMemoryAllocator::getNewChunk(size_t * finalSize)
 {
-	size_t MIN_FRAME_SIZE = Processor::pages[0].size;
-	//allignment
-	(*finalSize) = roundUp( *finalSize, MIN_FRAME_SIZE);
+	void * result = NULL;
 
-	void * physResult = NULL;
-	uint frameCount = (*finalSize) / MIN_FRAME_SIZE;
+	//printf("sending parameters: result at %x, finalsize at %x, flag %x \n",&result,finalSize,((VF_AT_KUSEG << VF_AT_SHIFT) | (VF_VA_AUTO << VF_VA_SHIFT)));
+	int success = SysCall::vma_alloc(&result,finalSize,((VF_AT_KUSEG << VF_AT_SHIFT) | (VF_VA_AUTO << VF_VA_SHIFT)));
+	//printf("result is %d at %x, size %x\n",success,result,*finalSize);//debug
 
-	uint resultantCount = MyFrameAllocator::instance().allocateAtKseg0(
-	                          &physResult, frameCount, MIN_FRAME_SIZE);
-	if (resultantCount != frameCount)
+	if (success!=EOK)
 	{
-		PRINT_DEBUG_FRAME("frame allocator did not return enough\n");
-		PRINT_DEBUG_FRAME("expected %d frames, got %d \n", frameCount, resultantCount);
+		PRINT_DEBUG_FRAME("vma allocator did not return ok(%d) but %d\n",EOK,success);
 		return NULL;
 	}
-	return (void*)ADDR_TO_KSEG0((uintptr_t)physResult);
+	return (void*)result;
 }
 
 //------------------------------------------------------------------------------
-void KernelMemoryAllocator::returnChunk(BlockFooter * frontBorder, size_t finalSize)
+void UserMemoryAllocator::returnChunk(BlockFooter * frontBorder, size_t finalSize)
 {
-	size_t MIN_FRAME_SIZE = Processor::pages[0].size;
-	//how much
-	uint frameCount = finalSize / MIN_FRAME_SIZE;
-	//FrameAllocator<7>::instance().frameFree(frontBorder,frameCount,FRAME_SIZE);
-	uintptr_t finalAddress = (uintptr_t)frontBorder - (uintptr_t)ADDR_PREFIX_KSEG0;
-
-	PRINT_DEBUG_FRAME("returning at %x, count %x, fsize %x \n",finalAddress,frameCount,FRAME_SIZE);
-	MyFrameAllocator::instance().frameFree((void*)finalAddress, frameCount, MIN_FRAME_SIZE);
+	PRINT_DEBUG_FRAME("returning at %x, size %x \n",frontBorder,finalSize);
+	int success = SysCall::vma_free(frontBorder);
+	if(success!=EOK)
+	{
+		PRINT_DEBUG_FRAME("ERROR: returning memory to vma alocator not succesful \n");
+	}
 }
 

@@ -10,26 +10,26 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Short description.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 
 #include "librt.h"
@@ -38,6 +38,7 @@
 #include "Mutex.h"
 #include "cpp.h"
 #include "assert.h"
+#include "UserMemoryAllocator.h"
 
 /* Basic IO */
 size_t putc( const char c )
@@ -62,7 +63,7 @@ char getc()
 ssize_t gets( char* str, const size_t len )
 {
 	/* we don't need to call syscall just to report error */
-	if (!len) return EINVAL;  
+	if (!len) return EINVAL;
 	return SysCall::gets( str, len );
 }
 
@@ -72,18 +73,19 @@ ssize_t gets( char* str, const size_t len )
 
 void *malloc(const size_t size)
 {
-	return NULL;
+	return UserMemoryAllocator::instance().getMemory( size );
 }
 
 void free(const void *ptr)
 {
+	UserMemoryAllocator::instance().freeMemory( ptr );
 }
 
 /* -------------------------------------------------------------------------- */
 /* --------------------------   THREADS   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int thread_create( 
+int thread_create(
 	thread_t *thread_ptr, void *(*thread_start)(void *), void *arg)
 {
 	return 0;
@@ -164,7 +166,7 @@ int mutex_init( struct mutex* mtx )
 {
 	if (!mtx)
 		return EINVAL;
-	
+
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	mtx = (mutex*)(new ((void*)mtx) Mutex());
 
@@ -178,8 +180,8 @@ int mutex_destroy( struct mutex* mtx )
 
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	((Mutex*)mtx)->destroy();
-	
-	delete mtx;
+
+	//delete mtx;
 
 	return EOK;
 }

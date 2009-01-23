@@ -10,21 +10,21 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Syscall codes.
  *
  * Contains translation macros from syscall names to codes.
@@ -43,4 +43,7 @@
 #define SYS_THREAD_SLEEP 9
 #define SYS_THREAD_YIELD 10
 #define SYS_THREAD_SUSPEND 11
-#define SYS_LAST 12
+#define SYS_VMA_ALLOC 12
+#define SYS_VMA_FREE 13
+
+#define SYS_LAST 14

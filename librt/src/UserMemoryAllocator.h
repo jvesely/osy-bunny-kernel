@@ -25,13 +25,16 @@
 
 /*!
  * @file
- * @brief KernelMemoryAllocator declaration.
+ * @brief Short description.
  *
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
-#pragma once
 
 #include "Singleton.h"
 #include "BasicMemoryAllocator.h"
+//#include "synchronization/StupidSpinlock.h"
 
 /*! @class KernelMemoryAllocator KernelMemoryAllocator.h
  * "mem/KernelMemoryAllocator.h"
@@ -43,40 +46,40 @@
  * from the BasicMemoryAllocator, but gets new memory blocks directly from
  * the FrameAllocator.
  */
-class KernelMemoryAllocator:
-	public BasicMemoryAllocator, public Singleton<KernelMemoryAllocator>
+class UserMemoryAllocator:
+	public BasicMemoryAllocator, public Singleton<UserMemoryAllocator>
 {
 public:
 	virtual void* getMemory( size_t ammount );
 	virtual void freeMemory( const void* address );
 
 protected:
-		/** @brief get brand new chunk of memory
+	/** @brief get brand new chunk of memory
 	*
 	*	Virtual function responsible for getting memory from either frame or vma allocator.
 	*	@note does not insert new chunk to list, nor creates structures on new memory
-	*	@param finalSize pointer to size of required memory. Function alligns this value according to
-	*		page size (and returns final size of chunk via pointer).
-	*	@return if successfull, returns address of new memory chunk, else NULL.
-	*		Return address is address from kseg0.
+	*	@param finalSize size of required memory (alligned to some pagesize)
+	*	@param finalSize reference to size of required memory. Function alligns this value according to
+	*		page size (and thus returns final size of chunk via reference).
+	*	Return address is virtual.
 	*/
 	virtual void * getNewChunk(size_t * finalSize);
 
-		/** @brief extend existing chunk of memory
+	/** @brief extend existing chunk of memory
 	*
 	*	Virtual function responsible for extending existing memory chunk. Result should be,
 	*	that new piece of usable(yet unformatted) memory is right behind old chunk of memory.
 	*	@param oldChunk old chunk FOOTER pointer
-	*	@param finalSize pointer to required size of new memory.Function alligns this value according to
-	*		page size (and returns final size of chunk via pointer).
-	*	@return true if success, false otherwise
+	*	@param finalSize reference to required size of new memory.
+	*	@return if succesfull beginning of new memory piece, else NULL.
+	*		Return address is virtual.
 	*	@note this is NOT final implementation (dummy implementation has no sense :) )
+	*	@note there is almost no way to return finalSize
 	*/
-	virtual bool extendExistingChunk(BlockFooter * oldChunk, size_t * finalSize, size_t originalSize)
+	virtual bool extendExistingChunk(BlockFooter * oldChunk, size_t & finalSize, size_t originalSize)
 	{
 		return NULL;
 	}
-
 	/** @brief return memory chunk to frame allocator
 	*
 	*	Returns whole chunk with given size to the frame allocator.
@@ -84,7 +87,7 @@ protected:
 	*	@param frontBorder front border of returned chunk
 	*	@param finalSize size of chunk
 	*/
-	virtual void returnChunk(BlockFooter * frontBorder, size_t finalSize);
+	void returnChunk(BlockFooter * frontBorder, size_t finalSize);
 
 
 	/** @brief shrink existing memory chunk to given size
@@ -95,15 +98,21 @@ protected:
 	*	Function does not handle chunk borders and structures, only returns part of
 	*	memory chunk!!! Also does not do any checks.
 	*	@param frontBorder memory chunk front border pointer
-	*	@param finalSize pointer to size, which should remaining chunk have.Function alligns this value according to
-	*		page size (and returns final size of chunk via pointer).
-	*	@param originalSize original size of chunk
+	*	@param finalSize reference to size, which should remaining chunk have. This value is
+	*		alligned(up) to page size and thus returned via reference.
 	*	@return TRUE if succesful, FALSE otherwise (function might not be implemented)
 	*	@note this is NOT final implementation (dummy implementation has no sense :) )
 	*/
-	virtual bool reduceChunk(BlockFooter * frontBorder, size_t * finalSize, size_t originalSize)
+	virtual bool reduceChunk(BlockFooter * frontBorder, size_t & finalSize, size_t originalSize)
 	{
 		return false;
 	}
+
+	/** @brief lock for allocator synchronisation
+	*
+	*	this is basic sollution, which will be very probably deprecated.
+	*/
+	//StupidSpinlock m_lock;
+
 
 };
