@@ -34,7 +34,7 @@
 
 #include "structures/Heap.h"
 #include "Singleton.h"
-#include "timer/Time.h"
+#include "Time.h"
 #include "drivers/InterruptHandler.h"
 #include "proc/Thread.h"
 

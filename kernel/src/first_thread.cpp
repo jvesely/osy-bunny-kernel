@@ -35,31 +35,43 @@
 #include "proc/UserThread.h"
 #include "Kernel.h"
 #include "tarfs/TarFS.h"
+#include "proc/Process.h"
 
 void* first_thread(void* data)
 {
 	#ifdef KERNEL_TEST
 		run_test();
-		Kernel::instance().halt();
+		KERNEL.halt();
 	#endif
 	
 	#ifdef USER_TEST
 		const char* file = "test.bin";
 	#else
-		const char* file = "init.bin";
+		const char* file = "test.bin";
 	#endif
 
-	printf( "Mounting root fs..." );
+	puts( "Mounting root fs..." );
 	TarFS* fs = new TarFS();
+
 
 	if (fs && fs->mount( KERNEL.disk() )) {
 		KERNEL.m_rootFS = fs;
-		printf( "done\n" );
+		puts( "done\n" );
 	} else {
-		printf( "Disk mounting failed. Shutting down.\n" );
+		puts( "Disk mounting failed. Shutting down.\n" );
 		KERNEL.halt();
 	}
-	
+
+	Process* main_proc = Process::create( file );
+	if (main_proc) {
+		printf( "Launching process: %s.\n", file );
+		Thread::getCurrent()->join( main_proc->mainThread() );
+	} else {
+		printf( "Failed to launch process: %s.\n", file );
+	}
+	KERNEL.halt();	
+
+
 	file_t bin_file = fs->openFile( file, OPEN_R );
 	if (bin_file < 0) {
 		printf("Failed to open file: %s.\n", file);
@@ -67,7 +79,7 @@ void* first_thread(void* data)
 	}
 	size_t filesize = fs->sizeFile( bin_file );
 	printf( "Reading from file %s of size %u.\n", file, filesize );
-	char* content = (char*)malloc( filesize + 1);
+	char* content = (char*)malloc( filesize + 1 );
 	content[filesize] = 0;
 	fs->readFile( bin_file, content, filesize );
 	printf( "Contents: %s.\n", content );

@@ -33,16 +33,18 @@
 
 #include "main.h"
 #include "Kernel.h"
+#include "atomic.h"
 
-volatile unative_t COUNT_CPU;
+volatile unative_t COUNT_CPU = 0;
+volatile native_t SIMPLE_LOCK = 0;
+volatile void** other_stack_ptr = NULL;
 
 /*! bootstrap entry point */
-void wrapped_start( void )
+void wrapped_start()
 {
-	KERNEL.switchTo();
-
-//	Kernel::instance().stop();
-//	msim_stop();
+	while ( swap(SIMPLE_LOCK, 1) ) ;
+	KERNEL.run();
+	while (1) ;
 }
 
 /*! entry point for general_exceptions */
@@ -52,7 +54,7 @@ void wrapped_general( Processor::Context* registers )
 }
 
 /*! TLB miss handler */
-void wrapped_tlbrefill( void )
+void wrapped_tlbrefill()
 {
 	KERNEL.refillTLB();
 }

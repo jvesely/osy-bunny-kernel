@@ -51,6 +51,7 @@ typedef List<Thread*> ThreadList;
 
 class Scheduler: public Singleton<Scheduler>
 {
+public:
 //	static const Time DEFAULT_QUANTUM;
 
 	/*! @brief Translates identifier to pointer.
@@ -73,6 +74,7 @@ class Scheduler: public Singleton<Scheduler>
 	inline void returnId( thread_t id )
 		{ m_threadMap.erase( id ); };
 
+private:
 	/*! @brief Removes thread from scheduling queue (ONLY). */
 	void dequeue( Thread* thread );
 	

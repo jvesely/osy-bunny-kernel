@@ -55,6 +55,8 @@ inline T ADDR_TO_KSEG0(T addr)
 
 #define ADDR_IN_KSEG0(addr) ( ADDR_PREFIX_KSEG0 == ADDR_PREFIX((uintptr_t)addr))
 
+#define ADDR_IN_USEG(addr)	(!( addr & ADDR_PREFIX_KSEG0 ))
+
 #define ADDR_SIZE_KSEG0 (ADDR_PREFIX_KSEG1 - ADDR_PREFIX_KSEG0)	/*! 0.5 GB */
 
 /* Entry points (jumps to C++ code) */
@@ -88,6 +90,6 @@ inline T ADDR_TO_KSEG0(T addr)
 
 /*! just under the kernel and writing down */
 #define KERNEL_STATIC_STACK_TOP         ADDR_TO_KSEG0 (0x400)
-/*! 1KB kernel stack */
-#define KERNEL_STATIC_STACK_SIZE        0x1000       
+/*! 4KB kernel stack */
+#define KERNEL_STATIC_STACK_SIZE        0x1000
 

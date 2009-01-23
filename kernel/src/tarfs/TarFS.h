@@ -43,8 +43,8 @@ typedef HashMap<file_t, Entry*> EntryMap;
 class TarFS: public VFS
 {
 public:
-	TarFS( DiscDevice* disc = NULL );
-	bool mount( DiscDevice* disc );
+	TarFS( DiskDevice* disk = NULL );
+	bool mount( DiskDevice* disk );
 	file_t openFile( const char file_name[], const char mode );
 	void closeFile( file_t file );
 	ssize_t readFile( file_t src, void* buffer, size_t size );
@@ -59,6 +59,6 @@ private:
 		
 	EntryMap m_entryMap;
 	DirEntry m_rootDir;
-	DiscDevice* m_mountedDisc;
+	DiskDevice* m_mountedDisk;
 	file_t m_lastDescriptor;
 };

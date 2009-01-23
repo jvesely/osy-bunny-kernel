@@ -36,7 +36,7 @@
 
 #include <api.h>
 #include "Singleton.h"
-#include "timer/Time.h"
+#include "Time.h"
 
 /**
  * @class MutexManager MutexManager.h "MutexManager.h"

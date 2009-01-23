@@ -35,7 +35,7 @@
 #pragma once
 #include "InterruptHandler.h"
 
-class DiscDevice: public InterruptHandler
+class DiskDevice: public InterruptHandler
 {
 public:
 	virtual bool read( void* buffer, uint count, uint block, uint start_pos ) = 0;

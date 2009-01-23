@@ -33,8 +33,9 @@
  */
 
 #include "Entry.h"
-#include "drivers/DiscDevice.h"
+#include "drivers/DiskDevice.h"
 #include "assert.h"
+#include "api.h"
 
 bool Entry::readFromDevice(void* buffer, size_t count, uint start_block, uint offset)
 {

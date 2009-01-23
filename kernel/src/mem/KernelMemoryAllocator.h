@@ -92,7 +92,7 @@ protected:
 	*	Function does not handle chunk borders and structures, only returns part of
 	*	memory chunk!!! Also does not do any checks.
 	*	@param frontBorder memory chunk front border pointer
-	*	@param totalSize size which should not returned first of chunk have
+	*	@param totalSize size which the remaining part of chunk should have.
 	*	@return TRUE if succesful, FALSE otherwise (function might not be implemented)
 	*/
 	virtual bool reduceChunk(BlockFooter * frontBorder, size_t totalSize)

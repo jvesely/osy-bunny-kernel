@@ -1,0 +1,127 @@
+/*
+ *          _     _
+ *          \`\ /`/
+ *           \ V /
+ *           /. .\            Bunny Kernel for MIPS
+ *          =\ T /=
+ *           / ^ \
+ *        {}/\\ //\
+ *        __\ " " /__
+ *   jgs (____/^\____)
+ *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+/*! 	 
+ *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
+ *   @par "SVN Repository"
+ *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
+ *   
+ *   @version $Id: Mutex.cpp 605 2009-01-22 23:58:59Z slovak $
+ *   @note
+ *   Semestral work for Operating Systems course at MFF UK \n
+ *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
+ *   
+ *   @date 2008-2009
+ */
+
+/*!
+ * @file 
+ * @brief Userspace Mutex class implementation.
+ */
+
+#include "Mutex.h"
+#include "atomic.h"
+#include "assert.h"
+#include "librt.h"
+#include "SysCall.h"
+
+/*----------------------------------------------------------------------------*/
+
+Mutex::~Mutex()
+{
+	ASSERT(m_waiting);
+}
+
+/*----------------------------------------------------------------------------*/
+
+int Mutex::init()
+{
+	m_locked = 0;
+	m_owner = 0;
+	m_waiting = 0;
+
+	return SysCall::event_init(&m_event);;
+}
+
+/*----------------------------------------------------------------------------*/
+
+void Mutex::destroy()
+{
+	if (m_waiting)
+		thread_exit(NULL);
+
+	SysCall::event_destroy(m_event);
+}
+
+/*----------------------------------------------------------------------------*/
+
+int Mutex::lock()
+{
+	if (swap(m_locked, 1) != 0) {
+		++m_waiting;
+		SysCall::event_wait(m_event, &m_locked);
+		--m_waiting;
+	}
+
+	// save the id of the thread which owns the mutex
+	m_owner = thread_self();
+
+	return EOK;
+}
+
+/*----------------------------------------------------------------------------*/
+
+int Mutex::lockTimeout( const Time& timeout )
+{
+	if (swap(m_locked, 1) != 0) {
+		++m_waiting;
+		SysCall::event_wait_timeout(m_event, &timeout, &m_locked);
+		--m_waiting;
+	}
+
+	// save the id of the thread which owns the mutex
+	m_owner = thread_self();
+
+	return EOK;
+}
+
+/*----------------------------------------------------------------------------*/
+
+int Mutex::unlock()
+{
+	if (swap(m_locked, 0) == 0)
+		return EINVAL;
+
+	// unblock waiting threads (if any)
+	if (m_waiting)
+		SysCall::event_fire(m_event);
+
+	return EOK;
+}
+
+/*----------------------------------------------------------------------------*/
+
+int Mutex::unlockCheck()
+{
+	thread_t current = thread_self();
+	if (current != m_owner)
+		thread_exit(NULL);
+
+	if (swap(m_locked, 0) == 0)
+		return EINVAL;
+
+	// unblock waiting threads (if any)
+	if (m_waiting)
+		SysCall::event_fire(m_event);
+
+	return EOK;
+}

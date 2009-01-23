@@ -49,7 +49,7 @@ class IVirtualMemoryMap: public Object
 {
 public:
 
-	static Pointer<IVirtualMemoryMap>& getCurrent()
+	static inline Pointer<IVirtualMemoryMap>& getCurrent()
 		{ static Pointer<IVirtualMemoryMap> current; return current; }
 
 	/*! @brief Gets ASID assigned to this map.
@@ -68,6 +68,8 @@ public:
 	 * Sets current ASID to the assigned asid.
 	 */
 	void switchTo();
+
+	static void switchOff();
 
 	/*! @brief InterMap memcpy.
 	 *	@param src_addr Address to copy from.

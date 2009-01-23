@@ -35,7 +35,7 @@
 #include "TarFS.h"
 #include "TarHeader.h"
 #include "FileEntry.h"
-#include "drivers/DiscDevice.h"
+#include "drivers/DiskDevice.h"
 #include "address.h"
 #include "tools.h"
 
@@ -53,30 +53,30 @@
 #define SIGNED_BITS_MASK (0x7fffffff)
 
 
-TarFS::TarFS( DiscDevice* disk ): m_lastDescriptor( 0 )
+TarFS::TarFS( DiskDevice* disk ): m_lastDescriptor( 0 )
 {
 	PRINT_DEBUG ("Creating tarfs on disk %p...\n", disk);
 	mount( disk );
 }
 /*----------------------------------------------------------------------------*/
-bool TarFS::mount( DiscDevice* disc )
+bool TarFS::mount( DiskDevice* disk )
 {
 
-	if (!disc || !disc->size()) return false;
+	if (!disk || !disk->size()) return false;
 
-	m_mountedDisc = disc;
+	m_mountedDisk = disk;
 	TarHeader header;
 	uint block = 0;
 
-	PRINT_DEBUG ("Mounting device %p of size %u B.\n", disc, disc->size());
+	PRINT_DEBUG ("Mounting device %p of size %u B.\n", disk, disk->size());
 	
-	while (disc->read( &header, TAR_BLOCK_SIZE, block, 0 )) {
+	while (disk->read( &header, TAR_BLOCK_SIZE, block, 0 )) {
 		/* if there is no name it might only be the end*/
 		if (header.fileName()[0] == '\0') break;
 		
 		if (header.fileType() == TarHeader::File) {
 				PRINT_DEBUG ("Found file: %s (%d).\n", header.fileName(), header.fileSize() );
-				FileEntry* file = new FileEntry( header, block, disc );
+				FileEntry* file = new FileEntry( header, block, disk );
 				m_rootDir.addSubEntry( header.fileName(), file );
 		}
 
@@ -122,6 +122,7 @@ void TarFS::closeFile( file_t file )
 ssize_t TarFS::readFile( file_t src, void* buffer, size_t size )
 {
 	Entry* entry = getFile( src );
+	PRINT_DEBUG ("Reading file: %u.\n", src);
 	if (entry) 
 		return entry->read( buffer, size );
 	return EIO;

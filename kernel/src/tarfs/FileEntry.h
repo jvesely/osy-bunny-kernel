@@ -36,12 +36,12 @@
 #include "TarHeader.h"
 #include "Entry.h"
 
-class DiscDevice;
+class DiskDevice;
 
 class FileEntry: public Entry
 {
 public:
-	FileEntry( TarHeader& tarHeader, uint block, DiscDevice* disc );
+	FileEntry( TarHeader& tarHeader, uint block, DiskDevice* disk );
 	size_t size() const { return m_size; };
 	ssize_t read( void* buffer, int size );
 	uint seek( FilePos pos, int offset );

@@ -82,7 +82,7 @@ int getc_try()
 /*----------------------------------------------------------------------------*/
 ssize_t gets(char* str, const size_t len)
 {
-	return Kernel::instance().console().readString(str, len);
+	return KERNEL.console().readString(str, len);
 }
 /*----------------------------------------------------------------------------*/
 extern size_t vprintf(const char * format, va_list args);

@@ -34,4 +34,13 @@
 
 #define SYS_PUTS 1
 #define SYS_GETS 2
-#define SYS_LAST 3
+#define SYS_EXIT 3
+#define SYS_EVENT_INIT 4
+#define SYS_EVENT_WAIT 5
+#define SYS_EVENT_WAIT_TIMEOUT 6
+#define SYS_EVENT_FIRE 7
+#define SYS_EVENT_DESTROY 8
+#define SYS_THREAD_SLEEP 9
+#define SYS_THREAD_YIELD 10
+#define SYS_THREAD_SUSPEND 11
+#define SYS_LAST 12

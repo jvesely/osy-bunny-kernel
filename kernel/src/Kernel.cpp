@@ -38,7 +38,7 @@
 #include "timer/Timer.h"
 #include "mem/FrameAllocator.h"
 #include "mem/TLB.h"
-#include "drivers/MsimDisc.h"
+#include "drivers/MsimDisk.h"
 
 //#define KERNEL_DEBUG
 
@@ -64,6 +64,8 @@ static const uint BUNNIES_PER_LINE = 10;
 static const uint BUNNY_LINES = 5;
 
 extern unative_t COUNT_CPU;
+extern native_t SIMPLE_LOCK;
+extern void* volatile* other_stack_ptr;
 
 Kernel::Kernel() :
 	Thread( 0 ),   /* We don't need no stack. */
@@ -81,7 +83,7 @@ Kernel::Kernel() :
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI   );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP   );
 
-	Processor::reg_write_status( 0 );
+	m_status = INITIALIZED;
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::printBunnies( uint count )
@@ -99,12 +101,20 @@ void Kernel::printBunnies( uint count )
 void Kernel::run()
 {
 	using namespace Processor;
+	
+	TLB::instance().flush();
+	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K );
+	reg_write_status( STATUS_CU0_MASK | STATUS_IM_MASK | STATUS_IE_MASK );
+	other_stack_ptr = &m_otherStackTop;
 
-	if (*DORDER_ADDRESS)
+	//printf( "HELLO WORLD! from processor: %d\n", *DORDER_ADDRESS );
+
+	if (*(volatile unative_t*)DORDER_ADDRESS)
 		goto sleep;
-	{	
-		printf( "HELLO WORLD! from processor: %d\n", *DORDER_ADDRESS );
+	{
 		ASSERT (COUNT_CPU);
+		
+		SIMPLE_LOCK = 0;
 
 		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBL );
 		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBS );
@@ -157,22 +167,26 @@ void Kernel::run()
 
 		ASSERT (MyFrameAllocator::instance().isInitialized());
 
-		attachDiscs();
+		attachDisks();
+	}
+	{
 		//init and run the main thread
 		thread_t mainThread;
 		Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
 		ASSERT (main);
 		yield();
-		//main->switchTo();
 	}
 sleep:
-	while (1) {
+	//printf("SLEEPING.\n");
+	SIMPLE_LOCK = 0;
+	while (true) {
 		asm volatile ("wait");
 	}
 	panic( "Should never reach this.\n" );
 }
 /*----------------------------------------------------------------------------*/
-size_t Kernel::getPhysicalMemorySize(uintptr_t from){
+size_t Kernel::getPhysicalMemorySize(uintptr_t from)
+{
 	printf( "Probing memory range..." );
 	
 	TLB::instance().switchAsid( 0 );
@@ -289,11 +303,11 @@ void Kernel::setTimeInterrupt(const Time& time)
 		current = roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND);
 	}
 	
-	Processor::reg_write_compare( current );
-	
 	PRINT_DEBUG
 		("[%u:%u] Set time interrupt in %u usecs current: %x, planned: %x.\n",
 			now.secs(), now.usecs(), usec, current, Processor::reg_read_compare());
+	
+	Processor::reg_write_compare( current );
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::refillTLB()
@@ -301,10 +315,10 @@ void Kernel::refillTLB()
   InterruptDisabler inter;
 
   bool success = TLB::instance().refill(
-		IVirtualMemoryMap::getCurrent().data(), Processor::reg_read_badvaddr());
+		IVirtualMemoryMap::getCurrent(), Processor::reg_read_badvaddr());
 	
-	PRINT_DEBUG ("TLB refill for address: %p was a %s.\n",
-		Processor::reg_read_badvaddr(), success ? "SUCESS" : "FAILURE");
+	PRINT_DEBUG ("TLB refill for address: %p (%u) was a %s.\n",
+		Processor::reg_read_badvaddr(), Thread::getCurrent()->id(), success ? "SUCESS" : "FAILURE");
 
   if (!success) {
 		printf( "Access to invalid address %p, KILLING offending thread.\n",
@@ -316,37 +330,18 @@ void Kernel::refillTLB()
 	}
 }
 /*----------------------------------------------------------------------------*/
-void Kernel::attachDiscs()
+void Kernel::attachDisks()
 {
-	DiscDevice* disc = new MsimDisc( HDD0_ADDRESS );
-	registerInterruptHandler( disc, HDD0_INTERRUPT );
-	ASSERT (disc);
-	m_discs.pushBack( disc );
+	DiskDevice* disk = new MsimDisk( HDD0_ADDRESS );
+	registerInterruptHandler( disk, HDD0_INTERRUPT );
+	ASSERT (disk);
+	m_disks.pushBack( disk );
 }
-/*----------------------------------------------------------------------------*/
-void Kernel::switchTo()
-{
-	using namespace Processor;
-	
-	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K);
-	
-	m_stack = &_kernel_end + (KERNEL_STATIC_STACK_SIZE * (*DORDER_ADDRESS));
-	m_stackSize = KERNEL_STATIC_STACK_SIZE;
-	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
-	Context * context = (Context*)(m_stackTop);
-	
-	/* Pointer to my member function that just calls virtual run()
-	 * http://www.goingware.com/tips/member-pointers.html
-	 * taking adress converting pointer and dereferencing trick 
-	 * was advised by M. Burda
-	 */
-	void (Thread::*runPtr)(void) = &Thread::start; 
-	
-	context->ra = *(unative_t*)(&runPtr);  /* return address (run this)       */
 
-	context->a0 = (unative_t)this;         /* the first and the only argument */
-	context->gp = ADDR_TO_KSEG0(0);        /* global pointer                  */
-	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
-	m_status = INITIALIZED;
-	Processor::switch_cpu_context( NULL, &m_stackTop);
+/*----------------------------------------------------------------------------*/
+
+Time Time::getCurrentTime()
+{
+	return Time( Kernel::instance().clock().time(), Kernel::instance().clock().usec() );
 }
+

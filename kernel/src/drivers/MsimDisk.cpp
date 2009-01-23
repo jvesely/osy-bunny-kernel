@@ -31,7 +31,7 @@
  * It would stay that way. Not that this comment is by any means ingenious but 
  * at least people can understand it. 
  */
-#include "MsimDisc.h"
+#include "MsimDisk.h"
 #include "api.h"
 #include "tools.h"
 #include "InterruptDisabler.h"
@@ -49,7 +49,7 @@
   printf(ARGS);
 #endif
 
-bool MsimDisc::read( void* buffer, uint count, uint secno, uint start_pos )
+bool MsimDisk::read( void* buffer, uint count, uint secno, uint start_pos )
 {
 	InterruptDisabler inter;
 	MutexLocker guard(m_guard);
@@ -72,7 +72,7 @@ bool MsimDisc::read( void* buffer, uint count, uint secno, uint start_pos )
 			PRINT_DEBUG ("Partial read to internal buffer %p.\n", m_buffer);	
 			diskOp( secno, ADDR_TO_USEG((uintptr_t)m_buffer), OP_READ );
 			copy_count = min( count, BLOCK_SIZE - start_pos );
-			memcpy( buffer, m_buffer + start_pos, copy_count );
+			memcpy( target, m_buffer + start_pos, copy_count );
 			/* If it did not read til the end of the block it won't be used again. */
 			start_pos = 0;
 		}
@@ -91,7 +91,7 @@ bool MsimDisc::read( void* buffer, uint count, uint secno, uint start_pos )
 	return (! (m_registers[STATUS] & ERROR_MASK));
 }
 /*----------------------------------------------------------------------------*/
-void MsimDisc::block()
+void MsimDisk::block()
 {
 	
 	m_waitingThread = Thread::getCurrent();
@@ -110,7 +110,7 @@ void MsimDisc::block()
 
 }
 /*----------------------------------------------------------------------------*/
-bool MsimDisc::write( void* buffer, uint count, uint block, uint start_pos )
+bool MsimDisk::write( void* buffer, uint count, uint block, uint start_pos )
 {
 	InterruptDisabler inter;
 
@@ -120,7 +120,7 @@ bool MsimDisc::write( void* buffer, uint count, uint block, uint start_pos )
   return false;
 }
 /*----------------------------------------------------------------------------*/
-void MsimDisc::diskOp( uint block_num, unative_t buffer, OperationMask op)
+void MsimDisk::diskOp( uint block_num, unative_t buffer, OperationMask op)
 {
 	ASSERT (!pending());
 	PRINT_DEBUG ("Started Disk op. buffer %p, sector: %u.\n", buffer, block_num);
@@ -132,9 +132,9 @@ void MsimDisc::diskOp( uint block_num, unative_t buffer, OperationMask op)
 	block();
 }
 /*----------------------------------------------------------------------------*/
-void MsimDisc::handleInterrupt()
+void MsimDisk::handleInterrupt()
 {
-	PRINT_DEBUG ("Handling disc interrupt.\n");
+	PRINT_DEBUG ("Handling disk interrupt.\n");
 	ASSERT (!pending());
 	ASSERT (m_waitingThread);
 

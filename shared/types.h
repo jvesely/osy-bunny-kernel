@@ -59,6 +59,8 @@ typedef int32_t ssize_t;
 
 typedef uint32_t thread_t;
 typedef uint32_t ipl_t;
+typedef uint32_t mtx_id_t;
+typedef uint32_t event_t;
 
 typedef unsigned int uint;
 

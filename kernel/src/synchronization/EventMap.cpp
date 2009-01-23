@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id$
+ *   @version $Id: EventMap.cpp 605 2009-01-22 23:58:59Z slovak $
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -32,22 +32,27 @@
  * at least people can understand it. 
  */
 
-#pragma once
+#include "EventMap.h"
 
-#include "structures/List.h"
+/*----------------------------------------------------------------------------*/
 
-class UserThread;
-template class List<UserThread*>;
-typedef List<UserThread*> UserThreadList;
-
-class Process
+EventMap::EventMap(): m_nextEventId(1), m_map(HASHMAP_SIZE) 
 {
-public:
-	static Process* create( const char* filename );
-	inline UserThread* mainThread() { return m_mainThread; };
-	void exit();
-	static Process* getCurrent();
-private:
-	UserThread* m_mainThread;
-	UserThreadList m_list;
-};
+	ASSERT(m_map.getArraySize());
+	int ok = m_map.insert(INVALID_ID, NULL);
+	ASSERT(ok == EOK);
+}
+
+/*----------------------------------------------------------------------------*/
+
+event_t EventMap::map( Event* evnt )
+{
+	int res;
+	while ((res = m_map.insert(m_nextEventId, evnt)) == EINVAL)
+		m_nextEventId++;
+	
+	if (res == ENOMEM)
+		return INVALID_ID;
+	
+	return m_nextEventId++;
+}

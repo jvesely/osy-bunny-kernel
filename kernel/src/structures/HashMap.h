@@ -226,11 +226,12 @@ protected:
 	*	@param size array size; if is 0 or less, array with size 1 is created
 	*/
 	void init ( unsigned int size ) {
-		m_arraySize = size;
-		if ( m_arraySize > 0 )
-			m_array = new List < Pair< KeyType,  DataType > > [m_arraySize];
-		else {
-			init ( 1 );//so that array allways exists
+		if (!size) size = 1;
+		m_array = new List< Pair<KeyType, DataType> > [size];
+		if (m_array) {
+			m_arraySize = size;
+		} else {
+			m_arraySize = 0;
 		}
 	}
 

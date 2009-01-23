@@ -48,6 +48,9 @@
   printf(ARGS);
 #endif
 
+
+extern void* volatile* other_stack_ptr;
+
 Thread* Thread::getCurrent()
 {
 	return Scheduler::instance().currentThread();
@@ -70,7 +73,7 @@ bool Thread::shouldSwitch()
 /*----------------------------------------------------------------------------*/
 Thread::Thread( uint stackSize ):
 	ListInsertable<Thread>(),
-	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(),
+	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(), m_otherStackTop( NULL ),
 	m_stackSize( stackSize ),	m_detached( false ), m_status( UNINITIALIZED ), 
 	m_id( 0 ), m_follower( NULL ), m_virtualMap( NULL )
 {
@@ -99,7 +102,7 @@ Thread::Thread( uint stackSize ):
 
 	context->a0 = (unative_t)this;         /* the first and the only argument */
 	context->gp = ADDR_TO_KSEG0(0);        /* global pointer                  */
-	context->status = STATUS_IM_MASK | STATUS_IE_MASK | STATUS_CU0_MASK;
+	context->status = STATUS_IM_MASK | STATUS_IE_MASK;
 	
 	PRINT_DEBUG ("Successfully created thread.\n");
 
@@ -109,7 +112,9 @@ Thread::Thread( uint stackSize ):
 void Thread::switchTo()
 {
 	InterruptDisabler interrupts;
-		
+	
+	PRINT_DEBUG ("Switching to thread %u.\n", m_id);
+
 	static const Time DEFAULT_QUANTUM(0, 20000);
 
 	Thread* old_thread = getCurrent();
@@ -134,19 +139,25 @@ void Thread::switchTo()
 
 	Scheduler::instance().m_currentThread = this;
 	Scheduler::instance().m_shouldSwitch = false;
+	other_stack_ptr = &m_otherStackTop;
 
 	PRINT_DEBUG ("Switching VMM to: %p.\n", m_virtualMap.data());
 
-	if (m_virtualMap)
+	if (m_virtualMap) {
 		m_virtualMap->switchTo();
+	} else {
+		IVirtualMemoryMap::switchOff();
+	}
 
-	if (this != (Thread*) Scheduler::instance().m_idle) {
+	if (this != Scheduler::instance().m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
 			m_id, DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
 		Timer::instance().plan( this, DEFAULT_QUANTUM );
 	}
 
-	Processor::switch_cpu_context(old_stack, new_stack);
+	PRINT_DEBUG ("Switching stacks: %p, %p.\n", old_stack, new_stack);
+
+	Processor::switch_cpu_context( old_stack, new_stack );
 }
 /*----------------------------------------------------------------------------*/
 void Thread::yield()

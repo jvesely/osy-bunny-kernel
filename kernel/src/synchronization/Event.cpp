@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id$
+ *   @version $Id: Event.cpp 605 2009-01-22 23:58:59Z slovak $
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -32,22 +32,44 @@
  * at least people can understand it. 
  */
 
-#pragma once
+#include "Event.h"
+#include "InterruptDisabler.h"
+#include "proc/Thread.h"
 
-#include "structures/List.h"
-
-class UserThread;
-template class List<UserThread*>;
-typedef List<UserThread*> UserThreadList;
-
-class Process
+Event::~Event()
 {
-public:
-	static Process* create( const char* filename );
-	inline UserThread* mainThread() { return m_mainThread; };
-	void exit();
-	static Process* getCurrent();
-private:
-	UserThread* m_mainThread;
-	UserThreadList m_list;
-};
+	ASSERT(m_list.empty());
+}
+
+void Event::wait() 
+{
+	InterruptDisabler interrupts;
+
+	Thread* thr = Thread::getCurrent();
+	thr->block();
+	thr->append(&m_list);
+
+	thr->yield();
+}
+
+void Event::waitTimeout( const Time& timeout )
+{
+	if (!timeout)
+		return;
+	
+	InterruptDisabler interrupts;
+
+	Thread* thr = Thread::getCurrent();
+	thr->alarm(timeout);
+	thr->append(&m_list);
+
+	thr->yield();
+}
+
+void Event::fire()
+{
+	InterruptDisabler interrupts;
+
+	for (ThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
+		(*it)->resume();
+}
