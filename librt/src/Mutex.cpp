@@ -34,6 +34,16 @@
 #include "librt.h"
 #include "SysCall.h"
 
+//#define USER_MUTEX_DEBUG
+
+#ifndef USER_MUTEX_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+	printf("[ USER_MUTEX_DEBUG ]: "); \
+	printf(ARGS);
+#endif
+
 /*----------------------------------------------------------------------------*/
 
 Mutex::~Mutex()
@@ -66,8 +76,11 @@ void Mutex::destroy()
 
 int Mutex::lock()
 {
-	if (swap(m_locked, 1) != 0) {
+	PRINT_DEBUG("Mutex::lock() started...\n");
+	while (swap(m_locked, 1) != 0) {
 		++m_waiting;
+		PRINT_DEBUG("Calling syscall event_wait with event id %d and locked pointer: %p\n", 
+			m_event, &m_locked);
 		SysCall::event_wait(m_event, &m_locked);
 		--m_waiting;
 	}
@@ -75,6 +88,7 @@ int Mutex::lock()
 	// save the id of the thread which owns the mutex
 	m_owner = thread_self();
 
+	PRINT_DEBUG("Mutex::lock(): Mutex successfully locked..\n");
 	return EOK;
 }
 
@@ -82,15 +96,20 @@ int Mutex::lock()
 
 int Mutex::lockTimeout( const Time& timeout )
 {
-	if (swap(m_locked, 1) != 0) {
+	PRINT_DEBUG("Mutex::lockTimeout() started...\n");
+	while (swap(m_locked, 1) != 0) {
 		++m_waiting;
-		SysCall::event_wait_timeout(m_event, &timeout, &m_locked);
+		PRINT_DEBUG("Calling syscall event_wait with event id %d and locked pointer: %p\n", 
+			m_event, &m_locked);
+		if (SysCall::event_wait_timeout(m_event, &timeout, &m_locked) == ETIMEDOUT)
+			break;
 		--m_waiting;
 	}
 
 	// save the id of the thread which owns the mutex
 	m_owner = thread_self();
 
+	PRINT_DEBUG("Mutex::lockTimeout(): Mutex successfully locked..\n");
 	return EOK;
 }
 

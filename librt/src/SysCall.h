@@ -84,7 +84,7 @@ int event_init( event_t* id );
 
 void event_wait( event_t id, volatile native_t* locked );
 
-void event_wait_timeout( 
+int event_wait_timeout( 
 	event_t id, const Time* time, volatile native_t* locked );
 
 void event_fire( event_t id );

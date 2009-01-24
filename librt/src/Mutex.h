@@ -28,6 +28,8 @@
  * @brief Mutex class declaration.
  */
 
+#pragma once
+
 #include "types.h"
 
 class Time;

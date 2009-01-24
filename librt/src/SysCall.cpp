@@ -152,10 +152,10 @@ void SysCall::event_wait( event_t id, volatile native_t* locked )
 	SYSCALL(SYS_EVENT_WAIT, id, locked, 0, 0);
 }
 
-void SysCall::event_wait_timeout( 
+int SysCall::event_wait_timeout( 
 	event_t id, const Time* time, volatile native_t* locked )
 {
-	SYSCALL(SYS_EVENT_WAIT_TIMEOUT, id, time, locked, 0);
+	return SYSCALL(SYS_EVENT_WAIT_TIMEOUT, id, time, locked, 0);
 }
 
 void SysCall::event_fire( event_t id )

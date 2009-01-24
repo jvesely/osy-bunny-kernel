@@ -38,7 +38,7 @@
 #include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
 
-#define USER_THREAD_DEBUG
+//#define USER_THREAD_DEBUG
 
 #ifndef USER_THREAD_DEBUG
 #define PRINT_DEBUG(...)

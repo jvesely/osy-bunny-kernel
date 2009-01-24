@@ -42,7 +42,7 @@
 #include "synchronization/Event.h"
 #include "tools.h"
 
-#define SYSCALL_HANDLER_DEBUG
+//#define SYSCALL_HANDLER_DEBUG
 
 #ifndef SYSCALL_HANDLER_DEBUG
 #define PRINT_DEBUG(...)
@@ -280,6 +280,7 @@ unative_t SyscallHandler::handleEventWaitTimeout()
 		Thread::getCurrent()->kill();
 
 	Time* time = (Time*)(m_params[1]);
+	Time alarm_time = Time::getCurrent() + *time;
 
 	if (!ADDR_IN_USEG((uintptr_t)(m_params[2])))
 		Thread::getCurrent()->kill();
@@ -290,10 +291,23 @@ unative_t SyscallHandler::handleEventWaitTimeout()
 	if (!ev)
 		Thread::getCurrent()->kill();
 
+	if (!(*time))
+		return ETIMEDOUT;
+
 	if (*locked)
 		ev->waitTimeout(*time);
 
-	return 0;
+	Time current = Time::getCurrent();
+	
+	if (current >= alarm_time) {
+		*time = Time();
+		return ETIMEDOUT;
+	} else {
+		*time = alarm_time - current;
+		return EOK;
+	}
+
+	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleEventFire()

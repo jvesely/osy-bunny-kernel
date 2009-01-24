@@ -41,8 +41,7 @@
 #include "InterruptDisabler.h"
 #include "address.h"
 
-
-#define PROCESS_DEBUG
+//#define PROCESS_DEBUG
 
 #ifndef PROCESS_DEBUG
 #define PRINT_DEBUG(...)
