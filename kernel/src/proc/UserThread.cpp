@@ -87,7 +87,7 @@ UserThread::~UserThread()
 extern "C" void switch_to_usermode(void*, void*, void*(*)(void*), void*);
 void UserThread::run()
 {
-	InterruptDisabler inter;
+	disable_interrupts();
 
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
 

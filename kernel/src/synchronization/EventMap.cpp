@@ -41,6 +41,7 @@ EventMap::EventMap(): m_nextEventId(1), m_map(HASHMAP_SIZE)
 	ASSERT(m_map.getArraySize());
 	int ok = m_map.insert(INVALID_ID, NULL);
 	ASSERT(ok == EOK);
+	ok = 0;
 }
 
 /*----------------------------------------------------------------------------*/

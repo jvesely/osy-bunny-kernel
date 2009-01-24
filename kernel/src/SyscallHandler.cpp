@@ -95,7 +95,9 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 	registers->epc += 4;
 
 	if (!m_handles[m_call]) return false;
+
 	registers->v0   = (this->*m_handles[m_call]) ();
+//	PRINT_DEBUG ("SC handled.\n");
 /*
 	if (m_call == SYS_GETS)
 		printf("Handled syscall: %u, params: %x %x, res: %x",
@@ -296,14 +298,17 @@ unative_t SyscallHandler::handleEventWaitTimeout()
 */
 	if (*locked)
 		ev->waitTimeout(*time);
+//	Processor::msim_trace_on();
 
-	Time current = Time::getCurrent();
+	const Time current = Time::getCurrent();
 	
 	if (current >= alarm_time) {
 		*time = Time();
+		PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() timedout.\n");
 		return ETIMEDOUT;
 	}
 	
+	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() woken.\n");
 	*time = alarm_time - current;
 	return EOK;
 }

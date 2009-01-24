@@ -679,8 +679,8 @@ uint FrameAllocator<N>::allocateAtKuseg(
 			ASSERT((uintptr_t)(*address) % frame_size == 0);
 
 			uint addr_offset = (uintptr_t)(*address) / frame_size;
-
 #ifdef FRALLOC_DEBUG
+
 			int n = start_kseg - offset(frame_size, &m_buddyInfoKseg);
 			PRINT_DEBUG("I.e. from the %u-th frame of size %u\n",
 				n, frame_size);

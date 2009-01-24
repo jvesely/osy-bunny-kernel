@@ -171,6 +171,7 @@ void Kernel::run()
 		thread_t mainThread;
 		Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
 		ASSERT (main);
+		main = 0;
 		yield();
 	}
 sleep:
@@ -224,7 +225,7 @@ void Kernel::exception( Processor::Context* registers )
 	} else {
 		printf( "Exception handling for: %s(%u) UNHANDLED => THREAD KILLED (%u).\n",
 				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
-//		stop();
+		stop();
 		Thread::getCurrent()->kill();
 //		panic("Unhandled exception(%u) %s.\n", 
 //			reason, Processor::EXCEPTIONS[reason].name );
