@@ -34,7 +34,7 @@
 #include "librt.h"
 #include "SysCall.h"
 
-//#define USER_MUTEX_DEBUG
+#define USER_MUTEX_DEBUG
 
 #ifndef USER_MUTEX_DEBUG
 #define PRINT_DEBUG(...)
@@ -76,7 +76,7 @@ void Mutex::destroy()
 
 int Mutex::lock()
 {
-	PRINT_DEBUG("Mutex::lock() started...\n");
+	PRINT_DEBUG("Mutex::lock(%u) started...\n", m_event);
 	while (swap(m_locked, 1) != 0) {
 		++m_waiting;
 		PRINT_DEBUG("Calling syscall event_wait with event id %d and locked pointer: %p\n", 
@@ -88,28 +88,32 @@ int Mutex::lock()
 	// save the id of the thread which owns the mutex
 	m_owner = thread_self();
 
-	PRINT_DEBUG("Mutex::lock(): Mutex successfully locked..\n");
+	PRINT_DEBUG("Mutex::lock(%u): Mutex successfully locked..\n", m_event);
 	return EOK;
 }
 
 /*----------------------------------------------------------------------------*/
 
-int Mutex::lockTimeout( const Time& timeout )
+int Mutex::lockTimeout( const Time timeout )
 {
-	PRINT_DEBUG("Mutex::lockTimeout() started...\n");
+	PRINT_DEBUG("Mutex::lockTimeout(%u) started...\n", m_event);
 	while (swap(m_locked, 1) != 0) {
 		++m_waiting;
-		PRINT_DEBUG("Calling syscall event_wait with event id %d and locked pointer: %p\n", 
-			m_event, &m_locked);
-		if (SysCall::event_wait_timeout(m_event, &timeout, &m_locked) == ETIMEDOUT)
-			break;
+		PRINT_DEBUG("Calling syscall event_wait_timeout with event id %d, locked pointer: %p and timeout pointer %p\n", 
+			m_event, &m_locked, &timeout);
+		PRINT_DEBUG("Timeout: %u\n", timeout.toUsecs());
+		if (SysCall::event_wait_timeout(m_event, &timeout, &m_locked) == ETIMEDOUT) {
+			PRINT_DEBUG("Returned ETIMEDOUT from syscall, current timeout: %u\n", timeout.toUsecs());
+			--m_waiting;
+			return ETIMEDOUT;
+		}
 		--m_waiting;
 	}
 
 	// save the id of the thread which owns the mutex
 	m_owner = thread_self();
 
-	PRINT_DEBUG("Mutex::lockTimeout(): Mutex successfully locked..\n");
+	PRINT_DEBUG("Mutex::lockTimeout(%u): Mutex successfully locked..\n", m_event);
 	return EOK;
 }
 
@@ -119,7 +123,7 @@ int Mutex::unlock()
 {
 	if (swap(m_locked, 0) == 0)
 		return EINVAL;
-
+	PRINT_DEBUG("Mutex::unlock(%u): Mutex successfully unlocked..\n", m_event);
 	// unblock waiting threads (if any)
 	if (m_waiting)
 		SysCall::event_fire(m_event);

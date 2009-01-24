@@ -36,6 +36,16 @@
 #include "InterruptDisabler.h"
 #include "proc/Thread.h"
 
+#define EVENT_DEBUG
+
+#ifndef EVENT_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...) \
+	printf("[ EVENT_DEBUG ]: "); \
+	printf(ARGS);
+#endif
+
 Event::~Event()
 {
 	ASSERT(m_list.empty());
@@ -54,22 +64,33 @@ void Event::wait()
 
 void Event::waitTimeout( const Time& timeout )
 {
-	if (!timeout)
-		return;
-	
 	InterruptDisabler interrupts;
+	PRINT_DEBUG("Event::waitTimeout() started...Waiting for %u usecs\n", timeout.toUsecs());
+/*	
+	if (timeout == Time(0, 0))
+		return;
+*/
 
 	Thread* thr = Thread::getCurrent();
 	thr->alarm(timeout);
 	thr->append(&m_list);
 
 	thr->yield();
+	PRINT_DEBUG("Event::waitTimeout() finished.\n");
 }
 
 void Event::fire()
 {
 	InterruptDisabler interrupts;
-	
-	while (!m_list.empty())
-		m_list.getFront()->resume();	
+	PRINT_DEBUG("Event::fire() started, unblocking all threads...(%u)\n",
+		m_list.size());
+
+	while (!m_list.empty()) {
+		Thread* thr = m_list.getFront();
+		PRINT_DEBUG ("Resuming thread: %u.\n", thr->id());
+		thr->resume();
+	}
+
+	/*for (ThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
+		(*it)->resume();*/
 }

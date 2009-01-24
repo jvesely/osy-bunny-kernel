@@ -79,6 +79,8 @@ UserThread::~UserThread()
 	if (m_userstack) {
 		ASSERT(m_virtualMap);
 		m_virtualMap->free( m_userstack );
+		PRINT_DEBUG ("Freed stack at address: %p.\n", m_userstack);
+//		m_virtualMap->dump();
 	}
 }
 /*----------------------------------------------------------------------------*/

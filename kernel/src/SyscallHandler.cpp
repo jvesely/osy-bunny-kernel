@@ -42,7 +42,7 @@
 #include "synchronization/Event.h"
 #include "tools.h"
 
-//#define SYSCALL_HANDLER_DEBUG
+#define SYSCALL_HANDLER_DEBUG
 
 #ifndef SYSCALL_HANDLER_DEBUG
 #define PRINT_DEBUG(...)
@@ -102,21 +102,6 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 			m_call, m_params[0], m_params[1], registers->v0 );
 	// */
 	return true;
-/*
-	switch ( m_call ) {
-		case SYS_PUTS: //Syscalls::SC_PUTS:
-			registers->v0 = handlePuts();
-			break;
-		case SYS_GETS: //Syscalls::SC_GETS:
-			registers->v0 = handleGets();
-			break;
-		default:
-			puts("Unknown SYSCALL.\n");
-			return false;
-	}
-	registers->epc += 4;
-	return true;
-*/
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handlePuts()
@@ -235,8 +220,10 @@ unative_t SyscallHandler::handleThreadSleep()
 unative_t SyscallHandler::handleEventInit()
 {
 	// is it a pointer in USEG?
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[0])))
+	if (!ADDR_IN_USEG((uintptr_t)(m_params[0]))) {
 		Thread::getCurrent()->kill();
+		return 0;
+	}
 
 	Event* evnt = new Event;
 	event_t ev = EventMap::instance().map(evnt);
@@ -251,49 +238,62 @@ unative_t SyscallHandler::handleEventInit()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleEventWait()
 {
-
-	PRINT_DEBUG ("Handling event wait.\n");
-
+	PRINT_DEBUG("SyscallHandler::handleEventWait() started\n");
 	event_t evnt = m_params[0];
 	
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[1])))
+	if (!ADDR_IN_USEG((uintptr_t)(m_params[1]))) {
 		Thread::getCurrent()->kill();
+		return 0;
+	}
 	
-	volatile native_t* locked = (native_t*)(m_params[1]);
+	native_t* locked = (native_t*)(m_params[1]);
 
 	Event* ev = EventMap::instance().getEvent(evnt);
-	if (!ev)
+	if (!ev) {
 		Thread::getCurrent()->kill();
+		return 0;
+	}
 
-	if (*locked)
+	if (*locked) {
+		PRINT_DEBUG("SyscallHandler::handleEventWait(): mutex still locked, so waiting.\n");
 		ev->wait();
+	}
 
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleEventWaitTimeout()
 {
+	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() started\n");
 	event_t evnt = m_params[0];
 
 	// is it a pointer in USEG?
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[1])))
+	if (!ADDR_IN_USEG((uintptr_t)(m_params[1]))) {
 		Thread::getCurrent()->kill();
+		return 0;
+	}
 
 	Time* time = (Time*)(m_params[1]);
+	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() time pointer: %p\n", time);
 	Time alarm_time = Time::getCurrent() + *time;
 
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[2])))
+	if (!ADDR_IN_USEG((uintptr_t)(m_params[2]))) {
 		Thread::getCurrent()->kill();
-	
+		return 0;
+	}
+
 	native_t* locked = (native_t*)(m_params[2]);
+	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() locked pointer: %p\n", locked);
 	
 	Event* ev = EventMap::instance().getEvent(evnt);
-	if (!ev)
+	if (!ev) {
 		Thread::getCurrent()->kill();
-
+		return 0;
+	}
+/*
 	if (!(*time))
 		return ETIMEDOUT;
-
+*/
 	if (*locked)
 		ev->waitTimeout(*time);
 
@@ -302,23 +302,21 @@ unative_t SyscallHandler::handleEventWaitTimeout()
 	if (current >= alarm_time) {
 		*time = Time();
 		return ETIMEDOUT;
-	} else {
-		*time = alarm_time - current;
-		return EOK;
 	}
-
+	
+	*time = alarm_time - current;
 	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleEventFire()
 {
-	PRINT_DEBUG ("Handling Event fire.\n");
-
 	event_t evnt = m_params[0];
 
 	Event* ev = EventMap::instance().getEvent(evnt);
-	if (!ev)
+	if (!ev) {
 		Thread::getCurrent()->kill();
+		return 0;
+	}
 
 	ev->fire();
 
@@ -331,8 +329,10 @@ unative_t SyscallHandler::handleEventDestroy()
 
 	Event* ev = EventMap::instance().getEvent(evnt);
 
-	if (!ev || ev->waiting())
+	if (!ev || ev->waiting()) {
 		Thread::getCurrent()->kill();
+		return 0;
+	}
 
 	EventMap::instance().unmap(evnt);
 	delete(ev);

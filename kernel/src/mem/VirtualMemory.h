@@ -116,7 +116,7 @@ inline bool VirtualMemory::checkSizeInSegment(const size_t size, const unsigned 
 			return size < (~0 - ADDR_PREFIX_KSEG3);
 
 		default:
-			ASSERT(NULL == "Bad segment identifier!");
+			ASSERT(!"Bad segment identifier!");
 			return false;
 	}
 }

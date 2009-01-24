@@ -217,14 +217,14 @@ void Kernel::exception( Processor::Context* registers )
 	
 	if (Processor::EXCEPTIONS[reason].handler) {
 		if (!(*Processor::EXCEPTIONS[reason].handler)( registers )) {
-			printf( "Exception handling for: %s(%u) FAILED => THREAD KILLED.\n",
-				Processor::EXCEPTIONS[reason].name, reason);
+			printf( "Exception handling for: %s(%u) FAILED => THREAD KILLED (%u).\n",
+				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
 			Thread::getCurrent()->kill();
 		}
 	} else {
-		printf( "Exception handling for: %s(%u) UNHANDLED => THREAD KILLED.\n",
-				Processor::EXCEPTIONS[reason].name, reason);
-		stop();
+		printf( "Exception handling for: %s(%u) UNHANDLED => THREAD KILLED (%u).\n",
+				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
+//		stop();
 		Thread::getCurrent()->kill();
 //		panic("Unhandled exception(%u) %s.\n", 
 //			reason, Processor::EXCEPTIONS[reason].name );
@@ -325,11 +325,14 @@ void Kernel::refillTLB()
   if (!success) {
 		printf( "Access to invalid address %p, KILLING offending thread.\n",
 			Processor::reg_read_badvaddr() );
-    if (Thread::getCurrent())
+    if (Thread::getCurrent()) {
 			Thread::getCurrent()->kill();
-		else
+			if (Thread::shouldSwitch())
+				Thread::getCurrent()->yield();
+		} else
 			panic( "No thread and invalid tlb refill.\n" );
 	}
+
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::attachDisks()
