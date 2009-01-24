@@ -65,7 +65,7 @@ void* first_thread(void* data)
 
 	Process* main_proc = Process::create( file );
 	if (main_proc) {
-		printf( "Launching process: %s.\n", file );
+		printf( "Joining process: %s.\n", file );
 		Thread::getCurrent()->join( main_proc->mainThread(), NULL );
 	} else {
 		printf( "Failed to launch process: %s.\n", file );

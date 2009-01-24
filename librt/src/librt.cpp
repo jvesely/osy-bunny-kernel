@@ -40,11 +40,6 @@
 #include "assert.h"
 #include "UserMemoryAllocator.h"
 
-struct thread_startup {
-	void *(*func)(void*);
-	void* data;
-};
-
 extern "C" int main();
 extern "C" void __start() __attribute__ ((section (".entry"), noreturn)) ;
 void __start()
@@ -56,7 +51,6 @@ void __start()
 void* thread_start( void* func, void* data) __attribute__(( noreturn ));
 void* thread_start( void* func, void* data)
 {
-	printf("Starting Process thread %p(%p)\n", func, data);
 	void* ret = ((void*(*)(void*))func)(data);
 	thread_exit( ret );
 }
@@ -107,7 +101,6 @@ void free( const void *ptr )
 int thread_create(
   thread_t *thread_ptr, void *(* func )(void*), void* arg )
 {
-	printf("Creating thread with func: %p(%p,%p).\n", thread_start, func, arg);
 	return SysCall::thread_create( thread_ptr, thread_start, (void*)func, arg  );
 }
 /* -------------------------------------------------------------------------- */
