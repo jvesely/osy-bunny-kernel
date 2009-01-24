@@ -36,6 +36,12 @@
 
 #define panic printf
 
+#if DEBUG_MUTEX >= 1
+	#define mutex_unlock mutex_unlock_check
+#else
+	#define mutex_unlock mutex_unlock_uncheck
+#endif
+
 #include "types.h"
 #include "flags.h"
 #include "assert.h"
@@ -198,25 +204,10 @@ void exit( void ) __attribute__ ((noreturn)) ;
  * @struct mutex librt.h "librt.h"
  * @brief Sructure for mutex (mutual exclusion).
  */
-typedef struct mutex {
-	/*! @brief Mutex status. (0 = unlocked, 1 = locked). */
-	volatile uint locked;
-	
-	/*! @brief Id of the thread owning this mutex. */
-	volatile thread_t thr;
-
-	/*! @brief Number of blocked (waiting) threads on this mutex. 
-	 *
-	 * Used to avoid some unneccessary syscalls.
-	 */
-	volatile uint waiting;
-
-	/*! @brief The list of blocked (waiting) threads on this mutex. */
-	
-} mutex_t;
-
-/*! @brief Function for checking if the mutex identifier is valid. */
-int mtx_ok( struct mutex* mtx );
+struct mutex {
+	/*! @brief Mutex class placeholder */
+	char mtx[16];
+};
 
 /*!
  * @brief Initialize the given mutex struct (to unlocked state).
@@ -243,7 +234,7 @@ int mutex_init( struct mutex* mtx );
 int mutex_destroy( struct mutex* mtx );
 
 /*!
- * Lock the given mutex. If the mutex is already locked, blocks the thread
+ * @brief Locks the given mutex. If the mutex is already locked, blocks the thread
  * until it is unlocked.
  *
  * @param mtx Mutex to lock.
@@ -253,7 +244,8 @@ int mutex_destroy( struct mutex* mtx );
 int mutex_lock( struct mutex* mtx );
 
 /*!
- * Lock the given mutex, but don't let it take more than the given time limit.
+ * @brief Lock the given mutex, but don't let it take more than the given time 
+ * limit.
  *
  * @param mtx Mutex to lock within time limit.
  * @param usec Time limit in microseconds for trying to lock the mutex.
@@ -264,16 +256,21 @@ int mutex_lock( struct mutex* mtx );
 int mutex_lock_timeout ( struct mutex* mtx, const unsigned int usec );
 
 /*!
- * Unlock the mutex. Unblocks the first thread waiting for this mutex.
+ * @brief Unlocks the mutex. Unblocks the first thread waiting for this mutex.
  *
  * In case the DEBUG_MUTEX symbol is defined and >= 1 and this function is
- * called by other thread than the one that locked the mutex.
- *
+ * called by other thread than the one that locked the mutex, the currently running
+ * thread is killed.
+ * 
  * @param mtx Mutex struct to unlock.
  * @retval EOK if successful.
  * @retval EINVAL if @a mtx is not a valid mutex identifier.
  */
 int mutex_unlock( struct mutex* mtx );
+
+int mutex_unlock_check( struct mutex* mtx );
+
+int mutex_unlock_uncheck( struct mutex* mtx );
 
 
 #ifdef __cplusplus

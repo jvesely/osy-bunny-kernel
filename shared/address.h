@@ -55,6 +55,9 @@ inline T ADDR_TO_KSEG0(T addr)
 
 #define ADDR_IN_KSEG0(addr) ( ADDR_PREFIX_KSEG0 == ADDR_PREFIX((uintptr_t)addr))
 
+/* first bit is not one */
+#define ADDR_IN_USEG(addr)	(! (addr & ADDR_PREFIX_KSEG0) )
+
 #define ADDR_SIZE_KSEG0 (ADDR_PREFIX_KSEG1 - ADDR_PREFIX_KSEG0)	/*! 0.5 GB */
 
 /* Entry points (jumps to C++ code) */

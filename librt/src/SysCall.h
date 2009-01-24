@@ -76,4 +76,18 @@ int thread_wakeup( thread_t thr ) __attribute__ ((noinline));
 
 void thread_exit( void* retval ) __attribute__ ((noinline, noreturn));
 
+int vma_alloc(void ** from, size_t * size, const unsigned int flags);
+
+int vma_free(const void * from);
+
+int event_init( event_t* id );
+
+void event_wait( event_t id, volatile native_t* locked );
+
+void event_wait_timeout( 
+	event_t id, const Time* time, volatile native_t* locked );
+
+void event_fire( event_t id );
+
+int event_destroy( event_t id );
 }

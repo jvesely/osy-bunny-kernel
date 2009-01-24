@@ -10,30 +10,35 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Short description.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 
 #include "librt.h"
 #include "SysCall.h"
+#include "Time.h"
+#include "Mutex.h"
+#include "cpp.h"
+#include "assert.h"
+#include "UserMemoryAllocator.h"
 
 struct thread_startup {
 	void *(*func)(void*);
@@ -79,127 +84,153 @@ char getc()
 ssize_t gets( char* str, const size_t len )
 {
 	/* we don't need to call syscall just to report error */
-	if (!len) return EINVAL;  
+	if (!len) return EINVAL;
 	return SysCall::gets( str, len );
 }
+
 /* -------------------------------------------------------------------------- */
 /* ---------------------------   MEMORY   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
 void* malloc( const size_t size )
 {
-	return NULL;
+	return UserMemoryAllocator::instance().getMemory( size );
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 void free( const void *ptr )
 {
+	UserMemoryAllocator::instance().freeMemory( ptr );
 }
 /* -------------------------------------------------------------------------- */
-/* ---------------------------   THREADS   ---------------------------------- */
+/* --------------------------   THREADS   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
+
 int thread_create(
   thread_t *thread_ptr, void *(* func )(void*), void* arg )
 {
 	printf("Creating thread with func: %p(%p,%p).\n", thread_start, func, arg);
 	return SysCall::thread_create( thread_ptr, thread_start, (void*)func, arg  );
 }
-/*----------------------------------------------------------------------------*/
-thread_t thread_self( void )
+/* -------------------------------------------------------------------------- */
+thread_t thread_self()
 {
 	return SysCall::thread_self();
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int thread_join( thread_t thr, void **thread_retval )
 {
 	return SysCall::thread_join( thr, thread_retval );
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int thread_join_timeout(
-  thread_t thr, void **thread_retval, const unsigned int usec )
+	thread_t thr, void **thread_retval, const unsigned int usec )
 {
 	const Time time( 0, usec );
 	return SysCall::thread_join( thr, thread_retval, true, &time );
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int thread_detach( thread_t thr )
 {
 	return SysCall::thread_detach( thr );
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int thread_cancel( thread_t thr )
 {
 	return SysCall::thread_cancel( thr );
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 void thread_sleep( const unsigned int sec )
 {
 	const Time time( sec, 0 );
 	SysCall::thread_sleep( &time );
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 void thread_usleep( const unsigned int usec )
 {
 	const Time time( 0, usec );
 	SysCall::thread_sleep( &time );
 }
-/*----------------------------------------------------------------------------*/
-void thread_yield( void )
+/* -------------------------------------------------------------------------- */
+void thread_yield()
 {
 	SysCall::thread_yield();
 }
-/*----------------------------------------------------------------------------*/
-void thread_suspend( void )
+/* -------------------------------------------------------------------------- */
+void thread_suspend()
 {
 	SysCall::thread_suspend();
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int thread_wakeup( thread_t thr )
 {
 	return SysCall::thread_wakeup( thr );
 }
-/*----------------------------------------------------------------------------*/
-void thread_exit( void *thread_retval )
+/* -------------------------------------------------------------------------- */
+void thread_exit( void* thread_retval )
 {
 	SysCall::thread_exit( thread_retval );
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 void exit()
 {
 	SysCall::exit();
 }
 /* -------------------------------------------------------------------------- */
-/* -----------------------------   MUTEX   ---------------------------------- */
+/* ----------------------------   MUTEX   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
-int mtx_ok( struct mutex* mtx )
+int mutex_init( struct mutex* mtx )
 {
 	if (!mtx)
 		return EINVAL;
-	
-	return EOK;
+
+	ASSERT(sizeof(*mtx) == sizeof(Mutex));
+	mtx = (mutex*)(new ((void*)mtx) Mutex());
+
+	return ((Mutex*)mtx)->init();
 }
-/*----------------------------------------------------------------------------*/
-int mutex_init( struct mutex* mtx )
-{
-	return 0;
-}
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int mutex_destroy( struct mutex* mtx )
 {
-	return 0;
+	if (!mtx)
+		return EINVAL;
+
+	ASSERT(sizeof(*mtx) == sizeof(Mutex));
+	((Mutex*)mtx)->destroy();
+
+	return EOK;
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int mutex_lock( struct mutex* mtx )
 {
-	return 0;
+	if (!mtx)
+		return EINVAL;
+
+	ASSERT(sizeof(*mtx) == sizeof(Mutex));
+	return ((Mutex*)mtx)->lock();
 }
-/*----------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 int mutex_lock_timeout ( struct mutex* mtx, const unsigned int usec )
 {
-	return 0;
-}
-/*----------------------------------------------------------------------------*/
-int mutex_unlock( struct mutex* mtx )
-{
-	return 0;
-}
-/*----------------------------------------------------------------------------*/
+	if (!mtx)
+		return EINVAL;
 
+	ASSERT(sizeof(*mtx) == sizeof(Mutex));
+	return ((Mutex*)mtx)->lockTimeout(Time(0, usec));
+}
+/* -------------------------------------------------------------------------- */
+int mutex_unlock_uncheck( struct mutex* mtx )
+{
+	if (!mtx)
+		return EINVAL;
+
+	ASSERT(sizeof(*mtx) == sizeof(Mutex));
+	return ((Mutex*)mtx)->unlock();
+}
+/* -------------------------------------------------------------------------- */
+int mutex_unlock_check( struct mutex* mtx )
+{
+	if (!mtx)
+		return EINVAL;
+
+	ASSERT(sizeof(*mtx) == sizeof(Mutex));
+	return ((Mutex*)mtx)->unlockCheck();
+}

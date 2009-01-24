@@ -55,17 +55,17 @@ using namespace SysCall;
 
 size_t SysCall::puts( const char* str )
 {
-  return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
+	return SYSCALL( SYS_PUTS, str, 0, 0, 0 );
 }
 
 size_t SysCall::gets( char* buffer, size_t size)
 {
-  return SYSCALL( SYS_GETS, buffer, size, 0, 0 );
+	return SYSCALL( SYS_GETS, buffer, size, 0, 0 );
 }
 
 void SysCall::exit()
 {
-  SYSCALL( SYS_EXIT, 0, 0, 0, 0 );
+	SYSCALL( SYS_EXIT, 0, 0, 0, 0 );
 	while (1) ;
 }
 
@@ -77,52 +77,96 @@ int SysCall::thread_create(
 
 thread_t SysCall::thread_self()
 {
-  return SYSCALL( SYS_THREAD_SELF, 0, 0, 0, 0);
+	return SYSCALL( SYS_THREAD_SELF, 0, 0, 0, 0);
 }
 
 int SysCall::thread_join(
   thread_t thr, void** retval, bool timed, const Time* time)
 {
-  return SYSCALL( SYS_THREAD_JOIN, thr, retval, timed, time );
+	return SYSCALL( SYS_THREAD_JOIN, thr, retval, timed, time );
 }
 
 int SysCall::thread_detach( thread_t thr )
 {
-  return SYSCALL( SYS_THREAD_DETACH, thr, 0, 0, 0 );
+	return SYSCALL( SYS_THREAD_DETACH, thr, 0, 0, 0 );
 }
 
 int SysCall::thread_cancel( thread_t thr )
 {
-  return SYSCALL( SYS_THREAD_CANCEL, thr, 0, 0, 0 );
+	return SYSCALL( SYS_THREAD_CANCEL, thr, 0, 0, 0 );
 }
 
 void SysCall::thread_sleep( const Time* time )
 {
-  SYSCALL( SYS_THREAD_SLEEP, time, 0, 0, 0 );
+	SYSCALL( SYS_THREAD_SLEEP, time, 0, 0, 0 );
 }
 
 void SysCall::thread_yield()
 {
-  SYSCALL( SYS_THREAD_YIELD, 0, 0, 0, 0 );
+	SYSCALL( SYS_THREAD_YIELD, 0, 0, 0, 0 );
 }
 
 void SysCall::thread_suspend()
 {
-  SYSCALL( SYS_THREAD_SUSPEND, 0, 0, 0, 0 );
+	SYSCALL( SYS_THREAD_SUSPEND, 0, 0, 0, 0 );
 }
 
 int SysCall::thread_wakeup( thread_t thr )
 {
-  return SYSCALL( SYS_THREAD_WAKEUP, thr, 0, 0, 0 );
+	return SYSCALL( SYS_THREAD_WAKEUP, thr, 0, 0, 0 );
 }
 
 void SysCall::thread_exit( void* retval )
 {
-  SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
+	SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
 	while (1) ;
 }
+int SysCall::vma_alloc(void ** from, size_t * size, const unsigned int flags)
+{
+	//this is needed so that these values are correct
+	volatile int lock = 1;
+	volatile void * vfrom;
+	volatile size_t vsize = *size;
+	int res = 0;
 
+	res = SYSCALL( SYS_VMA_ALLOC, &vfrom, &vsize, flags, &lock);
+	*from = (void*)vfrom;
+	*size = vsize;
+
+	return res;
+	//return SYSCALL( SYS_VMA_ALLOC, from, size, flags, 0);
+}
+
+int SysCall::vma_free(const void * from)
+{
+	return SYSCALL( SYS_VMA_FREE, from, 0, 0, 0);
+}
+
+int SysCall::event_init( event_t* id )
+{
+	return (id) ? SYSCALL(SYS_EVENT_INIT, id, 0, 0, 0) : (int)(EINVAL);
+}
+
+void SysCall::event_wait( event_t id, volatile native_t* locked )
+{
+	SYSCALL(SYS_EVENT_WAIT, id, locked, 0, 0);
+}
+
+void SysCall::event_wait_timeout( 
+	event_t id, const Time* time, volatile native_t* locked )
+{
+	SYSCALL(SYS_EVENT_WAIT_TIMEOUT, id, time, locked, 0);
+}
+
+void SysCall::event_fire( event_t id )
+{
+	SYSCALL(SYS_EVENT_FIRE, id, 0, 0, 0);
+}
+
+int SysCall::event_destroy( event_t id )
+{
+	return SYSCALL(SYS_EVENT_DESTROY, id, 0, 0, 0);
+}
 #undef QUOT
 #undef SYSCALL
-
 
