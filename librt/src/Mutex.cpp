@@ -34,7 +34,7 @@
 #include "librt.h"
 #include "SysCall.h"
 
-#define USER_MUTEX_DEBUG
+//#define USER_MUTEX_DEBUG
 
 #ifndef USER_MUTEX_DEBUG
 #define PRINT_DEBUG(...)

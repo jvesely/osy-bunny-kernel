@@ -188,6 +188,8 @@ void Thread::alarm( const Time& alarm_time )
 	
 	/* remove from the sheduling queue */
 	SCHEDULER.dequeue( this );
+
+	m_status = BLOCKED;
 }
 /*----------------------------------------------------------------------------*/
 void Thread::sleep( const Time& interval)

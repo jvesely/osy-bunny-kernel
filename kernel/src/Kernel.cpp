@@ -225,10 +225,7 @@ void Kernel::exception( Processor::Context* registers )
 	} else {
 		printf( "Exception handling for: %s(%u) UNHANDLED => THREAD KILLED (%u).\n",
 				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
-		stop();
 		Thread::getCurrent()->kill();
-//		panic("Unhandled exception(%u) %s.\n", 
-//			reason, Processor::EXCEPTIONS[reason].name );
 	}
 
 	if (Thread::shouldSwitch())

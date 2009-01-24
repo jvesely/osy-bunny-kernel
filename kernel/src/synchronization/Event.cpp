@@ -36,7 +36,7 @@
 #include "InterruptDisabler.h"
 #include "proc/Thread.h"
 
-#define EVENT_DEBUG
+//#define EVENT_DEBUG
 
 #ifndef EVENT_DEBUG
 #define PRINT_DEBUG(...)

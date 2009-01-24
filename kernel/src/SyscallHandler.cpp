@@ -42,7 +42,7 @@
 #include "synchronization/Event.h"
 #include "tools.h"
 
-#define SYSCALL_HANDLER_DEBUG
+//#define SYSCALL_HANDLER_DEBUG
 
 #ifndef SYSCALL_HANDLER_DEBUG
 #define PRINT_DEBUG(...)
