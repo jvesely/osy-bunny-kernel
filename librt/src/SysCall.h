@@ -52,15 +52,15 @@ size_t puts( const char* str ) __attribute__ ((noinline));
 
 size_t gets( char* buffer, size_t size) __attribute__ ((noinline));
 
-void exit() __attribute__ ((noinline));
+void exit() __attribute__ ((noinline, noreturn));
 
 int thread_create( 
-	thread_t *thread_ptr, void *(*thread_start)(void *), void *arg ) __attribute__ ((noinline));
+	thread_t *thread_ptr, void *(*thread_start)(void*, void*), void *arg, void* arg2 ) __attribute__ ((noinline));
 
 thread_t thread_self() __attribute__ ((noinline));
 
 int thread_join(
-	thread_t thr, void** retval, bool timed = false, Time time = Time(0, 0)) __attribute__ ((noinline));
+	thread_t thr, void** retval, bool timed = false, const Time* time = NULL) __attribute__ ((noinline));
 
 int thread_detach( thread_t thr ) __attribute__ ((noinline));
 
@@ -74,6 +74,6 @@ void thread_suspend() __attribute__ ((noinline));
 
 int thread_wakeup( thread_t thr ) __attribute__ ((noinline));
 
-void thread_exit( void* retval ) __attribute__ ((noinline));
+void thread_exit( void* retval ) __attribute__ ((noinline, noreturn));
 
 }

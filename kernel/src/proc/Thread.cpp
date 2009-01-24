@@ -37,7 +37,7 @@
 #include "timer/Timer.h"
 #include "api.h"
 
-//#define THREAD_DEBUG
+#define THREAD_DEBUG
 
 #ifndef THREAD_DEBUG
 #define PRINT_DEBUG(...)
@@ -240,7 +240,7 @@ bool Thread::detach()
 	return m_detached = true;
 }
 /*----------------------------------------------------------------------------*/
-int Thread::join( Thread* thread, bool timed, const Time& wait_time )
+int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_time )
 {
 	/* Need to disable interupts as the status of the thread
 	 * may not survive during reschedule
@@ -263,8 +263,8 @@ int Thread::join( Thread* thread, bool timed, const Time& wait_time )
 
 	/* Trying to join KILLED or FINISHED thread */
 	if (others_status == KILLED || others_status == FINISHED) {
-		PRINT_DEBUG ("Thread %u joined %s thread %u.\n",
-			(others_status == KILLED)? "KILLED" : "FINISHED", m_id, thread->m_id);
+		PRINT_DEBUG ("Thread %u(%p) joined %s thread %u.\n",
+			m_id, this, (others_status == KILLED)? "KILLED" : "FINISHED", thread->m_id);
 		delete thread;
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
@@ -282,13 +282,15 @@ int Thread::join( Thread* thread, bool timed, const Time& wait_time )
 
   yield();
 
+
 	others_status = thread->status();
 	/* Woken by the death of the thread (either timed or untimed) */
 	if ( (others_status == FINISHED) || (others_status == KILLED))	
 	{
 		PRINT_DEBUG ("Thread %u joined thread %u %s.\n", m_id, thread->m_id, timed ? "TIMED" : "");
+		if (retval) *retval = thread->m_ret;
 		delete thread;
-		resume();
+//		resume();
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
 
@@ -346,11 +348,12 @@ void Thread::kill()
 	block();
 
 	
-	if (Thread::getCurrent() == this)
-		yield();
-
-/* detached threads should be removed immediately after they finish execution*/
-	if (m_detached) delete this;
+	if (Thread::getCurrent() == this) {
+		SCHEDULER.m_shouldSwitch = true;
+	} else {
+	/* detached threads are removed immediately after they finish execution*/
+		if (m_detached) delete this;
+	}
 
 }
 /*----------------------------------------------------------------------------*/

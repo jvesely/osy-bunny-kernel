@@ -65,13 +65,14 @@ size_t SysCall::gets( char* buffer, size_t size)
 
 void SysCall::exit()
 {
-  SYSCALL( SYS_EXIT, 0, 0, 0, 0);
+  SYSCALL( SYS_EXIT, 0, 0, 0, 0 );
+	while (1) ;
 }
 
 int SysCall::thread_create( 
-  thread_t *thread_ptr, void *( *thread_start)(void *), void *arg )
+  thread_t *thread_ptr, void *( *thread_start)(void*, void*), void *arg, void* arg2 )
 {
-  return SYSCALL( SYS_THREAD_CREATE, thread_ptr, thread_start, arg, 0 );
+  return SYSCALL( SYS_THREAD_CREATE, thread_ptr, thread_start, arg, arg2 );
 }
 
 thread_t SysCall::thread_self()
@@ -80,9 +81,9 @@ thread_t SysCall::thread_self()
 }
 
 int SysCall::thread_join(
-  thread_t thr, void** retval, bool timed, Time time)
+  thread_t thr, void** retval, bool timed, const Time* time)
 {
-  return SYSCALL( SYS_THREAD_JOIN, thr, retval, timed, &time );
+  return SYSCALL( SYS_THREAD_JOIN, thr, retval, timed, time );
 }
 
 int SysCall::thread_detach( thread_t thr )
@@ -118,6 +119,7 @@ int SysCall::thread_wakeup( thread_t thr )
 void SysCall::thread_exit( void* retval )
 {
   SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
+	while (1) ;
 }
 
 #undef QUOT

@@ -35,6 +35,27 @@
 #include "librt.h"
 #include "SysCall.h"
 
+struct thread_startup {
+	void *(*func)(void*);
+	void* data;
+};
+
+extern "C" int main();
+extern "C" void __start() __attribute__ ((section (".entry"), noreturn)) ;
+void __start()
+{
+	main();
+	exit();
+}
+/*----------------------------------------------------------------------------*/
+void* thread_start( void* func, void* data) __attribute__(( noreturn ));
+void* thread_start( void* func, void* data)
+{
+	printf("Starting Process thread %p(%p)\n", func, data);
+	void* ret = ((void*(*)(void*))func)(data);
+	thread_exit( ret );
+}
+/*----------------------------------------------------------------------------*/
 /* Basic IO */
 size_t putc( const char c )
 {
@@ -76,9 +97,10 @@ void free( const void *ptr )
 /* ---------------------------   THREADS   ---------------------------------- */
 /* -------------------------------------------------------------------------- */
 int thread_create(
-  thread_t *thread_ptr, void *(*thread_start)(void *), void *arg )
+  thread_t *thread_ptr, void *(* func )(void*), void* arg )
 {
-	return SysCall::thread_create( thread_ptr, thread_start, arg );
+	printf("Creating thread with func: %p(%p,%p).\n", thread_start, func, arg);
+	return SysCall::thread_create( thread_ptr, thread_start, (void*)func, arg  );
 }
 /*----------------------------------------------------------------------------*/
 thread_t thread_self( void )
@@ -94,7 +116,8 @@ int thread_join( thread_t thr, void **thread_retval )
 int thread_join_timeout(
   thread_t thr, void **thread_retval, const unsigned int usec )
 {
-	return SysCall::thread_join( thr, thread_retval, true, Time(0, usec) );
+	const Time time( 0, usec );
+	return SysCall::thread_join( thr, thread_retval, true, &time );
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach( thread_t thr )
@@ -142,7 +165,6 @@ void thread_exit( void *thread_retval )
 void exit()
 {
 	SysCall::exit();
-	while (1) ;
 }
 /* -------------------------------------------------------------------------- */
 /* -----------------------------   MUTEX   ---------------------------------- */
@@ -180,10 +202,4 @@ int mutex_unlock( struct mutex* mtx )
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-extern "C" int main();
-extern "C" void __start() __attribute__ ((section (".entry"), noreturn)) ;
-void __start()
-{
-	main();
-	exit();
-}
+

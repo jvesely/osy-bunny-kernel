@@ -535,6 +535,6 @@ switch_to_usermode:
 	SWITCH_STACK
 	mfc0 $k0, $status
 	ori  $k0, $k0, 0x00000011
-	j $a0
+	j $a2
 	mtc0 $k0, $status 
 .end   switch_to_usermode

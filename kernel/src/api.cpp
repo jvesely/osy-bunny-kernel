@@ -150,7 +150,7 @@ int thread_join(thread_t thr)
 	InterruptDisabler inter;
 
 	Thread* thread = Thread::fromId( thr );
-	return Thread::getCurrent()->join( thread );
+	return Thread::getCurrent()->join( thread, NULL );
 }
 /*----------------------------------------------------------------------------*/
 int thread_join_timeout(thread_t thr, const uint usec)
@@ -159,7 +159,7 @@ int thread_join_timeout(thread_t thr, const uint usec)
 
 	Thread* thread = Thread::fromId( thr );
 	return 
-		Thread::getCurrent()->join( thread, true, Time::fromMicroSeconds( usec ) );
+		Thread::getCurrent()->join( thread, NULL, true, Time::fromMicroSeconds( usec ) );
 }
 /*----------------------------------------------------------------------------*/
 int thread_detach( thread_t thr )

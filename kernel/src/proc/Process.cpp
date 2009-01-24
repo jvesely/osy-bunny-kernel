@@ -76,7 +76,7 @@ Process* Process::create( const char* filename )
 	void * (*start)(void*) = (void*(*)(void*))0x1000000;
 
 	UserThread* main = new UserThread( 
-		start, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
+		start, NULL, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
 
 	/* Thread creation might have failed. */
 	if (main == NULL || (main->status() != Thread::INITIALIZED)) {
@@ -141,15 +141,16 @@ Process* Process::getCurrent()
 }
 /*----------------------------------------------------------------------------*/
 UserThread* Process::addThread( thread_t* thread_ptr,
-	void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags )
+	void* (*thread_start)(void*), void* arg1, void* arg2, const uint thread_flags )
 {
-  PRINT_DEBUG ("Creating Thread with userland stack...\n");
+  PRINT_DEBUG ("Creating Thread with userland stack...%p(%p,%p)\n",
+		thread_start, arg1, arg2);
 
 	void* stack_pos =
 		(char*)ADDR_PREFIX_KSEG0 - (m_list.size() + 2) * Thread::DEFAULT_STACK_SIZE;
 
   UserThread* new_thread = new UserThread( 
-		thread_start, thread_data, stack_pos, thread_flags);
+		thread_start, arg1, arg2, stack_pos, thread_flags);
 
   PRINT_DEBUG ("Thread created at address: %p.\n", new_thread);
 

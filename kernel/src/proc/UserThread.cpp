@@ -38,7 +38,7 @@
 #include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
 
-//#define USER_THREAD_DEBUG
+#define USER_THREAD_DEBUG
 
 #ifndef USER_THREAD_DEBUG
 #define PRINT_DEBUG(...)
@@ -49,24 +49,24 @@
 #endif
 
 /*----------------------------------------------------------------------------*/
-UserThread::UserThread( void* (*thread_start)(void*), void* data,
+UserThread::UserThread( void* (*thread_start)(void*), void* data, void* data2,
 	void* stack_pos, native_t flags, uint stack_size ):
-	KernelThread( thread_start, data, flags )
+	KernelThread( thread_start, data, flags ), m_runData2( data2 )
 {
 	m_status = UNINITIALIZED;
 
-	PRINT_DEBUG ("Constructing Userland thread.\n");
+	PRINT_DEBUG ("Constructing Userland thread, suggested stack: %p.\n", stack_pos);
 
 	unative_t vm_flags = VF_VA_USER << VF_VA_SHIFT;
 	vm_flags |= VF_AT_KUSEG << VF_AT_SHIFT;
 
 	m_userstack = stack_pos;
-//	(void*)(ADDR_PREFIX_KSEG0 - stack_size);
 
 	if (m_virtualMap->allocate( &m_userstack, stack_size, vm_flags ) != EOK)
 		return;
 	
-	PRINT_DEBUG ("Stack at address: %p.\n", m_stack);
+	PRINT_DEBUG ("Kernel stack at address: %p User stack: %p.\n", 
+		m_stack, m_userstack);
 
 	m_otherStackTop = (char*)m_userstack + stack_size;
 
@@ -82,15 +82,14 @@ UserThread::~UserThread()
 	}
 }
 /*----------------------------------------------------------------------------*/
-extern "C" void switch_to_usermode(void*(*exec)(void*), void* sp);
-
+extern "C" void switch_to_usermode(void*, void*, void*(*)(void*), void*);
 void UserThread::run()
 {
 	InterruptDisabler inter;
 
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
 
-	switch_to_usermode( m_runFunc, m_stackTop);
+	switch_to_usermode( m_runData, m_runData2, m_runFunc, m_stackTop );
 
 	m_status = FINISHED;
 	PRINT_DEBUG ("Finished thread %u.\n", m_id);

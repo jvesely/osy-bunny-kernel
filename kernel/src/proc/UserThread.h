@@ -56,6 +56,7 @@ public:
 
 private:
 	void* m_userstack;
+	void* m_runData2;
 
 	UserThread();
 	UserThread( const UserThread& other );
@@ -67,7 +68,7 @@ private:
 	/*!
 	 * @brief Prepares stack and initial context.
 	 */
-	UserThread( void* (*func)(void*), void* data, void* stack_pos,
+	UserThread( void* (*func)(void*), void* data, void* data2, void* stack_pos,
 		native_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
 
 	friend class Process;

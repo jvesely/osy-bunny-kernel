@@ -172,7 +172,7 @@ public:
 	 * @retval EOK this thread was suspended and successfully awoken on 
 	 * others ending
 	 */
-	int join( Thread* other, bool timed = false, const Time& wait_time = Time() );
+	int join( Thread* other, void ** retval, bool timed = false, const Time& wait_time = Time() );
 
 	/*! @brief Removes thread from the scheduling queue */
 	void block();
@@ -201,6 +201,7 @@ protected:
 	void* m_stack;	                           /*!< that's my stack            */
 	void* m_stackTop;                          /*!< top of my stack            */
 	void* m_otherStackTop;
+	void* m_ret;
 	unsigned int m_stackSize;                  /*!< size of my stack           */
 	Process*  m_process;                       /*!< my process                 */
 

@@ -41,7 +41,7 @@ void* first_thread(void* data)
 	#ifdef KERNEL_TEST
 		thread_t thr;
 		Thread* thread = KernelThread::create( &thr, (void*(*)(void*))run_test );
-		Thread::getCurrent()->join( thread );
+		Thread::getCurrent()->join( thread, NULL );
 		KERNEL.halt();
 	#endif
 	
@@ -66,7 +66,7 @@ void* first_thread(void* data)
 	Process* main_proc = Process::create( file );
 	if (main_proc) {
 		printf( "Launching process: %s.\n", file );
-		Thread::getCurrent()->join( main_proc->mainThread() );
+		Thread::getCurrent()->join( main_proc->mainThread(), NULL );
 	} else {
 		printf( "Failed to launch process: %s.\n", file );
 	}

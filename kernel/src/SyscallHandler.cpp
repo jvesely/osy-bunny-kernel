@@ -152,7 +152,7 @@ unative_t SyscallHandler::handleThreadCreate()
 	Process* current = Process::getCurrent();
 	ASSERT (current);
 	bool success = current->addThread( 
-		(thread_t*)m_params[0], (void*(*)(void*))m_params[1], (void*)m_params[2] );
+		(thread_t*)m_params[0], (void*(*)(void*))m_params[1], (void*)m_params[2], (void*)m_params[3] );
 	PRINT_DEBUG ("Thread create handled : %s.\n", success ? "OK" : "FAIL");
 	return success ? EOK : ENOMEM;
 }
@@ -160,7 +160,10 @@ unative_t SyscallHandler::handleThreadCreate()
 unative_t SyscallHandler::handleThreadJoin()
 {
 	Thread* thr = PROCESS_THREAD();
-	return Thread::getCurrent()->join( thr, m_params[2], *(Time*)m_params[2] );
+	bool timed = (bool)m_params[2];
+	PRINT_DEBUG ("Handling thread join on %u, %s, %p.\n", thr->id(),
+		timed?"TIMED":"DIRECT", m_params[3]);
+	return Thread::getCurrent()->join( thr, (void**)m_params[1], timed, *(Time*)m_params[3] );
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSelf()
@@ -204,6 +207,7 @@ unative_t SyscallHandler::handleThreadCancel()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadExit()
 {
+	Thread::getCurrent()->kill();
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
