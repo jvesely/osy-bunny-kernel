@@ -207,7 +207,7 @@ unative_t SyscallHandler::handleThreadCancel()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadExit()
 {
-	Thread::getCurrent()->kill();
+	Thread::getCurrent()->exit( (void*)m_params[0] );
 	return 0;
 }
 /*----------------------------------------------------------------------------*/

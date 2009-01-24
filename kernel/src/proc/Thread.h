@@ -142,6 +142,8 @@ public:
 	 */
 	virtual void kill();
 
+	void exit( void* retval );
+
 	/*! @brief Detached getter
 	 * @return detached state
 	 */

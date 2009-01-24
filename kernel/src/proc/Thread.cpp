@@ -171,13 +171,10 @@ void Thread::yield()
 	}
 
 	/* switch to the next thread */
-	Thread* next = getNext();
-	ASSERT (next);
-//	if (!next) {
-//		PRINT_DEBUG ("Last thread (%u) finished, shutting down.\n", m_id);
-//	} else {
-		next->switchTo();
-//	}
+	getNext()->switchTo();
+//	Thread* next = getNext();
+//	ASSERT (next);
+//	next->switchTo();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::alarm( const Time& alarm_time )
@@ -354,7 +351,16 @@ void Thread::kill()
 	/* detached threads are removed immediately after they finish execution*/
 		if (m_detached) delete this;
 	}
-
+}
+/*----------------------------------------------------------------------------*/
+void Thread::exit( void* return_value  )
+{
+	m_ret = return_value;
+	PRINT_DEBUG ("Exiting thread %u with return value: %p.\n", id(), m_ret);
+	bool is_detached = detached();
+	kill();
+	if (!is_detached)
+		m_status = FINISHED;
 }
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
