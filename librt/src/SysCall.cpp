@@ -121,20 +121,10 @@ void SysCall::thread_exit( void* retval )
 	SYSCALL( SYS_THREAD_EXIT, retval, 0, 0, 0 );
 	while (1) ;
 }
+
 int SysCall::vma_alloc(void ** from, size_t * size, const unsigned int flags)
 {
-	//this is needed so that these values are correct
-	volatile int lock = 1;
-	volatile void * vfrom;
-	volatile size_t vsize = *size;
-	int res = 0;
-
-	res = SYSCALL( SYS_VMA_ALLOC, &vfrom, &vsize, flags, &lock);
-	*from = (void*)vfrom;
-	*size = vsize;
-
-	return res;
-	//return SYSCALL( SYS_VMA_ALLOC, from, size, flags, 0);
+	return SYSCALL( SYS_VMA_ALLOC, from, size, flags, 0);
 }
 
 int SysCall::vma_free(const void * from)
