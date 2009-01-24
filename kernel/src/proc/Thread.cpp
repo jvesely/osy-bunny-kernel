@@ -270,7 +270,6 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 
 	/* set the joining stuff */
 	thread->m_follower = this;
-	m_status = JOINING;
 	
 	if ( timed ) {
 		alarm( wait_time );
@@ -279,6 +278,7 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 		block();
 	} 
 
+	m_status = JOINING;
   yield();
 
 
