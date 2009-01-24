@@ -83,9 +83,8 @@
 
 	ori   $k0, $sp, 0                 /* else get other stack */
 
-	lw    $k0, (other_stack_ptr)
-	lw    $k1, ($k0)                  /* $k1 = *other_stack_ptr */
-	ori   $k0, $sp, 0                 /* $k0 = $sp */
+	lw    $k1, (other_stack_ptr)
+	lw    $k1, ($k1)                  /* $k1 = *other_stack_ptr */
 	ori   $sp, $k1, 0                 /* $sp = k1 */
 2:
 	addi  $sp, $sp, 4
