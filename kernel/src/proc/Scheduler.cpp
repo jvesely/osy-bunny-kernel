@@ -143,14 +143,5 @@ void Scheduler::dequeue( Thread* thread )
 
 	thread->remove();
 	PRINT_DEBUG("Dequeuing thread %u.\n", thread->id());
-
-	/* Decrease active threa count if it is never to be run again */
-/*
-if ( (thread->status() == Thread::KILLED)
-		|| (thread->status() == Thread::FINISHED) ) {
-		PRINT_DEBUG("Decreasing thread count.\n");
-		--m_threadCount;
-	}
-*/
 }
 /*----------------------------------------------------------------------------*/
