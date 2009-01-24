@@ -36,7 +36,7 @@
 
 #pragma once
 
-#include "asm/atomic.h"
+#include "atomic.h"
 #include "proc/Thread.h"
 
 /**

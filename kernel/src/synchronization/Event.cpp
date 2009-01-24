@@ -69,7 +69,10 @@ void Event::waitTimeout( const Time& timeout )
 void Event::fire()
 {
 	InterruptDisabler interrupts;
+	
+	while (!m_list.empty())
+		m_list.getFront()->resume();	
 
-	for (ThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
-		(*it)->resume();
+//	for (ThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
+//		(*it)->resume();
 }

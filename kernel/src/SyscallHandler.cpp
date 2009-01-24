@@ -251,12 +251,15 @@ unative_t SyscallHandler::handleEventInit()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleEventWait()
 {
+
+	PRINT_DEBUG ("Handling event wait.\n");
+
 	event_t evnt = m_params[0];
 	
 	if (!ADDR_IN_USEG((uintptr_t)(m_params[1])))
 		Thread::getCurrent()->kill();
 	
-	native_t* locked = (native_t*)(m_params[1]);
+	volatile native_t* locked = (native_t*)(m_params[1]);
 
 	Event* ev = EventMap::instance().getEvent(evnt);
 	if (!ev)
@@ -295,6 +298,8 @@ unative_t SyscallHandler::handleEventWaitTimeout()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleEventFire()
 {
+	PRINT_DEBUG ("Handling Event fire.\n");
+
 	event_t evnt = m_params[0];
 
 	Event* ev = EventMap::instance().getEvent(evnt);

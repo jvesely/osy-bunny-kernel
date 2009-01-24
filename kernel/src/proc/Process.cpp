@@ -143,6 +143,8 @@ Process* Process::getCurrent()
 UserThread* Process::addThread( thread_t* thread_ptr,
 	void* (*thread_start)(void*), void* arg1, void* arg2, const uint thread_flags )
 {
+	InterruptDisabler inter;
+
   PRINT_DEBUG ("Creating Thread with userland stack...%p(%p,%p)\n",
 		thread_start, arg1, arg2);
 

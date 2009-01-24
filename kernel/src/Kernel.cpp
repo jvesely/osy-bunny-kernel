@@ -78,9 +78,6 @@ Kernel::Kernel() :
 //	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS  );
 	registerExceptionHandler( &m_syscalls, Processor::CAUSE_EXCCODE_SYS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT  );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI   );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP   );
 
 	m_status = INITIALIZED;
@@ -214,6 +211,8 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from)
 /*----------------------------------------------------------------------------*/
 void Kernel::exception( Processor::Context* registers )
 {
+	InterruptDisabler inter;
+
 	const Processor::Exceptions reason = Processor::get_exccode(registers->cause);
 	
 	if (Processor::EXCEPTIONS[reason].handler) {
@@ -223,6 +222,9 @@ void Kernel::exception( Processor::Context* registers )
 			Thread::getCurrent()->kill();
 		}
 	} else {
+		printf( "Exception handling for: %s(%u) UNHANDLED => THREAD KILLED.\n",
+				Processor::EXCEPTIONS[reason].name, reason);
+		stop();
 		Thread::getCurrent()->kill();
 //		panic("Unhandled exception(%u) %s.\n", 
 //			reason, Processor::EXCEPTIONS[reason].name );
@@ -241,17 +243,16 @@ bool Kernel::handleException( Processor::Context* registers )
 		case CAUSE_EXCCODE_INT:
 			handleInterrupts( registers );
 			break;
-		case CAUSE_EXCCODE_SYS:
-		case CAUSE_EXCCODE_RI:
-		case CAUSE_EXCCODE_ADEL:
-		case CAUSE_EXCCODE_ADES:
-			return false;
 		case CAUSE_EXCCODE_BP:
 			if (!(registers->cause & CAUSE_BD_MASK) ) {
 				registers->epc += 4; // go to the next instruction
 				return true;
 			}
 			panic("Exception: Break.\n");
+		case CAUSE_EXCCODE_ADES:
+		case CAUSE_EXCCODE_ADEL:
+		case CAUSE_EXCCODE_RI:
+		case CAUSE_EXCCODE_SYS:
 		case CAUSE_EXCCODE_TLBL:
 		case CAUSE_EXCCODE_TLBS:
 		case CAUSE_EXCCODE_TR:
