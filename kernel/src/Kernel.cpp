@@ -223,9 +223,13 @@ void Kernel::exception( Processor::Context* registers )
 			Thread::getCurrent()->kill();
 		}
 	} else {
-		panic("Unhandled exception(%u) %s.\n", 
-			reason, Processor::EXCEPTIONS[reason].name );
+		Thread::getCurrent()->kill();
+//		panic("Unhandled exception(%u) %s.\n", 
+//			reason, Processor::EXCEPTIONS[reason].name );
 	}
+
+	if (Thread::shouldSwitch())
+		Thread::getCurrent()->yield();
 }
 /*----------------------------------------------------------------------------*/
 bool Kernel::handleException( Processor::Context* registers )
@@ -284,9 +288,6 @@ void Kernel::handleInterrupts( Processor::Context* registers )
 			ASSERT (m_interruptHandlers[i]);
 			m_interruptHandlers[i]->handleInterrupt();
 		}
-	if (Thread::shouldSwitch())
-		Thread::getCurrent()->yield();
-
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::setTimeInterrupt(const Time& time)
