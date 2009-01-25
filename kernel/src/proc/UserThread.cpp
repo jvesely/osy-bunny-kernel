@@ -34,6 +34,7 @@
 
 #include "address.h"
 #include "UserThread.h"
+#include "proc/Process.h"
 #include "drivers/Processor.h"
 #include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
@@ -81,6 +82,8 @@ UserThread::~UserThread()
 		m_virtualMap->free( m_userstack );
 		PRINT_DEBUG ("Freed stack at address: %p.\n", m_userstack);
 	}
+	ASSERT (m_process);
+	m_process->removeThread( this );
 }
 /*----------------------------------------------------------------------------*/
 extern "C" void switch_to_usermode(void*, void*, void*(*)(void*), void*);

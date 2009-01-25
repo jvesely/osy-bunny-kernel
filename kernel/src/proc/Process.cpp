@@ -184,3 +184,12 @@ Thread* Process::getThread( thread_t thread )
 		return ptr;
 	return NULL;
 }
+/*----------------------------------------------------------------------------*/
+bool Process::removeThread( UserThread* thread )
+{
+	ASSERT (thread);
+	ASSERT (thread->process() == this);
+	ListItem<UserThread*>* item =  m_list.removeFind(thread);
+	delete item;
+	return item;
+}

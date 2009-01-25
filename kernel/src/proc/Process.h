@@ -49,6 +49,7 @@ public:
 	UserThread* addThread( thread_t* thread_ptr, void* (*thread_start)(void*),
 	    void* data = NULL, void* arg = NULL, const unsigned int flags = 0 );
 	Thread* getThread( thread_t thread );
+	bool removeThread( UserThread* );
 	void exit();
 	
 	static Process* getCurrent();
