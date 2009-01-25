@@ -60,7 +60,7 @@ int thread_create(
 thread_t thread_self() __attribute__ ((noinline));
 
 int thread_join(
-	thread_t thr, void** retval, bool timed = false, const Time* time = NULL) __attribute__ ((noinline));
+	thread_t thr, void** retval, const Time* time = NULL) __attribute__ ((noinline));
 
 int thread_detach( thread_t thr ) __attribute__ ((noinline));
 

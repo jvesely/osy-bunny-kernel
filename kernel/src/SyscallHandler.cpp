@@ -149,7 +149,7 @@ unative_t SyscallHandler::handleThreadCreate()
 	Process* current = Process::getCurrent();
 	ASSERT (current);
 
-	thread_t* thread_ptr = (thread*)CHECK_PTR_IN_USEG(m_params[0]);
+	thread_t* thread_ptr = (thread_t*)CHECK_PTR_IN_USEG(m_params[0]);
 
 	bool success = current->addThread( 
 		thread_ptr, (void*(*)(void*))m_params[1], (void*)m_params[2], (void*)m_params[3] );
@@ -161,11 +161,13 @@ unative_t SyscallHandler::handleThreadJoin()
 {
 	Thread* thr = PROCESS_THREAD();
 	bool timed = (bool)m_params[2];
+
+	const Time* time = (const Time*)CHECK_PTR_IN_USEG(m_params[2]);
 	
 	PRINT_DEBUG ("Handling thread join on %u, %s, %p.\n", thr->id(),
 		timed?"TIMED":"DIRECT", m_params[3]);
 	
-	return Thread::getCurrent()->join( thr, (void**)m_params[1], timed, *(Time*)m_params[3] );
+	return Thread::getCurrent()->join( thr, (void**)m_params[1], timed, *time );
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSelf()
@@ -215,10 +217,12 @@ unative_t SyscallHandler::handleThreadExit()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSleep()
 {
-	Time sleep_time(((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
-	PRINT_DEBUG ("Sleep:  %p %u:%u.\n", m_params[0],
-		((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
-	Thread::getCurrent()->sleep( sleep_time );
+
+	const Time* time = (const Time*)CHECK_PTR_IN_USEG(m_params[0])
+
+	PRINT_DEBUG ("Sleep:  %p %u:%u.\n", time, time->secs(), time->usecs());
+
+	Thread::getCurrent()->sleep( *time );
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
