@@ -100,26 +100,39 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 	return true;
 }
 /*----------------------------------------------------------------------------*/
+#define PROCESS_THREAD() \
+	({ \
+	Process* current = Process::getCurrent(); \
+	ASSERT (current); \
+	Thread* thread = current->getThread( m_params[0] ); \
+	if (!thread) return EINVAL; \
+	thread;\
+	})
+/*----------------------------------------------------------------------------*/
+#define CHECK_PTR_IN_USEG( ptr ) \
+	({ \
+	if (! (ADDR_IN_USEG( (uintptr_t)(ptr) ) )) \
+	{ \
+		Thread::getCurrent()->kill(); \
+		return EKILLED; \
+	}; \
+	(void*)(ptr);\
+	})
+/*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handlePuts()
 {
-/*	printf ("Should output string at %p(%p):%s.\n",
-		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */
-//	Processor::msim_stop();
-//	if (ADDR_TO_USEG(params[0]) == params[0]) {
-		return puts( (const char*)m_params[0] );
-//	} else {
-//		Thread::getCurrent()->kill();
-//	}
-
+	const char * str = (const char*)CHECK_PTR_IN_USEG(m_params[0]);
+	return puts( str );
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleGets()
 {
+	char* place = (char*)CHECK_PTR_IN_USEG(m_params[0]);
+
 	if (m_params[1] == 1) {
-		*(char*)m_params[0] = getc();
-		return 1;
+		return (*place = getc()), 1;
 	} else {
-		return gets((char*)m_params[0], m_params[1]);
+		return gets(place, m_params[1]);
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -131,21 +144,15 @@ unative_t SyscallHandler::handleExit()
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-#define PROCESS_THREAD() \
-	({ \
-	Process* current = Process::getCurrent(); \
-	ASSERT (current); \
-	Thread* thread = current->getThread( m_params[0] ); \
-	if (!thread) return EINVAL; \
-	thread;\
-	})
-
 unative_t SyscallHandler::handleThreadCreate()
 {
 	Process* current = Process::getCurrent();
 	ASSERT (current);
+
+	thread_t* thread_ptr = (thread*)CHECK_PTR_IN_USEG(m_params[0]);
+
 	bool success = current->addThread( 
-		(thread_t*)m_params[0], (void*(*)(void*))m_params[1], (void*)m_params[2], (void*)m_params[3] );
+		thread_ptr, (void*(*)(void*))m_params[1], (void*)m_params[2], (void*)m_params[3] );
 	PRINT_DEBUG ("Thread create handled : %s.\n", success ? "OK" : "FAIL");
 	return success ? EOK : ENOMEM;
 }
@@ -154,8 +161,10 @@ unative_t SyscallHandler::handleThreadJoin()
 {
 	Thread* thr = PROCESS_THREAD();
 	bool timed = (bool)m_params[2];
+	
 	PRINT_DEBUG ("Handling thread join on %u, %s, %p.\n", thr->id(),
 		timed?"TIMED":"DIRECT", m_params[3]);
+	
 	return Thread::getCurrent()->join( thr, (void**)m_params[1], timed, *(Time*)m_params[3] );
 }
 /*----------------------------------------------------------------------------*/
