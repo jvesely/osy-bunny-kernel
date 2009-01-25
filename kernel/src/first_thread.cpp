@@ -86,5 +86,5 @@ void* first_thread(void* data)
 	printf( "Contents: %s.\n", content );
 
 	KERNEL.halt();
-	return 0;
+	return NULL;
 }

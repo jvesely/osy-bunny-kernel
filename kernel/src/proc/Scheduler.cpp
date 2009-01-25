@@ -82,9 +82,6 @@ thread_t Scheduler::getId( Thread* newThread )
 	/* set the id to the thread */
 	newThread->setId(id);
 
-	/* count this thread as active */
-	//++m_threadCount;
-
 	return id;
 }
 /*----------------------------------------------------------------------------*/

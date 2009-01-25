@@ -106,9 +106,6 @@ private:
 	/*! Thread id generating helper. Increases avery time thread is added. */
 	thread_t m_nextThreadId;
 
-	/*! Number of active threads */
-//	uint m_threadCount;
-
 	/*! @brief Thread that runs when no one else will. */
 	Thread* m_idle;
 	

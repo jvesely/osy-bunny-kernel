@@ -229,7 +229,6 @@ protected:
 		if (!size) size = 1;
 		m_array = new List< Pair<KeyType, DataType> > [size];
 		m_arraySize = (m_array) ? size : 0;
-
 	}
 
 

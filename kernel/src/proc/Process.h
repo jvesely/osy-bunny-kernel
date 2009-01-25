@@ -50,7 +50,6 @@ public:
 	    void* data = NULL, void* arg = NULL, const unsigned int flags = 0 );
 	Thread* getThread( thread_t thread );
 	void exit();
-
 	
 	static Process* getCurrent();
 

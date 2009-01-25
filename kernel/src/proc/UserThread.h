@@ -46,14 +46,6 @@
  */
 class UserThread: public KernelThread
 {
-public:
-	/*!
-	 * @brief Ensures correct UserThread creation.
-	 */
-//	static Thread* create( thread_t* thread_ptr, void* (*thread_start)(void*),
-//		void* data = NULL,const unsigned int flags = 0 );
-
-
 private:
 	void* m_userstack;
 	void* m_runData2;

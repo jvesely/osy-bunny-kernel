@@ -137,7 +137,7 @@ void Thread::switchTo()
 	setStatus( RUNNING );
 
 	SCHEDULER.m_currentThread = this;
-	SCHEDULER.m_shouldSwitch = false;
+	SCHEDULER.m_shouldSwitch  = false;
 	other_stack_ptr = &m_otherStackTop;
 
 	PRINT_DEBUG ("Switching VMM to: %p.\n", m_virtualMap.data());
@@ -172,9 +172,6 @@ void Thread::yield()
 
 	/* switch to the next thread */
 	getNext()->switchTo();
-//	Thread* next = getNext();
-//	ASSERT (next);
-//	next->switchTo();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::alarm( const Time& alarm_time )
@@ -281,7 +278,6 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	m_status = JOINING;
   yield();
 
-
 	others_status = thread->status();
 	/* Woken by the death of the thread (either timed or untimed) */
 	if ( (others_status == FINISHED) || (others_status == KILLED))	
@@ -289,7 +285,6 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 		PRINT_DEBUG ("Thread %u joined thread %u %s.\n", m_id, thread->m_id, timed ? "TIMED" : "");
 		if (retval) *retval = thread->m_ret;
 		delete thread;
-//		resume();
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
 
@@ -373,4 +368,3 @@ Thread::~Thread()
 		SCHEDULER.returnId( m_id );
 	}
 }
-

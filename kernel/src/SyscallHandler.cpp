@@ -97,12 +97,6 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 	if (!m_handles[m_call]) return false;
 
 	registers->v0   = (this->*m_handles[m_call]) ();
-//	PRINT_DEBUG ("SC handled.\n");
-/*
-	if (m_call == SYS_GETS)
-		printf("Handled syscall: %u, params: %x %x, res: %x",
-			m_call, m_params[0], m_params[1], registers->v0 );
-	// */
 	return true;
 }
 /*----------------------------------------------------------------------------*/
@@ -356,8 +350,6 @@ unative_t SyscallHandler::handleVMAAlloc()
 	//round the size according to HW specifications
 	(*((size_t*)m_params[1])) = roundUp(*((size_t*)m_params[1]),Processor::pages[0].size);
 
-	//unative_t res = thread->getVMM()->allocate((void **)m_params[0], *((size_t*)m_params[1]),(unsigned int) m_params[2]);
-	//return res;
 	return thread->getVMM()->allocate((void **)m_params[0], *((size_t*)m_params[1]),(unsigned int) m_params[2]);
 }
 /*----------------------------------------------------------------------------*/
@@ -365,11 +357,9 @@ unative_t SyscallHandler::handleVMAFree()
 {
 	//the same as vma_free in api.h
 	Thread* thread = Thread::getCurrent();
-	
+
 	ASSERT (thread);
 	ASSERT (thread->getVMM());
-	
-	//unative_t res = thread->getVMM()->free((void *)m_params[0]);
-	//return res;
+
 	return thread->getVMM()->free((void *)m_params[0]);
 }

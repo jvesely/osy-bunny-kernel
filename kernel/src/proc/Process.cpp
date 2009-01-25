@@ -111,7 +111,7 @@ Process* Process::create( const char* filename )
 
 	char* place = (char*)malloc( file_size );
 	fs->readFile( bin_file, place, file_size );
-//	printf( "First int: %x.\n", *(uint*)place );
+
 	old_vmm->copyTo( place, vmm, (void*)start, file_size );
 	
 	free(place);

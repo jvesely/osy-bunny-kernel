@@ -330,7 +330,6 @@ void Kernel::refillTLB()
 		} else
 			panic( "No thread and invalid tlb refill.\n" );
 	}
-
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::attachDisks()
@@ -343,6 +342,6 @@ void Kernel::attachDisks()
 /*----------------------------------------------------------------------------*/
 Time Time::getCurrentTime()
 {
-  return Time( Kernel::instance().clock().time(), Kernel::instance().clock().usec() );
+	return Time( Kernel::instance().clock().time(), Kernel::instance().clock().usec() );
 }
 

@@ -90,7 +90,4 @@ void Event::fire()
 		PRINT_DEBUG ("Resuming thread: %u.\n", thr->id());
 		thr->resume();
 	}
-
-	/*for (ThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
-		(*it)->resume();*/
 }

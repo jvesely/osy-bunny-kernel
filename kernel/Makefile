@@ -53,7 +53,6 @@ kernel: $(BIN_DIR)/$(KERNEL_BIN)
 $(BIN_DIR)/$(KERNEL_BIN): $(BIN_DIR)/$(KERNEL_RAW)
 	@echo -e "$(COL_WHITE)Creating kernel.bin image... $(COL_GREEN)$@$(COL_END) <--$(COL_YELLOW) $^$(COL_END)"
 	@$(OBJCOPY) -O binary  $^ $@
-	@rm -f obj/test.o
 
 $(BIN_DIR)/$(KERNEL_RAW): Makefile.depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 	@echo -e "$(COL_WHITE)Linking kernel RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJS)$(COL_END)"
@@ -62,8 +61,7 @@ $(BIN_DIR)/$(KERNEL_RAW): Makefile.depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 -include Makefile.depend
 .SUFFIXES:
 
-.INTERMEDIATE: $(OBJ_DIR)/first_thread.o
-#.PHONY: $(OBJ_DIR)/test.o
+.INTERMEDIATE: $(OBJ_DIR)/test.o $(OBJ_DIR)/first_thread.o
 
 $(OBJ_DIR)/%.o : %.cpp
 	@echo -e "$(COL_WHITE)Compiling $(COL_CYAN)$@: $(COL_BLUE)$< $(COL_END)"
