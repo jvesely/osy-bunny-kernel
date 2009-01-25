@@ -228,11 +228,7 @@ protected:
 	void init ( unsigned int size ) {
 		if (!size) size = 1;
 		m_array = new List< Pair<KeyType, DataType> > [size];
-		if (m_array) {
-			m_arraySize = size;
-		} else {
-			m_arraySize = 0;
-		}
+		m_arraySize = (m_array) ? size : 0;
 	}
 
 

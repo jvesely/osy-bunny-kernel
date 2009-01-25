@@ -48,49 +48,25 @@
   printf(ARGS);
 #endif
 
-
-
-Thread* UserThread::create( thread_t* thread_ptr, void* (*thread_start)(void*),
-    void* thread_data, const unsigned int thread_flags )
-{
-	PRINT_DEBUG ("Creating Thread with userland stack...\n");
-
-	Thread* new_thread = new UserThread(thread_start, thread_data, thread_flags);
-
-	PRINT_DEBUG ("Thread created at address: %p", new_thread);
-
-  if ( (new_thread == NULL) || (new_thread->status() != INITIALIZED) ) {
-    delete new_thread;
-    return NULL;
-  }
-
-  *thread_ptr = Scheduler::instance().getId(new_thread);
-  if (!(*thread_ptr)) { //id space allocation failed
-    delete new_thread;
-    return NULL;
-  }
-
-  new_thread->resume();
-  return new_thread;
-}
 /*----------------------------------------------------------------------------*/
-UserThread::UserThread( void* (*thread_start)(void*), void* data,
-  native_t flags, uint stack_size ):
-	KernelThread( thread_start, data, flags )
+UserThread::UserThread( void* (*thread_start)(void*), void* data, void* data2,
+	void* stack_pos, native_t flags, uint stack_size ):
+	KernelThread( thread_start, data, flags ), m_runData2( data2 )
 {
 	m_status = UNINITIALIZED;
 
-	PRINT_DEBUG ("Constructing Userland thread.\n");
+	PRINT_DEBUG ("Constructing Userland thread, suggested stack: %p.\n", stack_pos);
 
 	unative_t vm_flags = VF_VA_USER << VF_VA_SHIFT;
 	vm_flags |= VF_AT_KUSEG << VF_AT_SHIFT;
 
-	m_userstack = (void*)(ADDR_PREFIX_KSEG0 - stack_size);
+	m_userstack = stack_pos;
 
 	if (m_virtualMap->allocate( &m_userstack, stack_size, vm_flags ) != EOK)
 		return;
 	
-	PRINT_DEBUG ("Stack at address: %p.\n", m_stack);
+	PRINT_DEBUG ("Kernel stack at address: %p User stack: %p.\n", 
+		m_stack, m_userstack);
 
 	m_otherStackTop = (char*)m_userstack + stack_size;
 
@@ -103,18 +79,18 @@ UserThread::~UserThread()
 	if (m_userstack) {
 		ASSERT(m_virtualMap);
 		m_virtualMap->free( m_userstack );
+		PRINT_DEBUG ("Freed stack at address: %p.\n", m_userstack);
 	}
 }
 /*----------------------------------------------------------------------------*/
-extern "C" void switch_to_usermode(void*(*exec)(void*), void* sp);
-
+extern "C" void switch_to_usermode(void*, void*, void*(*)(void*), void*);
 void UserThread::run()
 {
-	InterruptDisabler inter;
+	disable_interrupts();
 
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
 
-	switch_to_usermode( m_runFunc, m_stackTop);
+	switch_to_usermode( m_runData, m_runData2, m_runFunc, m_stackTop );
 
 	m_status = FINISHED;
 	PRINT_DEBUG ("Finished thread %u.\n", m_id);

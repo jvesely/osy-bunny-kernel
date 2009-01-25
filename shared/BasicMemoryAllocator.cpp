@@ -183,7 +183,6 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 		resHeader = (this->*getFreeBlockFunction)(realSize);
 	}
 
-
 	//now res points either to NULL or to header of free block large enough
 	if (resHeader == NULL)//will need new block
 	{
@@ -226,7 +225,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::getBlock(size_t realSi
 #endif
 
 	//try to extend some existing memory chunk
-	if (( res = tryExpandSomeChunk(totalSize) )!=NULL)
+	if (( res = tryExpandSomeChunk(totalSize) ) != NULL)
 	{
 		return res;
 	}
@@ -821,8 +820,3 @@ inline void BasicMemoryAllocator::setSizeDefault
 		header->getFooter()->setUsed();
 	}
 }
-
-
-
-
-

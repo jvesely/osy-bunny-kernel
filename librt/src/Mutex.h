@@ -28,6 +28,8 @@
  * @brief Mutex class declaration.
  */
 
+#pragma once
+
 #include "types.h"
 
 class Time;
@@ -76,7 +78,7 @@ public:
 	 * @brief Locks the given mutex. If the mutex is already locked, blocks the
 	 * thread until it is unlocked, but not more than the given timeout.
 	 */
-	int lockTimeout( const Time& timeout );
+	int lockTimeout( const Time timeout );
 
 	/*!
 	 * @brief Unlocks the mutex. Unblocks the first thread waiting for this mutex.

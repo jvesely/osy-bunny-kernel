@@ -76,6 +76,27 @@
 1:
 .endm SWITCH_STACK
 
+.macro SWITCH_STACK_ENTER
+	la    $k1, ADDR_PREFIX_KSEG0
+	and   $k0, $sp, $k1               /* $k0 = $sp & 0x80000000 */
+	bne   $k0, $zero, 2f              /* if ($k0 != 0) $k0 = $sp; goto 2 */
+
+	ori   $k0, $sp, 0                 /* else get other stack */
+
+	lw    $k1, (other_stack_ptr)
+	lw    $k1, ($k1)                  /* $k1 = *other_stack_ptr */
+	ori   $sp, $k1, 0                 /* $sp = k1 */
+2:
+	addi  $sp, $sp, 4
+	sw    $k0, ($sp)
+.endm SWITCH_STACK_ENTER
+
+.macro SWITCH_STACK_LEAVE
+	lw    $k0, ($sp)
+	ori   $sp, $k0, 0
+.endm SWITCH_STACK_LEAVE
+
+
 /***************************************************************************\
 | Code at hardwired addresses                                               |
 \***************************************************************************/
@@ -244,7 +265,7 @@ start:
 
 handle_tlbrefill:
 
-	SWITCH_STACK
+	SWITCH_STACK_ENTER
 
 	addi $sp, $sp, -CONTEXT_SIZE
 
@@ -275,7 +296,7 @@ handle_tlbrefill:
 	
 	/* Restore the stack pointer last and return from exception. */
 	
-	SWITCH_STACK
+	SWITCH_STACK_LEAVE
 
 	eret
 
@@ -352,12 +373,11 @@ handle_general:
 	and $k0, $k1
 	mtc0 $k0, $status
 	
-	/* The rest of the registers is saved on the current stack. Note
-	   that when the stack resides in virtual memory, this can cause
-	   the TLB Refill Exception, which means that we must not use
-	   the kernel scratch registers $k0 and $k1. */
+	/* Stack is switched to second stack located in KSEG0 if th thread was
+		 using USEG stack, this is done to avoid TLB refill/load/save exceptions. 
+		 Then the rest of the registers is saved on the stack. */
 	
-	SWITCH_STACK
+	SWITCH_STACK_ENTER
 
 	addiu $sp, -CONTEXT_SIZE
 	
@@ -414,7 +434,7 @@ handle_general:
 	
 	addiu $sp, CONTEXT_SIZE
 	
-	SWITCH_STACK
+	SWITCH_STACK_LEAVE
 	
 	/* Finally, restore the System Control Coprocessor registers
 	   and return from the exception. The ERET instruction also
@@ -536,6 +556,6 @@ switch_to_usermode:
 	SWITCH_STACK
 	mfc0 $k0, $status
 	ori  $k0, $k0, 0x00000011
-	j $a0
+	j    $a2
 	mtc0 $k0, $status 
 .end   switch_to_usermode

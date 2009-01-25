@@ -46,7 +46,7 @@ clean-disk:
 
 ### distcleaning stuff ###
 .PHONY: distclean
-distclean: distclean-kernel distclean-loader distclean-librt clean-disk
+distclean: distclean-kernel distclean-loader distclean-librt distclean-apps clean-disk
 distclean-kernel:
 	@echo "Distcleaning kernel"
 	$(MAKE) -C kernel distclean
@@ -56,6 +56,9 @@ distclean-loader:
 distclean-librt:
 	@echo "Distcleaning librt"
 	$(MAKE) -C librt distclean
+distclean-apps:
+	@echo "Distcleaning apps"
+	$(MAKE) -C apps distclean
 
 doc:
 	@echo "Creating documentation :)";

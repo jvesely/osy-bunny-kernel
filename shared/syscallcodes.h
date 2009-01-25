@@ -32,18 +32,29 @@
 
 #pragma once
 
-#define SYS_PUTS 1
-#define SYS_GETS 2
-#define SYS_EXIT 3
-#define SYS_EVENT_INIT 4
-#define SYS_EVENT_WAIT 5
-#define SYS_EVENT_WAIT_TIMEOUT 6
-#define SYS_EVENT_FIRE 7
-#define SYS_EVENT_DESTROY 8
-#define SYS_THREAD_SLEEP 9
-#define SYS_THREAD_YIELD 10
-#define SYS_THREAD_SUSPEND 11
-#define SYS_VMA_ALLOC 12
-#define SYS_VMA_FREE 13
+#define SYS_PUTS            1
+#define SYS_GETS            2
+#define SYS_EXIT            3
 
-#define SYS_LAST 14
+#define SYS_THREAD_CREATE   4
+#define SYS_THREAD_SELF     5
+#define SYS_THREAD_JOIN     6
+#define SYS_THREAD_DETACH   7
+#define SYS_THREAD_CANCEL   8
+#define SYS_THREAD_SLEEP    9
+#define SYS_THREAD_YIELD   10
+#define SYS_THREAD_SUSPEND 11
+#define SYS_THREAD_WAKEUP  12
+#define SYS_THREAD_EXIT    13
+
+#define SYS_EVENT_INIT     14
+#define SYS_EVENT_WAIT     15
+#define SYS_EVENT_WAIT_TIMEOUT 16
+#define SYS_EVENT_FIRE     17
+#define SYS_EVENT_DESTROY  18
+
+#define SYS_VMA_ALLOC      19
+#define SYS_VMA_FREE       20
+
+#define SYS_COUNT          21
+

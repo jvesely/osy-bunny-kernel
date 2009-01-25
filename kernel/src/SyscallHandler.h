@@ -47,19 +47,28 @@ private:
 
 	unative_t m_call;
 	unative_t m_params[4];
-	unative_t (SyscallHandler::*m_handles[SYS_LAST])(void);
+	unative_t (SyscallHandler::*m_handles[SYS_COUNT])(void);
 
 	unative_t handlePuts();
 	unative_t handleGets();
 	unative_t handleExit();
+
+	unative_t handleThreadCreate();
+	unative_t handleThreadJoin();
+	unative_t handleThreadSleep();
+	unative_t handleThreadYield();
+	unative_t handleThreadSuspend();
+	unative_t handleThreadWakeup();
+	unative_t handleThreadSelf();
+	unative_t handleThreadDetach();
+	unative_t handleThreadCancel();
+	unative_t handleThreadExit();
+
 	unative_t handleEventInit();
 	unative_t handleEventWait();
 	unative_t handleEventWaitTimeout();
 	unative_t handleEventFire();
 	unative_t handleEventDestroy();
-	unative_t handleThreadSleep();
-	unative_t handleThreadYield();
-	unative_t handleThreadSuspend();
 
 	/** @brief vma alloc syscall handler
 	*

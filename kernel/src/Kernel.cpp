@@ -78,9 +78,6 @@ Kernel::Kernel() :
 //	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS  );
 	registerExceptionHandler( &m_syscalls, Processor::CAUSE_EXCCODE_SYS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT  );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADEL );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_ADES );
-	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_RI   );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP   );
 
 	m_status = INITIALIZED;
@@ -174,6 +171,7 @@ void Kernel::run()
 		thread_t mainThread;
 		Thread* main = KernelThread::create(&mainThread, first_thread, NULL, TF_NEW_VMM);
 		ASSERT (main);
+		main = 0;
 		yield();
 	}
 sleep:
@@ -214,18 +212,24 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from)
 /*----------------------------------------------------------------------------*/
 void Kernel::exception( Processor::Context* registers )
 {
+	InterruptDisabler inter;
+
 	const Processor::Exceptions reason = Processor::get_exccode(registers->cause);
 	
 	if (Processor::EXCEPTIONS[reason].handler) {
 		if (!(*Processor::EXCEPTIONS[reason].handler)( registers )) {
-			printf( "Exception handling for: %s(%u) FAILED => TRHEAD KILLED.\n",
-				Processor::EXCEPTIONS[reason].name, reason);
+			printf( "Exception handling for: %s(%u) FAILED => THREAD KILLED (%u).\n",
+				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
 			Thread::getCurrent()->kill();
 		}
 	} else {
-		panic("Unhandled exception(%u) %s.\n", 
-			reason, Processor::EXCEPTIONS[reason].name );
+		printf( "Exception handling for: %s(%u) UNHANDLED => THREAD KILLED (%u).\n",
+				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
+		Thread::getCurrent()->kill();
 	}
+
+	if (Thread::shouldSwitch())
+		Thread::getCurrent()->yield();
 }
 /*----------------------------------------------------------------------------*/
 bool Kernel::handleException( Processor::Context* registers )
@@ -237,17 +241,16 @@ bool Kernel::handleException( Processor::Context* registers )
 		case CAUSE_EXCCODE_INT:
 			handleInterrupts( registers );
 			break;
-		case CAUSE_EXCCODE_SYS:
-		case CAUSE_EXCCODE_RI:
-		case CAUSE_EXCCODE_ADEL:
-		case CAUSE_EXCCODE_ADES:
-			return false;
 		case CAUSE_EXCCODE_BP:
 			if (!(registers->cause & CAUSE_BD_MASK) ) {
 				registers->epc += 4; // go to the next instruction
 				return true;
 			}
 			panic("Exception: Break.\n");
+		case CAUSE_EXCCODE_ADES:
+		case CAUSE_EXCCODE_ADEL:
+		case CAUSE_EXCCODE_RI:
+		case CAUSE_EXCCODE_SYS:
 		case CAUSE_EXCCODE_TLBL:
 		case CAUSE_EXCCODE_TLBS:
 		case CAUSE_EXCCODE_TR:
@@ -284,9 +287,6 @@ void Kernel::handleInterrupts( Processor::Context* registers )
 			ASSERT (m_interruptHandlers[i]);
 			m_interruptHandlers[i]->handleInterrupt();
 		}
-	if (Thread::shouldSwitch())
-		Thread::getCurrent()->yield();
-
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::setTimeInterrupt(const Time& time)
@@ -323,9 +323,11 @@ void Kernel::refillTLB()
   if (!success) {
 		printf( "Access to invalid address %p, KILLING offending thread.\n",
 			Processor::reg_read_badvaddr() );
-    if (Thread::getCurrent())
+    if (Thread::getCurrent()) {
 			Thread::getCurrent()->kill();
-		else
+			if (Thread::shouldSwitch())
+				Thread::getCurrent()->yield();
+		} else
 			panic( "No thread and invalid tlb refill.\n" );
 	}
 }
@@ -337,9 +339,7 @@ void Kernel::attachDisks()
 	ASSERT (disk);
 	m_disks.pushBack( disk );
 }
-
 /*----------------------------------------------------------------------------*/
-
 Time Time::getCurrentTime()
 {
 	return Time( Kernel::instance().clock().time(), Kernel::instance().clock().usec() );

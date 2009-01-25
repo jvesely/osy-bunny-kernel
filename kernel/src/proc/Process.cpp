@@ -39,7 +39,7 @@
 #include "tools.h"
 #include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
-
+#include "address.h"
 
 //#define PROCESS_DEBUG
 
@@ -72,9 +72,10 @@ Process* Process::create( const char* filename )
 		return 0;
 	}
 
-	void * start = (void*)0x1000000;
+	void * (*start)(void*) = (void*(*)(void*))0x1000000;
 
-	UserThread* main = new UserThread( (void* (*)(void*))start, NULL, TF_NEW_VMM );
+	UserThread* main = new UserThread( 
+		start, NULL, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
 
 	/* Thread creation might have failed. */
 	if (main == NULL || (main->status() != Thread::INITIALIZED)) {
@@ -98,7 +99,7 @@ Process* Process::create( const char* filename )
 
 
 	/* Space allocation may fail. */
-	if (vmm->allocate( &start, roundUp( file_size, 0x1000 ), flags ) != EOK) {
+	if (vmm->allocate( (void**)&start, roundUp( file_size, 0x1000 ), flags ) != EOK) {
 		PRINT_DEBUG ("Main area allocation failed.\n");
 		delete main;
 		return 0;
@@ -110,8 +111,10 @@ Process* Process::create( const char* filename )
 
 	char* place = (char*)malloc( file_size );
 	fs->readFile( bin_file, place, file_size );
-//	printf( "First int: %x.\n", *(uint*)place );
-	old_vmm->copyTo( place, vmm, start, file_size );
+
+	old_vmm->copyTo( place, vmm, (void*)start, file_size );
+	
+	free(place);
 
 	Process* me = new Process();
 	me->m_mainThread = main;
@@ -123,9 +126,61 @@ Process* Process::create( const char* filename )
 void Process::exit()
 {
 	m_mainThread->kill();
+	for ( UserThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
+	{
+		Thread::Status st = (*it)->status();
+		if (st != Thread::KILLED && st != Thread::FINISHED)
+			(*it)->kill();
+	}
 }
 /*----------------------------------------------------------------------------*/
 Process* Process::getCurrent()
 {
 	return Thread::getCurrent()->process();
+}
+/*----------------------------------------------------------------------------*/
+UserThread* Process::addThread( thread_t* thread_ptr,
+	void* (*thread_start)(void*), void* arg1, void* arg2, const uint thread_flags )
+{
+	InterruptDisabler inter;
+
+  PRINT_DEBUG ("Creating Thread with userland stack...%p(%p,%p)\n",
+		thread_start, arg1, arg2);
+
+	void* stack_pos =
+		(char*)ADDR_PREFIX_KSEG0 - (m_list.size() + 2) * Thread::DEFAULT_STACK_SIZE;
+
+  UserThread* new_thread = new UserThread( 
+		thread_start, arg1, arg2, stack_pos, thread_flags);
+
+  PRINT_DEBUG ("Thread created at address: %p.\n", new_thread);
+
+  if ( (new_thread == NULL) || (new_thread->status() != Thread::INITIALIZED) ) {
+    delete new_thread;
+    return NULL;
+  }
+
+  *thread_ptr = Scheduler::instance().getId( new_thread );
+  if (!(*thread_ptr)) { //id space allocation failed
+    delete new_thread;
+    return NULL;
+  }
+	ListItem<UserThread*>* storage = new ListItem<UserThread*>( new_thread );
+	if (!storage) {
+		delete new_thread;
+		return NULL;
+	}
+	m_list.pushBack( storage );
+	new_thread->m_process = this;
+  new_thread->resume();
+	PRINT_DEBUG ("New thread added to the process and scheduler.\n");
+	return new_thread;
+}
+/*----------------------------------------------------------------------------*/
+Thread* Process::getThread( thread_t thread )
+{
+	Thread* ptr = Thread::fromId( thread );
+	if (ptr && ptr->process() == this)
+		return ptr;
+	return NULL;
 }

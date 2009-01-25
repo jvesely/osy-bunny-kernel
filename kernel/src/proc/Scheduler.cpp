@@ -82,9 +82,6 @@ thread_t Scheduler::getId( Thread* newThread )
 	/* set the id to the thread */
 	newThread->setId(id);
 
-	/* count this thread as active */
-	++m_threadCount;
-
 	return id;
 }
 /*----------------------------------------------------------------------------*/
@@ -93,19 +90,12 @@ Thread* Scheduler::nextThread()
 	/* disable interrupts, when mangling with scheduling queue */
   InterruptDisabler interrupts;
 
-	if (m_activeThreadList.size() == 0 && m_threadCount > 0) {
+	if (m_activeThreadList.empty()) {
 		/* nothing to run but there arees till threads present */
 		PRINT_DEBUG ("Next thread will be the idle thread.\n");
 		return m_idle;
 	}
 
-//	if (m_threadCount == 0) {
-//			/* Only timerManager might be running */
-//			ASSERT (m_activeThreadList.size() <= 1);
-//			PRINT_DEBUG ("No more threads to run.\n");
-//			return NULL;
-//	}
-	
 	/* if the running thread is not the first thread in the list 
 	 * (is not in the list at all), then skip rotating and just plan
 	 * the first thread.
@@ -143,19 +133,12 @@ void Scheduler::enqueue( Thread* thread )
 	
 }
 /*----------------------------------------------------------------------------*/
-void Scheduler::dequeue(Thread* thread)
+void Scheduler::dequeue( Thread* thread )
 {
 	/* queue mangling needs interupts disabled */
 	InterruptDisabler interrupts;
 
 	thread->remove();
-	PRINT_DEBUG("Removing thread %u.\n", thread->id());
-
-	/* Decrease active threa count if it is never to be run again */
-	if ( (thread->status() == Thread::KILLED)
-		|| (thread->status() == Thread::FINISHED) ) {
-		PRINT_DEBUG("Decreasing thread count.\n");
-		--m_threadCount;
-	}
+	PRINT_DEBUG("Dequeuing thread %u.\n", thread->id());
 }
 /*----------------------------------------------------------------------------*/

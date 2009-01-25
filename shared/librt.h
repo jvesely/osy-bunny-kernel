@@ -186,7 +186,7 @@ int thread_wakeup( thread_t thr );
  * @brief Stops executing calling thread and allow access to the pointer
  * @a thread_retval to the thread waiting for the calling thread in thread_join.
  */
-void thread_exit( void *thread_retval );
+void thread_exit( void *thread_retval ) __attribute__ ((noreturn)) ;
 
 /*! 
  * @brief Stops executing all threads of the current process. 
@@ -194,7 +194,7 @@ void thread_exit( void *thread_retval );
  * All process resources are freed. If there is no other user process, the
  * kernel will end.
  */
-void exit( void );
+void exit( void ) __attribute__ ((noreturn)) ;
 
 /* -------------------------------------------------------------------------- */
 /* -----------------------------   MUTEX   ---------------------------------- */

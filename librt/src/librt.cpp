@@ -40,6 +40,21 @@
 #include "assert.h"
 #include "UserMemoryAllocator.h"
 
+extern "C" int main();
+extern "C" void __start() __attribute__ ((section (".entry"), noreturn)) ;
+void __start()
+{
+	main();
+	exit();
+}
+/*----------------------------------------------------------------------------*/
+void* thread_start( void* func, void* data) __attribute__(( noreturn ));
+void* thread_start( void* func, void* data)
+{
+	void* ret = ((void*(*)(void*))func)(data);
+	thread_exit( ret );
+}
+/*----------------------------------------------------------------------------*/
 /* Basic IO */
 size_t putc( const char c )
 {
@@ -70,98 +85,91 @@ ssize_t gets( char* str, const size_t len )
 /* -------------------------------------------------------------------------- */
 /* ---------------------------   MEMORY   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
-
-void *malloc(const size_t size)
+void* malloc( const size_t size )
 {
 	return UserMemoryAllocator::instance().getMemory( size );
 }
-
-void free(const void *ptr)
+/* -------------------------------------------------------------------------- */
+void free( const void *ptr )
 {
 	UserMemoryAllocator::instance().freeMemory( ptr );
 }
-
 /* -------------------------------------------------------------------------- */
 /* --------------------------   THREADS   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
 
 int thread_create(
-	thread_t *thread_ptr, void *(*thread_start)(void *), void *arg)
+  thread_t *thread_ptr, void *(* func )(void*), void* arg )
 {
-	return 0;
+	return SysCall::thread_create( thread_ptr, thread_start, (void*)func, arg  );
 }
-
-thread_t thread_self(void)
+/* -------------------------------------------------------------------------- */
+thread_t thread_self()
 {
-	// get the thread id somehow
-	return 0;
+	return SysCall::thread_self();
 }
-
-int thread_join(thread_t thr, void **thread_retval)
+/* -------------------------------------------------------------------------- */
+int thread_join( thread_t thr, void **thread_retval )
 {
-	// would need some synchronization, or call syscall directly
-	return EOK;
+	return SysCall::thread_join( thr, thread_retval );
 }
-
+/* -------------------------------------------------------------------------- */
 int thread_join_timeout(
-	thread_t thr, void **thread_retval, const unsigned int usec)
+	thread_t thr, void **thread_retval, const unsigned int usec )
 {
-	// would need some synchronization, or call syscall directly
-	return EOK;
+	const Time time( 0, usec );
+	return SysCall::thread_join( thr, thread_retval, true, &time );
 }
-
-int thread_detach(thread_t thr)
+/* -------------------------------------------------------------------------- */
+int thread_detach( thread_t thr )
 {
-	// would need some synchronization, or call syscall directly
-	return EOK;
+	return SysCall::thread_detach( thr );
 }
-
-int thread_cancel(thread_t thr)
+/* -------------------------------------------------------------------------- */
+int thread_cancel( thread_t thr )
 {
-	// would need some synchronization, or call syscall directly
-	return EOK;
+	return SysCall::thread_cancel( thr );
 }
-
-void thread_sleep(const unsigned int sec)
+/* -------------------------------------------------------------------------- */
+void thread_sleep( const unsigned int sec )
 {
-	SysCall::thread_sleep(sec, 0);
+	const Time time( sec, 0 );
+	SysCall::thread_sleep( &time );
 }
-
-void thread_usleep(const unsigned int usec)
+/* -------------------------------------------------------------------------- */
+void thread_usleep( const unsigned int usec )
 {
-	SysCall::thread_sleep(0, usec);
+	const Time time( 0, usec );
+	SysCall::thread_sleep( &time );
 }
-
-void thread_yield(void)
+/* -------------------------------------------------------------------------- */
+void thread_yield()
 {
 	SysCall::thread_yield();
 }
-
-void thread_suspend(void)
+/* -------------------------------------------------------------------------- */
+void thread_suspend()
 {
 	SysCall::thread_suspend();
 }
-
-int thread_wakeup(thread_t thr)
+/* -------------------------------------------------------------------------- */
+int thread_wakeup( thread_t thr )
 {
-	// would need some synchronization, or call syscall directly
-	return EOK;
+	return SysCall::thread_wakeup( thr );
 }
-
-void thread_exit(void* thread_retval)
+/* -------------------------------------------------------------------------- */
+void thread_exit( void* thread_retval )
 {
-	// hmm..don't know what to do besides to kill the thread
+	SysCall::thread_exit( thread_retval );
 }
-
-void exit(void)
+/* -------------------------------------------------------------------------- */
+void exit()
 {
 	SysCall::exit();
 }
-
 /* -------------------------------------------------------------------------- */
 /* ----------------------------   MUTEX   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
-
 int mutex_init( struct mutex* mtx )
 {
 	if (!mtx)
@@ -172,7 +180,7 @@ int mutex_init( struct mutex* mtx )
 
 	return ((Mutex*)mtx)->init();
 }
-
+/* -------------------------------------------------------------------------- */
 int mutex_destroy( struct mutex* mtx )
 {
 	if (!mtx)
@@ -181,11 +189,9 @@ int mutex_destroy( struct mutex* mtx )
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	((Mutex*)mtx)->destroy();
 
-	//delete mtx;
-
 	return EOK;
 }
-
+/* -------------------------------------------------------------------------- */
 int mutex_lock( struct mutex* mtx )
 {
 	if (!mtx)
@@ -194,7 +200,7 @@ int mutex_lock( struct mutex* mtx )
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	return ((Mutex*)mtx)->lock();
 }
-
+/* -------------------------------------------------------------------------- */
 int mutex_lock_timeout ( struct mutex* mtx, const unsigned int usec )
 {
 	if (!mtx)
@@ -203,7 +209,7 @@ int mutex_lock_timeout ( struct mutex* mtx, const unsigned int usec )
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	return ((Mutex*)mtx)->lockTimeout(Time(0, usec));
 }
-
+/* -------------------------------------------------------------------------- */
 int mutex_unlock_uncheck( struct mutex* mtx )
 {
 	if (!mtx)
@@ -212,7 +218,7 @@ int mutex_unlock_uncheck( struct mutex* mtx )
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	return ((Mutex*)mtx)->unlock();
 }
-
+/* -------------------------------------------------------------------------- */
 int mutex_unlock_check( struct mutex* mtx )
 {
 	if (!mtx)
@@ -220,15 +226,4 @@ int mutex_unlock_check( struct mutex* mtx )
 
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	return ((Mutex*)mtx)->unlockCheck();
-}
-
-/*----------------------------------------------------------------------------*/
-
-extern "C" int main();
-extern "C" void __start() __attribute__ ((section (".entry"), noreturn)) ;
-void __start()
-{
-	main();
-	exit();
-	while (1) ;
 }

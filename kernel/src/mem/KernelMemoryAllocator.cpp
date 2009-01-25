@@ -62,9 +62,9 @@ void KernelMemoryAllocator::freeMemory( const void* address )
 }
 
 //------------------------------------------------------------------------------
-void * KernelMemoryAllocator::getNewChunk(size_t * finalSize)
+void * KernelMemoryAllocator::getNewChunk(size_t* finalSize)
 {
-	size_t MIN_FRAME_SIZE = Processor::pages[0].size;
+	size_t MIN_FRAME_SIZE = Processor::pages[Processor::PAGE_MIN].size;
 	//allignment
 	(*finalSize) = roundUp( *finalSize, MIN_FRAME_SIZE);
 
