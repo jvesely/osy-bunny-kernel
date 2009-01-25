@@ -34,7 +34,7 @@
 
 #pragma once
 
-#define panic printf
+#define panic(ARGS...) printf(ARGS); thread_exit(NULL);
 
 #if DEBUG_MUTEX >= 1
 	#define mutex_unlock mutex_unlock_check
