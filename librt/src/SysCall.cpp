@@ -81,9 +81,9 @@ thread_t SysCall::thread_self()
 }
 
 int SysCall::thread_join(
-  thread_t thr, void** retval, bool timed, const Time* time)
+  thread_t thr, void** retval, const Time* time)
 {
-	return SYSCALL( SYS_THREAD_JOIN, thr, retval, timed, time );
+	return SYSCALL( SYS_THREAD_JOIN, thr, retval, time, 0 );
 }
 
 int SysCall::thread_detach( thread_t thr )

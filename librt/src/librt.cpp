@@ -118,7 +118,7 @@ int thread_join_timeout(
 	thread_t thr, void **thread_retval, const unsigned int usec )
 {
 	const Time time( 0, usec );
-	return SysCall::thread_join( thr, thread_retval, true, &time );
+	return SysCall::thread_join( thr, thread_retval, &time );
 }
 /* -------------------------------------------------------------------------- */
 int thread_detach( thread_t thr )

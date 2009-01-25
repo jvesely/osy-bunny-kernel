@@ -100,26 +100,39 @@ bool SyscallHandler::handleException( Processor::Context* registers )
 	return true;
 }
 /*----------------------------------------------------------------------------*/
+#define PROCESS_THREAD() \
+	({ \
+	Process* current = Process::getCurrent(); \
+	ASSERT (current); \
+	Thread* thread = current->getThread( m_params[0] ); \
+	if (!thread) return EINVAL; \
+	thread;\
+	})
+/*----------------------------------------------------------------------------*/
+#define CHECK_PTR_IN_USEG( ptr ) \
+	({ \
+	if (! (ADDR_IN_USEG( (uintptr_t)(ptr) ) )) \
+	{ \
+		Thread::getCurrent()->kill(); \
+		return EKILLED; \
+	}; \
+	(void*)(ptr);\
+	})
+/*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handlePuts()
 {
-/*	printf ("Should output string at %p(%p):%s.\n",
-		params[0], ADDR_TO_USEG(params[0]) ,params[0]); */
-//	Processor::msim_stop();
-//	if (ADDR_TO_USEG(params[0]) == params[0]) {
-		return puts( (const char*)m_params[0] );
-//	} else {
-//		Thread::getCurrent()->kill();
-//	}
-
+	const char * str = (const char*)CHECK_PTR_IN_USEG(m_params[0]);
+	return puts( str );
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleGets()
 {
+	char* place = (char*)CHECK_PTR_IN_USEG(m_params[0]);
+
 	if (m_params[1] == 1) {
-		*(char*)m_params[0] = getc();
-		return 1;
+		return (*place = getc()), 1;
 	} else {
-		return gets((char*)m_params[0], m_params[1]);
+		return gets(place, m_params[1]);
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -131,21 +144,15 @@ unative_t SyscallHandler::handleExit()
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-#define PROCESS_THREAD() \
-	({ \
-	Process* current = Process::getCurrent(); \
-	ASSERT (current); \
-	Thread* thread = current->getThread( m_params[0] ); \
-	if (!thread) return EINVAL; \
-	thread;\
-	})
-
 unative_t SyscallHandler::handleThreadCreate()
 {
 	Process* current = Process::getCurrent();
 	ASSERT (current);
+
+	thread_t* thread_ptr = (thread_t*)CHECK_PTR_IN_USEG(m_params[0]);
+
 	bool success = current->addThread( 
-		(thread_t*)m_params[0], (void*(*)(void*))m_params[1], (void*)m_params[2], (void*)m_params[3] );
+		thread_ptr, (void*(*)(void*))m_params[1], (void*)m_params[2], (void*)m_params[3] );
 	PRINT_DEBUG ("Thread create handled : %s.\n", success ? "OK" : "FAIL");
 	return success ? EOK : ENOMEM;
 }
@@ -154,9 +161,13 @@ unative_t SyscallHandler::handleThreadJoin()
 {
 	Thread* thr = PROCESS_THREAD();
 	bool timed = (bool)m_params[2];
+
+	const Time* time = (const Time*)CHECK_PTR_IN_USEG(m_params[2]);
+	
 	PRINT_DEBUG ("Handling thread join on %u, %s, %p.\n", thr->id(),
 		timed?"TIMED":"DIRECT", m_params[3]);
-	return Thread::getCurrent()->join( thr, (void**)m_params[1], timed, *(Time*)m_params[3] );
+	
+	return Thread::getCurrent()->join( thr, (void**)m_params[1], timed, *time );
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSelf()
@@ -206,28 +217,28 @@ unative_t SyscallHandler::handleThreadExit()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleThreadSleep()
 {
-	Time sleep_time(((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
-	PRINT_DEBUG ("Sleep:  %p %u:%u.\n", m_params[0],
-		((Time*)m_params[0])->secs(), ((Time*)m_params[0])->usecs());
-	Thread::getCurrent()->sleep( sleep_time );
+
+	const Time* time = (const Time*)CHECK_PTR_IN_USEG(m_params[0])
+
+	PRINT_DEBUG ("Sleep:  %p %u:%u.\n", time, time->secs(), time->usecs());
+
+	Thread::getCurrent()->sleep( *time );
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleEventInit()
 {
 	// is it a pointer in USEG?
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[0]))) {
-		Thread::getCurrent()->kill();
-		return 0;
-	}
-
-	Event* evnt = new Event;
-	event_t ev = EventMap::instance().map(evnt);
+	event_t* event_ptr = (event_t*)CHECK_PTR_IN_USEG(m_params[0]);
 	
+	Event* evnt = new Event;
+	if (!evnt) return ENOMEM;
+
+	event_t ev = EventMap::instance().map(evnt);
 	if (ev == EventMap::INVALID_ID)
 		return ENOMEM;
 
-	*((event_t*)(m_params[0])) = ev;
+	*event_ptr = ev;
 
 	return EOK;
 }
@@ -235,16 +246,12 @@ unative_t SyscallHandler::handleEventInit()
 unative_t SyscallHandler::handleEventWait()
 {
 	PRINT_DEBUG("SyscallHandler::handleEventWait() started\n");
-	event_t evnt = m_params[0];
 	
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[1]))) {
-		Thread::getCurrent()->kill();
-		return 0;
-	}
-	
-	native_t* locked = (native_t*)(m_params[1]);
+	event_t   evnt   = m_params[0];
+	native_t* locked = (native_t*)CHECK_PTR_IN_USEG(m_params[1]);
 
 	Event* ev = EventMap::instance().getEvent(evnt);
+
 	if (!ev) {
 		Thread::getCurrent()->kill();
 		return 0;
@@ -263,36 +270,22 @@ unative_t SyscallHandler::handleEventWaitTimeout()
 	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() started\n");
 	event_t evnt = m_params[0];
 
-	// is it a pointer in USEG?
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[1]))) {
-		Thread::getCurrent()->kill();
-		return 0;
-	}
-
-	Time* time = (Time*)(m_params[1]);
-	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() time pointer: %p\n", time);
-	Time alarm_time = Time::getCurrent() + *time;
-
-	if (!ADDR_IN_USEG((uintptr_t)(m_params[2]))) {
-		Thread::getCurrent()->kill();
-		return 0;
-	}
-
-	native_t* locked = (native_t*)(m_params[2]);
-	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() locked pointer: %p\n", locked);
+	// Are these pointers to USEG?
+	Time* time                = (Time*)CHECK_PTR_IN_USEG(m_params[1]);
+	volatile native_t* locked = (native_t*)CHECK_PTR_IN_USEG(m_params[2]);
+	
+	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() time pointer: %p, locked: %p\n", time, locked);
+	
+	const Time alarm_time = Time::getCurrent() + *time;
 	
 	Event* ev = EventMap::instance().getEvent(evnt);
 	if (!ev) {
 		Thread::getCurrent()->kill();
 		return 0;
 	}
-/*
-	if (!(*time))
-		return ETIMEDOUT;
-*/
+	
 	if (*locked)
 		ev->waitTimeout(*time);
-//	Processor::msim_trace_on();
 
 	const Time current = Time::getCurrent();
 	
@@ -341,25 +334,23 @@ unative_t SyscallHandler::handleEventDestroy()
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleVMAAlloc()
 {
-	//the same as vma_alloc in api.h
-	Thread* thread = Thread::getCurrent();
+	void**  area_start     = (void**) CHECK_PTR_IN_USEG(m_params[0]);
+	size_t* size           = (size_t*)CHECK_PTR_IN_USEG(m_params[1]);
+	IVirtualMemoryMap* vmm = IVirtualMemoryMap::getCurrent().data();	
 
-	ASSERT (thread);
-	ASSERT (thread->getVMM());
+	ASSERT (vmm);
 
 	//round the size according to HW specifications
-	(*((size_t*)m_params[1])) = roundUp(*((size_t*)m_params[1]),Processor::pages[0].size);
+	*size = roundUp(*size, Processor::pages[Processor::PAGE_MIN].size);
 
-	return thread->getVMM()->allocate((void **)m_params[0], *((size_t*)m_params[1]),(unsigned int) m_params[2]);
+	return vmm->allocate(area_start, *size, m_params[2]);
 }
 /*----------------------------------------------------------------------------*/
 unative_t SyscallHandler::handleVMAFree()
 {
 	//the same as vma_free in api.h
-	Thread* thread = Thread::getCurrent();
+	IVirtualMemoryMap* vmm = IVirtualMemoryMap::getCurrent().data();
+	ASSERT (vmm);
 
-	ASSERT (thread);
-	ASSERT (thread->getVMM());
-
-	return thread->getVMM()->free((void *)m_params[0]);
+	return vmm->free((void *)m_params[0]);
 }
