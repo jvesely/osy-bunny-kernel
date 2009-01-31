@@ -60,6 +60,8 @@ public:
 	 */
 	BinaryNode( const T& data, Tree< BinaryNode<T> >* tree = NULL );
 
+	bool checkOK( Tree<Node>* tree );
+
 	/*!
 	 * @brief Correctly destroys Node.
 	 * If the Node was inserted in a tree is is removed from the tree before 
@@ -169,7 +171,22 @@ protected:
 /*----------------------------------------------------------------------------*/
 /* DEFINITIONS ---------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
+template <typename T>
+bool BinaryNode<T>::checkOK( Tree<Node>* tree )
+{
+	ASSERT (m_myTree == tree);
+	ASSERT (m_parent || treeRoot() == this);
+	ASSERT (!m_parent || (m_parent->m_left == this || m_parent->m_right == this) );
+	ASSERT (!m_next || m_next->m_previous == this);
+	ASSERT (!m_previous || m_previous->m_next == this);
+	ASSERT (!m_right || m_right->m_parent == this);
+	ASSERT (!m_left || m_left->m_parent == this);
 
+	return 
+		m_left ? m_left->checkOK( tree ): true &&
+		m_right ? m_right->checkOK( tree ): true;
+}
+/*----------------------------------------------------------------------------*/
 template <typename T>
 BinaryNode<T>::BinaryNode( const T& data, Tree< BinaryNode<T> >* tree )
 	: Node( (Tree< Node >*)tree ), m_data( data ),
@@ -190,6 +207,7 @@ template <typename T>
 bool BinaryNode<T>::subtreeInsert( BinaryNode* item )
 {
 	/* no duplicates */
+	ASSERT ( item );
 	ASSERT ( !(*item == *this) ); 
 	
 	if (*item < *this) {
@@ -199,12 +217,15 @@ bool BinaryNode<T>::subtreeInsert( BinaryNode* item )
 		
 		/* insert as my left son */
 		item->m_parent = this;
+		m_left = item;
+		
+		item->m_previous = m_previous;
+		
 		if (m_previous)
 			m_previous->m_next = item;
-		item->m_previous = m_previous;
 		m_previous = item;
 		item->m_next = this;
-		m_left = item;
+		
 		item->m_myTree = this->m_myTree;
 		treeCount() += 1;
 		return true;
@@ -215,14 +236,14 @@ bool BinaryNode<T>::subtreeInsert( BinaryNode* item )
 		if (m_right)
 			return m_right->subtreeInsert( item );
 
-		/* insert as my rigt son */
+		/* insert as my right son */
 		item->m_parent = this;
+		m_right = item;
+		item->m_next = m_next;
 		if (m_next)
 			m_next->m_previous = item;
-		item->m_next = m_next;
 		m_next = item;
 		item->m_previous = this;
-		m_right = item;
 		item->m_myTree = m_myTree;
 		treeCount() += 1;
 		return true;
@@ -274,10 +295,12 @@ void BinaryNode<T>::removeFromTree()
 	ASSERT (!m_left || !m_right);
 
 	/* this is my only son */
-	BinaryNode<T>* son = m_left ? m_left : m_right;
+	BinaryNode<T>* only_son = (BinaryNode<T>*)((uintptr_t)m_left | (uintptr_t)m_right);
 
-	if (son)
-		son->m_parent = m_parent;
+	ASSERT (only_son == m_left || only_son == m_right);
+
+	if (only_son)
+		only_son->m_parent = m_parent;
 
 	/* take out of the sorted chain */
 	if (m_previous)
@@ -289,22 +312,20 @@ void BinaryNode<T>::removeFromTree()
 
 	/* I am root */
 	if (!m_parent) {
-		treeRoot() = son; // place new root
-		m_left = m_right = m_parent = m_next = m_previous =  NULL;
-		return;
-	}
-
-	/* Let my son take my place */
-	if (isLeftSon()) {
-		m_parent->m_left = son;
+		treeRoot() = only_son; // place new root
 	} else {
-		m_parent->m_right = son;
+		/* Let my son take my place */
+		if (isLeftSon()) {
+			m_parent->m_left = only_son;
+		} else {
+			m_parent->m_right = only_son;
+		}
 	}
 
 	m_left = m_right = m_parent = m_next = m_previous = NULL;
 	treeCount() -= 1;
+	m_myTree = NULL;
 	return;
-
 }
 /*----------------------------------------------------------------------------*/
 template <typename T>
@@ -338,7 +359,8 @@ void BinaryNode<T>::rotateLeft()
 
 	/* Son Becomes parent */
 	m_parent = m_left;
-	m_left = m_parent->m_right;
+	m_left = m_left->m_right;
+	if (m_left) m_left->m_parent = this;
 	m_parent->m_right = this;
 }
 /*----------------------------------------------------------------------------*/
@@ -361,8 +383,8 @@ void BinaryNode<T>::rotateRight()
 	/* Son becomes parent */
 	m_parent = m_right;
 	m_right = m_parent->m_left;
+	if (m_right) m_right->m_parent = this;
 	m_parent->m_left = this;
-
 }
 /*----------------------------------------------------------------------------*/
 template <typename T>

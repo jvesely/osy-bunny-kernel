@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id: Object.h 387 2008-12-12 19:26:23Z vesely $
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -46,17 +46,18 @@ public:
 	Object():m_refCount( 0 ){};
 
 	/*! @brief just checks the count. */
-	virtual ~Object() { ASSERT(m_refCount == 0); }
+	virtual ~Object() { ASSERT (m_refCount == 0); }
 
 	/*! @brief Increases reference count. */
 	inline uint incCount() { return ++m_refCount; };
+		
 	/*! @brief Decreases reference count, deletes object if it reaches 0. */
 	inline uint decCount() { return (--m_refCount) ? m_refCount : (delete this, 0); };
 
 protected:
-	/*! @brief New instance new count. */
+	/*! @brief New instance, new count. */
 	Object( const Object& other) { m_refCount = 0; }
 
 private:
-	uint m_refCount;   /*!< @brief Reference count */
+	uint m_refCount;   /*!< @brief Reference count. */
 };

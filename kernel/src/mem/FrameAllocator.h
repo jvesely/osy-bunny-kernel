@@ -48,7 +48,7 @@
 #include "types.h"
 #include "cpp.h"
 #include "tools.h"
-#include "../../common/address.h"
+#include "address.h"
 #include "flags.h"
 #include "InterruptDisabler.h"
 #include "Singleton.h"

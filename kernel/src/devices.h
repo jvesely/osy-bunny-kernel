@@ -27,20 +27,31 @@
  * @file 
  * @brief Device addresses.
  *
- * Device addreses are defined here in one place.
+ * Device addresses and interrupts are defined in this place.
  */
 
 #pragma once
 #include "types.h"
 
-#define DEVICES_MAP_START 0xFFFFFFF0
+#define DEVICES_MAP_START 0xFFFFFF00
+
+#define TIMER_INTERRUPT 7
 
 /*! simple character output */
 #define CHARACTER_OUTPUT_ADDRESS (char*)(0xFFFFFFF0)
 
 /*! keyboard */
-#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFF4)
-#define CHARACTER_INPUT_INTERUPT 1
+#define CHARACTER_INPUT_ADDRESS (char*)(0xFFFFFFE0)
+#define CHARACTER_INPUT_INTERRUPT 1
 
 /*! rtc */
-#define CLOCK (uint32_t*)(0xFFFFFFF8)
+#define CLOCK (unative_t*)(0xFFFFFFD0)
+
+/*! hdd */
+#define HDD0_ADDRESS    (unative_t*)(0xffffffc0)
+#define HDD0_INTERRUPT    2
+
+/*! dorder */
+#define DORDER_ADDRESS (unative_t*)(0xFFFFFFB0)
+#define DORDER_INTERRUPT 3
+

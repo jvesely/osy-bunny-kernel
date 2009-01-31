@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id: header.tmpl 41 2008-10-26 18:00:14Z vesely $
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -25,7 +25,7 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Timer class implementation.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
  * It would stay that way. Not that this comment is by any means ingenious but 
@@ -35,6 +35,8 @@
 #include "Timer.h"
 #include "Kernel.h"
 #include "InterruptDisabler.h"
+#include "proc/Thread.h"
+#include "proc/Scheduler.h"
 
 //#define TIMER_DEBUG
 
@@ -51,45 +53,41 @@ void Timer::plan(Thread* thread, const Time& time)
 {
 	ASSERT (thread);
 	
-	/* Mangling with shared structure that can be used during interupts
-	 * requires posptoning them
-	 */
+	/* Mangling with shared structure. */
 	InterruptDisabler inter;
 
-	/* It is higly probable that this thread was already planned so 
-	 * we'd better remove it first.
-	 */
-	//thread->removeFromHeap();
-
-	/* Convert relative time to abslute and insert into time heap. */
-	Time now = Time::getCurrent();
-	Time planned = (now + time);
+	/* Convert relative time to absolute and insert into time heap. */
+	const Time now = Time::getCurrent();
+	const Time planned = (now + time);
 	
-	PRINT_DEBUG ("----------PLANNING Time: %u:%u ----------------\n", now.secs(), now.usecs());
-	PRINT_DEBUG ("Pending events: %u and planning thread %p for the time: %u,%u.\n",
+	PRINT_DEBUG ("----------PLANNING Time: %u:%u ----------------\n",
+		now.secs(), now.usecs());
+	PRINT_DEBUG ("Pending events: %u, planning thread %p for the time: %u,%u.\n",
 		m_heap.size(), thread->id(), planned.secs(), planned.usecs());
 
 	thread->insertIntoHeap(&m_heap, planned);
 
-	/* if the newest event is sooner than the former it is needed to replan interupts */
-	if ( thread == static_cast<Thread*>(m_heap.topItem()) ) {
-		PRINT_DEBUG ("Replanning interupt to time: %u:%u.\n", thread->key().secs(), thread->key().usecs());
-		Kernel::instance().setTimeInterrupt(thread->key());
+	/* if the newest event is sooner than the former 
+	 * it is needed to replan interupts 
+	 * we may safely use top() as there must be at least one 
+	 * (the inserted one) element
+	 */
+	if ( thread == m_heap.top() ) {
+		PRINT_DEBUG ("Replanning interupt to time: %u:%u.\n", 
+			thread->key().secs(), thread->key().usecs());
+
+		Kernel::instance().setTimeInterrupt( thread->key() );
 	}
 
-	PRINT_DEBUG ("Pending events: %u.\n", m_heap.size());
-	PRINT_DEBUG ("------------------PLANNING END--------------\n");
+	PRINT_DEBUG ("Pending events: %u.\n %s\n", 
+		m_heap.size(), "------------------PLANNING END--------------\n");
 }
 /*----------------------------------------------------------------------------*/
-void Timer::interupt()
+void Timer::handleInterrupt()
 {
-
 	InterruptDisabler interrupts;
 
-	/* We need to know about replanning as we need to do it as the last thing */
-	bool nextThread = false;
-
-	Time now = Time::getCurrent();
+	const Time now = Time::getCurrent();
 
 	PRINT_DEBUG ("===============INTERRUPT START==============\n");
 	PRINT_DEBUG ("Handling interupt in time %u, %u, pending events: %u.\n", 
@@ -97,7 +95,7 @@ void Timer::interupt()
 	
 	Thread * thr = NULL;
 
-	/* While there are events that are due execute them */
+	/* While there are events that are due, execute them */
 	while ( (thr = static_cast<Thread*>(m_heap.topItem())) && (thr->key() < now) )
 	{
 				
@@ -105,9 +103,10 @@ void Timer::interupt()
 
 		if ( thr->status() == Thread::RUNNING ) {
 			/* Current thread might have only requested recheduling */
+			ASSERT (thr == Thread::getCurrent());
 			PRINT_DEBUG ("Timer to replan thread %u.\n", thr->id());
-			nextThread = true;
 			thr->removeFromHeap();
+			Scheduler::instance().m_shouldSwitch = true;
 		} else {
 			/* Other thread might have only requested waking up */
 			ASSERT (thr->status() != Thread::READY);
@@ -119,15 +118,11 @@ void Timer::interupt()
 	/* Get the next event */
 	thr = static_cast<Thread*>(m_heap.topItem());
 
-	Time nextEvent = thr ? thr->key() : Time();
+	const Time nextEvent = thr ? thr->key() : Time();
 
 	PRINT_DEBUG ("Next event in %u,%u.\n", nextEvent.secs(), nextEvent.usecs());
+
 	Kernel::instance().setTimeInterrupt(nextEvent);
 
-	/* Rescheduling was requested */
-	if (nextThread) {
-		PRINT_DEBUG ("Thread switching was due.\n");
-		Thread::getCurrent()->yield();
-	}
 	PRINT_DEBUG ("=====================INTERRUPT END==================\n");
 }

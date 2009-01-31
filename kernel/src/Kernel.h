@@ -32,15 +32,26 @@
 #pragma once
 
 #include "Singleton.h"
+#include "ExceptionHandler.h"
+#include "SyscallHandler.h"
+#include "proc/Thread.h"
+#include "Time.h"
+
 #include "drivers/Console.h"
 #include "drivers/RTC.h"
-#include "mem/TLB.h"
-//#include "mem/Allocator.h"
-#include "mem/BasicMemoryAllocator.h"
-//#include "proc/Scheduler.h"
+#include "drivers/Processor.h"
+
+#include "structures/List.h"
+#include "VFS.h"
+
+extern void* first_thread(void*);
 
 /*! symbol specified in linker script */
 extern uint32_t _kernel_end;
+
+class DiskDevice;
+
+typedef List<DiskDevice*> DiskList;
 
 /*!
  * @class Kernel Kernel.h "Kernel.h"
@@ -48,7 +59,8 @@ extern uint32_t _kernel_end;
  *
  * Kernel will handle all stuff that kernel should :)
  */
-class Kernel:public Singleton<Kernel>
+class Kernel:
+public Singleton<Kernel>, public ExceptionHandler, public Thread
 {
 
 public:
@@ -59,7 +71,7 @@ public:
 	 * that needs initializing, except that which is already initialized and
 	 * schedules first thread.
 	 */
-	void run();
+	void run() __attribute__ ((noreturn));
 
 	/*!
 	 * @brief Gets current I/O device.
@@ -80,6 +92,8 @@ public:
 	inline size_t physicalMemorySize() const 
 		{ return m_physicalMemorySize; };
 
+	void kill() { halt(); };
+
 	/*! @brief Stops execution, returns control to msim. */
 	static inline void stop() { Processor::msim_stop(); };
 	
@@ -93,23 +107,20 @@ public:
 	static inline void block() 
 		{ Processor::save_and_disable_interrupts(); while(true) ;; };
 
-	/*! @brief Kernel heap alloc.
-	 * @param size requested size
-	 * @return adress to the block of given size, NULL on failure
-	 */
-	void* malloc( size_t size );// const;
-
-	/*! @brief Kernel heap free.
-	 * @param address adress of the returned block
-	 */
-	void free( const void* address );// const;
-
 	/*!
 	 * @brief Exception handling member function.
-	 * @param registers pointer to the stored registers at the time
+	 * @param registers Pointer to the stored registers at the time
 	 * when exception occured.
 	 */
-	void handle(Processor::Context* registers);
+	void exception( Processor::Context* registers );
+
+	/*! 
+	 * @brief Handler for exceptions that are handled directly by the kernel.
+	 */
+	bool handleException( Processor::Context* registers );
+
+	void registerExceptionHandler( 
+		ExceptionHandler* handler, Processor::Exceptions exception );
 
 	/*! @brief Sets interrupt on given time or sooner.
 	 * @param time Desired time of interrupt
@@ -117,50 +128,55 @@ public:
 	void setTimeInterrupt( const Time& time );
 
 	void refillTLB();
+	
+	/*! @brief Registers handler for the given interrupt.
+	 *	@param handler Run this handler when interrupt occurs.
+	 *	@param intn Associate with this interrupt.
+	 */
+	void registerInterruptHandler( InterruptHandler* handler, uint intn );
 
-	inline TLB& tlb() { return m_tlb; }
+	/*! @brief Gets the first disk. */
+	inline DiskDevice* disk() { return m_disks.getFront(); };
+
+	inline VFS* rootFS() { return m_rootFS; };
 
 private:
-	/*! @brief Prints requested number of BUNNIES */
-	void printBunnies( uint count );
+	Console m_console;                 /*!< Console device.        */
+	const RTC m_clock;                 /*!< Clock device.          */
+	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
+	uint m_timeToTicks;                /*!< Converting constant.   */
+	DiskList m_disks;									 /*!< Disks.                 */
+	VFS* m_rootFS;                     /*!< /.                     */
+	SyscallHandler m_syscalls;         /*!< Handles Syscalls.      */
+	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
 
-	/*! kernel heap manager */
-	BasicMemoryAllocator m_alloc;
-
-	/*! console device */
-	Console m_console;
-
-	/*! clock device */
-	const RTC m_clock;
-
-	/*! store memory size so it does not have to be detected again */
-	size_t m_physicalMemorySize;
-
-	/*! TLB managing */
-	TLB m_tlb;
-
-	/*! converting constant */
-	uint m_timeToTicks;
+	/*! Vector of the Interrupt handlers. */
+	InterruptHandler* m_interruptHandlers[Processor::INTERRUPT_COUNT]; 
 
 	/*! @brief Detects accessible memory.
 	 *
 	 * Detects accesible memory by moving mapping of the first MB.
 	 * @return size of detected memory.
 	 */
-	size_t getPhysicalMemorySize(uintptr_t from);
+	size_t getPhysicalMemorySize( uintptr_t from );
 
 	/*! @brief Interrupt hanling member function.
 	 * @param registers pointer to the stored registers at the time
 	 * when interrupt occured.
 	 */
-	void handleInterrupts(Processor::Context* registers);
+	void handleInterrupts( Processor::Context* registers );
 
+	void attachDisks();
+	
 	/*! @brief Initializes structures.
 	 *
-	 * Resets status register to turn on useg mapping.
-	 * Sets clock and console addresses.
+	 * Resets status register to turn on useg mapping. Sets clock and console 
+	 * addresses. Registers self as the interrupt handler for interrupts.
 	 */
 	Kernel();
 
-friend class Singleton<Kernel>;
+	friend class Singleton<Kernel>;
+	friend void* first_thread(void*);
 };
+
+#define KERNEL Kernel::instance()

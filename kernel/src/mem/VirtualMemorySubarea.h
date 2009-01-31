@@ -48,25 +48,20 @@
 class VirtualMemorySubarea : public ListInsertable<VirtualMemorySubarea>
 {
 public:
-	VirtualMemorySubarea(const void* physicalAddress, const size_t frameSize, const size_t frameCount)
+	VirtualMemorySubarea(const void* physicalAddress, 
+		const Processor::PageSize frameSize, const size_t frameCount)
 		: m_physicalAddress(physicalAddress), m_frameSize(frameSize), m_frameCount(frameCount)
-	{
-		printf("VMSubA constructed\n");
-	}
-
-	~VirtualMemorySubarea() {
-		printf("VMSubA destructed\n");
-	}
+	{}
 
 	inline size_t size() const;
-	inline size_t frameSize() const;
+	inline Processor::PageSize frameSize() const;
 	inline void* address(size_t index) const;
 
 	inline void free();
 
 private:
 	const void* m_physicalAddress;
-	size_t m_frameSize;
+	Processor::PageSize m_frameSize;
 	size_t m_frameCount;
 
 };
@@ -75,12 +70,12 @@ private:
 
 inline size_t VirtualMemorySubarea::size() const
 {
-	return m_frameSize * m_frameCount;
+	return Processor::pages[m_frameSize].size * m_frameCount;
 }
 
 /* --------------------------------------------------------------------- */
 
-inline size_t VirtualMemorySubarea::frameSize() const
+inline Processor::PageSize VirtualMemorySubarea::frameSize() const
 {
 	return m_frameSize;
 }
@@ -89,7 +84,7 @@ inline size_t VirtualMemorySubarea::frameSize() const
 
 inline void* VirtualMemorySubarea::address(size_t index) const
 {
-	return (void *)((size_t)m_physicalAddress + (index * m_frameSize));
+	return (void *)((size_t)m_physicalAddress + (index * Processor::pages[m_frameSize].size));
 }
 
 /* --------------------------------------------------------------------- */
@@ -97,7 +92,7 @@ inline void* VirtualMemorySubarea::address(size_t index) const
 inline void VirtualMemorySubarea::free()
 {
 	// free the physical memory
-	MyFrameAllocator::instance().frameFree(m_physicalAddress, m_frameCount, m_frameSize);
+	MyFrameAllocator::instance().frameFree(m_physicalAddress, m_frameCount, 
+		Processor::pages[m_frameSize].size);
 }
-
 

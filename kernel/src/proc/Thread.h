@@ -32,15 +32,14 @@
  */
 #pragma once
 
-#include "api.h"
 #include "structures/ListInsertable.h"
 #include "structures/HeapInsertable.h"
-#include "timer/Time.h"
-#include "mem/VirtualMemory.h"
+#include "Time.h"
+#include "mem/IVirtualMemoryMap.h"
 #include "Pointer.h"
 
-template class Pointer<VirtualMemory>;
-
+template class Pointer<IVirtualMemoryMap>;
+class Process;
 
 #define THREAD_HEAP_CHILDREN 4
 
@@ -87,16 +86,18 @@ public:
 	 */
 	static Thread* fromId( thread_t );
 
+	static bool shouldSwitch();
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
 	 * Construction involves allocating stack and preparing context.
-	 * If successfull thread's status will be INITIALIZED, if someting went 
+	 * If successfull thread's status will be INITIALIZED, if something went 
 	 * wrong it will be UNITIALIZED.
 	 * @param flags Thread flags -- ingored
 	 * @param stackSize size of requested stack
 	 */
-	Thread(	unative_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE);
+	Thread(	uint stackSize = DEFAULT_STACK_SIZE );
 
 	/*! @enum Status
 	 * @brief Possible states of threads
@@ -109,13 +110,16 @@ public:
 	virtual ~Thread();
 
 	/*! @brief This will be run in the separate thread, includes some management */
-	virtual void run() = 0;
+	virtual void run() __attribute__ ((noreturn)) = 0;
 
 	/*! Suspend thread for the given time, no status is set */
 	void alarm( const Time& alarm_time );
 
-	/*! @brief new thread entry point */
+	/*! @brief New thread entry point. */
 	void start() { run(); };
+
+	/*! @brief Process I belong to. */
+	Process* process() { return m_process; };
 
 	/*! @brief Rescheduling member function.
 	 *
@@ -124,7 +128,7 @@ public:
 	 */
 	void switchTo();
 
-	/*! @brief Wrapper to Scheduler yield, surrenders processing time. */
+	/*! @brief Stops execution of the current thread and switches to the next. */
 	void yield();
 
 	/*! @brief Puts Thread back into the running queue */
@@ -136,7 +140,9 @@ public:
 	/*! @brief Takes the thread off the queue, and if it was detached 
 	 * deletes it on the spot.
 	 */
-	void kill();
+	virtual void kill();
+
+	void exit( void* retval );
 
 	/*! @brief Detached getter
 	 * @return detached state
@@ -168,15 +174,7 @@ public:
 	 * @retval EOK this thread was suspended and successfully awoken on 
 	 * others ending
 	 */
-	int join( Thread* other, bool timed = false );
-
-	/*! @brief Timed version of join.
-	 *
-	 * If the thread other is still running after timeout.
-	 * @return is same as join adding ETIMEDOUT, if the time is up and other
-	 * thread is still running.
-	 */
-	int joinTimeout( Thread* other, const uint usec );
+	int join( Thread* other, void ** retval, bool timed = false, const Time& wait_time = Time() );
 
 	/*! @brief Removes thread from the scheduling queue */
 	void block();
@@ -199,18 +197,15 @@ public:
 	 */
 	inline void setStatus( Status status ) { m_status = status; };
 	
-	/*! @brief Prepares stack and sets status to initialized. */
-	Thread();
-
 	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
-/*
-	inline Pointer<IVirtualMemoryMap> createVMM()
-		{ ASSERT (!m_virtualMap); return (m_virtualMap = new VirtualMemory()); }
-*/
+
 protected:
-	void* m_stack;	                           /*!< that's my stack           */
-	void* m_stackTop;                          /*!< top of my stack           */
-	unsigned int m_stackSize;                  /*!< size of my stack          */
+	void* m_stack;	                           /*!< that's my stack            */
+	void* m_stackTop;                          /*!< top of my stack            */
+	void* m_otherStackTop;
+	void* m_ret;
+	unsigned int m_stackSize;                  /*!< size of my stack           */
+	Process*  m_process;                       /*!< my process                 */
 
 	bool m_detached;                           /*!< detached flag              */
 	Status m_status;                           /*!< my status                  */
@@ -219,8 +214,8 @@ protected:
 	Pointer<IVirtualMemoryMap> m_virtualMap;   /*!< @brief Virtual Memory Map. */
 
 private:
-	Thread(const Thread& other);                  /*!< no copying   */
-	const Thread& operator=(const Thread& other); /*!< no assigning */
+	Thread( const Thread& other );              /*!< no copying   */
+	Thread& operator = ( const Thread& other ); /*!< no assigning */
 
 };
 

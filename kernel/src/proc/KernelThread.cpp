@@ -31,12 +31,12 @@
  */
 
 #include "KernelThread.h"
-#include "Kernel.h"
 #include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "api.h"
 #include "timer/Timer.h"
+#include "mem/VirtualMemory.h"
 
 //#define KERNEL_THREAD_DEBUG
 
@@ -53,7 +53,7 @@ void KernelThread::run()
 {
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
 	
-	m_runFunc(m_runData);
+	m_runFunc( m_runData );
 	
 	m_status = FINISHED;
 	PRINT_DEBUG ("Finished thread %u.\n", m_id);
@@ -73,31 +73,32 @@ void KernelThread::run()
 /*----------------------------------------------------------------------------*/
 KernelThread::KernelThread( void* (*thread_start)(void*), void* data, 
 	unative_t flags, uint stackSize ):
-	Thread(flags, stackSize), m_runFunc(thread_start), m_runData(data)
+	Thread( stackSize ), m_runFunc( thread_start ), m_runData( data )
 {
 	if (flags & TF_NEW_VMM) {
 		m_virtualMap = new VirtualMemory;
 		if (!m_virtualMap) this->m_status = Thread::UNINITIALIZED;
-		PRINT_DEBUG ("Creating new Virtual Memory Map %d.\n",(bool)m_virtualMap );
+		PRINT_DEBUG ("Creating new Virtual Memory Map %d.\n", (bool)m_virtualMap);
 	} else {
-		KernelThread * creator = (KernelThread*)Thread::getCurrent();
+		Thread* creator = Thread::getCurrent();
 		if (creator) {
-			m_virtualMap = creator->m_virtualMap;
-			PRINT_DEBUG ("Using creators(%u) Virtual Memory Map.\n", creator->id());		
+			m_virtualMap = creator->getVMM();
+			PRINT_DEBUG ("Using creators(%u) Virtual Memory Map.\n", creator->id());
 		}
+		m_status = INITIALIZED;
 	}
 }
 /*----------------------------------------------------------------------------*/
 Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags )
 {
-	Thread* new_thread = new KernelThread(thread_start, thread_data, thread_flags);
+	Thread* new_thread = new KernelThread( thread_start, thread_data, thread_flags );
 
 	if ( (new_thread == NULL) || (new_thread->status() != INITIALIZED) ) {
 		delete new_thread;
 		return NULL;
 	}
 	
-	*thread_ptr = Scheduler::instance().getId(new_thread);
+	*thread_ptr = SCHEDULER.getId(new_thread);
 	if (!(*thread_ptr)) { //id space allocation failed
 		delete new_thread;
 		return NULL;

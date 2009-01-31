@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id: header.tmpl 41 2008-10-26 18:00:14Z vesely $
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -33,10 +33,12 @@
 #pragma once
 
 #include "structures/Heap.h"
-#include "proc/Thread.h"
 #include "Singleton.h"
-#include "timer/Time.h"
+#include "Time.h"
+#include "drivers/InterruptHandler.h"
+#include "proc/Thread.h"
 
+typedef Heap<Thread*, THREAD_HEAP_CHILDREN> ThreadHeap;
 
 /*! class Timer Timer.h "timer/Timer.h"
  * @brief Timer class keeps truck of sleeping threads that wish to be awaken 
@@ -46,7 +48,7 @@
  * to add an event to the event heap. Interupt signals that some events might
  * be due. Future interupts are planned using timer interrupts.
  */
-class Timer: public Singleton<Timer>
+class Timer:public InterruptHandler, public Singleton<Timer>
 {
 public:
 	/*! @brief Adds thread that wish to be waken on given time to the event heap.
@@ -62,9 +64,9 @@ public:
 	 *		RUNNING threads are switched (at the end of processing)
 	 *		other threads are enqueued to the running queue.
 	 */
-	void interupt();
+	void handleInterrupt();
 
 private:
 	/*! @brief Event heap */
-	Heap<Thread*, THREAD_HEAP_CHILDREN> m_heap;
+	ThreadHeap m_heap;
 };

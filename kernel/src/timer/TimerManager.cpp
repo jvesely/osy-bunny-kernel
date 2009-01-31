@@ -36,7 +36,7 @@
 
 //------------------------------------------------------------------------------
 TimerManager::TimerManager():
-		Thread( 0, Thread::DEFAULT_STACK_SIZE ),
+		Thread(),
 		m_mySemaphore( 0 )
 {
 	//printk( "TimerManager ctor\n" );//debug

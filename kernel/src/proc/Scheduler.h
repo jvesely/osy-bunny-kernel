@@ -32,10 +32,8 @@
 #pragma once
 
 #include "Singleton.h"
-#include "KernelThread.h"
-#include "IdleThread.h"
-#include "structures/List.h"
 #include "structures/HashMap.h"
+#include "structures/List.h"
 
 /*! @class Scheduler Scheduler.h "proc/Scheduler.h"
  * @brief Stores and handles active threads.
@@ -43,15 +41,23 @@
  * Stores active thread and decides who is next to run.
  */
 
+class Thread;
+class KernelThread;
+class UserThread;
+class Timer;
+
 typedef HashMap<thread_t, Thread*> ThreadMap; 
+typedef List<Thread*> ThreadList;
 
 class Scheduler: public Singleton<Scheduler>
 {
+public:
 //	static const Time DEFAULT_QUANTUM;
 
-	/*! @brief Converts identifier to pointer 
-	 * @param thread id to be converted
-	 * @return pointer to Thread class, NULL on failure
+	/*! @brief Translates identifier to pointer.
+	 * @param thread identifier to translate.
+	 * @retval Pointer to Thread class.
+	 * @retval NULL if no thread with such an id exists.
 	 */
 	Thread* thread( thread_t thread )
 		{ return m_threadMap.exists( thread ) ? m_threadMap.at( thread ) : NULL; };
@@ -68,6 +74,7 @@ class Scheduler: public Singleton<Scheduler>
 	inline void returnId( thread_t id )
 		{ m_threadMap.erase( id ); };
 
+private:
 	/*! @brief Removes thread from scheduling queue (ONLY). */
 	void dequeue( Thread* thread );
 	
@@ -75,7 +82,6 @@ class Scheduler: public Singleton<Scheduler>
 	 * @note If IdleThread was running context is switched to the enqueued thread.
 	 */
 	void enqueue( Thread* thread );
-
 	
 	/*! @brief Gets pointer to current thread.
 	 * @return Pointer to structure representing running thread.
@@ -98,20 +104,23 @@ class Scheduler: public Singleton<Scheduler>
 	Thread* m_currentThread;
 
 	/*! Thread id generating helper. Increases avery time thread is added. */
-	thread_t m_nextThread;
-
-	/*! Number of active threads */
-	uint m_threadCount;
+	thread_t m_nextThreadId;
 
 	/*! @brief Thread that runs when no one else will. */
-	IdleThread* m_idle;
+	Thread* m_idle;
 	
+	/*! @brief Remember if switching is due. */
+	bool m_shouldSwitch;
+
 	/*! @brief Just sets current thread to NULL, creates Idle thread */
 	Scheduler();
 	
 	friend class Singleton<Scheduler>;
 	friend class Thread;
-	friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
+	friend class UserThread;
+	friend class KernelThread;
+	friend class Timer;
+	//friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
 
 };
-
+#define SCHEDULER Scheduler::instance()

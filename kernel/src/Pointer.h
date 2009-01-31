@@ -15,7 +15,7 @@
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
  *   
- *   @version $Id: Pointer.h 386 2008-12-12 19:02:55Z vesely $
+ *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
@@ -52,12 +52,14 @@ public:
 		{ if ((m_obj = other.m_obj)) m_obj->incCount(); }
 
 	/*! @brief Correctly destroys pointer. */
-	inline ~Pointer() { releaseObj(); }
+	virtual ~Pointer() { releaseObj(); }
 
+	inline const T* data() const { return m_obj; }
+		
 	inline T* data() { return m_obj; }
 
 	/*! @brief Assigns instance to guard. */
-	inline Pointer<T>& operator = ( T * other_obj )
+	inline Pointer<T>& operator = ( T* other_obj )
 	{
 		if (m_obj != other_obj) {
 			releaseObj();
@@ -67,7 +69,7 @@ public:
 	}
 
 	/*! @brief Standard opertor, keeps count */
-	inline Pointer<T>& operator = ( Pointer<T>& other )
+	inline Pointer<T>& operator = ( const Pointer<T>& other )
 	{ 
 		if (m_obj != other.m_obj) {
 			releaseObj();

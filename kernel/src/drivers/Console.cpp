@@ -30,7 +30,7 @@
  */
 
 #include "Console.h"
-#include "Kernel.h"
+#include "proc/Thread.h"
 
 //#define CONSOLE_DEBUG
 
@@ -85,7 +85,7 @@ ssize_t Console::readString(char* str, const size_t len)
 	return c - str;
 }
 /*----------------------------------------------------------------------------*/
-void Console::interrupt()
+void Console::handleInterrupt()
 {
 	/* read character */
 	insert();

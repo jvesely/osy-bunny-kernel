@@ -1,38 +1,18 @@
 #
 # Loader creation makefile
 #
-
-CC = mipsel-linux-gnu-gcc
-OBJCOPY = mipsel-linux-gnu-objcopy
-LD = mipsel-linux-gnu-ld
-
-CFLAGS = -O2 -fno-optimize-sibling-calls -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -fno-rtti -fno-threadsafe-statics
-
-ASFLAGS = -march=r4000 -mabi=32 -mgp32 -msoft-float -mlong32 -G 0 -mno-abicalls -fno-pic -fno-builtin -ffreestanding -nostdlib -nostdinc -pipe -Wall -Wextra -Werror -Wno-unused-parameter -Wmissing-prototypes -g3 -std=gnu99 -I. -D__ASM__
-
-LDFLAGS = -G 0 -static -g
-
-### Colours ###
-COL_BLACK = \033[01;30m
-COL_GREEN = \033[01;32m
-COL_BLUE = \033[01;34m
-COL_RED = \033[01;31m
-COL_YELLOW = \033[01;33m
-COL_VIOLET = \033[01;35m
-COL_CYAN = \033[01;36m
-COL_WHITE = \033[01;37m
-COL_END = \033[0m
+include ../Makefile.inc
 
 ### Dirs ###
 BIN_DIR = bin
 OBJ_DIR = obj
 SRC_DIR = src
-COMMON_DIR = ../common
+COMMON_DIR = ../shared
 
 ### Files ###
 
 VPATH = $(shell find src -type d )
-VPATH += ../common
+VPATH += COMMON_DIR
 
 LOADER_BIN = loader.bin
 LOADER_RAW = loader.raw

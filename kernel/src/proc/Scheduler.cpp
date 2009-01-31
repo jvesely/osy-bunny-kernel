@@ -31,10 +31,9 @@
  */
 
 #include "Scheduler.h"
-#include "Kernel.h"
-#include "KernelThread.h"
+#include "Thread.h"
 #include "InterruptDisabler.h"
-#include "timer/Timer.h"
+#include "Kernel.h"
 
 //#define SCHEDULER_DEBUG
 
@@ -51,8 +50,8 @@
 Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 {
 	/* create idle thread */
-	m_idle = new IdleThread();
-	
+	m_idle = &KERNEL; //new IdleThread();
+	m_currentThread = &KERNEL;
 	/* reserve thread_t 0 to be out of the reach for other threads */
 	m_threadMap.insert(0, NULL);
 
@@ -63,23 +62,25 @@ Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
 thread_t Scheduler::getId( Thread* newThread )
 {
 	/* there has to be free id becasue if all were occupied, than
-	 * the system would have thread at every byt of adressable memory,
+	 * the system would have thread at every byte of adressable memory,
 	 * but the next variable and the parameter take up 8 bytes 
-	 * (and even more is used by the rest of the kernel), there must be a free id
+	 * (and even more is used by the rest of the kernel), 
+	 * thus there must be a free id
 	 */
-	thread_t id = m_nextThread++;
+	thread_t id = m_nextThreadId++;
 
 	/* if it is taken repeat */
-	while (m_threadMap.insert(id, newThread) == EINVAL) {
+	int result;
+	while ( !id || (result = m_threadMap.insert(id, newThread)) == EINVAL) {
 		PRINT_DEBUG("ID %u already in use getting new one.\n", id);
-		id = m_nextThread++;
+		id = m_nextThreadId++;
 	}
+
+	if (result == ENOMEM)
+		return 0;
 
 	/* set the id to the thread */
 	newThread->setId(id);
-
-	/* count this thread as active */
-	++m_threadCount;
 
 	return id;
 }
@@ -89,19 +90,12 @@ Thread* Scheduler::nextThread()
 	/* disable interrupts, when mangling with scheduling queue */
   InterruptDisabler interrupts;
 
-	if (m_activeThreadList.size() == 0 && m_threadCount > 0) {
+	if (m_activeThreadList.empty()) {
 		/* nothing to run but there arees till threads present */
 		PRINT_DEBUG ("Next thread will be the idle thread.\n");
 		return m_idle;
 	}
 
-	if (m_threadCount == 0) {
-			/* Only timerManager might be running */
-			ASSERT (m_activeThreadList.size() <= 1);
-			PRINT_DEBUG ("No more threads to run.\n");
-			return NULL;
-	}
-	
 	/* if the running thread is not the first thread in the list 
 	 * (is not in the list at all), then skip rotating and just plan
 	 * the first thread.
@@ -115,7 +109,7 @@ Thread* Scheduler::nextThread()
 	}
 }
 /*----------------------------------------------------------------------------*/
-void Scheduler::enqueue(Thread * thread)
+void Scheduler::enqueue( Thread* thread )
 {
 	/* disable interupts as all sheduling queue mangling functions */
 	InterruptDisabler interrupts;
@@ -132,26 +126,19 @@ void Scheduler::enqueue(Thread * thread)
 	/* if the idle thread is running and other thread became ready,
 	 * idle thread is planned for switch as soon as possible
 	 */
-	if (m_currentThread == m_idle && m_activeThreadList.size() == 1) {
+	if (m_currentThread == m_idle) {
 		PRINT_DEBUG("Ending IDLE thread reign.\n");
-		thread->switchTo();
+		m_shouldSwitch = true;
 	}
 	
 }
 /*----------------------------------------------------------------------------*/
-void Scheduler::dequeue(Thread* thread)
+void Scheduler::dequeue( Thread* thread )
 {
 	/* queue mangling needs interupts disabled */
 	InterruptDisabler interrupts;
 
 	thread->remove();
-	PRINT_DEBUG("Removing thread %u.\n", thread->id());
-
-	/* Decrease active threa count if it is never to be run again */
-	if ( (thread->status() == Thread::KILLED)
-		|| (thread->status() == Thread::FINISHED) ) {
-		PRINT_DEBUG("Decreasing thread count.\n");
-		--m_threadCount;
-	}
+	PRINT_DEBUG("Dequeuing thread %u.\n", thread->id());
 }
 /*----------------------------------------------------------------------------*/

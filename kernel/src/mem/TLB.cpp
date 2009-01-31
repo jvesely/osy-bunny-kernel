@@ -33,6 +33,8 @@
 #include "TLB.h"
 #include "api.h"
 #include "InterruptDisabler.h"
+#include "tools.h"
+#include "mem/IVirtualMemoryMap.h"
 
 //#define TLB_DEBUG
 
@@ -40,7 +42,7 @@
 #define PRINT_DEBUG(...)
 #else
 #define PRINT_DEBUG(ARGS...) \
-  printf("[ TLB_DEBUG ]: "); \
+  printf("[ TLB DEBUG ]: "); \
   printf(ARGS);
 #endif
 
@@ -48,8 +50,26 @@
 Processor::PageSize TLB::suggestPageSize(
 	size_t chunk_size, uint prefer_size, uint prefer_entries )
 {
+	PRINT_DEBUG ("Analyzing %u B memory chunk.\n", chunk_size);
 	using namespace Processor;
-	return PAGE_4K;
+	uint min_res = -1;
+	PageSize victor = PAGE_MIN;
+	for (PageSize page = PAGE_MIN; ; ++page)
+	{
+		size_t aligned = roundUp(chunk_size, pages[page].size);
+		uint loss = ( (aligned - chunk_size) * 100) / aligned;
+		uint count = (aligned / pages[page].size) ;
+		uint result = loss * prefer_size + count * prefer_entries;
+		PRINT_DEBUG ("%u: %u => %u (%u,%u) %u.\n",
+			pages[page].size, chunk_size, aligned, loss, count, result);
+		if (result < min_res) {
+			min_res = result;
+			victor = page;
+		}
+		if (page == PAGE_MAX) break;
+	}
+	PRINT_DEBUG ("Suggest pages of size: %u.\n", pages[victor].size);
+	return victor;
 }
 /*----------------------------------------------------------------------------*/
 TLB::TLB()
@@ -99,7 +119,9 @@ void TLB::clearAsid( const byte asid )
 
 	using namespace Processor;
 
-  for (uint i = 0; i < ENTRY_COUNT; ++i) {
+	native_t old_asid = reg_read_entryhi();
+  
+	for (uint i = 0; i < ENTRY_COUNT; ++i) {
     reg_write_index( i );
 		TLB_read();	
 		if ((reg_read_entryhi() & ASID_MASK) == asid) {
@@ -109,7 +131,14 @@ void TLB::clearAsid( const byte asid )
 			reg_write_entrylo1( 0 );
     	TLB_write_index();
 		}
-  }	
+  }
+	reg_write_entryhi( old_asid );
+}
+/*----------------------------------------------------------------------------*/
+void TLB::switchAsid( byte asid )
+{
+	PRINT_DEBUG ("Switching ASID to %u.\n", asid);
+	Processor::reg_write_entryhi( asid & Processor::ASID_MASK );
 }
 /*----------------------------------------------------------------------------*/
 void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Processor::PageSize page_size )
@@ -124,11 +153,11 @@ void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Pro
 	unative_t page        = addrToPage( virtual_address,  page_size);
 	unative_t frame       = addrToPage( physical_address, page_size);
 
-	reg_write_entryhi (((page << VPN2_SHIFT) & VPN2_MASK) | 0xff); // set address, ASID = 0xff
+	reg_write_entryhi (pageToVPN2( page, 0xff )); // set address, ASID = 0xff
 
 
-	unative_t reg_addr_value =
-		((frame << PFN_SHIFT) & PFN_ADDR_MASK) | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | ENTRY_LO_GLOBAL_MASK;
+	unative_t reg_addr_value = 
+		frameToPFN( frame, ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | ENTRY_LO_GLOBAL_MASK );
 	
 	if ( isEven(page, page_size) ) {
 		reg_write_entrylo0( ENTRY_LO_GLOBAL_MASK );
@@ -158,7 +187,7 @@ byte TLB::getAsid( IVirtualMemoryMap* map )
 		m_asidMap[new_asid]->setAsid( 0 );
 		clearAsid( new_asid );
 	}
-	PRINT_DEBUG ("Selected ASID: %d.\n", new_asid);
+	PRINT_DEBUG ("VMM: %p got ASID: %d.\n", map, new_asid);
 	m_asidMap[new_asid] = map;
 	map->setAsid( new_asid );
 	
@@ -174,98 +203,126 @@ void TLB::returnAsid( const byte asid )
 	m_asidMap[asid] = NULL;
 }
 /*----------------------------------------------------------------------------*/
+bool  TLB::handleException( Processor::Context* registers )
+{
+	return refill( IVirtualMemoryMap::getCurrent().data(), registers->badva );
+}
+/*----------------------------------------------------------------------------*/
 void TLB::setMapping(
-	const uintptr_t virtAddr,	
-	const uintptr_t physAddr,	
-	const Processor::PageSize pageSize,
-	const byte asid,
-	bool global
+	const uintptr_t virtAddr,	const uintptr_t physAddr,
+	const Processor::PageSize pageSize,	const byte asid, const bool global
 	) 
 {
 	using namespace Processor;
 
-	unative_t page        = addrToPage( virtAddr, pageSize);
-	unative_t frame       = addrToPage( physAddr, pageSize);
-	unative_t page_mask   = pages[pageSize].mask << PAGE_MASK_SHIFT;
-	unative_t global_flag = global ? ENTRY_LO_GLOBAL_MASK : 0;
+	const unative_t page        = addrToPage( virtAddr, pageSize);
+	const unative_t frame       = addrToPage( physAddr, pageSize);
+	const unative_t page_mask   = pages[pageSize].mask << PAGE_MASK_SHIFT;
+	const unative_t global_flag = global ? ENTRY_LO_GLOBAL_MASK : 0;
 
-	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
-		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
-	reg_write_pagemask (page_mask); //set the right pageSize
+	const unative_t old_asid    = reg_read_entryhi();
 
-	reg_write_entrylo0( global_flag );
-	reg_write_entrylo1( global_flag );
+//	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
+//		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
 
-	reg_write_entryhi( ((page << VPN2_SHIFT) & VPN2_MASK) | asid ); // set address, ASID = asid
+	reg_write_pagemask (page_mask);                //set the right pageSize
+	reg_write_entrylo0( global_flag );             //set global if necessary
+	reg_write_entrylo1( global_flag );             //set global if necessary
+	reg_write_entryhi( pageToVPN2( page, asid ) ); // set address, ASID = asid
 
 	/* try find mapping */
 	TLB_probe();
 
 	/* read found position or any other if it was not found */
-	const native_t index = reg_read_index();
-
-	/* check the hit */
-	const bool hit = !(index & PROBE_FAILURE);
-	
+	const bool hit = !(reg_read_index() & PROBE_FAILURE);
 
 	if (hit) {
 		/* there is such entry */
 		TLB_read();
-		if (reg_read_pagemask() != (unative_t)pageSize){
+		if (reg_read_pagemask() != pages[pageSize].mask){
 			/* page size mismatch =>  invalidate */
 			reg_write_entrylo0( global_flag );
 			reg_write_entrylo1( global_flag );
 			/* set the right pageSize */
-			reg_write_pagemask (page_mask); 
+			reg_write_pagemask( page_mask ); 
 		}
 	} 
 
 	/* construct PFN from given address */
 	const unative_t reg_addr_value = 
-		((frame << PFN_SHIFT) & PFN_ADDR_MASK) | ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | global_flag;
+		frameToPFN( frame, ENTRY_LO_VALID_MASK | ENTRY_LO_DIRTY_MASK | global_flag);
 
 
 	/* choose left/right in the pair, allow writing(Dirty) and set valid */
 	if ( isEven(page, pageSize) ) { //  ends with 1 or 0
 		/* left/first */
 		reg_write_entrylo0( reg_addr_value );
-		PRINT_DEBUG ("Writing left entry.\n");
+//		PRINT_DEBUG ("Writing left entry.\n");
 	} else {
 		/* right/second */
 		reg_write_entrylo1( reg_addr_value );
-		PRINT_DEBUG ("Writing right entry.\n");
+//		PRINT_DEBUG ("Writing right entry.\n");
 	}
 	
 	if (hit) {
 		/* rewrite/update conflicting */
 		TLB_write_index();
-		PRINT_DEBUG ("Rewriting existing at position %u.\n", reg_read_index());
+//		PRINT_DEBUG ("Rewriting existing at position %u.\n", reg_read_index());
 	} else {
 		/* rewrite random as there was no previous */
 		TLB_write_random();
-		PRINT_DEBUG ("Adding entry at position.\n");
+//		PRINT_DEBUG ("Adding entry at position.\n");
 	}
+
+	reg_write_entryhi( old_asid );
 }
 /*----------------------------------------------------------------------------*/
-bool TLB::refill(IVirtualMemoryMap* vmm, native_t bad_addr)
+bool TLB::refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr )
 {
-	PRINT_DEBUG ("Refilling virtual address %p.\n", bad_addr);
+#ifdef TLB_DEBUG
+	const unative_t start_count = Processor::reg_read_count();	
+#endif
 	ASSERT (vmm);
 
 	byte asid = vmm->asid();
 
 	ASSERT (asid);
+	if (asid == BAD_ASID) return false;
 
+	PRINT_DEBUG ("Refilling virtual address %p ASID: %u.\n", bad_addr, asid);
+	
 	void* phys_addr = (void*)bad_addr;
-	size_t size;
-	bool success = vmm->translate( phys_addr, size );
+	Processor::PageSize page_size;
+#ifdef TLB_DEBUG
+	const unative_t translate_start = Processor::reg_read_count();
+#endif
 
-	PRINT_DEBUG ("Virtual Address %p translated into %p %s.\n", bad_addr, phys_addr, success ? "OK" : "FAIL");
+	bool success = vmm->translate( phys_addr, page_size );
+#ifdef TLB_DEBUG
+	const unative_t translate_end = Processor::reg_read_count();
+	PRINT_DEBUG ("Translation took: %u.\n",
+		translate_end - translate_start);
+#endif
+	PRINT_DEBUG ("Virtual Address %p translated into %p using size %d %s.\n",
+		bad_addr, phys_addr, page_size, success ? "OK" : "FAIL");
 
 	if (!success) 
 		return false;
+#ifdef TLB_DEBUG
+	const unative_t map_start = Processor::reg_read_count();
+#endif
 
-	setMapping((uintptr_t)bad_addr, (uintptr_t)phys_addr, Processor::PAGE_4K, asid);
+	setMapping((uintptr_t)bad_addr, (uintptr_t)phys_addr, page_size, asid);
+#ifdef TLB_DEBUG
+	const unative_t map_end = Processor::reg_read_count();
+	PRINT_DEBUG ("Mapping took: %u.\n",
+		map_end - map_start);
+#endif
+
+#ifdef TLB_DEBUG
+	const unative_t end_count = Processor::reg_read_count();
+	PRINT_DEBUG ("Start count: %u end count: %u, used cycles: %u.\n",
+		start_count, end_count, end_count - start_count);
+#endif
 	return true;
-
 }
