@@ -32,10 +32,12 @@
  * at least people can understand it. 
  */
 
-#include "flags.h"
 #include "VirtualMemory.h"
 
-//#define VMA_DEBUG
+#include "flags.h"
+#include "Memory.h"
+
+#define VMA_DEBUG
 
 #ifndef VMA_DEBUG
 #define PRINT_DEBUG(...)
@@ -45,45 +47,50 @@
   printf(ARGS);
 #endif
 
-int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
+using namespace Processor;
+
+int VirtualMemory::allocate(void** from, size_t size, unsigned int flags)
 {
-	//TODO add new param with frame size or get the optimal size (check how is from aligned)
-	size_t frameSize = 4096;
+	// the global minimal allowed page size (only for alignment checks)
+	const PageSize frameType = PAGE_MIN;
 
 	// check if size is aligned and not zero
-	if (!VirtualMemory::checkAligned(size, frameSize)) {
-		PRINT_DEBUG("Size %u not aligned to frame size %x.\n", size, frameSize);
+	if (!Memory::isAligned(size, frameType) || (size == 0)) {
+		PRINT_DEBUG("Size %u is 0 or is not aligned to frame size %x.\n",
+			size, Memory::frameSize(frameType));
 		return EINVAL;
 	}
 
 	// check if in the given size is possible in the given segment (for area1 test)
-	if (!VirtualMemory::checkSizeInSegment(size, VF_ADDR_TYPE(flags))) {
-		PRINT_DEBUG("Segment %u is smaller than requested size %x.\n", VF_ADDR_TYPE(flags), size);
+	if (!Memory::checkSizeInSegment(size, VF_ADDR_TYPE(flags))) {
+		PRINT_DEBUG("Segment %u is smaller than requested size %x.\n",
+			VF_ADDR_TYPE(flags), size);
 		return ENOMEM;
 	}
 
 	if (VF_VIRT_ADDR(flags) == VF_VA_AUTO) {
 		// automatically assign the virtual address
 
-		// get the right address in segment (KSEG0/1 will be ignored later)
-		*from = getAddressInSegment(VF_ADDR_TYPE(flags));
+		// get the right address in segment (if KSEG0/1 from will be calculated later)
+		*from = Memory::getAddressInSegment(VF_ADDR_TYPE(flags));
 
 		if (m_virtualMemoryMap.count() != 0) {
-			getFreeAddress(*from, size);
-			//TODO align from to the frameSize
+			// get a free address aligned to the biggest usable page size
+			getFreeAddress(*from, size, Memory::getBiggestPage(size));
 		}
 
 		PRINT_DEBUG("Address %p choosen for the new block of size %x.\n", *from, size);
 	} else {
 		// VF_VA_USER means the from is important for virtual address
 
-		// check if address is aliged
-		if (!VirtualMemory::checkAligned(*from, frameSize)) {
-			PRINT_DEBUG("Address %p not aligned to frame size %x.\n", *from, frameSize);
+		// check if address is aligned
+		if (!Memory::isAligned(*from, frameType)) {
+			PRINT_DEBUG("Address %p is not aligned to frame size %x.\n",
+				*from, Memory::frameSize(frameType));
 			return EINVAL;
 		}
 		// check if from/size is free
-		if (!checkIfFree(*from, size)) {
+		if (!isFree(*from, size)) {
 			PRINT_DEBUG("Address %p with size %x (or its part) is not free.\n", *from, size);
 			return EINVAL;
 		}
@@ -91,12 +98,12 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 		// for test area1
 		// calculate the missing or wrong segment
 		flags &= ~VF_AT_MASK;
-		flags |= (VirtualMemory::getSegment(*from) << VF_AT_SHIFT);
+		flags |= (Memory::getSegment(*from) << VF_AT_SHIFT);
 		//XXX printf("FLAGS: %x - seg %u, type %u\n", flags, VF_ADDR_TYPE(flags), VF_VIRT_ADDR(flags));
 	}
 
 	// check if the whole  virtual block is in the right segment (KSEG0/1 will be checked later)
-	if ((VirtualMemory::getSegment(*from) != VF_ADDR_TYPE(flags)) || !checkSegment(*from, size)) {
+	if ((Memory::getSegment(*from) != VF_ADDR_TYPE(flags)) || !Memory::checkSegment(*from, size)) {
 		if (VF_VIRT_ADDR(flags) == VF_VA_AUTO) {
 			PRINT_DEBUG("Address %p with size %x is overflowing segment %u.\n",
 				*from, size, VF_ADDR_TYPE(flags));
@@ -115,8 +122,11 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 		flags |= (VF_VA_AUTO << VF_VA_SHIFT);
 	}
 
+	// create VM Area
 	VirtualMemoryArea vma(*from, size);
+
 	PRINT_DEBUG("Allocating physical memory for VMA at %p with size %x.\n", *from, size);
+	// allocate the physical memory trough VMA
 	int res = vma.allocate(flags);
 
 	if (res == ENOMEM) {
@@ -127,9 +137,9 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 		return ENOMEM;
 	}
 
-	// add vma to the virtual memory map
 	PRINT_DEBUG("Adding VMA at %p with size %x to the virtual memory map (%u).\n",
 		*from, size, m_virtualMemoryMap.count());
+	// add vma to the virtual memory map
 	m_virtualMemoryMap.insert(vma);
 
 	return EOK;
@@ -137,14 +147,17 @@ int VirtualMemory::allocate(void **from, size_t size, unsigned int flags)
 
 /* --------------------------------------------------------------------- */
 
-int VirtualMemory::free(const void *from)
+int VirtualMemory::free(const void* from)
 {
 	// search for the address and get the VMA
 	const VirtualMemoryMapEntry* entry = m_virtualMemoryMap.findItem(
 		VirtualMemoryMapEntry(VirtualMemoryArea(from)));
 
 	// if it doesn't exists or doesn't begin on the given address - fail
-	if ((entry == NULL) || (entry->data().address() != from)) return EINVAL;
+	if ((entry == NULL) || (entry->data().address() != from)) {
+		PRINT_DEBUG("No VMA starts at %p.\n", from);
+		return EINVAL;
+	}
 
 	// free all subareas
 	const_cast<VirtualMemoryArea&>(entry->data()).free();
@@ -152,6 +165,228 @@ int VirtualMemory::free(const void *from)
 	// delete the entry from the tree
 	delete entry;
 
+	// clear the TLB
+	freed();
+
+	return EOK;
+}
+
+/* --------------------------------------------------------------------- */
+
+int VirtualMemory::resize(const void* from, const size_t size)
+{
+	// check if size is aligned and not zero
+	if (!Memory::isAligned(size, PAGE_MIN) || (size == 0)) {
+		PRINT_DEBUG("Size %x is zero or is not aligned.\n", size);
+		return EINVAL;
+	}
+
+	// search for the address and get the VMA
+	const VirtualMemoryMapEntry* entry =
+		m_virtualMemoryMap.findItem(VirtualMemoryArea(from));
+
+	// if it doesn't exists or doesn't begin on the given address - fail
+	if ((entry == NULL) || (entry->data().address() != from)) {
+		PRINT_DEBUG("No VMA starts at %p.\n", from);
+		return EINVAL;
+	}
+
+	// actual size of the selected VMA
+	const size_t actualSize = const_cast<VirtualMemoryArea&>(entry->data()).size();
+
+	if (size > actualSize) {
+		// if enlarging, check if the VMA stays in one segment
+		if (!Memory::checkSegment(from, size)) {
+			PRINT_DEBUG("Area %p (%x) would overflow to another segment after resizing to %x.\n",
+				from, actualSize, size);
+			return EINVAL;
+		}
+
+		// if enlarging, check if there is enough space behind the VMA
+		if (!isFree((void *)((size_t)from + actualSize), size - actualSize)) {
+			PRINT_DEBUG("Not enough free space after %p to resize from %x to %x.\n",
+				from, actualSize, size);
+			return EINVAL;
+		}
+	}
+
+	// clear the TLB
+	freed();
+
+	// call resize on the specific VM Area
+	return const_cast<VirtualMemoryArea&>(entry->data()).resize(size);
+}
+
+/* --------------------------------------------------------------------- */
+
+int VirtualMemory::remap(const void* from, const void* to)
+{
+	if (from == to) return EOK;
+
+	// check if address is aligned
+	if (!Memory::isAligned(to, PAGE_MIN)) {
+		PRINT_DEBUG("Address %p is not aligned.\n", to);
+		return EINVAL;
+	}
+
+	// search for the address and get the VMA
+	VirtualMemoryMapEntry* entry =
+		m_virtualMemoryMap.findItem(VirtualMemoryArea(from));
+
+	// if it doesn't exists or doesn't begin on the given address - fail
+	if ((entry == NULL) || (entry->data().address() != from)) {
+		PRINT_DEBUG("No VMA starts at %p.\n", from);
+		return EINVAL;
+	}
+
+	// size of the selected VMA
+	const size_t size = entry->data().size();
+
+	//TODO !!! is it allowed to have to in a different segment???
+	//TODO !!! maybe at least check if to is not in KSEG0/1 (no TLB)
+	// check if from and to are in the same segment
+	//if (Memory::getSegment(from) != Memory::getSegment(to)) {
+	//	PRINT_DEBUG("Address %p (from) is in different segment than %p (to).\n",
+	//		from, to);
+	//	return EINVAL;
+	//}
+
+	// check if to+size fits to the segment
+	if (!Memory::checkSegment(to, size)) {
+		PRINT_DEBUG("Area %p (%x) would overflow to another segment after mapping to %p.\n",
+			from, size, to);
+		return EINVAL;
+	}
+
+	const void* checkAddr = to;
+	size_t checkSize = size;
+
+	// check if to is not in the range from+size
+	if (Memory::isInRange(to, from, size)) {
+		checkAddr = (void *)((size_t)to + size);
+		checkSize = (size_t)to - (size_t)from;
+	}
+
+	// check if from is not in the range to+size
+	if (Memory::isInRange(from, to, size)) {
+		checkSize = (size_t)from - (size_t)to;
+	}
+
+	// check if the to, to+size range is free
+	if (!isFree(checkAddr, checkSize)) {
+		PRINT_DEBUG("Mapping %p (%x) to %p (%x) would overlap another area.\n",
+			from, size, to, size);
+		return EINVAL;
+	}
+
+	// save the vma from the virtual memory map
+	VirtualMemoryArea vma = entry->data();
+	// remove the old value
+	m_virtualMemoryMap.remove(entry);
+	// change the address of VMA
+	vma.address(to);
+	// insert it to the virtual memory map
+	m_virtualMemoryMap.insert(vma);
+
+	// clear the TLB
+	freed();
+
+	return EOK;
+}
+
+/* --------------------------------------------------------------------- */
+
+int VirtualMemory::merge(const void* area1, const void* area2)
+{
+	if (Memory::getSegment(area1) != Memory::getSegment(area2)) {
+		PRINT_DEBUG("Areas %p and %p to merge are in different segments.\n", area1, area2);
+		return EINVAL;
+	}
+
+	// search for the first area
+	VirtualMemoryMapEntry* entry1 =
+		m_virtualMemoryMap.findItem(VirtualMemoryArea(area1));
+
+	// if it doesn't exists or doesn't begin on the given address - fail
+	if ((entry1 == NULL) || (entry1->data().address() != area1)) {
+		PRINT_DEBUG("No VMA starts at %p.\n", area1);
+		return EINVAL;
+	}
+
+	// search for the second area
+	VirtualMemoryMapEntry* entry2 =
+		m_virtualMemoryMap.findItem(VirtualMemoryArea(area2));
+
+	// if it doesn't exists or doesn't begin on the given address - fail
+	if ((entry2 == NULL) || (entry2->data().address() != area2)) {
+		PRINT_DEBUG("No VMA starts at %p.\n", area2);
+		return EINVAL;
+	}
+
+	if (area2 == (void *)((size_t)area1 + entry1->data().size())) {
+		// on the first area call merge
+		const_cast<VirtualMemoryArea&>(entry1->data()).merge(
+			const_cast<VirtualMemoryArea&>(entry2->data()));
+		// remove area2 from the virtual memory map
+		m_virtualMemoryMap.remove(entry2);
+	} else if (area1 == (void *)((size_t)area2 + entry2->data().size())) {
+		// on the first area call merge
+		const_cast<VirtualMemoryArea&>(entry2->data()).merge(
+			const_cast<VirtualMemoryArea&>(entry1->data()));
+		// remove area1 from the virtual memory map
+		m_virtualMemoryMap.remove(entry1);
+	} else {
+		PRINT_DEBUG("Areas %p (%x) and %p (%x) are not adjacent.\n",
+			area1, entry1->data().size(), area2, entry2->data().size());
+		return EINVAL;
+	}
+
+	// clear the TLB
+	freed();
+
+	return EOK;
+}
+
+/* --------------------------------------------------------------------- */
+
+int VirtualMemory::split(const void* from, const void* split)
+{
+	// check if split address is aligned
+	if (!Memory::isAligned(split, PAGE_MIN)) {
+		PRINT_DEBUG("Address %p is not aligned.\n", split);
+		return EINVAL;
+	}
+
+	// search for the area
+	VirtualMemoryMapEntry* entry =
+		m_virtualMemoryMap.findItem(VirtualMemoryArea(from));
+
+	// if it doesn't exists or doesn't begin on the given address - fail
+	if ((entry == NULL) || (entry->data().address() != from)) {
+		PRINT_DEBUG("No VMA starts at %p.\n", from);
+		return EINVAL;
+	}
+
+	size_t size = entry->data().size();
+
+	// check if split is inside the selected VMA
+	if ((split == from) || !Memory::isInRange(split, from, size)) {
+		PRINT_DEBUG("Address %p is not inside the area %p (%x).\n", split, from, size);
+		return EINVAL;
+	}
+
+	VirtualMemoryArea vma = const_cast<VirtualMemoryArea&>(entry->data()).split(split);
+	if (vma.size() == 0) {
+		PRINT_DEBUG("No memory left to create new VM Area in split().\n");
+		return ENOMEM;
+	}
+
+	PRINT_DEBUG("Adding VMA at %p with size %x to the virtual memory map (%u).\n",
+		vma.address(), vma.size(), m_virtualMemoryMap.count());
+	// add vma to the virtual memory map
+	m_virtualMemoryMap.insert(vma);
+
+	// clear the TLB
 	freed();
 
 	return EOK;
@@ -161,7 +396,8 @@ int VirtualMemory::free(const void *from)
 
 bool VirtualMemory::translate(void*& address, Processor::PageSize& frameSize)
 {
-	PRINT_DEBUG("Virtual memory map tree size %u.\n", m_virtualMemoryMap.count());
+	PRINT_DEBUG("Virtual memory map tree size %u, TLB is looking for %p.\n",
+		m_virtualMemoryMap.count(), address);
 
 	// search for the address and get the VMA
 	const VirtualMemoryMapEntry* entry = 
@@ -170,24 +406,27 @@ bool VirtualMemory::translate(void*& address, Processor::PageSize& frameSize)
 	// if VMA not found, address is not allocated
 	if (entry == NULL) {
 		PRINT_DEBUG("Address %p is not in the tree.\n", address);
+		dump();
 		return false;
 	}
 
+	//XXX
+	if (address == (void*)0xc0114000) msim_stop();
+
 	// find the address translation on the found VMA
-	frameSize = Processor::PAGE_MIN;
 	return entry->data().find(address, frameSize);
 }
 
 /* --------------------------------------------------------------------- */
 
-bool VirtualMemory::checkIfFree(const void* from, const size_t size)
+bool VirtualMemory::isFree(const void* from, const size_t size)
 {
 	// if we have not allocated yet, everything is free (except NULL)
 	if (m_virtualMemoryMap.count() == 0) return true;
 
 	// check if address not in other block
 	if (m_virtualMemoryMap.findItem(VirtualMemoryArea(from)) != NULL) {
-		PRINT_DEBUG("Address %p was found in the virtual memory map.\n", from);
+		PRINT_DEBUG("Address %p is already taken.\n", from);
 		return false;
 	}
 
@@ -222,41 +461,100 @@ bool VirtualMemory::checkIfFree(const void* from, const size_t size)
 
 /* --------------------------------------------------------------------- */
 
-void VirtualMemory::getFreeAddress(void*& from, const size_t size)
+void VirtualMemory::getFreeAddress(void*& from, const size_t size, Processor::PageSize frameType)
 {
-	// start from beginning (min() - so count check was done before call)
-	VirtualMemoryMapEntry *next, *low = &m_virtualMemoryMap.min();
+	// start from the beginning (min() - count check was done before this call)
+	VirtualMemoryMapEntry* segmentLow = &m_virtualMemoryMap.min();
 
 	// loop to the right segment (so from already contains address in the right segment)
-	while (VirtualMemory::getSegment(from) != VirtualMemory::getSegment(low->data().address())) {
-		if ((low = (VirtualMemoryMapEntry *)low->next()) == NULL) break;
+	while (Memory::getSegment(from) != Memory::getSegment(segmentLow->data().address())) {
+		if ((segmentLow = (VirtualMemoryMapEntry *)segmentLow->next()) == NULL) break;
 	}
 
-	if (low == NULL) {
-		// there was no allocation in the requested segment, so from is set to a good value
-		return;
-	}
+	// there was no allocation in the requested segment, so from is set to a good value
+	if (segmentLow == NULL) return;
 
 	// from is set to the minimal automatically assigned address in segment
-	if ((from < low->data().address()) && (checkIfFree(from, size))) {
+	if ((from < segmentLow->data().address()) && (isFree(from, size))) {
 		// from is lower than the first allocated block and there is enough free space
 		return;
 	}
 
+	VirtualMemoryMapEntry *next, *low;
 	size_t freeSize;
-	// loop trough the allocated block, to find a suitable place for the new block
-	do {
-		// the next free pointer
-		from = (void *)((size_t)(low->data().address()) + low->data().size());
-		// the next used pointer (TODO: next() should return my ptr)
-		if ((next = (VirtualMemoryMapEntry *)low->next()) == NULL) break;
-		// if running out of segment
-		if (VirtualMemory::getSegment(from) != VirtualMemory::getSegment(next->data().address())) break;
-		// free space between the two pointers
-		freeSize = (size_t)(next->data().address()) - (size_t)(from);
-		// store next as low for the next iteration
-		low = next;
-		// loop while the space is not enough
-	} while (freeSize < size);
+
+	while (1) {
+		// intialize the variables
+		low = segmentLow;
+		freeSize = 0;
+
+		// loop trough the allocated blocks, to find a suitable place for the new block
+		do {
+			set_from:
+			// the next free pointer
+			from = (void *)((size_t)(low->data().address()) + low->data().size());
+			// the next used pointer
+			next = (VirtualMemoryMapEntry *)low->next();
+
+			//PRINT_DEBUG(" trying OLD %p as from \n", from);
+			// align from to the requested pagesize, if it's not possible segment ends there
+			if (!Memory::alignUp(from, frameType)) break;
+			//PRINT_DEBUG(" trying NEW %p as from \n", from);
+
+			// if from is aligned up, be sure next is after from (overflow risk)
+			while ((next != NULL) && ((size_t)(next->data().address()) < (size_t)from)) {
+				// check if from is not already taken
+				if (Memory::isInRange(from, next->data().address(), next->data().size())) {
+					low = next;
+					goto set_from;
+				}
+				// move to the next area
+				next = (VirtualMemoryMapEntry *)next->next();
+			}
+			// if next is NULL, memory after from is free
+			if (next == NULL) break;
+
+			//PRINT_DEBUG(" comparing from %p to next %p \n", from, next ? next->data().address() : (void *)0xDEAD0BED);
+
+			// if running out of segment (the last free address could be OK)
+			if (Memory::getSegment(from) != Memory::getSegment(next->data().address())) break;
+
+			// free space between the two pointers (area addresses)
+			freeSize = (size_t)(next->data().address()) - (size_t)(from);
+			// store next as low for the next iteration
+			low = next;
+			// loop while the space is not enough
+		} while (freeSize < size);
+
+		if (Memory::checkSegment(from, size) || (frameType == PAGE_MIN)) {
+			// everything OK or we used the smallest possible page size
+			return;
+		} else {
+			// the from+size overflows the segment, we try smaller pagesize
+			--frameType;
+		}
+	}
 }
+
+/* --------------------------------------------------------------------- */
+
+void VirtualMemory::dump()
+{
+	if (m_virtualMemoryMap.count() == 0) {
+		printf("[ VMA DEBUG ]: VM Map is empty.\n");
+		return;
+	}
+
+	printf("\n[ VMA DEBUG ]: ============= VMM DUMP ===========\n");
+
+	VirtualMemoryMapEntry *x = &m_virtualMemoryMap.min();
+	do {
+		printf("[ VMA DEBUG ]: VM Area is at %p (%x).\n",
+			x->data().address(), x->data().size());
+
+		x = (VirtualMemoryMapEntry *)x->next();
+	} while (x != NULL);
+	printf("[ VMA DEBUG ]: ==================================\n");
+}
+
 

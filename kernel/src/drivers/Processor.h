@@ -403,8 +403,38 @@ inline void msim_stop (void)
 
 } // namespace Processor
 
-inline Processor::PageSize& operator++(Processor::PageSize& me)
+inline Processor::PageSize& operator++(Processor::PageSize& variable)
 {
-	me = (Processor::PageSize)(me + 1);
-	return me;
+	if (variable != Processor::PAGE_MAX) {
+		variable = (Processor::PageSize)(variable + 1);
+	}
+	return variable;
 }
+
+inline Processor::PageSize operator++(Processor::PageSize& variable, int)
+{
+	Processor::PageSize old = variable;
+	++variable;
+	return old;
+}
+
+inline Processor::PageSize& operator--(Processor::PageSize& variable)
+{
+	if (variable != Processor::PAGE_MIN) {
+		variable = (Processor::PageSize)(variable - 1);
+	}
+	return variable;
+}
+
+inline Processor::PageSize operator--(Processor::PageSize& variable, int)
+{
+	Processor::PageSize old = variable;
+	--variable;
+	return old;
+}
+
+inline bool operator< (const Processor::PageSize left, const Processor::PageSize right)
+{
+	return (int)left < (int)right;
+}
+

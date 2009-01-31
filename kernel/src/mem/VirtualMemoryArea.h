@@ -57,17 +57,23 @@ public:
 	{}
 
 	inline const void* address() const;
+	void address(const void* newAddress);
 	inline size_t size() const;
+
+	int resize(const size_t size);
+	void merge(VirtualMemoryArea& area);
+	VirtualMemoryArea split(const void* split);
 
 	int allocate(const unsigned int flags);
 	void free();
 
-	bool find(void*& address, Processor::PageSize& frameSize) const;
+	bool find(void*& address, Processor::PageSize& frameType) const;
 
 	bool operator== (const VirtualMemoryArea& other) const;
 	bool operator< (const VirtualMemoryArea& other) const;
 
 private:
+	int allocateAtKuseg(const size_t size, const Processor::PageSize frameType);
 
 	const void* m_address;
 	size_t m_size;

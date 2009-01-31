@@ -390,21 +390,33 @@ int vma_free(const void *from)
 /*----------------------------------------------------------------------------*/
 int vma_resize(const void *from, const size_t size)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->resize(from, size);
 }
 /*----------------------------------------------------------------------------*/
 int vma_remap(const void *from, const void *to)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->remap(from, to);
 }
 /*----------------------------------------------------------------------------*/
 int vma_merge(const void *area1, const void *area2)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->merge(area1, area2);
 }
 /*----------------------------------------------------------------------------*/
 int vma_split(const void *from, const void *split)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->split(from, split);
 }
 /*----------------------------------------------------------------------------*/
