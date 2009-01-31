@@ -95,14 +95,12 @@ int VirtualMemory::allocate(void** from, size_t size, unsigned int flags)
 			return EINVAL;
 		}
 
-		// for test area1
-		// calculate the missing or wrong segment
+		// calculate the missing or wrong segment (the address contains the information)
 		flags &= ~VF_AT_MASK;
 		flags |= (Memory::getSegment(*from) << VF_AT_SHIFT);
-		//XXX printf("FLAGS: %x - seg %u, type %u\n", flags, VF_ADDR_TYPE(flags), VF_VIRT_ADDR(flags));
 	}
 
-	// check if the whole  virtual block is in the right segment (KSEG0/1 will be checked later)
+	// check if the whole virtual block is in the right segment (KSEG0/1 will be checked later)
 	if ((Memory::getSegment(*from) != VF_ADDR_TYPE(flags)) || !Memory::checkSegment(*from, size)) {
 		if (VF_VIRT_ADDR(flags) == VF_VA_AUTO) {
 			PRINT_DEBUG("Address %p with size %x is overflowing segment %u.\n",
@@ -411,7 +409,7 @@ bool VirtualMemory::translate(void*& address, Processor::PageSize& frameSize)
 	}
 
 	//XXX
-	if (address == (void*)0xc0114000) msim_stop();
+	if (address == (void*)0xc01a4000) msim_stop();
 
 	// find the address translation on the found VMA
 	return entry->data().find(address, frameSize);

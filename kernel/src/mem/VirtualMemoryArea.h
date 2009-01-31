@@ -73,7 +73,9 @@ public:
 	bool operator< (const VirtualMemoryArea& other) const;
 
 private:
-	int allocateAtKuseg(const size_t size, const Processor::PageSize frameType);
+	int allocateAtKSegAddr(const void* address, const size_t size);
+	int allocateAtKSegAuto();
+	int allocateAtKUSeg(const size_t size, Processor::PageSize frameType);
 
 	const void* m_address;
 	size_t m_size;

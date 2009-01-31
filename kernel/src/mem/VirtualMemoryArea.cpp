@@ -37,7 +37,7 @@
 #include "mem/Memory.h"
 #include "mem/TLB.h"
 
-//#define VMA_DEBUG
+#define VMA_DEBUG
 //#define VMA_OPERATOR_DEBUG
 
 #ifndef VMA_DEBUG
@@ -91,21 +91,8 @@ int VirtualMemoryArea::allocate(const unsigned int flags)
 		}
 	}
 
-	//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
-	PageSize frameType = TLB::suggestPageSize(m_size, 100, 1);
-
-	if ((VF_ADDR_TYPE(flags) == VF_AT_KSEG0) || (VF_ADDR_TYPE(flags) == VF_AT_KSEG1)) {
-		// VF_VA_USER here means it has to have the same physical address (KSEG0-1)
-
-		m_address = (void *)ADDR_OFFSET((size_t)m_address);
-		// calculate the frame count (ceil it)
-		size_t count = (m_size / Memory::frameSize(frameType)) + 
-				(m_size % Memory::frameSize(frameType) ? 1 : 0);
-		// allocate one piece of memory
-		if (MyFrameAllocator::instance().allocateAtAddress(
-			m_address, count, Memory::frameSize(frameType)) < count) {
-			return ENOMEM;
-		}
+	if (VF_SEG_NOTLB(VF_ADDR_TYPE(flags))) {
+		// KSEG0 and KSEG1
 
 		// change address to virtual 0x8* or 0xA*
 		if (VF_ADDR_TYPE(flags) == VF_AT_KSEG0) {
@@ -114,22 +101,82 @@ int VirtualMemoryArea::allocate(const unsigned int flags)
 			m_address = (void *)ADDR_TO_KSEG1((size_t)m_address);
 		}
 
-		// save as subarea
-		VirtualMemorySubarea* s = new VirtualMemorySubarea(m_address, frameType, count);
-		PRINT_DEBUG("Subarea created at %p physical memory, build of %d frames of size %x.\n",
-			m_address, count, Memory::frameSize(frameType));
-		// add it to the list
-		s->append(m_subAreas);
-
-		return EOK;
+		// VF_VA_USER here means it has to have the same physical address (KSEG0-1)
+		if (VF_VIRT_ADDR(flags) == VF_VA_USER) {
+			return allocateAtKSegAuto();
+		} else {
+			return allocateAtKSegAddr(m_address, m_size);
+		}
 	} else {
-		return allocateAtKuseg(m_size, frameType);
+		// User segments
+
+		//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
+		PageSize frameType = TLB::suggestPageSize(m_size, 100, 1);
+
+		return allocateAtKUSeg(m_size, frameType);
 	}
 }
 
 /* --------------------------------------------------------------------- */
 
-int VirtualMemoryArea::allocateAtKuseg(const size_t size, Processor::PageSize frameType)
+int VirtualMemoryArea::allocateAtKSegAddr(const void* address, const size_t size)
+{
+	// KSEG0 and KSEG1 are without TLB, so don't bother about page size
+	Processor::PageSize frameType = Processor::PAGE_MIN;
+	// calculate the frame count
+	size_t count = size / Memory::frameSize(frameType);
+
+	// allocate one piece of memory at address
+	if (MyFrameAllocator::instance().allocateAtAddress(
+		(void *)ADDR_OFFSET((size_t)address), count, Memory::frameSize(frameType)
+		) < count)
+	{
+		return ENOMEM;
+	}
+
+	// save as subarea
+	VirtualMemorySubarea* s = new VirtualMemorySubarea(address, frameType, count);
+	PRINT_DEBUG("Subarea created at %p physical memory, build of %d frames of size %x.\n",
+		address, count, Memory::frameSize(frameType));
+	// add it to the list
+	s->append(m_subAreas);
+
+	return EOK;
+}
+
+/* --------------------------------------------------------------------- */
+
+int VirtualMemoryArea::allocateAtKSegAuto()
+{
+	// KSEG0 and KSEG1 are without TLB, so don't bother about page size
+	Processor::PageSize frameType = Processor::PAGE_MIN;
+	// address without the KSEG0/1 offset
+	void * address = (void *)ADDR_OFFSET((size_t)m_address);
+	// calculate the frame count
+	size_t count = m_size / Memory::frameSize(frameType);
+
+	// allocate one piece of memory (anywhere)
+	if (MyFrameAllocator::instance().allocateAtKseg0(
+		&address, count, Memory::frameSize(frameType)) < count) {
+		return ENOMEM;
+	}
+
+	// change the address back to virtual 0x8* or 0xA*
+	m_address = (void *)(ADDR_PREFIX((size_t)m_address) | (size_t)address);
+
+	// save as subarea
+	VirtualMemorySubarea* s = new VirtualMemorySubarea(m_address, frameType, count);
+	PRINT_DEBUG("Subarea created at %p physical memory, build of %d frames of size %x.\n",
+		m_address, count, Memory::frameSize(frameType));
+	// add it to the list
+	s->append(m_subAreas);
+
+	return EOK;
+}
+
+/* --------------------------------------------------------------------- */
+
+int VirtualMemoryArea::allocateAtKUSeg(const size_t size, Processor::PageSize frameType)
 {
 	// temporary list for newly allocated subareas
 	VirtualMemorySubareaContainer newSubareas;
@@ -253,14 +300,16 @@ int VirtualMemoryArea::resize(const size_t size)
 			s = m_subAreas->getBack();
 		}
 	} else {
+		size_t allocate = size - m_size;
+
 		// enlarge the VMA
 		if (VF_SEG_NOTLB(Memory::getSegment(m_address))) {
 			// if in KSEG0/1 the new allocation have to be placed just after the block
 			//TODO
-			ASSERT(NULL == "Not implemented yet");
+			ASSERT(!"Not implemented yet");
 		} else {
 			// if not in KSEG0/1, allocate some place anywhere
-			result = allocateAtKuseg(size - m_size, PAGE_MIN);
+			result = allocateAtKUSeg(allocate, PAGE_MIN);
 			if (result != EOK) return result;
 		}
 	}
@@ -344,6 +393,8 @@ bool VirtualMemoryArea::find(void*& address, Processor::PageSize& frameType) con
 			// if so, set output parameters and return true
 			address = (*subarea)->address((((size_t)va - (size_t)vaStart) / (*subarea)->frameSize()));
 			frameType = (*subarea)->frameType();
+			PRINT_DEBUG("Physical address found at %p with frame size %x.\n",
+				address, Memory::frameSize(frameType));
 			return true;
 		}
 		// set new start for the next subarea
