@@ -37,7 +37,8 @@
 #include "mem/Memory.h"
 #include "mem/TLB.h"
 
-#define VMA_DEBUG
+//#define VMA_DEBUG
+#define VMA_TLB_DEBUG
 //#define VMA_OPERATOR_DEBUG
 
 #ifndef VMA_DEBUG
@@ -45,6 +46,14 @@
 #else
 #define PRINT_DEBUG(ARGS...) \
   printf("[ VMA DEBUG ]: "); \
+  printf(ARGS);
+#endif
+
+#ifndef VMA_TLB_DEBUG
+#define PRINT_TLB_DEBUG(...)
+#else
+#define PRINT_TLB_DEBUG(ARGS...) \
+  printf("[ VMA TLB DEBUG ]: "); \
   printf(ARGS);
 #endif
 
@@ -109,11 +118,7 @@ int VirtualMemoryArea::allocate(const unsigned int flags)
 		}
 	} else {
 		// User segments
-
-		//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
-		PageSize frameType = TLB::suggestPageSize(m_size, 100, 1);
-
-		return allocateAtKUSeg(m_size, frameType);
+		return allocateAtKUSeg(m_address, m_size);
 	}
 }
 
@@ -176,12 +181,24 @@ int VirtualMemoryArea::allocateAtKSegAuto()
 
 /* --------------------------------------------------------------------- */
 
-int VirtualMemoryArea::allocateAtKUSeg(const size_t size, Processor::PageSize frameType)
+int VirtualMemoryArea::allocateAtKUSeg(const void* virtualAddress, const size_t size)
 {
 	// temporary list for newly allocated subareas
 	VirtualMemorySubareaContainer newSubareas;
 	// how much we still need
 	size_t allocate = size;
+
+	//TODO get optimal frame size !from can be aligned for 4k if VF_VA_USER!
+	PageSize frameType = TLB::suggestPageSize(m_size, 100, 1);
+	PageSize addressAlignedFor = Memory::isAligned(virtualAddress);
+
+	// if address is not aligned for the suggested page size, fallback
+	if (frameType > addressAlignedFor) {
+		frameType = addressAlignedFor;
+	}
+
+	// force 4K pages
+	//frameType = PAGE_MIN;
 
 	// new and old values the frameAlloc function changes
 	void* address = NULL;
@@ -301,17 +318,18 @@ int VirtualMemoryArea::resize(const size_t size)
 		}
 	} else {
 		size_t allocate = size - m_size;
+		void* address = (void *)((size_t)m_address + m_size);
 
 		// enlarge the VMA
 		if (VF_SEG_NOTLB(Memory::getSegment(m_address))) {
 			// if in KSEG0/1 the new allocation have to be placed just after the block
-			//TODO
-			ASSERT(!"Not implemented yet");
+			result = allocateAtKSegAddr(address, allocate);
 		} else {
-			// if not in KSEG0/1, allocate some place anywhere
-			result = allocateAtKUSeg(allocate, PAGE_MIN);
-			if (result != EOK) return result;
+			// if in User segments, allocate some place anywhere
+			result = allocateAtKUSeg(address, allocate);
 		}
+
+		if (result != EOK) return result;
 	}
 
 	m_size = size;
@@ -369,7 +387,7 @@ bool VirtualMemoryArea::find(void*& address, Processor::PageSize& frameType) con
 {
 	if (m_subAreas == NULL) return false;
 
-	PRINT_DEBUG("Searching address %p in VMA %p (size %x with %u subareas).\n",
+	PRINT_TLB_DEBUG("Searching address %p in VMA %p (size %x with %u subareas).\n",
 		address, m_address, m_size, m_subAreas->size());
 
 	/* Skip searching if it is not in my range. */
@@ -389,11 +407,11 @@ bool VirtualMemoryArea::find(void*& address, Processor::PageSize& frameType) con
 		vaEnd = (void *)((size_t)vaStart + (*subarea)->size());
 		// check if the virtual address is in the range (in subarea)
 		if ((va >= vaStart) && (va < vaEnd)) {
-			PRINT_DEBUG("Searching in subarea from %p to %p.\n", vaStart, vaEnd);
+			PRINT_TLB_DEBUG("Searching in subarea from %p to %p.\n", vaStart, vaEnd);
 			// if so, set output parameters and return true
 			address = (*subarea)->address((((size_t)va - (size_t)vaStart) / (*subarea)->frameSize()));
 			frameType = (*subarea)->frameType();
-			PRINT_DEBUG("Physical address found at %p with frame size %x.\n",
+			PRINT_TLB_DEBUG("Physical address found at %p with frame size %x.\n",
 				address, Memory::frameSize(frameType));
 			return true;
 		}

@@ -75,7 +75,7 @@ public:
 private:
 	int allocateAtKSegAddr(const void* address, const size_t size);
 	int allocateAtKSegAuto();
-	int allocateAtKUSeg(const size_t size, Processor::PageSize frameType);
+	int allocateAtKUSeg(const void* virtualAddress, const size_t size);
 
 	const void* m_address;
 	size_t m_size;

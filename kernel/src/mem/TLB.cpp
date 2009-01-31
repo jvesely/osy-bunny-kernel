@@ -153,7 +153,7 @@ void TLB::mapDevices( uintptr_t physical_address, uintptr_t virtual_address, Pro
 	unative_t page        = addrToPage( virtual_address,  page_size);
 	unative_t frame       = addrToPage( physical_address, page_size);
 
-	reg_write_entryhi (pageToVPN2( page, 0xff )); // set address, ASID = 0xff
+	reg_write_entryhi (pageToVPN2( page, 0xff, PAGE_MIN )); // set address, ASID = 0xff
 
 
 	unative_t reg_addr_value = 
@@ -222,15 +222,15 @@ void TLB::setMapping(
 
 	const unative_t old_asid    = reg_read_entryhi();
 
-//	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
-//		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
+	PRINT_DEBUG ("Mapping %p(%p) to %p(%p) using size %x for ASID %x.\n",
+		page << 12, virtAddr, frame << 12, physAddr, pageSize, asid);
 
-	reg_write_pagemask (page_mask);                //set the right pageSize
+	reg_write_pagemask( page_mask );                //set the right pageSize
 	reg_write_entrylo0( global_flag );             //set global if necessary
 	reg_write_entrylo1( global_flag );             //set global if necessary
-	reg_write_entryhi( pageToVPN2( page, asid ) ); // set address, ASID = asid
+	reg_write_entryhi( pageToVPN2( page, asid, pageSize ) ); // set address, ASID = asid
 
-	/* try find mapping */
+	/* try to find mapping */
 	TLB_probe();
 
 	/* read found position or any other if it was not found */
@@ -257,21 +257,21 @@ void TLB::setMapping(
 	if ( isEven(page, pageSize) ) { //  ends with 1 or 0
 		/* left/first */
 		reg_write_entrylo0( reg_addr_value );
-//		PRINT_DEBUG ("Writing left entry.\n");
+		PRINT_DEBUG ("Writing left entry.\n");
 	} else {
 		/* right/second */
 		reg_write_entrylo1( reg_addr_value );
-//		PRINT_DEBUG ("Writing right entry.\n");
+		PRINT_DEBUG ("Writing right entry.\n");
 	}
 	
 	if (hit) {
 		/* rewrite/update conflicting */
 		TLB_write_index();
-//		PRINT_DEBUG ("Rewriting existing at position %u.\n", reg_read_index());
+		PRINT_DEBUG ("Rewriting existing at position %u.\n", reg_read_index());
 	} else {
 		/* rewrite random as there was no previous */
 		TLB_write_random();
-//		PRINT_DEBUG ("Adding entry at position.\n");
+		PRINT_DEBUG ("Adding entry at position.\n");
 	}
 
 	reg_write_entryhi( old_asid );

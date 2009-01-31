@@ -175,8 +175,8 @@ private:
    * @param asid ASID to use.
    * @return registry Hi value to store in TLB.
    */
-	inline unative_t pageToVPN2( unative_t page, byte asid)
-		{ return ((page << Processor::VPN2_SHIFT) & Processor::VPN2_MASK) | asid; }
+	inline unative_t pageToVPN2( unative_t page, byte asid, Processor::PageSize size)
+		{ return ((page << Processor::VPN2_SHIFT) & (Processor::VPN2_MASK << (Processor::pages[size].shift - Processor::pages[Processor::PAGE_MIN].shift))) | asid; }
 
 	/*! @brief Stores asids that could be assigned to VMM. */
 	Buffer<byte, ASID_COUNT> m_freeAsids;

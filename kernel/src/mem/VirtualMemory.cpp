@@ -37,13 +37,22 @@
 #include "flags.h"
 #include "Memory.h"
 
-#define VMA_DEBUG
+//#define VMA_DEBUG
+#define VMA_TLB_DEBUG
 
 #ifndef VMA_DEBUG
 #define PRINT_DEBUG(...)
 #else
 #define PRINT_DEBUG(ARGS...) \
   printf("[ VMA DEBUG ]: "); \
+  printf(ARGS);
+#endif
+
+#ifndef VMA_TLB_DEBUG
+#define PRINT_TLB_DEBUG(...)
+#else
+#define PRINT_TLB_DEBUG(ARGS...) \
+  printf("[ VMA TLB DEBUG ]: "); \
   printf(ARGS);
 #endif
 
@@ -394,7 +403,7 @@ int VirtualMemory::split(const void* from, const void* split)
 
 bool VirtualMemory::translate(void*& address, Processor::PageSize& frameSize)
 {
-	PRINT_DEBUG("Virtual memory map tree size %u, TLB is looking for %p.\n",
+	PRINT_TLB_DEBUG("Virtual memory map tree size %u, TLB is looking for %p.\n",
 		m_virtualMemoryMap.count(), address);
 
 	// search for the address and get the VMA
@@ -403,13 +412,13 @@ bool VirtualMemory::translate(void*& address, Processor::PageSize& frameSize)
 
 	// if VMA not found, address is not allocated
 	if (entry == NULL) {
-		PRINT_DEBUG("Address %p is not in the tree.\n", address);
+		PRINT_TLB_DEBUG("Address %p is not in the tree.\n", address);
 		dump();
 		return false;
 	}
 
 	//XXX
-	if (address == (void*)0xc01a4000) msim_stop();
+	//if (address == (void*)0xc01a4000) msim_stop();
 
 	// find the address translation on the found VMA
 	return entry->data().find(address, frameSize);
