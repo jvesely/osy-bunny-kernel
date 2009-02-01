@@ -355,7 +355,7 @@ int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags)
 	if (cnt == 0)
 		return ENOMEM;
 
-	if (MyFrameAllocator::instance().frameAlloc(paddr, cnt, 4096, flags) < cnt)
+	if (MyFrameAllocator::instance().frameAlloc(paddr, cnt, Processor::pages[Processor::PAGE_MIN].size, flags) < cnt)
 		return ENOMEM;
 	
 	return EOK;
@@ -366,7 +366,7 @@ int frame_free(const void *paddr, const size_t cnt)
 	if (cnt == 0)
 		return ENOMEM;
 
-	if (!MyFrameAllocator::instance().frameFree(paddr, cnt, 4096))
+	if (!MyFrameAllocator::instance().frameFree(paddr, cnt, Processor::pages[Processor::PAGE_MIN].size))
 		return ENOMEM;
 
 	return EOK;

@@ -56,7 +56,7 @@ class Thread: public ListInsertable<Thread>,
 {
 
 public:
-	static const int DEFAULT_STACK_SIZE = 0x1000; /*!< 4KB */
+	static const int DEFAULT_STACK_SIZE = 0x2000; /*!< 8KB */
 
 	/*!
 	 * @brief Gets currently running thread.

@@ -42,7 +42,9 @@ static const char *	desc =
  * Expected physical frame size is 4 KB. This constant has to be
  * changed if the actual frame size differs.
  */
+#ifndef FRAME_SIZE
 #define FRAME_SIZE	4096
+#endif
 
 /*
  * Convert physical address to virtual address in KSEG0

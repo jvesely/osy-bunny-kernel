@@ -38,7 +38,7 @@
 #include "mem/TLB.h"
 
 //#define VMA_DEBUG
-#define VMA_TLB_DEBUG
+//#define VMA_TLB_DEBUG
 //#define VMA_OPERATOR_DEBUG
 
 #ifndef VMA_DEBUG

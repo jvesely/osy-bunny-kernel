@@ -28,7 +28,7 @@ emake() {
 
 test() {
 	emake distclean || fail "Cleanup before compilation"
-	emake "KERNEL_TEST=$1" || fail "Compilation"
+	emake -j3 "KERNEL_TEST=$1" || fail "Compilation"
 	msim | tee test.log || fail "Execution"
 	grep '^Test passed\.\.\.$' test.log > /dev/null || fail "Test $1"
 	rm -f test.log
