@@ -72,7 +72,7 @@ public:
 	 * @return @a true if translation was found and inserrted into the TLB
 	 * 		@a false otherwise.
 	 */
-	bool refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr );
+	bool refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr, const bool hit );
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *
@@ -88,9 +88,8 @@ public:
 	 */
 	void setMapping(
 		const uintptr_t virtual_address, const uintptr_t physical_address, 
-		const Processor::PageSize page_size, const byte asid, 
-		const bool global = false
-		);
+		const Processor::PageSize page_size, const byte asid
+	);
 
 	/*!
 	 * @brief Gets currently used ASID.
@@ -142,41 +141,15 @@ public:
 	void flush();
 
 private:
-	/*!
-	 * @brief Gets page(or frame)	number of the given address.
-	 * @param address Address to convert.
-	 * @param page_size Size of pages to use.
-	 * @return Returns upper 20 bits of the starting address of the page.
-	 */
-	static inline unative_t addrToPage( uintptr_t address, Processor::PageSize page_size )
-		{ return address >> Processor::pages[Processor::PAGE_4K].shift & ~Processor::pages[page_size].mask; }
+	static inline unative_t addrToEntryLo( uintptr_t addr, Processor::PageSize size, byte flags, bool odd)
+		{
+			return (((addr >> Processor::pages[size].shift) << 1 | odd) << (Processor::pages[size].shift - Processor::pages[Processor::PAGE_MIN].shift) << Processor::PFN_SHIFT) | flags;
+		}
 
-	/*!
-	 * @brief Checks if page number represents even or odd page.
-	 * @param page first 20 bits of the page starting address.
-	 * @param page_size Size of the page.
-	 * @return  @a true if page number is even, @a false otherwise.
-	 */
-	static inline bool isEven( unative_t page, Processor::PageSize page_size )
-		{ return !((page >> (Processor::pages[page_size].shift - Processor::pages[Processor::PAGE_4K].shift)) & 1); }
-
-	/*!
-	 * @brief Turns frame number and flags into registry value.
-	 * @param frame Frame number to write.
-	 * @param flags Flags to add
-	 * @return registry Lo value to store in TLB.
-	 */
-	static inline unative_t frameToPFN( unative_t frame, byte flags)
-		{ return ((frame << Processor::PFN_SHIFT) & Processor::PFN_ADDR_MASK) | flags; }
-
-	/*!
-   * @brief Turns page number and flags into registry value.
-   * @param page Page number to write.
-   * @param asid ASID to use.
-   * @return registry Hi value to store in TLB.
-   */
-	inline unative_t pageToVPN2( unative_t page, byte asid)
-		{ return ((page << Processor::VPN2_SHIFT) & Processor::VPN2_MASK) | asid; }
+	static inline unative_t addrToEntryHi( uintptr_t addr, Processor::PageSize size, byte asid )
+		{
+			return (addr >> Processor::pages[size].shift) << Processor::pages[size].shift | asid;
+		}
 
 	/*! @brief Stores asids that could be assigned to VMM. */
 	Buffer<byte, ASID_COUNT> m_freeAsids;

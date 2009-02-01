@@ -217,10 +217,10 @@ private:
 	static const uint HASH_RANGE = 19;
 
 	/*! @brief Minimum frame size given by the MIPS platform. */
-	static const uint MIN_FRAME_SIZE = 4096;		// 4kB
+	static const uint MIN_FRAME_SIZE = 2 * 4096;		// 8kB
 
 	/*! @brief Maximum frame size given by the MIPS platform. */
-	static const uint MAX_FRAME_SIZE = 16777216;	// 16MB
+	static const uint MAX_FRAME_SIZE = 2 * 16777216;	// 32MB
 
 	/*! @brief Next frame size = FRAME_STEP * This frame size */
 	static const uint FRAME_STEP = 4;

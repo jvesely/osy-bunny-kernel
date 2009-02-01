@@ -355,7 +355,7 @@ int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags)
 	if (cnt == 0)
 		return ENOMEM;
 
-	if (MyFrameAllocator::instance().frameAlloc(paddr, cnt, 4096, flags) < cnt)
+	if (MyFrameAllocator::instance().frameAlloc(paddr, cnt, Processor::pages[Processor::PAGE_MIN].size, flags) < cnt)
 		return ENOMEM;
 	
 	return EOK;
@@ -366,7 +366,7 @@ int frame_free(const void *paddr, const size_t cnt)
 	if (cnt == 0)
 		return ENOMEM;
 
-	if (!MyFrameAllocator::instance().frameFree(paddr, cnt, 4096))
+	if (!MyFrameAllocator::instance().frameFree(paddr, cnt, Processor::pages[Processor::PAGE_MIN].size))
 		return ENOMEM;
 
 	return EOK;
@@ -390,21 +390,33 @@ int vma_free(const void *from)
 /*----------------------------------------------------------------------------*/
 int vma_resize(const void *from, const size_t size)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->resize(from, size);
 }
 /*----------------------------------------------------------------------------*/
 int vma_remap(const void *from, const void *to)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->remap(from, to);
 }
 /*----------------------------------------------------------------------------*/
 int vma_merge(const void *area1, const void *area2)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->merge(area1, area2);
 }
 /*----------------------------------------------------------------------------*/
 int vma_split(const void *from, const void *split)
 {
-	return ENOMEM;
+	KernelThread* thread = (KernelThread*)Thread::getCurrent();
+	ASSERT (thread);
+	if (!thread->getVMM()) return EINVAL;
+	return thread->getVMM()->split(from, split);
 }
 /*----------------------------------------------------------------------------*/

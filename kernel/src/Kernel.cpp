@@ -100,7 +100,7 @@ void Kernel::run()
 	using namespace Processor;
 	
 	TLB::instance().flush();
-	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_4K );
+	TLB::instance().mapDevices( DEVICES_MAP_START, DEVICES_MAP_START, PAGE_MIN );
 	reg_write_status( STATUS_CU0_MASK | STATUS_IM_MASK | STATUS_IE_MASK );
 	other_stack_ptr = &m_otherStackTop;
 
@@ -191,22 +191,23 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from)
 	const uint32_t MAGIC = 0xDEADBEEF;
 
 	size_t size = 0;
-	const size_t range = 0x100000/sizeof(uint32_t); /* 1MB */
+	const size_t range = Processor::pages[Processor::PAGE_512K].size / sizeof(uint32_t);
 	volatile uint32_t* front = (uint32_t*)ADDR_TO_USEG(from);
-	volatile uint32_t* back = (uint32_t *)range - 1;
+	volatile uint32_t* back  = (uint32_t *)range - 1;
 	volatile uint32_t* point = front;
 
 	while (true) {
 		TLB::instance().setMapping(
-			(uintptr_t)front, (uintptr_t)point, Processor::PAGE_1M, false );
+			(uintptr_t)front, (uintptr_t)point, Processor::PAGE_512K, 0 );
 		(*front) = MAGIC; //write
 		(*back) = MAGIC; //write
 		if ( (*front != MAGIC) || (*back != MAGIC) ) break; //check
-		size += range * sizeof(uint32_t);
+		size  += range * sizeof(uint32_t);
 		point += range; //add
+		TLB::instance().clearAsid( 0 );
 	}
-	printk("OK\n");
 	TLB::instance().clearAsid( 0 );
+	printk("OK\n");
 	return size;
 }
 /*----------------------------------------------------------------------------*/
@@ -315,7 +316,7 @@ void Kernel::refillTLB()
   InterruptDisabler inter;
 
   bool success = TLB::instance().refill(
-		IVirtualMemoryMap::getCurrent(), Processor::reg_read_badvaddr());
+		IVirtualMemoryMap::getCurrent(), Processor::reg_read_badvaddr(), false);
 	
 	PRINT_DEBUG ("TLB refill for address: %p (%u) was a %s.\n",
 		Processor::reg_read_badvaddr(), Thread::getCurrent()->id(), success ? "SUCESS" : "FAILURE");

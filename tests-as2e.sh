@@ -23,12 +23,12 @@ fi
 
 emake() {
 	echo "Running make $SILENT_MAKE $@"
-	make $SILENT_MAKE "$@"
+	make -j3 $SILENT_MAKE "$@"
 }
 
 test() {
 	emake distclean || fail "Cleanup before compilation"
-	emake -j3 "KERNEL_TEST=$1" || fail "Compilation"
+	emake "KERNEL_TEST=$1" || fail "Compilation"
 	msim | tee test.log || fail "Execution"
 	grep '^Test passed\.\.\.$' test.log > /dev/null || fail "Test $1"
 	rm -f test.log
@@ -36,10 +36,7 @@ test() {
 }
 
 for TEST in \
-	tests/as2/area1/test.c \
-	tests/as2/falloc1/test.c \
-	tests/as2/malloc1/test.c \
-	tests/as2/thrcopy1/test.c \
+	tests/as2e/area1/test.c \
 	; do
 	test "${TEST}"
 done
@@ -47,12 +44,12 @@ done
 # these tests need a bit of special handling to compile and link
 
 for TEST in \
-	tests/as2/map1 \
-	tests/as2/map2 \
+	tests/as2e/map1 \
+	tests/as2e/map2 \
 	; do
-	cp -f $TEST/test.h tests/as2/shared/
-	test "${TEST}/test.c tests/as2/shared/tst_area_list.c tests/as2/shared/tst_area_ops.c"
-	rm tests/as2/shared/test.h
+	cp -f $TEST/test.h tests/as2e/shared/
+	test "${TEST}/test.c tests/as2e/shared/tst_area_list.c tests/as2e/shared/tst_area_ops.c"
+	rm tests/as2e/shared/test.h
 done
 
 echo
