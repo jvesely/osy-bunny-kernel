@@ -28,7 +28,7 @@
  * @brief Base class of memory allocator
  *
  * 	This is base class, from which are derived KernelMemoryAllocator and
- *	UserMemoryAllocator. Class should implement four basic memory allocation
+ *	UserMemoryAllocator. Class should implement at least four basic memory allocation
  *	strategies, enable to switch them at runtime and resize existing memory.
  *	Allocator now formats memory as a bunch of free/used blocks, which are
  *	organized in (sorted) list.
@@ -66,7 +66,7 @@ class BasicMemoryAllocator
 public:
 	/** @brief identifier of class used in memory blocks
 	*
-	*	See structure of memory block header.
+	*	See the structure of memory block header.
 	*/
 	static const uint32_t IDENTIFIER = 0xBA51CAAA;
 
@@ -353,19 +353,59 @@ class BlockHeader: public SimpleListItem
 
 	/** @brief set strategy to FirstFit
 	*
-	*	Changes pointer to functions and resorts free blocks list according to
-	*	address.
+	*	@todo change : must use sorted lists
 	*	Changes pointers getFreeBlockFunction, setSizeFunction and
 	*	insertIntoFreeListFunction.
 	*	For setSizeFunction is enough to use setSizeDefault.
 	*	Inserting into list of free blocks has no effect on allocator work,
 	*	so it is enough to use default implementation.
 	*	getFreeBlockFunction must search blocks according to their addresses.
-	*	This strategy does not use blockLists at all.
+	*	This strategy does not use blockLists at all, it uses list of memory chunks
+	*	and iterates trough blocks sequentially as they are stored in memory chunk.
+	*	On the other hand, it must maintains consistency of free/used memory blocks lists.
 	*/
 	void setStrategyFirstFit();
 
+	/** @brief set strategy to next fit
+	*
+	*	@todo change : must use sorted lists
+	*	Changes pointers getFreeBlockFunction, setSizeFunction and
+	*	insertIntoFreeListFunction according to next fit strategy.
+	*	Next fit strategy has the same principle as the first it strategy,
+	*	except that it finds 'second' fit.
+	*	This strategy again sequentialy iterates trough blocks in chunks and therefore does
+	*	not use memory blocks lists, but must maintain them.
+	*	Inserting into list of free blocks has no effect on allocator work,
+	*	so it is enough to use default implementation.
+	*	getFreeBlockFunction must iterate blocks according to their addresses and if
+	*	possible, must return second suitable block.
+	*	For setSizeFunction is enough to use setSizeDefault.
+	*/
+	void setStrategyNextFit();
 
+	/** @brief set strategy to best fit
+	*
+	*	Changes pointers getFreeBlockFunction, setSizeFunction and
+	*	insertIntoFreeListFunction according to best fit strategy and sorts
+	*	list of free blocks.
+	*	Strategy searches for smallest block bigger or equal to required size.
+	*	Iterating trough blocks is the same as in first fit or default strategy,
+	*	blocks are sorted according to their sizes. Resized blocks must be reintegrated
+	*	into list.
+	*	@todo
+	*/
+	void setStrategyBestFit();
+
+	/** @brief set strategy to worst fit
+	*
+	*	Changes pointers getFreeBlockFunction, setSizeFunction and
+	*	insertIntoFreeListFunction according to best fit strategy and sorts
+	*	list of free blocks.
+	*	Iterating trough blocks is reverse to the iterating in first fit or default strategy,
+	*	blocks are sorted according to their sizes. Resized blocks must be reintegrated
+	*	into list.
+	*/
+	void setStrategyWorstFit();
 
 protected:
 	/** @brief get some memory from frame allocator
@@ -566,6 +606,10 @@ protected:
 	*	(both in header and footer). If block has undefined state, it is not removed from
 	*	list (is state-safe).
 	*	No checking is performed. Expects that list is locked.
+	*
+	*	Keep in ming, that some strategies requires, that after each correct blockfooter
+	*	follows correct header!!
+	*
 	*	@param header block header
 	*	@param used specifies whether block will be used or free
 	*/
@@ -611,22 +655,41 @@ protected:
 	*/
 	inline void initBlock(BlockHeader * header, size_t realSize, bool free = true);
 
+	/** @brief receives front chunk border from information in back border
+	*
+	*	Uses position of back border and size information. No checking is performed.
+	*	@note Chunk front border is of type BlockFooter and back border of type
+	*	BlockHeader.
+	*/
+	inline BlockFooter * frontFromBackBorder(BlockHeader * backBorder) const{
+		return (BlockFooter*)(
+			(uintptr_t)backBorder - backBorder->size() + sizeof(BlockHeader));
+	}
+
+	//--------------strategy dependant functions-----
+
 	/** @brief default memory allocation
 	*
 	*	Only searches list for first matching free block and returns it.
 	*	No checking, no changes in structure.
-	*	@note should be used only with default memory allocation strategy.
 	*/
 	BlockHeader * getFreeBlockDefault(size_t realSize) const;
 
-	/** @brief first fit memory allocation
+	/** @brief default memory allocation
+	*
+	*	Allways takes the last block in list (that means the biggest). If it is
+	*	big enough, returns it.
+	*/
+	BlockHeader * getFreeBlockWorstFit(size_t realSize) const;
+
+	/** @brief next fit memory allocation
 	*
 	*	Searches trough all memory chunks (if needed). Each chunk is linearly
-	*	searched for free block big enough. If such block is found, function
-	*	returns it immediatelly. If nothing is ound, returns NULL.
-	*	@note should be used only with FirstFit memory allocation strategy.
+	*	searched for free block big enough. Second suitable block is returned.
+	*	If nothing is found, returns NULL.
+	*	@note should be used only with NextFit memory allocation strategy.
 	*/
-	BlockHeader * getFreeBlockFirstFit(size_t realSize) const;
+	BlockHeader * getFreeBlockNextFit(size_t realSize) const;
 
 	/** @brief logicaly resizes block
 	*
@@ -638,12 +701,56 @@ protected:
 	*/
 	void setSizeDefault(BlockHeader * header, size_t realSize);
 
-	/** @brief Inserts into list of free list in default order.
+	/** @brief logically resizes block and reintegrates it into list
+	*
+	*	Does not really change size of block, only changes size value in block header,
+	*	and on space, where block footer is supposed to be, sets size as well.
+	*	Use with care, could destroy structure of list.
+	*	Copies state as well (only free or used).
+	*	Also reintegrates block, if needed, to list of free blocks, so this list is
+	*	sorted by block`s size.
+	*	@note Does not handle old footer. This might lead to loose of data.
+	*/
+	void setSizeBestFit(BlockHeader * header, size_t realSize);
+
+	/** @brief Inserts into list of free blocks in default order.
 	*
 	*	Default order is on the end of list. Header must be in state FREE, this function
 	*	will not change it`s state.
 	*/
 	void insertIntoFreeListDefault(BlockHeader * header);
+
+	/** @brief Inserts into list of free blocks sorted according to address.
+	*
+	*	Function will insert block into list of free blocks. With first fit and next fit strategy,
+	*	this list must be sorted according to address. Header must be in state FREE, this function
+	*	will not change it`s state.
+	*/
+	void insertIntoFreeListFirstFit(BlockHeader * header);
+
+	/** @brief Inserts into list of free blocks sorted according to size.
+	*
+	*	Function will insert block into list of free blocks. With best fit and worst fit strategy,
+	*	this list must be sorted according to size. Header must be in state FREE, this function
+	*	will not change it`s state.
+	*/
+	void insertIntoFreeListBestFit(BlockHeader * header);
+
+	/** @brief sort free blocks list according to address
+	*
+	*	Resorts list of free blocks according to addresses, in ascending order.
+	*	Tries to optimize the process, so in good conditions, it may have linear complexity,
+	*	in general case it has quadratic complexity.
+	*/
+	void sortFreeAddress();
+
+	/** @brief sort free blocks according to their sizes
+	*
+	*	Resorts list of free blocks according to sizes, in ascending order.
+	*	Tries to optimize the process, so in good conditions, it may have linear complexity,
+	*	in general case it has quadratic complexity.
+	*/
+	void sortFreeSize();
 
 	/** @brief pointer to function which finds and uses block
 	*
@@ -746,10 +853,12 @@ inline void BasicMemoryAllocator::initBlock
 	header->setUndefined();
 
 	//set size (=create footer)
-	(this->*setSizeFunction)(header, realSize);
+	//(this->*setSizeFunction)(header, realSize);
+	setSizeDefault(header,realSize);
 
 	//set state of block (which handless also footer state)
 	setState(header, free);
+
 }
 //------------------------------------------------------------------------------
 inline void BasicMemoryAllocator::setStrategyDefault()

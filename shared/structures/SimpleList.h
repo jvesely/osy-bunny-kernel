@@ -75,6 +75,14 @@ public:
 		return & m_mainItem;
 	}
 
+	/** @brief get item connecting head and tail of list
+	*
+	*	Non-const function.
+	*/
+	inline SimpleListItem * getMainItem(){
+		return & m_mainItem;
+	}
+
 
 	/** @brief no comment
 	*/
