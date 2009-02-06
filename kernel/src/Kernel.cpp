@@ -51,8 +51,10 @@
 #endif
 
 
+static const uint BUNNIES_PER_LINE = 10;
+static const uint BUNNY_LINES = 5;
 /*! This is our great bunny :) */
-static const char* BUNNY_STR[5] = {
+static const char* BUNNY_STR[BUNNY_LINES] = {
 "|\\   /| ",
 " \\|_|/  ",
 " /. .\\  ",
@@ -60,22 +62,18 @@ static const char* BUNNY_STR[5] = {
 " (>o<)  "
 };
 
-static const uint BUNNIES_PER_LINE = 10;
-static const uint BUNNY_LINES = 5;
-
 extern unative_t COUNT_CPU;
 extern native_t SIMPLE_LOCK;
 extern void* volatile* other_stack_ptr;
 
 Kernel::Kernel() :
-	Thread( 0 ),   /* We don't need no stack. */
+	Thread( 0 ),   /* We need no stack. (We use static stack one :) ) */
 	m_console( CHARACTER_OUTPUT_ADDRESS, CHARACTER_INPUT_ADDRESS ),
 	m_clock( CLOCK )
 {
 	registerInterruptHandler( &m_console, CHARACTER_INPUT_INTERRUPT );
 	registerInterruptHandler( &Timer::instance(), TIMER_INTERRUPT );
 
-//	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_SYS  );
 	registerExceptionHandler( &m_syscalls, Processor::CAUSE_EXCCODE_SYS );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_INT  );
 	registerExceptionHandler( this, Processor::CAUSE_EXCCODE_BP   );
@@ -108,14 +106,12 @@ void Kernel::run()
 
 	if (*(volatile unative_t*)DORDER_ADDRESS)
 		goto sleep;
+	
 	{
-		ASSERT (COUNT_CPU);
+		ASSERT (COUNT_CPU);     /* We need at least one processor to run. */
 		
 		SIMPLE_LOCK = 0;
 
-		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBL );
-		registerExceptionHandler( &TLB::instance(), Processor::CAUSE_EXCCODE_TLBS );
-		
 		printBunnies( COUNT_CPU );
 		printf( "Running on %d processors\n", COUNT_CPU );
 
@@ -175,7 +171,6 @@ void Kernel::run()
 		yield();
 	}
 sleep:
-	//printf("SLEEPING.\n");
 	SIMPLE_LOCK = 0;
 	while (true) {
 		asm volatile ("wait");
@@ -217,52 +212,37 @@ void Kernel::exception( Processor::Context* registers )
 
 	const Processor::Exceptions reason = Processor::get_exccode(registers->cause);
 	
-	if (Processor::EXCEPTIONS[reason].handler) {
-		if (!(*Processor::EXCEPTIONS[reason].handler)( registers )) {
-			printf( "Exception handling for: %s(%u) FAILED => THREAD KILLED (%u).\n",
+	if (!Processor::EXCEPTIONS[reason].handler ||
+		  !(*Processor::EXCEPTIONS[reason].handler)( registers )
+		) {
+			printf( "Exception handling for: %s(%u) UNHANDLED or FAILED => KILLING offending thread (%u).\n",
 				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
+
 			Thread::getCurrent()->kill();
 		}
-	} else {
-		printf( "Exception handling for: %s(%u) UNHANDLED => THREAD KILLED (%u).\n",
-				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
-		Thread::getCurrent()->kill();
-	}
-
+	
 	if (Thread::shouldSwitch())
 		Thread::getCurrent()->yield();
 }
 /*----------------------------------------------------------------------------*/
 bool Kernel::handleException( Processor::Context* registers )
 {
-	using namespace Processor;
-	const Exceptions reason = get_exccode( registers->cause );
+	const Processor::Exceptions reason = Processor::get_exccode( registers->cause );
 
-	switch (reason){
-		case CAUSE_EXCCODE_INT:
-			handleInterrupts( registers );
-			break;
-		case CAUSE_EXCCODE_BP:
-			if (!(registers->cause & CAUSE_BD_MASK) ) {
-				registers->epc += 4; // go to the next instruction
-				return true;
-			}
-			panic("Exception: Break.\n");
-		case CAUSE_EXCCODE_ADES:
-		case CAUSE_EXCCODE_ADEL:
-		case CAUSE_EXCCODE_RI:
-		case CAUSE_EXCCODE_SYS:
-		case CAUSE_EXCCODE_TLBL:
-		case CAUSE_EXCCODE_TLBS:
-		case CAUSE_EXCCODE_TR:
-		case CAUSE_EXCCODE_OV:
-		case CAUSE_EXCCODE_CPU:
-		case CAUSE_EXCCODE_IBE:
-		case CAUSE_EXCCODE_DBE:
-		default:
-			panic( "Called for incorrect exception: %d.\n", reason );
+	if (reason == Processor::CAUSE_EXCCODE_INT)
+	{
+		handleInterrupts( registers );
+		return true;
 	}
-	return true;
+
+	if (reason == Processor::CAUSE_EXCCODE_BP &&
+		!(registers->cause & Processor::CAUSE_BD_MASK) )
+	{
+  	registers->epc += 4; // go to the next instruction
+    return true;
+  }
+	ASSERT (!"Incorrect exception for this handler!!!");
+	return false;
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::registerExceptionHandler( 
