@@ -36,6 +36,10 @@
 #include "assert.h"
 #include "dprintf.h"
 
+#define PAGE_SIZE  (1 << 13)
+#define FRAME_SIZE PAGE_SIZE
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

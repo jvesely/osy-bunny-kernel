@@ -75,8 +75,8 @@ void * KernelMemoryAllocator::getNewChunk(size_t* finalSize)
 	                          &physResult, frameCount, MIN_FRAME_SIZE);
 	if (resultantCount != frameCount)
 	{
-		PRINT_DEBUG_FRAME("frame allocator did not return enough\n");
-		PRINT_DEBUG_FRAME("expected %d frames, got %d \n", frameCount, resultantCount);
+		PRINT_DEBUG_FRAME("Frame allocator did not return enough\n");
+		PRINT_DEBUG_FRAME("Expected %d frames, got %d \n", frameCount, resultantCount);
 		return NULL;
 	}
 	return (void*)ADDR_TO_KSEG0((uintptr_t)physResult);
@@ -85,13 +85,12 @@ void * KernelMemoryAllocator::getNewChunk(size_t* finalSize)
 //------------------------------------------------------------------------------
 void KernelMemoryAllocator::returnChunk(BlockFooter * frontBorder, size_t finalSize)
 {
-	size_t MIN_FRAME_SIZE = Processor::pages[0].size;
+	size_t MIN_FRAME_SIZE = Processor::pages[Processor::PAGE_MIN].size;
 	//how much
 	uint frameCount = finalSize / MIN_FRAME_SIZE;
-	//FrameAllocator<7>::instance().frameFree(frontBorder,frameCount,FRAME_SIZE);
 	uintptr_t finalAddress = (uintptr_t)frontBorder - (uintptr_t)ADDR_PREFIX_KSEG0;
 
-	PRINT_DEBUG_FRAME("returning at %x, count %x, fsize %x \n",finalAddress,frameCount,FRAME_SIZE);
+	PRINT_DEBUG_FRAME("Returning at %x, count %x, fsize %x \n", finalAddress, frameCount, MIN_FRAME_SIZE);
 	MyFrameAllocator::instance().frameFree((void*)finalAddress, frameCount, MIN_FRAME_SIZE);
 }
 

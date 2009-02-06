@@ -148,8 +148,12 @@ BasicMemoryAllocator::BasicMemoryAllocator():
 	m_freeSize = 0;
 	m_totalSize = 0;
 	m_chunkResizingEnabled = false;
-	//default allocation strategy
+
 	setStrategyDefault();
+	//setStrategyFirstFit();
+	//setStrategyNextFit();
+	//setStrategyBestFit();
+	//setStrategyWorstFit();
 }
 //------------------------------------------------------------------------------
 BasicMemoryAllocator::~BasicMemoryAllocator()
@@ -160,7 +164,6 @@ BasicMemoryAllocator::~BasicMemoryAllocator()
 
 void * BasicMemoryAllocator::getMemory(size_t ammount)
 {
-	//inherited classs shoul implement some synchronisation here!!!
 #ifdef BMA_DEBUG
 	if ((m_mylock)) //debug
 	{
@@ -201,6 +204,7 @@ void * BasicMemoryAllocator::getMemory(size_t ammount)
 	//now res points only to valid free memory block large enough
 	//creating used block in free block (and reconnecting free remaining part)
 	resHeader = useFreeBlock(resHeader, realSize);
+
 	PRINT_DEBUG_OTHER("resHeader = %x\n", resHeader);
 	void * res = (void*)((uintptr_t)resHeader + sizeof(BlockHeader));
 	PRINT_DEBUG_OTHER("res       = %x\n", res);
@@ -272,19 +276,19 @@ void BasicMemoryAllocator::freeAll()
 	//InterruptDisabler lock;
 	BlockHeader * header;
 	BlockFooter * frontBorder;
-/*	while (!m_usedBloks.empty())
-	{
-		header = (BlockHeader*)(m_usedBloks.getMainItem()->next);
-		freeUsedBlock(header);
-		returnChunkIfPossible(header);
-	}*/
+	/*	while (!m_usedBloks.empty())
+		{
+			header = (BlockHeader*)(m_usedBloks.getMainItem()->next);
+			freeUsedBlock(header);
+			returnChunkIfPossible(header);
+		}*/
 	while (!m_chunks.empty())
 	{
 		header = (BlockHeader*)(m_chunks.getMainItem()->next);
 		frontBorder = (BlockFooter*)(
-		(uintptr_t)header - header->size() + sizeof(BlockHeader));
+		                  (uintptr_t)header - header->size() + sizeof(BlockHeader));
 		assert(frontBorder->isBorder());
-		returnChunk(frontBorder,frontBorder->size());
+		returnChunk(frontBorder, frontBorder->size());
 	}
 }
 //------------------------------------------------------------------------------
@@ -297,7 +301,7 @@ BasicMemoryAllocator::tryToGetNewChunk(size_t totalSize)
 
 	//also get real finalSize
 	void * start = getNewChunk(&finalSize);
-	PRINT_DEBUG_FRAME("got chunk at %x \n",start);
+	PRINT_DEBUG_FRAME("got chunk at %x \n", start);
 	if (!start) return NULL;//no memory
 
 	BlockHeader * res = initChunk(start, finalSize);
@@ -365,6 +369,9 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::initChunk(
 	backBorder->setBorder();
 	backBorder->setSize(size);
 
+	//insert into chunk list
+	m_chunks.insert(backBorder);
+
 	//setting resultant block
 	PRINT_DEBUG_FRAME("init block with real size %x \n", realSize);
 
@@ -425,9 +432,9 @@ bool BasicMemoryAllocator::reduceChunkWithBlockIfNeeded(BlockHeader * header)
 	        (header->size() > 2*expectedPageAlignment))
 	{
 		//aligning new size of memory chunk - we want some free space left
-/*		size_t finalSize  = alignUp(
-		                        frontBorder->size() - header->size() + pageAlignment,
-		                        pageAlignment);*/
+		/*		size_t finalSize  = alignUp(
+				                        frontBorder->size() - header->size() + pageAlignment,
+				                        pageAlignment);*/
 		//this is required, so that there will be reasonable free space left
 		size_t finalSize = frontBorder->size() - header->size() + expectedPageAlignment;
 
@@ -510,13 +517,13 @@ const
 	PRINT_DEBUG_STRATEGY("getFreeBlockDefault\n");
 	//search initialisation
 	if (m_freeBlocks.empty()) return NULL;
-	BlockHeader* resHeader = NULL;
+	//BlockHeader* resHeader = NULL;
 	BlockHeader* header = (BlockHeader*)(m_freeBlocks.getMainItem()->next);
 
-	assert (header != m_freeBlocks.getMainItem());
+	assert(header != m_freeBlocks.getMainItem());
 
 	//while not found and there is still something to find
-	while ((resHeader == NULL) && (header))
+	while (header != m_freeBlocks.getMainItem())
 	{
 		PRINT_DEBUG_OTHER("Testing block at %x, size %d\n", header, header->size());
 		assert(header->isFree());
@@ -524,61 +531,59 @@ const
 		if (header->size() >= realSize)
 		{
 			// first fit
-			resHeader = header;
+			return header;
 		}
 		// next block
 		header = ( BlockHeader* )( header->next );
-		//if header is header of first block (and therefore we cycled trough list)
-		//set it to null
-		if (((SimpleListItem*)header) == (m_freeBlocks.getMainItem()))
-		{
-			//though it seems a bit strange, it is hm..most flexible code for available list
-			header = NULL;
-		}
 	}
 
 	//now res points either to NULL or to header of free block large enough
-	return resHeader;
+	return NULL;
 }
 
 //------------------------------------------------------------------------------
 BasicMemoryAllocator::BlockHeader *
-BasicMemoryAllocator::getFreeBlockFirstFit(size_t realSize)
+BasicMemoryAllocator::getFreeBlockNextFit(size_t realSize)
 const
 {
-	PRINT_DEBUG_STRATEGY("getFreeBlockFirstFit\n");
+	PRINT_DEBUG_STRATEGY("getFreeBlockNextFit\n");
 
-	if (m_chunks.empty()) return NULL;
+	//find first
+	BlockHeader * header = getFreeBlockDefault(realSize);
+	if (!header) return NULL;
 
-	//search initialisation
-	BlockHeader * header;
-	BlockHeader * ChunkBackBorder = (BlockHeader*)m_chunks.getMainItem()->next;
-	BlockFooter * ChunkFrontBorder;
-	//try each chunk
-	while (ChunkBackBorder != m_chunks.getMainItem())
+	BlockHeader * secondHeader = ( BlockHeader* )( header->next );
+
+	//find second :)
+	while (secondHeader != m_freeBlocks.getMainItem())
 	{
-		assert(ChunkBackBorder->isBorder());
-		ChunkFrontBorder = (BlockFooter*)(
-		                       (uintptr_t)ChunkBackBorder - ChunkBackBorder->size() + sizeof(BlockHeader));
-
-		assert(ChunkFrontBorder->isBorder());
-
-		header = (BlockHeader*)(ChunkFrontBorder + 1);
-		//try each block in chunk
-		while (!header->isBorder())
+		assert(secondHeader->isFree());
+		if (secondHeader->size() >= realSize)
 		{
-			assert((header->isFree()) || (header->isUsed()));
-			//if good, then use it
-			if ((header->isFree()) &&
-			        (header->size() >= realSize))
-			{
-				return header;
-			}
-			header = (BlockHeader*)(header->getFooter() + 1);
+			return secondHeader;
 		}
-		//next chunk
-		ChunkBackBorder = (BlockHeader*) ChunkBackBorder->next;
+		secondHeader = (BlockHeader*)secondHeader->next;
 	}
+	//if second suitable block has not been found yet, then there is only one suitable
+	return header;
+}
+
+//------------------------------------------------------------------------------
+BasicMemoryAllocator::BlockHeader *
+BasicMemoryAllocator::getFreeBlockWorstFit(size_t realSize)
+const
+{
+	PRINT_DEBUG_STRATEGY("getFreeBlockWorstFit\n");
+
+	if (m_freeBlocks.empty()) return NULL;
+
+	BlockHeader * header = (BlockHeader*)m_freeBlocks.getMainItem()->prev;
+
+	if (header->size() >= realSize)
+	{
+		return header;
+	}
+	//else //there is no block big enough
 	return NULL;
 }
 
@@ -657,6 +662,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::freeUsedBlock
 	{
 		setState(header, true);
 	}
+
 	return header;
 }
 
@@ -676,6 +682,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::divideBlock(
 	//creating 2nd block
 	BlockHeader * newHeader = (BlockHeader*)((uintptr_t)header + realSize);
 	newHeader->setUndefined();
+
 	initBlock(newHeader, header->size() - realSize, free2);
 
 	//setting 1st block
@@ -699,7 +706,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::divideBlock(
 	}
 
 	//changing state of first block
-	setState( header, free1 );
+	setState(header, free1);
 
 	return header;
 
@@ -763,7 +770,8 @@ void BasicMemoryAllocator::setState( BasicMemoryAllocator::BlockHeader * header,
 		header->disconnect();
 
 	//set whole block state, considering border values as well
-	//connecting as well
+	//and connecting
+
 	if (free)//will be free
 	{
 		header->setFree();
@@ -778,30 +786,193 @@ void BasicMemoryAllocator::setState( BasicMemoryAllocator::BlockHeader * header,
 	}
 
 }
+//strategy functions (most)
 //------------------------------------------------------------------------------
 void BasicMemoryAllocator::setStrategyFirstFit()
 {
-	//resort all blocks?...maybe not needed.
+	PRINT_DEBUG_STRATEGY("setStrategyFirstFit\n");
+	sortFreeAddress();
 
 	//set function pointers
-	getFreeBlockFunction = &BasicMemoryAllocator::getFreeBlockFirstFit;
-	insertIntoFreeListFunction = &BasicMemoryAllocator::insertIntoFreeListDefault;
+	getFreeBlockFunction = &BasicMemoryAllocator::getFreeBlockDefault;
+	insertIntoFreeListFunction = &BasicMemoryAllocator::insertIntoFreeListFirstFit;
 	setSizeFunction = &BasicMemoryAllocator::setSizeDefault;
 }
+
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::setStrategyNextFit()
+{
+	PRINT_DEBUG_STRATEGY("setStrategyFirstFit\n");
+	sortFreeAddress();
+
+	//set function pointers
+	getFreeBlockFunction = &BasicMemoryAllocator::getFreeBlockNextFit;
+	insertIntoFreeListFunction = &BasicMemoryAllocator::insertIntoFreeListFirstFit;
+	setSizeFunction = &BasicMemoryAllocator::setSizeDefault;
+}
+
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::setStrategyBestFit()
+{
+	PRINT_DEBUG_STRATEGY("setStrategyBestFit\n");
+	sortFreeSize();
+
+	//set function pointers
+	getFreeBlockFunction = &BasicMemoryAllocator::getFreeBlockDefault;
+	insertIntoFreeListFunction = &BasicMemoryAllocator::insertIntoFreeListBestFit;
+	setSizeFunction = &BasicMemoryAllocator::setSizeBestFit;
+}
+
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::setStrategyWorstFit()
+{
+	PRINT_DEBUG_STRATEGY("setStrategyWorstFit\n");
+	sortFreeSize();
+
+	//set function pointers
+	getFreeBlockFunction = &BasicMemoryAllocator::getFreeBlockWorstFit;
+	insertIntoFreeListFunction = &BasicMemoryAllocator::insertIntoFreeListBestFit;
+	setSizeFunction = &BasicMemoryAllocator::setSizeBestFit;
+}
+
+
 //------------------------------------------------------------------------------
 void BasicMemoryAllocator::insertIntoFreeListDefault
 (BasicMemoryAllocator::BlockHeader * header)
 {
+	PRINT_DEBUG_STRATEGY("insertIntoFreeListDefault\n");
 	assert(header);
 	assert(!header->isBorder());
-	//PRINT_DEBUG_STRATEGY("insertIntoFreeListDefault\n");
 
 	//only inserts at the end of list
 	m_freeBlocks.insert(header);
 }
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::insertIntoFreeListFirstFit
+(BasicMemoryAllocator::BlockHeader * header)
+{
+	PRINT_DEBUG_STRATEGY("insertIntoFreeListFirstFit\n");
+	assert(header);
+	assert(!header->isBorder());
+
+	if (m_freeBlocks.empty())
+	{
+		//printf("only insert\n");//debug
+		//only inserts
+		m_freeBlocks.insert(header);
+		return;
+	}
+
+	//if it is to be first or last...
+	if ((uintptr_t)(m_freeBlocks.getMainItem()->next) > (uintptr_t)header)
+	{
+		//printf("on begin\n");//debug
+		header->prev = m_freeBlocks.getMainItem();
+		header->next = m_freeBlocks.getMainItem()->next;
+		header->reconnect();
+		return;
+	}
+
+	if ((uintptr_t)(m_freeBlocks.getMainItem()->prev) < (uintptr_t)header)
+	{
+		//printf("on end\n");//debug
+		header->next = m_freeBlocks.getMainItem();
+		header->prev = m_freeBlocks.getMainItem()->prev;
+		header->reconnect();
+		return;
+	}
+
+	//what to do first? find nearest free block or search in list?
+
+	//try to find nearest free block
+	/*	keep in mind, that this method is called allways with header, that
+	*	might have yet undefinet front neighbour, his back neighbour should be
+	*	defined though.
+	*/
+	BlockHeader * afterHeader = (BlockHeader*)(header->getFooter() + 1);
+	while (afterHeader->isUsed())
+	{
+		afterHeader = (BlockHeader*)(afterHeader->getFooter() + 1);
+	}
+
+	assert((afterHeader->isFree()) || (afterHeader->isBorder()));
+
+	if (afterHeader->isFree())
+	{
+		//printf("found nearest\n");//debug
+		header->next = afterHeader;
+		header->prev = afterHeader->prev;
+		header->reconnect();
+		return;
+	}
+
+	//find place in free blocks list
+	//printf("searching in list\n");//debug
+	afterHeader = (BlockHeader*)m_freeBlocks.getMainItem()->next;
+	while ((uintptr_t)afterHeader < (uintptr_t)header)
+	{
+		afterHeader = (BlockHeader*) afterHeader->next;
+	}
+	//afterHeader must be found : otherwise something bad happened
+	assert(afterHeader->isFree());
+	header->next = afterHeader;
+	header->prev = afterHeader->prev;
+	header->reconnect();
+}
 
 //------------------------------------------------------------------------------
-inline void BasicMemoryAllocator::setSizeDefault
+void BasicMemoryAllocator::insertIntoFreeListBestFit
+(BasicMemoryAllocator::BlockHeader * header)
+{
+	PRINT_DEBUG_STRATEGY("insertIntoFreeListBestFit\n");
+	assert(header);
+	assert(!header->isBorder());
+	BlockHeader * header2;
+
+	if (m_freeBlocks.empty())
+	{
+		//only inserts at the end of list
+		PRINT_DEBUG_OTHER("inserting blocks to empty free list\n");
+		m_freeBlocks.insert(header);
+		return;
+	}
+
+	header2 = (BlockHeader*)m_freeBlocks.getMainItem()->next;
+	if (header->size() <= header2->size())
+	{
+		//at to the begin
+		PRINT_DEBUG_OTHER("inserting blocks to begin of free list\n");
+		header->prev = m_freeBlocks.getMainItem();
+		header->next = header2;
+		header->reconnect();
+		return;
+	}
+
+	header2 = (BlockHeader*)m_freeBlocks.getMainItem()->prev;
+	if (header->size() >= header2->size())
+	{
+		//at to the end
+		PRINT_DEBUG_OTHER("inserting blocks to the end of free list\n");
+		header->next = m_freeBlocks.getMainItem();
+		header->prev = header2;
+		header->reconnect();
+		return;
+	}
+	//otherwise, search trough blocks...
+	header2 = (BlockHeader*)m_freeBlocks.getMainItem()->prev;
+	while (header2->size() > header->size())
+	{
+		header2 = (BlockHeader*) header2->prev;
+	}
+	assert(header2->isFree());
+	header->prev = header2;
+	header->next = header2->next;
+	header->reconnect();
+}
+
+
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::setSizeDefault
 (BasicMemoryAllocator::BlockHeader * header, size_t realSize)
 {
 	PRINT_DEBUG_STRATEGY("setSizeDefault\n");
@@ -820,3 +991,104 @@ inline void BasicMemoryAllocator::setSizeDefault
 		header->getFooter()->setUsed();
 	}
 }
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::setSizeBestFit
+(BasicMemoryAllocator::BlockHeader * header, size_t realSize)
+{
+	PRINT_DEBUG_STRATEGY("setSizeBestFit\n");
+	assert(!header->isBorder());
+
+	//setting size value
+	header->setSize(realSize);
+	header->getFooter()->setSize(realSize);
+	//set state
+	if (header->isFree())
+	{
+		header->getFooter()->setFree();
+		//reintegrate into sorted list
+		header->disconnect();
+		insertIntoFreeListBestFit(header);
+	}
+	else
+	{
+		header->getFooter()->setUsed();
+	}
+}
+
+
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::sortFreeAddress()
+{
+	PRINT_DEBUG_STRATEGY("sorting free list(address)");
+	if (m_freeBlocks.empty()) return;
+	//checking of blocks
+	SimpleList unsorted;
+	BlockHeader * header = (BlockHeader*)m_freeBlocks.getMainItem()->next;
+	BlockHeader * prevHeader = header;
+	header = (BlockHeader*) header->next;
+	while (header != m_freeBlocks.getMainItem())
+	{
+		assert(header->isFree());
+		if ((uintptr_t)header < (uintptr_t)prevHeader)
+		{
+			header->disconnect();
+			unsorted.insert(header);
+		}
+		else
+		{
+			prevHeader = header;
+		}
+		header = (BlockHeader*) prevHeader->next;
+	}
+	//now all sorted blocks should be in m_freeBlocks and unsorted in unsorted...
+	/*	all unsorted blocks will be inserted into m_freeBlocks via
+	*	insertIntoFreeListFirtFit function, since this does insertin according to address
+	*/
+	while (!unsorted.empty())
+	{
+		header = (BlockHeader*)unsorted.getMainItem()->next;
+		header->disconnect();
+		insertIntoFreeListFirstFit(header);
+	}
+	//now everything should be sorted..
+}
+
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::sortFreeSize()
+{
+	PRINT_DEBUG_STRATEGY("sorting free list(size)");
+	if (m_freeBlocks.empty()) return;
+	//checking of blocks
+	SimpleList unsorted;
+	BlockHeader * header = (BlockHeader*)m_freeBlocks.getMainItem()->next;
+	BlockHeader * prevHeader = header;
+	header = (BlockHeader*) header->next;
+	while (header != m_freeBlocks.getMainItem())
+	{
+		assert(header->isFree());
+		if (header->size() < prevHeader->size())
+		{
+			header->disconnect();
+			unsorted.insert(header);
+		}
+		else
+		{
+			prevHeader = header;
+		}
+		header = (BlockHeader*) prevHeader->next;
+	}
+	//now all sorted blocks should be in m_freeBlocks and unsorted in unsorted...
+	/*	all unsorted blocks will be inserted into m_freeBlocks via
+	*	insertIntoFreeListFirtFit function, since this does insertin according to address
+	*/
+	while (!unsorted.empty())
+	{
+		header = (BlockHeader*)unsorted.getMainItem()->next;
+		header->disconnect();
+		insertIntoFreeListBestFit(header);
+	}
+	//now everything should be sorted..
+}
+
+
+

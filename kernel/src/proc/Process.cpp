@@ -79,7 +79,7 @@ Process* Process::create( const char* filename )
 
 	/* Thread creation might have failed. */
 	if (main == NULL || (main->status() != Thread::INITIALIZED)) {
-		PRINT_DEBUG ("Main thread creation failed.\n");
+		PRINT_DEBUG ("Main thread creation failed %p.\n", main);
 		delete main;
 		return 0;
 	}
@@ -99,7 +99,7 @@ Process* Process::create( const char* filename )
 
 
 	/* Space allocation may fail. */
-	if (vmm->allocate( (void**)&start, roundUp( file_size, 0x1000 ), flags ) != EOK) {
+	if (vmm->allocate( (void**)&start, roundUp( file_size, Processor::pages[Processor::PAGE_MIN].size ), flags ) != EOK) {
 		PRINT_DEBUG ("Main area allocation failed.\n");
 		delete main;
 		return 0;

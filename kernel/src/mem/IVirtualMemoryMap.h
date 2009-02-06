@@ -98,6 +98,11 @@ public:
 	 */
 	virtual int free(const void* from) = 0;
 
+	virtual int resize(const void* from, const size_t size) = 0;
+	virtual int remap(const void* from, const void* to) = 0;
+	virtual int merge(const void* area1, const void* area2) = 0;
+	virtual int split(const void* from, const void* split) = 0;
+
 	/*! @brief Translates Virtual address into physical.
 	 * @param address Virtual address to translate, physical adress is returned
 	 * 	in this param as well.

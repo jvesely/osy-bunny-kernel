@@ -97,20 +97,19 @@ struct Page {
 };
 
 static const Page pages[7] = {
-	{ 0x0001000, 12, 0x000 },        /*!<   4KB */
-	{ 0x0004000, 14, 0x003 },        /*!<  16KB */
-	{ 0x0010000, 16, 0x00f },        /*!<  64KB */
-	{ 0x0040000, 18, 0x03f },        /*!< 256KB */
-	{ 0x0100000, 20, 0x0ff },        /*!<   1MB */
-	{ 0x0400000, 22, 0x3ff },        /*!<   4MB */
-	{ 0x1000000, 24, 0xfff }         /*!<  16MB */
+	{ 0x0002000, 13, 0x000 },        /*!<   4KB * 2 */
+	{ 0x0008000, 15, 0x003 },        /*!<  16KB * 2 */
+	{ 0x0020000, 17, 0x00f },        /*!<  64KB * 2 */
+	{ 0x0080000, 19, 0x03f },        /*!< 256KB * 2 */
+	{ 0x0200000, 21, 0x0ff },        /*!<   1MB * 2 */
+	{ 0x0800000, 23, 0x3ff },        /*!<   4MB * 2 */
+	{ 0x2000000, 25, 0xfff }         /*!<  16MB * 2 */
 };
 
 /*! reverted bit usage mask in TLB according to page size */
 enum PageSize {
-	PAGE_MIN = 0, 
-	PAGE_4K  = 0, PAGE_16K, PAGE_64K, PAGE_256K,	PAGE_1M, PAGE_4M, PAGE_16M,
-	PAGE_MAX = PAGE_16M 
+	PAGE_8K, PAGE_32K, PAGE_128K, PAGE_512K, PAGE_2M, PAGE_8M, PAGE_32M,
+	PAGE_MIN = PAGE_8K, PAGE_MAX = PAGE_32M
 };
 
 extern "C" void switch_cpu_context(void** old_top, void** new_top);
@@ -130,9 +129,15 @@ inline unative_t reg_read_index()     { return read_register(0);  }
 /*! named register read wrapper */
 inline unative_t reg_read_random()    { return read_register(1);  }
 /*! named register read wrapper */
+inline unative_t reg_read_entrylo0()  { return read_register(2); }
+/*! named register read wrapper */
+inline unative_t reg_read_entrylo1()  { return read_register(3); }
+/*! named register read wrapper */
 inline unative_t reg_read_pagemask()  { return read_register(5);  }
 /*! named register read wrapper */
 inline unative_t reg_read_badvaddr()  { return read_register(8);  }
+/*! named register read wrapper */
+inline unative_t reg_read_wired()     { return read_register(6);  }
 /*! named register read wrapper */
 inline unative_t reg_read_count()     { return read_register(9);  }
 /*! named register read wrapper */
@@ -403,8 +408,38 @@ inline void msim_stop (void)
 
 } // namespace Processor
 
-inline Processor::PageSize& operator++(Processor::PageSize& me)
+inline Processor::PageSize& operator++(Processor::PageSize& variable)
 {
-	me = (Processor::PageSize)(me + 1);
-	return me;
+	if (variable != Processor::PAGE_MAX) {
+		variable = (Processor::PageSize)(variable + 1);
+	}
+	return variable;
 }
+
+inline Processor::PageSize operator++(Processor::PageSize& variable, int)
+{
+	Processor::PageSize old = variable;
+	++variable;
+	return old;
+}
+
+inline Processor::PageSize& operator--(Processor::PageSize& variable)
+{
+	if (variable != Processor::PAGE_MIN) {
+		variable = (Processor::PageSize)(variable - 1);
+	}
+	return variable;
+}
+
+inline Processor::PageSize operator--(Processor::PageSize& variable, int)
+{
+	Processor::PageSize old = variable;
+	--variable;
+	return old;
+}
+
+inline bool operator< (const Processor::PageSize left, const Processor::PageSize right)
+{
+	return (int)left < (int)right;
+}
+

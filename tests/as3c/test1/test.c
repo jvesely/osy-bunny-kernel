@@ -48,9 +48,9 @@ static char* desc =
 
 struct mutex mtx;
 
-void* thread_proc(void* data)
+static void* thread_proc(void* data)
 {
-	thread_t self = thread_self();
+	thread_t thread = thread_self();
 	printf("Thread %x started...\n", thread);
 
 	thread_yield();
@@ -103,14 +103,32 @@ int main(void)
 	// var definitions
 	thread_t thread[THREAD_COUNT];
 
-
 	// var initialization
 	mutex_init(&mtx);
 
-	// work to do
-	//mutex_lock(&mtx);
-	//mutex_unlock(&mtx);
+	char* string = "A thread.";
 
+	int res;
+	char* str;
+	// do the test
+	for (int i = 0; i < THREAD_COUNT; i++) {
+		str = (char *)malloc(10 * sizeof(char));
+		// copy string
+		for (int j = 0; j < 10; j++) str[j] = string[j];
+		// set label
+		str[0] += i;
+		// create threads
+		res = thread_create(thread + i, thread_proc, str);
+		if (res != EOK) {
+			printf ("Unable to create thread (%d)\n", res);
+		}
+	}
+
+	// join threads
+	void* x;
+	for (int i = 0; i < THREAD_COUNT; i++) {
+		thread_join(thread[i], &x);
+	}
 
 	// clean up
 	mutex_destroy(&mtx);
