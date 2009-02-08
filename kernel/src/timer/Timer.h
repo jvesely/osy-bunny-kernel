@@ -70,7 +70,7 @@ private:
 	/*! @brief Event heap */
 	ThreadHeap m_heap;
 
-	Timer();
+	Timer() {};
 	friend class Singleton<Timer>;
 };
 
