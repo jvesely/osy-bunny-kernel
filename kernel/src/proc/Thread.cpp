@@ -111,7 +111,9 @@ Thread::Thread( uint stackSize ):
 void Thread::switchTo()
 {
 	InterruptDisabler interrupts;
-	
+
+	ASSERT (this); 
+
 	PRINT_DEBUG ("Switching to thread %u.\n", m_id);
 
 	static const Time DEFAULT_QUANTUM(0, 20000);
@@ -148,10 +150,11 @@ void Thread::switchTo()
 		IVirtualMemoryMap::switchOff();
 	}
 
+	/* plan my end if I'm not the idle thread */
 	if (this != SCHEDULER.m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
 			m_id, DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
-		Timer::instance().plan( this, DEFAULT_QUANTUM );
+		TIMER.plan( this, DEFAULT_QUANTUM );
 	}
 
 	PRINT_DEBUG ("Switching stacks: %p, %p.\n", old_stack, new_stack);
@@ -171,7 +174,7 @@ void Thread::yield()
 	}
 
 	/* switch to the next thread */
-	getNext()->switchTo();
+	Thread::getNext()->switchTo();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::alarm( const Time& alarm_time )
@@ -278,7 +281,10 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	m_status = JOINING;
   yield();
 
+	ASSERT (thread);
+
 	others_status = thread->status();
+
 	/* Woken by the death of the thread (either timed or untimed) */
 	if ( (others_status == FINISHED) || (others_status == KILLED))	
 	{
@@ -363,8 +369,9 @@ void Thread::exit( void* return_value  )
 Thread::~Thread()
 {
 	PRINT_DEBUG ("Thread %u erased from the world.\n", m_id);
-	free(m_stack);
 	if ( m_id ) {
+		PRINT_DEBUG ("Returning id.\n");
 		SCHEDULER.returnId( m_id );
 	}
+	free(m_stack);
 }

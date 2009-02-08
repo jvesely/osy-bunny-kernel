@@ -115,6 +115,8 @@ void Kernel::run()
 		printBunnies( COUNT_CPU );
 		printf( "Running on %d processors\n", COUNT_CPU );
 
+		printf ("PAGE_8K: %d.\n", Processor::PAGE_8K);
+
 		if (COUNT_CPU > 1)
 			puts( "Warning: It's nice to have more processors, but we currently support only one.\n" );
 
@@ -127,21 +129,21 @@ void Kernel::run()
 		native_t to = 0;
 		const unsigned int start = m_clock.time();
 		printf( "Detecting freq..." );
-		while (m_clock.time() == start) ;
+		while (m_clock.time() == start) ;  /* sync time for the current second */
+
 		const native_t from = reg_read_count();
 		while (m_clock.time() - (start + 1) < 1) { //1 s
 			putc( '.' );
 			to = reg_read_count();
 			putc( '\b' );
 		}
-		m_timeToTicks = (to - from) / 1000000;
-
 		/* I would use constants here but they would not be used
 		 * in any other part of the program and still it's clear what this does.
 		 * (counts Mhz :) )
 		 */
-
-		printf( "%d.%d MHz\n", m_timeToTicks, (to - from) % 1000 );
+		m_timeToTicks = (to - from) / 1000000;
+		printf( "%d.%d MHz\n", m_timeToTicks, ((to - from) / 1000) % 1000 );
+		
 		const uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
 
 		// detect memory
@@ -274,14 +276,14 @@ void Kernel::setTimeInterrupt(const Time& time)
 {
 	InterruptDisabler interrupts;
 
-	const Time now = Time::getCurrent();
+	const Time now      = Time::getCurrent();
 	const Time relative = ( time > now ) ? time - now : Time( 0, 0 );
 
-	unative_t current = Processor::reg_read_count();
-	const uint usec = relative.toUsecs();
+	unative_t current   = Processor::reg_read_count();
+	const uint usec     = relative.toUsecs();
 
  	if (time) {
-		current = roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND);
+		current = roundUp(current + (usec * m_timeToTicks), m_timeToTicks * 10 * RTC::MILLI_SECOND); // 10 ms time slot
 	}
 	
 	PRINT_DEBUG
@@ -304,13 +306,12 @@ void Kernel::refillTLB()
   if (!success) {
 		printf( "Access to invalid address %p, KILLING offending thread.\n",
 			Processor::reg_read_badvaddr() );
-    if (Thread::getCurrent()) {
-			Thread::getCurrent()->kill();
-			if (Thread::shouldSwitch())
-				Thread::getCurrent()->yield();
-		} else
-			panic( "No thread and invalid tlb refill.\n" );
+		ASSERT (Thread::getCurrent());
+		Thread::getCurrent()->kill();
 	}
+
+	if (Thread::shouldSwitch())
+		Thread::getCurrent()->yield();
 }
 /*----------------------------------------------------------------------------*/
 void Kernel::attachDisks()
@@ -323,6 +324,6 @@ void Kernel::attachDisks()
 /*----------------------------------------------------------------------------*/
 Time Time::getCurrentTime()
 {
-	return Time( Kernel::instance().clock().time(), Kernel::instance().clock().usec() );
+	return Time( KERNEL.clock().time(), KERNEL.clock().usec() );
 }
 

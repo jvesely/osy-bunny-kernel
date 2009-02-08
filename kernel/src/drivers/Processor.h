@@ -97,13 +97,13 @@ struct Page {
 };
 
 static const Page pages[7] = {
-	{ 0x0002000, 13, 0x000 },        /*!<   4KB * 2 */
-	{ 0x0008000, 15, 0x003 },        /*!<  16KB * 2 */
-	{ 0x0020000, 17, 0x00f },        /*!<  64KB * 2 */
-	{ 0x0080000, 19, 0x03f },        /*!< 256KB * 2 */
-	{ 0x0200000, 21, 0x0ff },        /*!<   1MB * 2 */
-	{ 0x0800000, 23, 0x3ff },        /*!<   4MB * 2 */
-	{ 0x2000000, 25, 0xfff }         /*!<  16MB * 2 */
+	{ 0x0002000, 13, 0x000 },        /*!<   8KB */
+	{ 0x0008000, 15, 0x003 },        /*!<  32KB */
+	{ 0x0020000, 17, 0x00f },        /*!< 128KB */
+	{ 0x0080000, 19, 0x03f },        /*!< 512KB */
+	{ 0x0200000, 21, 0x0ff },        /*!<   2MB */
+	{ 0x0800000, 23, 0x3ff },        /*!<   8MB */
+	{ 0x2000000, 25, 0xfff }         /*!<  32MB */
 };
 
 /*! reverted bit usage mask in TLB according to page size */
@@ -309,7 +309,7 @@ inline void revert_interrupt_state(ipl_t state)
 struct Exception
 {
 	uint code;
-	char* name;
+	const char* name;
 	ExceptionHandler* handler;
 };
 /*! @brief Exception codes */
@@ -334,20 +334,20 @@ const uint EXCEPTION_COUNT = 14;
 
 static const Exception EXCEPTIONS[EXCEPTION_COUNT] =
 {
-	{ CAUSE_EXCCODE_INT,  (char*)"Interrupt exception", NULL },
-	{ CAUSE_EXCCODE_MOD,  (char*)"TLB modification exception", NULL },
-	{ CAUSE_EXCCODE_TLBL, (char*)"TLB load exception", NULL },
-	{ CAUSE_EXCCODE_TLBS, (char*)"TLB save exception", NULL },
-	{ CAUSE_EXCCODE_ADEL, (char*)"Address error load exception", NULL },
-	{ CAUSE_EXCCODE_ADES, (char*)"Address error save exception", NULL },
+	{ CAUSE_EXCCODE_INT,  (char*)"Interrupt exception"            , NULL },
+	{ CAUSE_EXCCODE_MOD,  (char*)"TLB modification exception"     , NULL },
+	{ CAUSE_EXCCODE_TLBL, (char*)"TLB load exception"             , NULL },
+	{ CAUSE_EXCCODE_TLBS, (char*)"TLB save exception"             , NULL },
+	{ CAUSE_EXCCODE_ADEL, (char*)"Address error load exception"   , NULL },
+	{ CAUSE_EXCCODE_ADES, (char*)"Address error save exception"   , NULL },
 	{ CAUSE_EXCCODE_IBE,  (char*)"Instruction bus error exception", NULL },
-	{ CAUSE_EXCCODE_DBE,  (char*)"Data bus error exception", NULL },
-	{ CAUSE_EXCCODE_SYS,  (char*)"Syscall exception", NULL },
-	{ CAUSE_EXCCODE_BP,   (char*)"Breakpoint exception", NULL },
-	{ CAUSE_EXCCODE_RI,   (char*)"Reserved instruction exception", NULL },
-	{ CAUSE_EXCCODE_CPU,  (char*)"Coprocessor unusable exception", NULL },
-	{ CAUSE_EXCCODE_OV,   (char*)"Integer overflow exception", NULL },
-	{ CAUSE_EXCCODE_TR,   (char*)"Trap instruction exception", NULL }
+	{ CAUSE_EXCCODE_DBE,  (char*)"Data bus error exception"       , NULL },
+	{ CAUSE_EXCCODE_SYS,  (char*)"Syscall exception"              , NULL },
+	{ CAUSE_EXCCODE_BP,   (char*)"Breakpoint exception"           , NULL },
+	{ CAUSE_EXCCODE_RI,   (char*)"Reserved instruction exception" , NULL },
+	{ CAUSE_EXCCODE_CPU,  (char*)"Coprocessor unusable exception" , NULL },
+	{ CAUSE_EXCCODE_OV,   (char*)"Integer overflow exception"     , NULL },
+	{ CAUSE_EXCCODE_TR,   (char*)"Trap instruction exception"     , NULL }
 };
 
 const unative_t	CAUSE_EXCCODE_MASK  = 0x0000007c;

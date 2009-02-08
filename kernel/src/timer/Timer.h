@@ -69,4 +69,9 @@ public:
 private:
 	/*! @brief Event heap */
 	ThreadHeap m_heap;
+
+	Timer();
+	friend class Singleton<Timer>;
 };
+
+#define TIMER Timer::instance()
