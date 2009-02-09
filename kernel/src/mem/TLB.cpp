@@ -219,7 +219,7 @@ void TLB::setMapping(
 	reg_write_entryhi( old_asid );
 }
 /*----------------------------------------------------------------------------*/
-bool TLB::refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr, bool hit )
+bool TLB::refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr )
 {
 #ifdef TLB_DEBUG
 	const unative_t start_count = Processor::reg_read_count();	

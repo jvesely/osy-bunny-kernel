@@ -296,7 +296,7 @@ void Kernel::refillTLB()
   InterruptDisabler inter;
 
   bool success = TLB::instance().refill(
-		IVirtualMemoryMap::getCurrent(), Processor::reg_read_badvaddr(), false);
+		IVirtualMemoryMap::getCurrent(), Processor::reg_read_badvaddr() );
 	
 	PRINT_DEBUG ("TLB refill for address: %p (%u) was a %s.\n",
 		Processor::reg_read_badvaddr(), Thread::getCurrent()->id(), success ? "SUCESS" : "FAILURE");

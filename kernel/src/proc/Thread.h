@@ -96,7 +96,6 @@ public:
 	 * Construction involves allocating stack and preparing context.
 	 * If successfull thread's status will be INITIALIZED, if something went 
 	 * wrong it will be UNITIALIZED.
-	 * @param flags Thread flags -- ingored
 	 * @param stackSize size of requested stack
 	 */
 	Thread(	uint stackSize = DEFAULT_STACK_SIZE );
