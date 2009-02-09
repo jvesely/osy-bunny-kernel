@@ -118,6 +118,7 @@ int thread_join( thread_t thr, void **thread_retval );
  *  microseconds.
  * 
  * @param thr thread id of the thread to wait for.
+ * @param thread_retval pointer to place where return value should be stored.
  * @param usec number of microsecs to wait before returning ETIMEDOUT.
  * @return See non-timed version, plus ETIMEOUT if thread is still running
  * after given time.

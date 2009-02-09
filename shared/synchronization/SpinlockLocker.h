@@ -52,7 +52,7 @@ public:
 	/**
 	 * Constructor locks the Spinlock given in parameter.
 	 *
-	 * @param Spinlock The lock passed by reference.
+	 * @param spinlock The lock passed by reference.
 	 */
 	inline SpinlockLocker(Spinlock& spinlock): m_spinlock(spinlock) {
 		m_spinlock.lock();

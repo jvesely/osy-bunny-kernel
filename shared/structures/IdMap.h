@@ -36,20 +36,62 @@
 
 #include "structures/HashMap.h"
 
+/*!
+ * @class IdMap IdMap.h "structures/IdMap.h"
+ * @brief Basically a hashmap with ability to generate uniqe keys.
+ *
+ * Wrapper class for standard HashMap with added ability to generate keys.
+ * Maintains mappings from ID to T, cleans all mappings upon destruction.
+ */
 template <typename ID, typename T>
 class IdMap
 {
 public:
+	/*!
+	 * @brief Standard onstructor, just prepares hashmap.
+	 * @param count number of bags used by hasmap, default is 61
+	 */
 	IdMap(int count = 61);
-	ID getFreeId( const T& );
-	inline void returnId( const ID& );
-	inline T translateId( const ID& );
+
+	/*!
+	 * @brief Generates unused ID and creates mapping to T.
+	 * @param element ID would map to this instance.
+	 * @return new generated ID != BAD_ID when succeeded, BAD_ID otherwise
+	 */
+	ID getFreeId( const T& element );
+
+	/*!
+	 * @brief Destroys mapping assigned to given ID, marking it as free.
+	 * @param id ID to free.
+	 */
+	inline void returnId( const ID& id );
+
+	/*!
+	 * @brief Traslates given ID into type T using existing mapping.
+	 * @param id ID to translate.
+	 * @return Associated T on success, default constructed T otherwise.
+	 */
+	inline T translateId( const ID& id );
+
+	/*!
+	 * @brief Used HashMap getter, provided for convenience.
+	 * @return Used HashMap const reference.
+	 */
 	inline const HashMap<ID, T>& map() const;
+
+	/*!
+	 * @brief Standard destructor, clears hashmap.
+	 */
 	~IdMap();
 
+	/*! @brief Error indicator, returned by some memeber functions on error. */
 	const ID BAD_ID;
+
 private:
+	/*! @brief Last used ID, used during next ID generation. */
 	ID m_lastId;
+
+	/*! @brief Hasmap storing existing associations. */
 	HashMap<ID, T> m_map;
 
 	IdMap( const IdMap& );
