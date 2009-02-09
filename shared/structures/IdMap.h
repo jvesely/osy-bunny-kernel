@@ -45,6 +45,7 @@ public:
 	inline void returnId( const ID& );
 	inline T translateId( const ID& );
 	const ID BAD_ID;
+	~IdMap();
 
 private:
 	ID m_lastId;
@@ -99,4 +100,10 @@ template <typename ID, typename T>
 T IdMap<ID, T>::translateId( const ID& id)
 {
 	return m_map.exists( id ) ? m_map.at( id ) : T();
+}
+/*----------------------------------------------------------------------------*/
+template <typename ID, typename T>
+IdMap<ID, T>::~IdMap()
+{
+	m_map.clear();
 }
