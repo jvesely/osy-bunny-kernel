@@ -42,8 +42,6 @@ TimerManager::TimerManager():
 	//printk( "TimerManager ctor\n" );//debug
 	//printk( "timer size: %x \n", sizeof( ClassTimer ) );
 	m_lastEvent.setTime( 0, 0 );
-	//Scheduler::instance().getId(this);
-	//Scheduler::instance().enqueue( this );
 	resume();
 
 	//printk("TimerManager ctor OK\n");

@@ -42,16 +42,13 @@
  */
 
 class Thread;
-class KernelThread;
-class UserThread;
-class Timer;
 
 typedef HashMap<thread_t, Thread*> ThreadMap; 
 typedef List<Thread*> ThreadList;
 
 class Scheduler: public Singleton<Scheduler>
 {
-public:
+//public:
 //	static const Time DEFAULT_QUANTUM;
 
 	/*! @brief Translates identifier to pointer.
@@ -64,7 +61,7 @@ public:
 
 	/*! @brief Adds new thread, generates id for it and makes it READY
 	 * @param newThread thread to be added
-	 * @result id of the new thread
+	 * @result id of the newThread, 0 if mapping failed
 	 */
 	thread_t getId( Thread* newThread );
 
@@ -112,15 +109,10 @@ private:
 	/*! @brief Remember if switching is due. */
 	bool m_shouldSwitch;
 
-	/*! @brief Just sets current thread to NULL, creates Idle thread */
+	/*! @brief Just sets current thread to &KERNEL, creates Idle thread */
 	Scheduler();
 	
 	friend class Singleton<Scheduler>;
 	friend class Thread;
-	friend class UserThread;
-	friend class KernelThread;
-	friend class Timer;
-	//friend Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*), void* thread_data, const unsigned int thread_flags );
-
 };
 #define SCHEDULER Scheduler::instance()

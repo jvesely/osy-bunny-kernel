@@ -88,6 +88,8 @@ public:
 
 	static bool shouldSwitch();
 
+	static void requestSwitch();
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
@@ -182,9 +184,6 @@ public:
 	/*! @brief Resumes thread to the scheduling queue */
 	void resume();
 
-	/*! @brief Sets my thread_t identifier. */
-	inline void setId( thread_t id ) { m_id = id; };
-
 	/*! @brief Gets current thread status.
 	 * @return current status
 	 */
@@ -198,13 +197,16 @@ public:
 	inline void setStatus( Status status ) { m_status = status; };
 	
 	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
+	
+	/*! @brief Sets my thread_t identifier. */
+	thread_t registerWithScheduler();
 
 protected:
-	void* m_stack;	                           /*!< that's my stack            */
-	void* m_stackTop;                          /*!< top of my stack            */
-	void* m_otherStackTop;
-	void* m_ret;
-	unsigned int m_stackSize;                  /*!< size of my stack           */
+	void*  m_stack;                            /*!< that's my stack            */
+	void*  m_stackTop;                         /*!< top of my stack            */
+	void*  m_otherStackTop;                    /*!< may switch to this stack   */
+	void*  m_ret;                              /*!< return value               */
+	size_t m_stackSize;                        /*!< size of my stack           */
 	Process*  m_process;                       /*!< my process                 */
 
 	bool m_detached;                           /*!< detached flag              */

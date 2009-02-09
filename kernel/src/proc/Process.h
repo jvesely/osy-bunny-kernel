@@ -44,7 +44,7 @@ typedef List<UserThread*> UserThreadList;
 class Process
 {
 public:
-	static Process* create( const char* filename );
+	static Process* create( const char* image, size_t size );
 	inline UserThread* mainThread() { return m_mainThread; };
 	UserThread* addThread( thread_t* thread_ptr, void* (*thread_start)(void*),
 	    void* data = NULL, void* arg = NULL, const unsigned int flags = 0 );

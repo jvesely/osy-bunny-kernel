@@ -36,7 +36,6 @@
 #include "UserThread.h"
 #include "proc/Process.h"
 #include "drivers/Processor.h"
-#include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
 
 //#define USER_THREAD_DEBUG

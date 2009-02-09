@@ -79,9 +79,6 @@ thread_t Scheduler::getId( Thread* newThread )
 	if (result == ENOMEM)
 		return 0;
 
-	/* set the id to the thread */
-	newThread->setId(id);
-
 	return id;
 }
 /*----------------------------------------------------------------------------*/

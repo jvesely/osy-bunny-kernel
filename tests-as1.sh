@@ -28,7 +28,7 @@ for TEST in \
 	tests/as1/mutex5/test.c \
 	; do
 	make distclean || fail "Cleanup before compilation"
-	make "KERNEL_TEST=$TEST" || fail "Compilation"
+	make -j3 "KERNEL_TEST=$TEST" || fail "Compilation"
 	msim
 	make distclean "KERNEL_TEST=$TEST" || fail "Cleanup after compilation"
 done
@@ -45,7 +45,7 @@ for TEST in \
 	tests/as1/timer1/test.c \
 	; do
 	make distclean || fail "Cleanup before compilation"
-	make "KERNEL_TEST=$TEST" || fail "Compilation"
+	make -j3 "KERNEL_TEST=$TEST" || fail "Compilation"
 	msim | tee /dev/stderr | grep '^Test passed\.\.\.$' > /dev/null || fail "Test $TEST"
 	make distclean "KERNEL_TEST=$TEST" || fail "Cleanup after compilation"
 done

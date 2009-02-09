@@ -70,6 +70,11 @@ bool Thread::shouldSwitch()
 	return SCHEDULER.m_shouldSwitch;
 }
 /*----------------------------------------------------------------------------*/
+void Thread::requestSwitch()
+{
+	SCHEDULER.m_shouldSwitch = true;
+}
+/*----------------------------------------------------------------------------*/
 Thread::Thread( uint stackSize ):
 	ListInsertable<Thread>(),
 	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(), m_otherStackTop( NULL ),
@@ -168,7 +173,7 @@ void Thread::yield()
 	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
 
 	/* voluntary yield should remove me from the Timer */
-	if (m_status == RUNNING) {
+	if (status() == RUNNING) {
 		PRINT_DEBUG ("Removed from heap during yield. (%u)\n", m_id);
 		removeFromHeap();
 	}
@@ -208,7 +213,7 @@ void Thread::sleep( const Time& interval)
 void Thread::suspend()
 {
 	/* may only suspend self */
-	ASSERT (m_status == RUNNING);
+	ASSERT (status() == RUNNING);
 
 	/* WAITING indicates that I have to waken by another thread */
 	m_status = WAITING;
@@ -366,11 +371,16 @@ void Thread::exit( void* return_value  )
 		m_status = FINISHED;
 }
 /*----------------------------------------------------------------------------*/
+thread_t Thread::registerWithScheduler()
+{
+	return m_id = SCHEDULER.getId( this );
+}
+/*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
 	PRINT_DEBUG ("Thread %u erased from the world.\n", m_id);
 	if ( m_id ) {
-		PRINT_DEBUG ("Returning id.\n");
+		PRINT_DEBUG ("Returning id %d.\n", m_id);
 		SCHEDULER.returnId( m_id );
 	}
 	free(m_stack);
