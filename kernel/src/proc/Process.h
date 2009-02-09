@@ -76,6 +76,8 @@ private:
 	process_t m_id;
 
 	Process(){};
+	void clearEvents();
+	void clearThreads();
 
 	Process( const Process& );
 	Process& operator = ( const Process& );

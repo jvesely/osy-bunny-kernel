@@ -44,9 +44,10 @@ public:
 	ID getFreeId( const T& );
 	inline void returnId( const ID& );
 	inline T translateId( const ID& );
-	const ID BAD_ID;
+	inline const HashMap<ID, T>& map() const;
 	~IdMap();
 
+	const ID BAD_ID;
 private:
 	ID m_lastId;
 	HashMap<ID, T> m_map;
@@ -100,6 +101,12 @@ template <typename ID, typename T>
 T IdMap<ID, T>::translateId( const ID& id)
 {
 	return m_map.exists( id ) ? m_map.at( id ) : T();
+}
+/*----------------------------------------------------------------------------*/
+template <typename ID, typename T>
+const HashMap<ID, T>& IdMap<ID, T>::map() const
+{
+	return m_map;
 }
 /*----------------------------------------------------------------------------*/
 template <typename ID, typename T>

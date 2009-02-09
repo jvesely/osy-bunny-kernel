@@ -38,6 +38,7 @@
 #include "tools.h"
 #include "InterruptDisabler.h"
 #include "address.h"
+#include "synchronization/Event.h"
 
 //#define PROCESS_DEBUG
 
@@ -104,15 +105,41 @@ Process* Process::create( const char* image, size_t size )
 	return me;
 }
 /*----------------------------------------------------------------------------*/
-void Process::exit()
+void Process::clearEvents()
+{
+	const uint list_count = eventTable.map().getArraySize();
+	for (uint i = 0; i < list_count; ++i)
+	{
+		List< Pair<event_t, Event*> >* list =	eventTable.map().getList( i );
+		List< Pair<event_t, Event*> >::Iterator it;
+		ASSERT (list);
+		for (it = list->begin(); it != list->end(); ++it){
+			it->second->fire();
+			delete it->second;
+		}
+		list->clear();
+	}
+}
+/*----------------------------------------------------------------------------*/
+void Process::clearThreads()
 {
 	m_mainThread->kill();
 	for ( UserThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
 	{
 		Thread::Status st = (*it)->status();
-		if (st != Thread::KILLED && st != Thread::FINISHED)
+		if (st != Thread::KILLED && st != Thread::FINISHED) {
+			if (st != Thread::READY)
+				(*it)->resume();
 			(*it)->kill();
+		}
 	}
+
+}
+/*----------------------------------------------------------------------------*/
+void Process::exit()
+{
+	clearEvents();
+	clearThreads();
 }
 /*----------------------------------------------------------------------------*/
 Process* Process::getCurrent()
