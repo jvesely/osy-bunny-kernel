@@ -45,48 +45,5 @@ public:
 
 private:
 
-	unative_t m_call;
-	unative_t m_params[4];
-	unative_t (SyscallHandler::*m_handles[SYS_COUNT])(void);
-
-	unative_t handlePuts();
-	unative_t handleGets();
-	unative_t handleExit();
-
-	unative_t handleThreadCreate();
-	unative_t handleThreadJoin();
-	unative_t handleThreadSleep();
-	unative_t handleThreadYield();
-	unative_t handleThreadSuspend();
-	unative_t handleThreadWakeup();
-	unative_t handleThreadSelf();
-	unative_t handleThreadDetach();
-	unative_t handleThreadCancel();
-	unative_t handleThreadExit();
-
-	unative_t handleEventInit();
-	unative_t handleEventWait();
-	unative_t handleEventWaitTimeout();
-	unative_t handleEventFire();
-	unative_t handleEventDestroy();
-
-	/** @brief vma alloc syscall handler
-	*
-	*	Because in user space are page sizes unknown, this call differs from kernel vma_alloc.
-	*	This function accepts not-alligned size and returns alligned size in (*size).
-	*	@param from pointer to return pointer
-	*	@param size pointer to required size
-	*	@param flags standart vma_alloc flags (see api.h in /kernel/src)
-	*	@return result of vma_alloc(see api.h)
-	*	@note This function accepts unalligned size.
-	*/
-	unative_t handleVMAAlloc();
-
-	/** @brief vma free syscall
-	*
-	*	Standart vma_free behaviour. For more details see /kernel/api.h
-	*	vma_free specification.
-	*	@return result of vma_free(see api.h)
-	*/
-	unative_t handleVMAFree();
+	unative_t (*m_handles[SYS_COUNT])(unative_t par[]);
 };

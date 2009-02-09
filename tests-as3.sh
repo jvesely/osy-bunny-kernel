@@ -41,7 +41,7 @@ for TEST in \
 	tests/as3/uspace3/test.c \
 	; do
 	emake distclean || fail "Cleanup before compilation"
-	emake "USER_TEST=$TEST" || fail "Compilation"
+	emake -j3 "USER_TEST=$TEST" || fail "Compilation"
 	msim
 	emake distclean "USER_TEST=$TEST" || fail "Cleanup after compilation"
 done
@@ -58,7 +58,7 @@ for TEST in \
 	tests/as3/malloc1/test.c \
 	; do
 	emake distclean || fail "Cleanup before compilation"
-	emake "USER_TEST=$TEST" || fail "Compilation"
+	emake -j3 "USER_TEST=$TEST" || fail "Compilation"
 	msim | tee test.log || fail "Execution"
 	grep '^Test passed\.\.\.$' test.log > /dev/null || fail "Test $TEST"
 	rm -f test.log
