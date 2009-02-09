@@ -373,7 +373,7 @@ void Thread::exit( void* return_value  )
 /*----------------------------------------------------------------------------*/
 thread_t Thread::registerWithScheduler()
 {
-	return m_id = SCHEDULER.getId( this );
+	return m_id = SCHEDULER.getFreeId( this );
 }
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
