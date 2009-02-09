@@ -34,16 +34,27 @@
 
 #pragma once
 
+#include "types.h"
 #include "structures/List.h"
+#include "structures/IdMap.h"
 
 class Thread;
 class UserThread;
+class Event;
+class Process;
+
 template class List<UserThread*>;
-typedef List<UserThread*> UserThreadList;
+template class IdMap<event_t, Event*>;
+template class IdMap<process_t, Process*>;
+
+typedef List<UserThread*>          UserThreadList;
+typedef IdMap<event_t, Event*>     EventTable;
+typedef IdMap<process_t, Process*> ProcessTable;
 
 class Process
 {
 public:
+
 	static Process* create( const char* image, size_t size );
 	inline UserThread* mainThread() { return m_mainThread; };
 	UserThread* addThread( thread_t* thread_ptr, void* (*thread_start)(void*),
@@ -51,10 +62,24 @@ public:
 	Thread* getThread( thread_t thread );
 	bool removeThread( UserThread* );
 	void exit();
+	inline process_t id() { return m_id; }
+
+	EventTable eventTable;
 	
+
 	static Process* getCurrent();
 
 private:
 	UserThread* m_mainThread;
 	UserThreadList m_list;
+
+	process_t m_id;
+
+	Process(){};
+
+	Process( const Process& );
+	Process& operator = ( const Process& );
 };
+
+#define PROCESS Process::getCurrent()
+#define CURRENT_EVENT_TABLE Process::getCurrent()->eventTable

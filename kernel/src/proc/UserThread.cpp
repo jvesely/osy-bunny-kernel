@@ -34,9 +34,8 @@
 
 #include "address.h"
 #include "UserThread.h"
-#include "proc/Process.h"
-#include "drivers/Processor.h"
 #include "InterruptDisabler.h"
+#include "proc/Process.h"
 
 //#define USER_THREAD_DEBUG
 

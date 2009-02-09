@@ -115,8 +115,6 @@ void Kernel::run()
 		printBunnies( COUNT_CPU );
 		printf( "Running on %d processors\n", COUNT_CPU );
 
-		printf ("PAGE_8K: %d.\n", Processor::PAGE_8K);
-
 		if (COUNT_CPU > 1)
 			puts( "Warning: It's nice to have more processors, but we currently support only one.\n" );
 

@@ -38,7 +38,7 @@
 #include "proc/Process.h"
 #include "proc/Thread.h"
 
-#include "synchronization/EventMap.h"
+//#include "synchronization/EventMap.h"
 #include "synchronization/Event.h"
 #include "tools.h"
 
@@ -186,12 +186,14 @@ static unative_t handleEventInit( unative_t params[] )
 	// is it a pointer in USEG?
 	event_t* event_ptr = (event_t*)CHECK_PTR_IN_USEG(params[0]);
 	
-	Event* evnt = new Event;
-	if (!evnt) return ENOMEM;
+	Event* event = new Event;
+	if (!event) return ENOMEM;
 
-	event_t ev = EventMap::instance().map(evnt);
-	if (ev == EventMap::INVALID_ID)
+	event_t ev = CURRENT_EVENT_TABLE.getFreeId( event );
+	if (ev == CURRENT_EVENT_TABLE.BAD_ID) {
+		delete event;
 		return ENOMEM;
+	}
 
 	*event_ptr = ev;
 
@@ -202,10 +204,10 @@ static unative_t handleEventWait( unative_t params[] )
 {
 	PRINT_DEBUG("handleEventWait() started\n");
 	
-	event_t   evnt   = params[0];
+	event_t   event   = params[0];
 	native_t* locked = (native_t*)CHECK_PTR_IN_USEG(params[1]);
 
-	Event* ev = EventMap::instance().getEvent(evnt);
+	Event* ev = CURRENT_EVENT_TABLE.translateId( event );
 
 	if (!ev) {
 		Thread::getCurrent()->kill();
@@ -223,17 +225,17 @@ static unative_t handleEventWait( unative_t params[] )
 static unative_t handleEventWaitTimeout( unative_t params[] )
 {
 	PRINT_DEBUG("handleEventWaitTimeout() started\n");
-	event_t evnt = params[0];
+	event_t event = params[0];
 
 	// Are these pointers to USEG?
-	Time* time                = (Time*)CHECK_PTR_IN_USEG(params[1]);
+	Time* time                 = (Time*)CHECK_PTR_IN_USEG(params[1]);
 	volatile unative_t* locked = (unative_t*)CHECK_PTR_IN_USEG(params[2]);
 	
 	PRINT_DEBUG("handleEventWaitTimeout() time pointer: %p, locked: %p\n", time, locked);
 	
 	const Time alartime = Time::getCurrent() + *time;
 	
-	Event* ev = EventMap::instance().getEvent(evnt);
+	Event* ev = CURRENT_EVENT_TABLE.translateId( event );
 	if (!ev) {
 		Thread::getCurrent()->kill();
 		return 0;
@@ -257,9 +259,9 @@ static unative_t handleEventWaitTimeout( unative_t params[] )
 /*----------------------------------------------------------------------------*/
 static unative_t handleEventFire( unative_t params[] )
 {
-	event_t evnt = params[0];
+	event_t event = params[0];
 
-	Event* ev = EventMap::instance().getEvent(evnt);
+	Event* ev = CURRENT_EVENT_TABLE.translateId(event);
 	if (!ev) {
 		Thread::getCurrent()->kill();
 		return 0;
@@ -272,17 +274,17 @@ static unative_t handleEventFire( unative_t params[] )
 /*----------------------------------------------------------------------------*/
 static unative_t handleEventDestroy( unative_t params[] )
 {
-	event_t evnt = params[0];
+	event_t event = params[0];
 
-	Event* ev = EventMap::instance().getEvent(evnt);
+	Event* ev = CURRENT_EVENT_TABLE.translateId( event );
 
 	if (!ev || ev->waiting()) {
 		Thread::getCurrent()->kill();
 		return 0;
 	}
 
-	EventMap::instance().unmap(evnt);
-	delete(ev);
+	CURRENT_EVENT_TABLE.returnId( event );
+	delete ev;
 
 	return EOK;
 }
