@@ -48,33 +48,33 @@
 namespace SysCall
 {
 
-size_t puts( const char* str ) __attribute__ ((noinline));
+size_t puts( const char* str );
 
-size_t gets( char* buffer, size_t size) __attribute__ ((noinline));
+size_t gets( char* buffer, size_t size);
 
-void exit() __attribute__ ((noinline, noreturn));
+void exit() __attribute__ ((noreturn));
 
 int thread_create( 
-	thread_t *thread_ptr, void *(*thread_start)(void*, void*), void *arg, void* arg2 ) __attribute__ ((noinline));
+	thread_t *thread_ptr, void *(*thread_start)(void*, void*), void *arg, void* arg2 );
 
-thread_t thread_self() __attribute__ ((noinline));
+thread_t thread_self();
 
 int thread_join(
-	thread_t thr, void** retval, const Time* time = NULL) __attribute__ ((noinline));
+	thread_t thr, void** retval, const Time* time = NULL);
 
-int thread_detach( thread_t thr ) __attribute__ ((noinline));
+int thread_detach( thread_t thr );
 
-int thread_cancel( thread_t thr ) __attribute__ ((noinline));
+int thread_cancel( thread_t thr );
 
-void thread_sleep( const Time* time ) __attribute__ ((noinline));
+void thread_sleep( const Time* time );
 
-void thread_yield() __attribute__ ((noinline));
+void thread_yield();
 
-void thread_suspend() __attribute__ ((noinline));
+void thread_suspend();
 
-int thread_wakeup( thread_t thr ) __attribute__ ((noinline));
+int thread_wakeup( thread_t thr );
 
-void thread_exit( void* retval ) __attribute__ ((noinline, noreturn));
+void thread_exit( void* retval ) __attribute__ ((noreturn));
 
 int vma_alloc(void ** from, size_t * size, const unsigned int flags);
 
