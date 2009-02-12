@@ -56,7 +56,7 @@ static const char * desc =
 
 
 //how much memory should allocate test
-const size_t NEEDED_MEMORY = 8*1024*1024;
+const size_t NEEDED_MEMORY = 2*1024*1024;
 //max length of random string
 const unsigned int MAX_LENGTH = 2048;
 /*percentage of free operations against malloc operations in allocation phase
@@ -74,6 +74,12 @@ struct strSize
 	char * s;
 	size_t size;
 };
+
+/** @brief basic hash function
+*/
+unsigned int hash ( int key, int rng ) {
+	return ((key % rng)+rng) % rng;
+}
 
 
 /**
