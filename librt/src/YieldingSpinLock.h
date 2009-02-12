@@ -25,15 +25,25 @@
 
 /*!
  * @file
- * @brief int hash funtion
- *
+ * @brief Yielding spinlock
  *
  */
 
+#include "synchronization/Spinlock.h"
 
-#include "structures/HashMap.h"
+/** @brief Yielding spinlock
+*
 
-unsigned int hash ( int key, int rng ) {
-	return ((key % rng)+rng) % rng;
-}
-
+*	In contrast to normal spinlock this spinlock "does not" actively wait
+*	and	yields it`s quantum until lock is unlocked.
+*/
+class YieldingSpinLock : public Spinlock
+{
+private:
+	/** @brief wait function
+	*
+	*	Instead of active waiting, yiedlds.
+	*/
+	void wait()
+	{ thread_yield(); }
+};

@@ -10,21 +10,21 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Declaration and definition of a wrapper class on the Spinlock class
  * providing an easy to use interface which automatically locks and unlocks
  * the Spinlock lock.
@@ -54,24 +54,24 @@ public:
 	 *
 	 * @param Spinlock The lock passed by reference.
 	 */
-	inline SpinlockLocker(Spinlock& spinlock): m_spinlock(spinlock) {
-		m_spinlock.lock();
+	inline SpinlockLocker(Spinlock * spinlock): m_spinlock(spinlock) {
+		m_spinlock->lock();
 	}
 
 	/**
 	 * Desctructor which unlocks the lock given in the constructor.
 	 */
 	inline ~SpinlockLocker() {
-		m_spinlock.unlock();
+		m_spinlock->unlock();
 	}
 
 private:
 	/** The reference to lock from the constructor. */
-	Spinlock& m_spinlock;
+	Spinlock * m_spinlock;
 
 	/** Deny copy-constructor. */
 	SpinlockLocker(const SpinlockLocker&);
-	
+
 	/** Deny assignment. */
 	SpinlockLocker& operator=(const SpinlockLocker&);
 

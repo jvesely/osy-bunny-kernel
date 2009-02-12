@@ -75,9 +75,10 @@ SyscallHandler::SyscallHandler()
 	m_handles[SYS_EVENT_WAIT_TIMEOUT] = (&SyscallHandler::handleEventWaitTimeout);
 	m_handles[SYS_EVENT_FIRE] = (&SyscallHandler::handleEventFire);
 	m_handles[SYS_EVENT_DESTROY] = (&SyscallHandler::handleEventDestroy);
-	
+
 	m_handles[SYS_VMA_ALLOC] = (&SyscallHandler::handleVMAAlloc);
 	m_handles[SYS_VMA_FREE] = (&SyscallHandler::handleVMAFree);
+	m_handles[SYS_GET_TIME] = (&SyscallHandler::handleGetTime);
 }
 /*----------------------------------------------------------------------------*/
 bool SyscallHandler::handleException( Processor::Context* registers )
@@ -151,7 +152,7 @@ unative_t SyscallHandler::handleThreadCreate()
 
 	thread_t* thread_ptr = (thread_t*)CHECK_PTR_IN_USEG(m_params[0]);
 
-	bool success = current->addThread( 
+	bool success = current->addThread(
 		thread_ptr, (void*(*)(void*))m_params[1], (void*)m_params[2], (void*)m_params[3] );
 	PRINT_DEBUG ("Thread create handled : %s.\n", success ? "OK" : "FAIL");
 	return success ? EOK : ENOMEM;
@@ -163,10 +164,10 @@ unative_t SyscallHandler::handleThreadJoin()
 	bool timed = (bool)m_params[2];
 
 	const Time* time = (const Time*)CHECK_PTR_IN_USEG(m_params[2]);
-	
+
 	PRINT_DEBUG ("Handling thread join on %u, %s, %p.\n", thr->id(),
 		timed?"TIMED":"DIRECT", m_params[3]);
-	
+
 	return Thread::getCurrent()->join( thr, (void**)m_params[1], timed, *time );
 }
 /*----------------------------------------------------------------------------*/
@@ -230,7 +231,7 @@ unative_t SyscallHandler::handleEventInit()
 {
 	// is it a pointer in USEG?
 	event_t* event_ptr = (event_t*)CHECK_PTR_IN_USEG(m_params[0]);
-	
+
 	Event* evnt = new Event;
 	if (!evnt) return ENOMEM;
 
@@ -246,7 +247,7 @@ unative_t SyscallHandler::handleEventInit()
 unative_t SyscallHandler::handleEventWait()
 {
 	PRINT_DEBUG("SyscallHandler::handleEventWait() started\n");
-	
+
 	event_t   evnt   = m_params[0];
 	native_t* locked = (native_t*)CHECK_PTR_IN_USEG(m_params[1]);
 
@@ -273,28 +274,28 @@ unative_t SyscallHandler::handleEventWaitTimeout()
 	// Are these pointers to USEG?
 	Time* time                = (Time*)CHECK_PTR_IN_USEG(m_params[1]);
 	volatile native_t* locked = (native_t*)CHECK_PTR_IN_USEG(m_params[2]);
-	
+
 	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() time pointer: %p, locked: %p\n", time, locked);
-	
+
 	const Time alarm_time = Time::getCurrent() + *time;
-	
+
 	Event* ev = EventMap::instance().getEvent(evnt);
 	if (!ev) {
 		Thread::getCurrent()->kill();
 		return 0;
 	}
-	
+
 	if (*locked)
 		ev->waitTimeout(*time);
 
 	const Time current = Time::getCurrent();
-	
+
 	if (current >= alarm_time) {
 		*time = Time();
 		PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() timedout.\n");
 		return ETIMEDOUT;
 	}
-	
+
 	PRINT_DEBUG("SyscallHandler::handleEventWaitTimeout() woken.\n");
 	*time = alarm_time - current;
 	return EOK;
@@ -336,7 +337,7 @@ unative_t SyscallHandler::handleVMAAlloc()
 {
 	void**  area_start     = (void**) CHECK_PTR_IN_USEG(m_params[0]);
 	size_t* size           = (size_t*)CHECK_PTR_IN_USEG(m_params[1]);
-	IVirtualMemoryMap* vmm = IVirtualMemoryMap::getCurrent().data();	
+	IVirtualMemoryMap* vmm = IVirtualMemoryMap::getCurrent().data();
 
 	ASSERT (vmm);
 
@@ -354,3 +355,12 @@ unative_t SyscallHandler::handleVMAFree()
 
 	return vmm->free((void *)m_params[0]);
 }
+
+//------------------------------------------------------------------------------
+unative_t SyscallHandler::handleGetTime()
+{
+	*((Time*)(m_params[0])) = Time::getCurrentTime();
+
+	return EOK;
+}
+

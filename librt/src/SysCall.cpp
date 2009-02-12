@@ -10,26 +10,26 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Short description.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 
 #include "SysCall.h"
@@ -69,7 +69,7 @@ void SysCall::exit()
 	while (1) ;
 }
 
-int SysCall::thread_create( 
+int SysCall::thread_create(
   thread_t *thread_ptr, void *( *thread_start)(void*, void*), void *arg, void* arg2 )
 {
   return SYSCALL( SYS_THREAD_CREATE, thread_ptr, thread_start, arg, arg2 );
@@ -142,7 +142,7 @@ void SysCall::event_wait( event_t id, volatile native_t* locked )
 	SYSCALL(SYS_EVENT_WAIT, id, locked, 0, 0);
 }
 
-int SysCall::event_wait_timeout( 
+int SysCall::event_wait_timeout(
 	event_t id, const Time* time, volatile native_t* locked )
 {
 	return SYSCALL(SYS_EVENT_WAIT_TIMEOUT, id, time, locked, 0);
@@ -157,6 +157,13 @@ int SysCall::event_destroy( event_t id )
 {
 	return SYSCALL(SYS_EVENT_DESTROY, id, 0, 0, 0);
 }
+
+void SysCall::getCurrentTime(volatile Time * time)
+{
+	SYSCALL(SYS_GET_TIME, time, 0, 0, 0);
+}
+
+
 #undef QUOT
 #undef SYSCALL
 

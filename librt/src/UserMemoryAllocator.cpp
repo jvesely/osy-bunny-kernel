@@ -32,13 +32,13 @@
  * at least people can understand it.
  */
 
+#include "api.h"
 #include "UserMemoryAllocator.h"
-/// \todo synchronisation
-//#include "synchronization/StupidSpinlockLocker.h"
 
 #include "SysCall.h"
 #include "syscallcodes.h"
-#include "api.h"
+#include "synchronization/SpinLockLocker.h"
+
 
 //debug messages for frame allocation
 //#define ALLOCATOR_DEBUG_FRAME
@@ -54,15 +54,13 @@
 
 void* UserMemoryAllocator::getMemory( size_t amount )
 {
-	/// \todo synchronisation
-	//StupidSpinlockLocker locker(m_lock);
+	SpinlockLocker locker(&m_lock);
 	return this->BasicMemoryAllocator::getMemory( amount );
 }
 /*----------------------------------------------------------------------------*/
 void UserMemoryAllocator::freeMemory( const void* address )
 {
-	/// \todo synchronisation
-	//StupidSpinlockLocker locker(m_lock);
+	SpinlockLocker locker(&m_lock);
 	return this->BasicMemoryAllocator::freeMemory( address );
 }
 
@@ -71,9 +69,7 @@ void * UserMemoryAllocator::getNewChunk(size_t * finalSize)
 {
 	void * result = NULL;
 
-	//printf("sending parameters: result at %x, finalsize at %x, flag %x \n",&result,finalSize,((VF_AT_KUSEG << VF_AT_SHIFT) | (VF_VA_AUTO << VF_VA_SHIFT)));
 	int success = SysCall::vma_alloc(&result,finalSize,((VF_AT_KUSEG << VF_AT_SHIFT) | (VF_VA_AUTO << VF_VA_SHIFT)));
-	//printf("result is %d at %x, size %x\n",success,result,*finalSize);//debug
 
 	if (success!=EOK)
 	{

@@ -32,10 +32,10 @@
  * at least people can understand it.
  */
 
-#include "BasicMemoryAllocator.h"
-#include <api.h>
-#include <tools.h>
+#include "api.h"
+#include "tools.h"
 #include "address.h"
+#include "BasicMemoryAllocator.h"
 
 /*
 naming convention for memory sizes:
@@ -149,11 +149,12 @@ BasicMemoryAllocator::BasicMemoryAllocator():
 	m_totalSize = 0;
 	m_chunkResizingEnabled = false;
 
-	setStrategyDefault();
+	//choose strategy used by allocator (can be changed during runtime)
+	//setStrategyDefault();
 	//setStrategyFirstFit();
 	//setStrategyNextFit();
 	//setStrategyBestFit();
-	//setStrategyWorstFit();
+	setStrategyWorstFit();
 }
 //------------------------------------------------------------------------------
 BasicMemoryAllocator::~BasicMemoryAllocator()
@@ -276,12 +277,6 @@ void BasicMemoryAllocator::freeAll()
 	//InterruptDisabler lock;
 	BlockHeader * header;
 	BlockFooter * frontBorder;
-	/*	while (!m_usedBloks.empty())
-		{
-			header = (BlockHeader*)(m_usedBloks.getMainItem()->next);
-			freeUsedBlock(header);
-			returnChunkIfPossible(header);
-		}*/
 	while (!m_chunks.empty())
 	{
 		header = (BlockHeader*)(m_chunks.getMainItem()->next);
@@ -291,6 +286,21 @@ void BasicMemoryAllocator::freeAll()
 		returnChunk(frontBorder, frontBorder->size());
 	}
 }
+//------------------------------------------------------------------------------
+bool BasicMemoryAllocator::returnChunkIfPossible(BlockHeader * header)
+{
+	assert(!header->isBorder());
+
+	BlockFooter * frontBorder = ((BlockFooter*)header) - 1;
+	if (!frontBorder->isBorder()) return false;
+
+	BlockHeader * backBorder = (BlockHeader*)(header->getFooter() + 1);
+	if (!backBorder->isBorder()) return false;
+
+	returnChunk(frontBorder, frontBorder->size());
+	return true;
+}
+
 //------------------------------------------------------------------------------
 BasicMemoryAllocator::BlockHeader *
 BasicMemoryAllocator::tryToGetNewChunk(size_t totalSize)
@@ -314,9 +324,8 @@ BasicMemoryAllocator::tryToGetNewChunk(size_t totalSize)
 BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::tryExpandSomeChunk(size_t totalSize)
 {
 	if (!m_chunkResizingEnabled) return NULL;
-	//alignment
-	//size_t FRAME_SIZE = Processor::pages[0].size;
-	size_t finalSize = totalSize;// roundUp(totalSize, FRAME_SIZE);
+
+	size_t finalSize = totalSize;
 
 	//bear in mind that chunk has footer at the front and header at the end
 	BlockFooter * frontBorder = NULL;
@@ -334,7 +343,6 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::tryExpandSomeChunk(siz
 		success = extendExistingChunk(frontBorder, &finalSize, frontBorder->size());
 		backBorder = (BlockHeader*) backBorder->next;
 	}
-	//else success = bad and NULL is returned
 
 	if (success)
 	{
@@ -343,7 +351,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::tryExpandSomeChunk(siz
 		backBorder = (BlockHeader*) backBorder->prev;
 		return joinChunk(frontBorder, backBorder, finalSize);
 	}
-	//else
+	//else success = false and NULL is returned
 	PRINT_DEBUG_FRAME("expanding existing chunk was NOT possible\n");
 	return NULL;
 }
@@ -431,10 +439,6 @@ bool BasicMemoryAllocator::reduceChunkWithBlockIfNeeded(BlockHeader * header)
 	if (((m_freeSize - reduceSize) > MIN_FREE_SIZE) &&
 	        (header->size() > 2*expectedPageAlignment))
 	{
-		//aligning new size of memory chunk - we want some free space left
-		/*		size_t finalSize  = alignUp(
-				                        frontBorder->size() - header->size() + pageAlignment,
-				                        pageAlignment);*/
 		//this is required, so that there will be reasonable free space left
 		size_t finalSize = frontBorder->size() - header->size() + expectedPageAlignment;
 
@@ -771,7 +775,6 @@ void BasicMemoryAllocator::setState( BasicMemoryAllocator::BlockHeader * header,
 
 	//set whole block state, considering border values as well
 	//and connecting
-
 	if (free)//will be free
 	{
 		header->setFree();
@@ -857,7 +860,6 @@ void BasicMemoryAllocator::insertIntoFreeListFirstFit
 
 	if (m_freeBlocks.empty())
 	{
-		//printf("only insert\n");//debug
 		//only inserts
 		m_freeBlocks.insert(header);
 		return;
@@ -866,7 +868,6 @@ void BasicMemoryAllocator::insertIntoFreeListFirstFit
 	//if it is to be first or last...
 	if ((uintptr_t)(m_freeBlocks.getMainItem()->next) > (uintptr_t)header)
 	{
-		//printf("on begin\n");//debug
 		header->prev = m_freeBlocks.getMainItem();
 		header->next = m_freeBlocks.getMainItem()->next;
 		header->reconnect();
@@ -875,14 +876,11 @@ void BasicMemoryAllocator::insertIntoFreeListFirstFit
 
 	if ((uintptr_t)(m_freeBlocks.getMainItem()->prev) < (uintptr_t)header)
 	{
-		//printf("on end\n");//debug
 		header->next = m_freeBlocks.getMainItem();
 		header->prev = m_freeBlocks.getMainItem()->prev;
 		header->reconnect();
 		return;
 	}
-
-	//what to do first? find nearest free block or search in list?
 
 	//try to find nearest free block
 	/*	keep in mind, that this method is called allways with header, that
@@ -899,7 +897,6 @@ void BasicMemoryAllocator::insertIntoFreeListFirstFit
 
 	if (afterHeader->isFree())
 	{
-		//printf("found nearest\n");//debug
 		header->next = afterHeader;
 		header->prev = afterHeader->prev;
 		header->reconnect();
@@ -907,7 +904,6 @@ void BasicMemoryAllocator::insertIntoFreeListFirstFit
 	}
 
 	//find place in free blocks list
-	//printf("searching in list\n");//debug
 	afterHeader = (BlockHeader*)m_freeBlocks.getMainItem()->next;
 	while ((uintptr_t)afterHeader < (uintptr_t)header)
 	{
@@ -1088,6 +1084,23 @@ void BasicMemoryAllocator::sortFreeSize()
 		insertIntoFreeListBestFit(header);
 	}
 	//now everything should be sorted..
+}
+//------------------------------------------------------------------------------
+void BasicMemoryAllocator::initBlock
+(BlockHeader * header, size_t realSize, bool free )
+{
+	assert(!header->isBorder());
+
+	//setting undefined state
+	header->setUndefined();
+
+	//set size (=create footer)
+	//(this->*setSizeFunction)(header, realSize);
+	setSizeDefault(header,realSize);
+
+	//set state of block (which handless also footer state)
+	setState(header, free);
+
 }
 
 

@@ -94,6 +94,42 @@ void free( const void *ptr )
 {
 	UserMemoryAllocator::instance().freeMemory( ptr );
 }
+//------------------------------------------------------------------------------
+void mallocStrategyDefault()
+{
+	UserMemoryAllocator::instance().setStrategyDefault();
+}
+
+void mallocStrategyFirstFit()
+{
+	UserMemoryAllocator::instance().setStrategyFirstFit();
+}
+
+void mallocStrategyNextFit()
+{
+	UserMemoryAllocator::instance().setStrategyNextFit();
+}
+
+void mallocStrategyBestFit()
+{
+	UserMemoryAllocator::instance().setStrategyBestFit();
+}
+
+void mallocStrategyWorstFit()
+{
+	UserMemoryAllocator::instance().setStrategyWorstFit();
+}
+
+size_t mallocatorGetFreeSize()
+{
+	return UserMemoryAllocator::instance().getFreeSize();
+}
+
+size_t mallocatorGetTotalSize()
+{
+	return UserMemoryAllocator::instance().getTotalSize();
+}
+
 /* -------------------------------------------------------------------------- */
 /* --------------------------   THREADS   ----------------------------------- */
 /* -------------------------------------------------------------------------- */

@@ -29,7 +29,6 @@
  *
  */
 #pragma once
-
 #include "Singleton.h"
 #include "BasicMemoryAllocator.h"
 

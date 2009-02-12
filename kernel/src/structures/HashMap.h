@@ -27,24 +27,19 @@
  * @file
  * @brief hash map implementation
  *
- * Contains: class Pair and class HashMap (both templated)
+ *	Hash map behaves almost like stl map, but it`s operation compleity
+ *	is slightly different, because it is a hash map.
  */
 
 #pragma once
-#include <api.h>
-#include <structures/List.h>
-#include <structures/Pair.h>
+#include "api.h"
+#include "structures/List.h"
+#include "structures/Pair.h"
 
 
 
-/** default size of hash map; should be prime number*/
+/** \brief default size of hash map; should be prime number*/
 const int defaultHashArraySize = 1999;
-
-/** error: not inserted (element already exists) - not used (EINVAL used instead)*/
-const int eAlreadyExists = -2;
-
-/** internal error enomem - not used right now (ENOMEM is now sufficient)*/
-const int eNoMemory = -1;
 
 
 /** @brief hash map
@@ -56,131 +51,155 @@ const int eNoMemory = -1;
 template <typename KeyType, typename DataType> class HashMap
 {
 public:
-	/** @brief default ctor */
-	inline HashMap ( unsigned int arraySize = defaultHashArraySize ) { init ( arraySize ); }
+	/** @brief default constructor
+	*
+	*	@param arraySize lenghth of hash array
+	*/
+	inline HashMap(unsigned int arraySize = defaultHashArraySize) { init(arraySize); }
 
-	/** @brief copy ctor */
-	inline HashMap ( const HashMap<KeyType, DataType> & oldMap ) { m_array = NULL; copyMap ( oldMap ); }
+	/** @brief copy constructor
+	*
+	*	Copies content(values) and hash array length as well.
+	*/
+	inline HashMap(const HashMap<KeyType, DataType> & oldMap) { m_array = NULL; copyMap(oldMap); }
 
-	/** @brief dtor */
-	~HashMap() { assert ( m_array != NULL );delete [] m_array; }
+	/** @brief destructor
+	*
+	*	Deallocates everything.
+	*/
+	~HashMap() { assert(m_array != NULL);delete [] m_array; }
 
 	/** @brief operator =
 	*	@return *this
-	*	copies entire map with structure
+	*
+	*	Copies entire map with structure.
 	*/
-	inline const HashMap<KeyType, DataType> & operator = ( const HashMap<KeyType, DataType> & oldMap )
+	inline const HashMap<KeyType, DataType> & operator = (const HashMap<KeyType, DataType> & oldMap)
 	{
-		copyMap ( oldMap );
+		copyMap(oldMap);
 		return *this;
 	}
 
-	/** @brief hash array size*/
+	/** @brief get hash array size*/
 	inline unsigned int getArraySize() const {return m_arraySize;}
 
-	/** @brief count of stored elements
-	*	computational complexity is O(array size)
+	/** @brief get count of stored elements
+	*
+	*	Computational complexity is O(array size).
 	*/
 	inline unsigned int size() const
 	{
 		unsigned int res = 0;
-		for ( unsigned int i = 0; i < m_arraySize; i++ ) {
-			res += getList ( i )->size();
+		for (unsigned int i = 0; i < m_arraySize; i++)
+		{
+			res += getList(i)->size();
 		}
 		return res;
 	}
 
 	/** @brief count of stored elements
-	*	computational complexity is O(array size)
+	*
+	*	Computational complexity is O(array size).
+	*	(is a wrapper for size() function)
 	*/
 	inline unsigned int getSize() const { return size(); }
 
 	/** @brief insert
-	*	if element with equal key exists, nothing happens and eAlreadyExists is returned
-	*	@note returns int, which is not unsigned int, remember it for methods such as getList
+	*
+	*	If an element with equal key exists, nothing happens and EINVAL is returned.
 	*	@return EOK if success; EINVAL if already eisted, ENOMEM if not enough memory is available
 	*/
-	inline int insert ( const KeyType & key, const DataType & value )
+	inline int insert(const KeyType & key, const DataType & value)
 	{
-		if ( exists ( key ) ) {
+		if (exists(key))
+		{
 			return EINVAL;
 		}
 		//else
-		return insertNew ( key, value );
+		return insertNew(key, value);
 	}
 
 	/** @brief insert
-	*	if element with equal key exists, nothing happens and eAlreadyExists is returned
-	*	implementation note: calls insert(key,data)
-	*	@note returns int, which is not unsigned int, remember it for methods such as getList
-	*	@return hash(key) if success; -1( = eAlreadyExists) else
+	*
+	*	If element with equal key exists, nothing happens and EINVAL is returned
+	*	(is a wrapper for insert(data.first, data.second)).
+	*	@return EOK if success; EINVAL if already eisted, ENOMEM if not enough memory is available
 	*/
-	inline int insert ( const Pair<KeyType, DataType>& data ) { return insert ( data.first, data.second ); }
+	inline int insert(const Pair<KeyType, DataType>& data) { return insert(data.first, data.second); }
 
 	/** @brief clear values
-	*	array size is not changed
+	*
+	*	Array size is not changed and hash array is not deleted.
 	*/
-	void clear() {
-		for ( unsigned int i = 0; i < m_arraySize; i++ ) {
+	void clear()
+	{
+		for (unsigned int i = 0; i < m_arraySize; i++)
+		{
 			m_array[i].clear();
 		}
 	}
 
 	/** @brief const reference to element
-	*	@note if no element with \a key is found, program fails
+	*	@note if no element with \a key is found, program panics
 	*/
-	inline const DataType& at ( const KeyType & key ) const
+	inline const DataType& at(const KeyType & key) const
 	{
-		if ( exists ( key ) ) {
-			return m_array[ mhash ( key ) ].find ( key )->second;
+		if (exists(key))
+		{
+			return m_array[mhash(key)].find(Pair<KeyType, DataType>(key, DataType()))->second;
 		}
-		return at ( key );
+		return at(key);
 	}
 
 	/** @brief non-const reference to element
 	*	@note if no element with \a key is found, new element is created
 	*/
-	inline DataType & at ( const KeyType & key )
+	inline DataType & at(const KeyType&key)
 	{
-		if ( exists ( key ) ) {
-			return m_array[ mhash ( key ) ].find ( Pair<KeyType, DataType> ( key, DataType() ) )->second;
-		} else {
-			return m_array[ mhash ( key ) ].pushBack ( Pair<KeyType, DataType> ( key, DataType() ) )->second;
+		if (exists(key))
+		{
+			return m_array[mhash(key)].find(Pair<KeyType, DataType>(key, DataType()))->second;
+		}
+		else
+		{
+			return m_array[mhash(key)].pushBack(Pair<KeyType, DataType>(key, DataType()))->second;
 		}
 	}
 
 	/** @brief non-const reference to element
 	*	@note if no element with \a key is found, new element is created
+	*
+	*	(is wraper for at(key))
 	*/
-	inline DataType& operator [] ( const KeyType & key ) { return at ( key ); }
+	inline DataType& operator [](const KeyType & key) {return at(key);}
 
 	/** @brief const reference to element
-	*	@note if no element with \a key is found, program fails
+	*	@note if no element with \a key is found, program panics
+	*
+	*	(is wraper for at(key))
 	*/
-	inline const DataType& operator [] ( const KeyType & key ) const { return at ( key ); }
+	inline const DataType& operator [](const KeyType & key) const { return at(key); }
 
-	/** @brief find
-	*	implementation note: uses getItem() method of List::Iterator, return value is compared to NULL
-	*/
-	bool exists ( const KeyType & key ) const
+	/** @brief checks existence of key */
+	bool exists(const KeyType & key) const
 	{
-		return ( getList ( mhash ( key ) )->find( Pair<KeyType, DataType>( key, DataType() ) ).getItem() != NULL );
+		return (getList(mhash(key))->find(Pair<KeyType, DataType>(key, DataType())).getItem() != NULL);
 	}
 
 	/** @brief get list with position pos in array
 	*	@return list with position \a pos in array; if position is invalid, NULL is returned
 	*/
-	List < Pair< KeyType, DataType > > * getList ( unsigned int pos ) const
+	List < Pair< KeyType, DataType > > * getList(unsigned int pos) const
 	{
-		if ( pos < m_arraySize )
+		if (pos < m_arraySize)
 			return m_array + pos;
 		else return NULL;
 	}
 
-	/** @brief erase	*/
-	inline void erase ( const KeyType & key )
+	/** @brief erase element by key*/
+	inline void erase(const KeyType & key)
 	{
-		getList ( mhash ( key ) )->erase ( Pair<KeyType, DataType> ( key, DataType() ) );
+		getList(mhash(key))->erase(Pair<KeyType, DataType> (key, DataType()));
 	}
 
 	/** @brief statistical function
@@ -192,15 +211,18 @@ public:
 		double res = 0;
 		double sum2 = 0;
 		double sum = 0 ;
-		for ( unsigned int i = 0; i < m_arraySize; i++ ) {
-			sum += ( double ) getList ( i )->size();
-			sum2 += ( double ) ( ( getList ( i )->size() ) * ( getList ( i )->size() ) );
+		for (unsigned int i = 0; i < m_arraySize; i++)
+		{
+			sum += (double) getList(i)->size();
+			sum2 += (double)((getList(i)->size()) * (getList(i)->size()));
 		}
-		if ( m_arraySize > 1 ) {
+		if (m_arraySize > 1)
+		{
 			mean = sum / m_arraySize;
-			res = ( sum2 - sum * sum / ( m_arraySize ) ) / ( m_arraySize - 1 );//sample variance
-			res = ( res * m_arraySize ) / ( sum * sum );
-		}else
+			res = (sum2 - sum * sum / (m_arraySize)) / (m_arraySize - 1);      //sample variance
+			res = (res * m_arraySize) / (sum * sum);
+		}
+		else
 			res = 0.0;
 		return res;
 	}
@@ -209,12 +231,16 @@ public:
 	double getAverageCount()
 	{
 		double sum = 0;
-		for ( unsigned int i = 0; i < m_arraySize; i++ ) {
-			sum += getList ( i )->size();
+		for (unsigned int i = 0; i < m_arraySize; i++)
+		{
+			sum += getList(i)->size();
 		}
-		if ( m_arraySize > 0 ) {
+		if (m_arraySize > 0)
+		{
 			return sum / m_arraySize;
-		}else{
+		}
+		else
+		{
 			return 0;
 		}
 	}
@@ -222,10 +248,12 @@ public:
 protected:
 
 	/** @brief creates array of List< Pair<KeyType,DataType> >
-	*	this opertion may fall on no memory and nothing will be signalled
+	*
+	*	This opertion may fail on no memory and nothing will be signalled.
 	*	@param size array size; if is 0 or less, array with size 1 is created
 	*/
-	void init ( unsigned int size ) {
+	void init(unsigned int size)
+	{
 		if (!size) size = 1;
 		m_array = new List< Pair<KeyType, DataType> > [size];
 		m_arraySize = (m_array) ? size : 0;
@@ -233,49 +261,55 @@ protected:
 
 
 	/** @brief inserts new item
-	*	expects that key does not exist in map, no check for existence is performed
+	*
+	*	Expects that key does not exist in map, no check for existence is performed.
 	*	@return EOK if success or ENOMEM on memory size failure
 	*/
-	inline int insertNew ( const KeyType & key, const DataType & data ) {
-		assert ( m_arraySize != 0 );
-		assert ( m_array != NULL );
+	inline int insertNew(const KeyType & key, const DataType & data)
+	{
+		assert(m_arraySize != 0);
+		assert(m_array != NULL);
 		//creation and controll of correst insertion
-		if (m_array[mhash ( key ) ].pushBack ( Pair<KeyType, DataType> ( key, data ) )
-				== m_array[mhash ( key ) ].end())
+		if (m_array[mhash(key)].pushBack(Pair<KeyType, DataType> (key, data))
+		        == m_array[mhash(key)].end())
 			return ENOMEM;
-		return EOK;//(int) mhash ( key );
+		return EOK;
 	}
 
 	/** @brief hash function
-	*	related to current hash array size
-	*	calls hash(key, m_arraySize)
+	*
+	*	Related to current hash array size.
+	*	Calls hash(key, m_arraySize).
 	*/
-	inline unsigned int mhash ( const KeyType & key ) const
+	inline unsigned int mhash(const KeyType & key) const
 	{
-		assert ( m_arraySize > 0 );
-		assert ( hash ( key , m_arraySize ) < m_arraySize );
-		return hash ( key , m_arraySize );
+		assert(m_arraySize > 0);
+		assert(hash(key , m_arraySize) < m_arraySize);
+		return hash(key , m_arraySize);
 	};
 
 	/** @brief copy entire map
-	*	copies also structure (array size) and deletes old values and array
+	*
+	*	Copies also structure (array size) and deletes old values and array.
 	*/
-	void copyMap ( const HashMap<KeyType, DataType> & oldMap )
+	void copyMap(const HashMap<KeyType, DataType> & oldMap)
 	{
-		if ( m_array != NULL ) delete [] m_array; //this is only one case, where m_array == NULL is allowed
-			//can happen only in copy-ctor
-		init ( oldMap.getArraySize() );
-		for ( unsigned int i = 0; i < m_arraySize; i++ ) {
-			assert ( oldMap.getList ( i ) != NULL );
-			m_array[i].copyList ( * ( oldMap.getList ( i ) ) );
+		if (m_array != NULL) delete [] m_array;   //this is only one case, where m_array == NULL is allowed
+		//can happen only in copy-ctor
+		init(oldMap.getArraySize());
+		for (unsigned int i = 0; i < m_arraySize; i++)
+		{
+			assert(oldMap.getList(i) != NULL);
+			m_array[i].copyList(* (oldMap.getList(i)));
 		}
 	}
 
-	/** @brief size of has array */
+	/** @brief size of hash array */
 	unsigned int m_arraySize;
 
 	/** @brief hash array
-	*	array of List< Pair<KeyType, DataType> >
+	*
+	*	It is an array of List< Pair<KeyType, DataType> >
 	*/
 	List < Pair< KeyType,  DataType > > * m_array;
 
@@ -286,5 +320,5 @@ private:
 
 
 /** @brief hash funtion for int */
-unsigned int hash ( int key, int rng );
+unsigned int hash(int key, int rng);
 

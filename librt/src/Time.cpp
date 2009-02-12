@@ -25,15 +25,21 @@
 
 /*!
  * @file
- * @brief int hash funtion
+ * @brief Short description.
  *
- *
+ * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 
+#include "SysCall.h"
+#include "syscallcodes.h"
+#include "api.h"
 
-#include "structures/HashMap.h"
 
-unsigned int hash ( int key, int rng ) {
-	return ((key % rng)+rng) % rng;
+Time Time::getCurrentTime()
+{
+	Time result;
+	SysCall::getCurrentTime(&result);
+	return result;
 }
-

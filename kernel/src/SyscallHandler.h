@@ -89,4 +89,11 @@ private:
 	*	@return result of vma_free(see api.h)
 	*/
 	unative_t handleVMAFree();
+
+	/** @brief get current time for user mode
+	*
+	*	Just a syscall wrapper for Time::getCurrentTime()
+	*/
+	unative_t handleGetTime();
+
 };

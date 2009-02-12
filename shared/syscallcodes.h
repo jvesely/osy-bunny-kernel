@@ -56,5 +56,7 @@
 #define SYS_VMA_ALLOC      19
 #define SYS_VMA_FREE       20
 
-#define SYS_COUNT          21
+#define SYS_GET_TIME		21
+
+#define SYS_COUNT			22
 

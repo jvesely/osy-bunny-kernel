@@ -34,7 +34,7 @@
 
 #include "Singleton.h"
 #include "BasicMemoryAllocator.h"
-//#include "synchronization/StupidSpinlock.h"
+#include "YieldingSpinLock.h"
 
 /*! @class KernelMemoryAllocator KernelMemoryAllocator.h
  * "mem/KernelMemoryAllocator.h"
@@ -110,9 +110,9 @@ protected:
 
 	/** @brief lock for allocator synchronisation
 	*
-	*	this is basic sollution, which will be very probably deprecated.
+	*	Used for malloc and free. These functions must
 	*/
-	//StupidSpinlock m_lock;
+	YieldingSpinLock m_lock;
 
 
 };
