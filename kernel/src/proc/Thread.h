@@ -141,7 +141,7 @@ public:
 	/*! @brief Takes the thread off the queue, and if it was detached 
 	 * deletes it on the spot.
 	 */
-	virtual void kill();
+	virtual bool kill();
 
 	void exit( void* retval );
 
@@ -219,13 +219,10 @@ private:
 	Thread( const Thread& other );              /*!< no copying   */
 	Thread& operator = ( const Thread& other ); /*!< no assigning */
 
-	void deactivate();
+	bool deactivate();
 
 	friend class Process;
 };
 
 template class ListInsertable<Thread>; 
 template class HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>;
-
-typedef List<Thread *> ThreadList;
-

@@ -27,12 +27,12 @@ emake() {
 }
 
 test() {
-	emake distclean || fail "Cleanup before compilation"
+#	emake distclean || fail "Cleanup before compilation"
 	emake "KERNEL_TEST=$1" || fail "Compilation"
 	msim | tee test.log || fail "Execution"
 	grep '^Test passed\.\.\.$' test.log > /dev/null || fail "Test $1"
 	rm -f test.log
-	emake distclean "KERNEL_TEST=$1" || fail "Cleanup after compilation"
+#	emake distclean "KERNEL_TEST=$1" || fail "Cleanup after compilation"
 }
 
 for TEST in \

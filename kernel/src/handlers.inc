@@ -115,11 +115,12 @@ static unative_t handleThreadJoin( unative_t params[] )
 	bool timed = (bool)params[2];
 
 	const Time* time = (const Time*)CHECK_PTR_IN_USEG(params[2]);
+	void** place     = (void**)CHECK_PTR_IN_USEG(params[1]);
 	
 	PRINT_DEBUG ("Handling thread join on %u, %s, %p.\n", thr->id(),
 		timed?"TIMED":"DIRECT", params[3]);
 	
-	return Thread::getCurrent()->join( thr, (void**)params[1], timed, *time );
+	return Thread::getCurrent()->join( thr, place, timed, *time );
 }
 /*----------------------------------------------------------------------------*/
 static unative_t handleThreadSelf( unative_t params[] )
@@ -170,7 +171,7 @@ static unative_t handleThreadExit( unative_t params[] )
 static unative_t handleThreadSleep( unative_t params[] )
 {
 
-	const Time* time = (const Time*)CHECK_PTR_IN_USEG(params[0])
+	const Time* time = (const Time*)CHECK_PTR_IN_USEG(params[0]);
 
 	PRINT_DEBUG ("Sleep:  %p %u:%u.\n", time, time->secs(), time->usecs());
 
@@ -275,6 +276,8 @@ static unative_t handleEventDestroy( unative_t params[] )
 
 	Event* ev = CURRENT_EVENT_TABLE.translateId( event );
 
+	PRINT_DEBUG ("Handling event destroy.\n");
+
 	if (!ev || ev->waiting()) {
 		Thread::getCurrent()->kill();
 		return 0;
@@ -282,6 +285,8 @@ static unative_t handleEventDestroy( unative_t params[] )
 
 	CURRENT_EVENT_TABLE.returnId( event );
 	delete ev;
+
+	PRINT_DEBUG ("Destroy handled.\n");
 
 	return EOK;
 }
