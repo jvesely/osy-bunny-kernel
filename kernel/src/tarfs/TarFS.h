@@ -50,7 +50,6 @@ public:
 	ssize_t readFile( file_t src, void* buffer, size_t size );
 	uint seekFile( file_t file, FilePos pos, int offset);
 	bool existsFile( file_t file );
-	size_t sizeFile( file_t file );
 	bool eof( file_t file );
 
 private:

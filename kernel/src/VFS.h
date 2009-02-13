@@ -53,7 +53,6 @@ public:
 	virtual ssize_t readFile( file_t src, void* buffer, size_t size ) = 0;
 	virtual uint seekFile( file_t file, FilePos pos, int offset ) = 0; 
 	virtual bool existsFile( file_t file ) = 0;
-	virtual size_t sizeFile( file_t file ) = 0;
 	virtual bool eof( file_t file ) = 0;
 
 private:

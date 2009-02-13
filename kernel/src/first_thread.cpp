@@ -70,7 +70,9 @@ void* first_thread(void* data)
 		KERNEL.halt();
 	}
 
-	const size_t file_size = fs->sizeFile( first_proc );
+	const size_t file_size = fs->seekFile( first_proc, POS_END, 0 );
+	fs->seekFile( first_proc, POS_START, 0 );
+
 	char* image = (char*)malloc(file_size);
 	fs->readFile( first_proc, image, file_size );
 

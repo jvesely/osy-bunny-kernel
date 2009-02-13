@@ -133,19 +133,12 @@ uint TarFS::seekFile( file_t file, FilePos pos, int offset )
 	Entry* entry = getFile( file );
 	if (entry) 
 		return entry->seek( pos, offset );
-	return 0;
+	return EIO;
 }
 /*----------------------------------------------------------------------------*/
 bool TarFS::existsFile( file_t file )
 {
 	return (bool) getFile( file );
-}
-/*----------------------------------------------------------------------------*/
-size_t TarFS::sizeFile( file_t file )
-{
-	Entry* entry = getFile( file );
-	if (entry) return entry->size();
-		else     return 0;
 }
 /*----------------------------------------------------------------------------*/
 bool TarFS::eof( file_t file )

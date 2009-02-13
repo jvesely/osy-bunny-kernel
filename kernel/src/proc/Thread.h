@@ -221,6 +221,7 @@ private:
 
 	void deactivate();
 
+	friend class Process;
 };
 
 template class ListInsertable<Thread>; 
