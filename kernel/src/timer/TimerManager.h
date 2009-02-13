@@ -39,6 +39,7 @@
 
 #include "Time.h"
 #include "timer/ClassTimer.h"
+#include "proc/Thread.h"
 #include "Singleton.h"
 
 
