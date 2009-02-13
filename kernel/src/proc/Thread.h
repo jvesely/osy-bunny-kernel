@@ -95,7 +95,7 @@ public:
 	 * Unless paramters are given contructs the thread using defaults.
 	 * Construction involves allocating stack and preparing context.
 	 * If successfull thread's status will be INITIALIZED, if something went 
-	 * wrong it will be UNITIALIZED.
+	 * wrong it will be UNINITIALIZED.
 	 * @param stackSize size of requested stack
 	 */
 	Thread(	uint stackSize = DEFAULT_STACK_SIZE );
@@ -211,12 +211,15 @@ protected:
 	bool m_detached;                           /*!< detached flag              */
 	Status m_status;                           /*!< my status                  */
 	thread_t m_id;	                           /*!< my id                      */
-	Thread* m_follower;                        /*!< someone waiting            */
+	Thread* m_follower;                        /*!< someone waiting for me     */
+	Thread* m_joinTarget;                      /*!< I'm waiting for this       */
 	Pointer<IVirtualMemoryMap> m_virtualMap;   /*!< @brief Virtual Memory Map. */
 
 private:
 	Thread( const Thread& other );              /*!< no copying   */
 	Thread& operator = ( const Thread& other ); /*!< no assigning */
+
+	void deactivate();
 
 };
 

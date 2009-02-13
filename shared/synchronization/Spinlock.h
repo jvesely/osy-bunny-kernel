@@ -37,7 +37,6 @@
 #pragma once
 
 #include "atomic.h"
-#include "proc/Thread.h"
 
 /**
  * @class Spinlock Spinlock.h "Spinlock.h"

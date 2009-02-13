@@ -36,8 +36,9 @@
 #include "address.h"
 #include "timer/Timer.h"
 #include "api.h"
+#include "proc/ThreadCollector.h"
 
-//#define THREAD_DEBUG
+#define THREAD_DEBUG
 
 #ifndef THREAD_DEBUG
 #define PRINT_DEBUG(...)
@@ -128,17 +129,17 @@ void Thread::switchTo()
 	void** new_stack = &m_stackTop;
 
 	if ( old_thread ) {
-		if ((old_thread->status() == KILLED || old_thread->status() == FINISHED)
-			&& old_thread->m_detached)
-		{
-			delete old_thread;
-			old_thread = NULL;
-		} else {
+//		if ((old_thread->status() == KILLED || old_thread->status() == FINISHED)
+//			&& old_thread->m_detached)
+//		{
+//			delete old_thread;
+//			old_thread = NULL;
+//		} else {
 			if (old_thread->status() == RUNNING)
 				old_thread->setStatus( READY );
 
 			old_stack = &old_thread->m_stackTop;
-		}
+//		}
 	}
 	
 	setStatus( RUNNING );
@@ -165,6 +166,9 @@ void Thread::switchTo()
 	PRINT_DEBUG ("Switching stacks: %p, %p.\n", old_stack, new_stack);
 
 	Processor::switch_cpu_context( old_stack, new_stack );
+
+	PRINT_DEBUG ("Thread %u, cleaning inactive.\n", m_id);
+	THREAD_BIN.clean();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::yield()
@@ -214,13 +218,11 @@ void Thread::suspend()
 {
 	/* may only suspend self */
 	ASSERT (status() == RUNNING);
-
-	/* WAITING indicates that I have to waken by another thread */
-	m_status = WAITING;
-
-	PRINT_DEBUG ("Thread %u suspended.\n", m_id);
+	PRINT_DEBUG ("Thread %u suspending.\n", m_id);
 
 	block();
+	/* WAITING indicates that I have to waken by another thread */
+	m_status = WAITING;
 
 	/* surrender processor */
 	yield();
@@ -269,7 +271,7 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	if (others_status == KILLED || others_status == FINISHED) {
 		PRINT_DEBUG ("Thread %u(%p) joined %s thread %u.\n",
 			m_id, this, (others_status == KILLED)? "KILLED" : "FINISHED", thread->m_id);
-		delete thread;
+		thread->deactivate();
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
 
@@ -295,7 +297,7 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	{
 		PRINT_DEBUG ("Thread %u joined thread %u %s.\n", m_id, thread->m_id, timed ? "TIMED" : "");
 		if (retval) *retval = thread->m_ret;
-		delete thread;
+		thread->deactivate();
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
 
@@ -357,7 +359,7 @@ void Thread::kill()
 		SCHEDULER.m_shouldSwitch = true;
 	} else {
 	/* detached threads are removed immediately after they finish execution*/
-		if (m_detached) delete this;
+		if (m_detached) deactivate();
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -371,6 +373,15 @@ void Thread::exit( void* return_value  )
 		m_status = FINISHED;
 }
 /*----------------------------------------------------------------------------*/
+void Thread::deactivate()
+{
+	PRINT_DEBUG ("Deactivating thread %u.\n", m_id)
+	THREAD_BIN.add( this );
+	m_status = UNINITIALIZED;
+	SCHEDULER.returnId( m_id );
+	m_id = 0;
+}
+/*----------------------------------------------------------------------------*/
 thread_t Thread::registerWithScheduler()
 {
 	return m_id = SCHEDULER.getFreeId( this );
@@ -378,7 +389,7 @@ thread_t Thread::registerWithScheduler()
 /*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
-	PRINT_DEBUG ("Thread %u erased from the world.\n", m_id);
+	PRINT_DEBUG ("Thread %p erased from the world.===\n", this);
 	if ( m_id ) {
 		PRINT_DEBUG ("Returning id %d.\n", m_id);
 		SCHEDULER.returnId( m_id );
