@@ -120,6 +120,4 @@ protected:
 	*	Used for malloc and free. These functions must
 	*/
 	YieldingSpinLock m_lock;
-
-
 };
