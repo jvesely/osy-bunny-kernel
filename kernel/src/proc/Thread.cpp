@@ -38,14 +38,14 @@
 #include "api.h"
 #include "proc/ThreadCollector.h"
 
-#define THREAD_DEBUG
+//#define THREAD_DEBUG
 
 #ifndef THREAD_DEBUG
 #define PRINT_DEBUG(...)
 #else
 #define PRINT_DEBUG(ARGS...) \
   printf("[ THREAD_DEBUG ]: "); \
-  printf(ARGS);
+  printf(ARGS)
 #endif
 
 
@@ -125,22 +125,14 @@ void Thread::switchTo()
 	static const Time DEFAULT_QUANTUM(0, 20000);
 
 	Thread* old_thread = getCurrent();
-	void** old_stack = NULL;
+
+	ASSERT ( old_thread );
+	
+	void** old_stack = &(old_thread->m_stackTop);
 	void** new_stack = &m_stackTop;
 
-	if ( old_thread ) {
-//		if ((old_thread->status() == KILLED || old_thread->status() == FINISHED)
-//			&& old_thread->m_detached)
-//		{
-//			delete old_thread;
-//			old_thread = NULL;
-//		} else {
-			if (old_thread->status() == RUNNING)
-				old_thread->setStatus( READY );
-
-			old_stack = &old_thread->m_stackTop;
-//		}
-	}
+	if (old_thread->status() == RUNNING)
+		old_thread->setStatus( READY );
 	
 	setStatus( RUNNING );
 
@@ -358,7 +350,6 @@ void Thread::kill()
 	if (Thread::getCurrent() == this) {
 		SCHEDULER.m_shouldSwitch = true;
 	} else {
-	/* detached threads are removed immediately after they finish execution*/
 		if (m_detached) deactivate();
 	}
 }
@@ -375,7 +366,7 @@ void Thread::exit( void* return_value  )
 /*----------------------------------------------------------------------------*/
 void Thread::deactivate()
 {
-	PRINT_DEBUG ("Deactivating thread %u.\n", m_id)
+	PRINT_DEBUG ("Deactivating thread %u(%p).\n", m_id, this);
 	THREAD_BIN.add( this );
 	m_status = UNINITIALIZED;
 	SCHEDULER.returnId( m_id );
@@ -394,5 +385,6 @@ Thread::~Thread()
 		PRINT_DEBUG ("Returning id %d.\n", m_id);
 		SCHEDULER.returnId( m_id );
 	}
+	PRINT_DEBUG ("Freeing stack.\n");
 	free(m_stack);
 }

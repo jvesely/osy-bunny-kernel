@@ -109,5 +109,5 @@ Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*)
 
 KernelThread::~KernelThread()
 {
-	PRINT_DEBUG ("Thread %d dying.\n", m_id);
+	PRINT_DEBUG ("Thread %u dying.\n", m_id);
 }

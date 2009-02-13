@@ -302,8 +302,8 @@ void Kernel::refillTLB()
 		Processor::reg_read_badvaddr(), Thread::getCurrent()->id(), success ? "SUCESS" : "FAILURE");
 
   if (!success) {
-		printf( "Access to invalid address %p, KILLING offending thread.\n",
-			Processor::reg_read_badvaddr() );
+		printf( "Access to invalid address %p, KILLING offending thread(%u).\n",
+			Processor::reg_read_badvaddr(), Thread::getCurrent()->id() );
 		ASSERT (Thread::getCurrent());
 		Thread::getCurrent()->kill();
 	}

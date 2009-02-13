@@ -38,7 +38,6 @@
 #include "api.h"
 
 class Thread;
-//class ListInsertable;
 typedef List<Thread*> ThreadList;
 
 
@@ -60,15 +59,17 @@ private:
 	friend class Singleton<ThreadCollector>;
 };
 
-#define THREAD_BIN ThreadCollector::instance()
 
 inline void ThreadCollector::clean()
 {
+//	printf("Clean: Collector count: %u.\n", m_list.size());
 	while (!m_list.empty()) { 
-		ListItem<Thread*>* item = m_list.removeFront();
+		ListItem<Thread*>* item = m_list.getFront();
 		ASSERT (item && (item == item->data()));
 		delete item;
 	}
+//	printf("Clean: Collector count: %u.\n", m_list.size());
 }
 /*----------------------------------------------------------------------------*/
 
+#define THREAD_BIN ThreadCollector::instance()
