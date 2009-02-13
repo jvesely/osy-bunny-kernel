@@ -41,7 +41,7 @@
 #include "address.h"
 #include "synchronization/Event.h"
 
-//#define PROCESS_DEBUG
+#define PROCESS_DEBUG
 
 #ifndef PROCESS_DEBUG
 #define PRINT_DEBUG(...)
@@ -107,37 +107,43 @@ Process* Process::create( const char* image, size_t size )
 /*----------------------------------------------------------------------------*/
 void Process::clearEvents()
 {
+	PRINT_DEBUG ("Clearing used events: %u.\n", eventTable.map().size());
 	const uint list_count = eventTable.map().getArraySize();
 	for (uint i = 0; i < list_count; ++i)
 	{
 		List< Pair<event_t, Event*> >* list =	eventTable.map().getList( i );
 		List< Pair<event_t, Event*> >::Iterator it;
 		ASSERT (list);
-		for (it = list->begin(); it != list->end(); ++it){
-			it->second->fire();
+		for (it = list->begin(); it != list->end(); ++it) {
+			if (it->second) {//don't fire dummy event
+				PRINT_DEBUG ("Found event FIRING.\n");
+				it->second->fire();
+			}
 			delete it->second;
 		}
 		list->clear();
 	}
+	PRINT_DEBUG ("Events cleared.\n");
 }
 /*----------------------------------------------------------------------------*/
 void Process::clearThreads()
 {
-	m_mainThread->deactivate();
-	for ( UserThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
+	PRINT_DEBUG ("Clearing process threads.\n");
+	m_mainThread->deactivate() || m_mainThread->kill();
+	
+	UserThreadList::Iterator it;
+	for ( it = m_list.begin(); it != m_list.end(); ++it )
 	{
-		Thread::Status st = (*it)->status();
-		if (st != Thread::KILLED && st != Thread::FINISHED) {
-			(*it)->deactivate();
-		}
+		(*it)->deactivate() || (*it)->kill();
 	}
-
+	m_list.clear();
+	PRINT_DEBUG ("Threads cleared");
 }
 /*----------------------------------------------------------------------------*/
 void Process::exit()
 {
-	clearEvents();
-//	clearThreads();
+	//clearEvents();
+	clearThreads();
 }
 /*----------------------------------------------------------------------------*/
 Process* Process::getCurrent()
@@ -179,7 +185,7 @@ UserThread* Process::addThread( thread_t* thread_ptr,
 	m_list.pushBack( storage );
 	new_thread->m_process = this;
   new_thread->resume();
-	PRINT_DEBUG ("New thread added to the process and scheduler.\n");
+	PRINT_DEBUG ("New thread added to the process and scheduler %u.\n", new_thread->id());
 	return new_thread;
 }
 /*----------------------------------------------------------------------------*/

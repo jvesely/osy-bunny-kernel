@@ -37,9 +37,12 @@
 
 #include "api.h"
 #include "types.h"
-#include "InterruptDisabler.h"
-#include "proc/Thread.h"
 #include "Time.h"
+#include "structures/List.h"
+
+class Thread;
+
+typedef List<Thread*> ThreadList;
 
 /**
  * @class Semaphore Semaphore.h "Semaphore.h"
@@ -65,7 +68,7 @@ public:
 	 * threads waiting for it. If somebody is still locked on this semaphore,
 	 * panic.
 	 */
-	inline ~Semaphore();
+	~Semaphore();
 
 	/**
 	 * Get the value of the semaphore counter. Using the fact, that reading
@@ -142,7 +145,7 @@ private:
 };
 
 /* --------------------------------------------------------------------- */
-
+/*
 inline Semaphore::~Semaphore() {
 	// if the waiting list is not empty, panic
 	if (waitingList.size() != 0) {
@@ -150,7 +153,7 @@ inline Semaphore::~Semaphore() {
 			this, Thread::getCurrent()->id());
 	}
 }
-
+*/
 /* --------------------------------------------------------------------- */
 
 inline unative_t Semaphore::get() const {

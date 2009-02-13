@@ -35,6 +35,9 @@
 
 #include "Semaphore.h"
 
+#include "proc/Thread.h"
+#include "InterruptDisabler.h"
+
 void Semaphore::up(const unative_t number) {
 	// disable interrupts
 	InterruptDisabler lock;
@@ -108,5 +111,13 @@ int Semaphore::downTimeout(const unative_t number, const Time time) {
 	return (m_counter >= number)
 		? m_counter -= number, EOK
 		: ETIMEDOUT;
+}
+/*----------------------------------------------------------------------------*/
+Semaphore::~Semaphore() {
+  // if the waiting list is not empty, panic
+  if (waitingList.size() != 0) {
+    panic("Semaphore at %x being destroyed by thread %u while there are still locked threads waiting for it!\n",
+      this, Thread::getCurrent()->id());
+  }
 }
 

@@ -36,6 +36,7 @@
 #include "Mutex.h"
 
 #include "InterruptDisabler.h"
+#include "proc/Thread.h"
 
 // To fobid unlocking by other thread than locked
 //#define DEBUG_MUTEX

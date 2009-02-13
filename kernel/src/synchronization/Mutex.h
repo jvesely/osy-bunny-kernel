@@ -38,7 +38,10 @@
 #include "api.h"
 
 #include "Time.h"
-#include "proc/Thread.h"
+#include "structures/List.h"
+
+class Thread;
+typedef List<Thread*> ThreadList;
 
 /**
  * @class Mutex Mutex.h "Mutex.h"
