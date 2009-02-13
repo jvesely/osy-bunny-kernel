@@ -267,9 +267,6 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
 
-	/* set the joining stuff */
-	thread->m_follower = this;
-	
 	if ( timed ) {
 		alarm( wait_time );
 	} else {
@@ -277,10 +274,16 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 		block();
 	} 
 
-	m_status = JOINING;
+	/* set the joining stuff */
+	thread->m_follower = this;
+	m_status           = JOINING;
+	m_joinTarget       = thread;
+
   yield();
 
 	ASSERT (thread);
+
+	m_joinTarget = NULL;
 
 	others_status = thread->status();
 
@@ -346,7 +349,6 @@ void Thread::kill()
 	/* remove from both timer and scheduler */
 	block();
 
-	
 	if (Thread::getCurrent() == this) {
 		SCHEDULER.m_shouldSwitch = true;
 	} else {
@@ -367,6 +369,13 @@ void Thread::exit( void* return_value  )
 void Thread::deactivate()
 {
 	PRINT_DEBUG ("Deactivating thread %u(%p).\n", m_id, this);
+
+	if (m_joinTarget)
+	{
+		m_joinTarget->m_follower = NULL;
+		m_joinTarget = NULL;
+	}
+	
 	THREAD_BIN.add( this );
 	m_status = UNINITIALIZED;
 	SCHEDULER.returnId( m_id );

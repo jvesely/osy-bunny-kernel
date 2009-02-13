@@ -123,14 +123,12 @@ void Process::clearEvents()
 /*----------------------------------------------------------------------------*/
 void Process::clearThreads()
 {
-	m_mainThread->kill();
+	m_mainThread->deactivate();
 	for ( UserThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
 	{
 		Thread::Status st = (*it)->status();
 		if (st != Thread::KILLED && st != Thread::FINISHED) {
-			if (st != Thread::READY)
-				(*it)->resume();
-			(*it)->kill();
+			(*it)->deactivate();
 		}
 	}
 
