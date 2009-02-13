@@ -37,6 +37,7 @@
 
 #include "SysCall.h"
 #include "syscallcodes.h"
+#include "synchronization/SpinlockLocker.h"
 
 
 //debug messages for vma allocation
