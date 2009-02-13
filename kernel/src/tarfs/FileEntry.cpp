@@ -35,7 +35,7 @@
 #include "FileEntry.h"
 #include "VFS.h"
 
-#define ENTRY_DEBUG
+//#define ENTRY_DEBUG
 
 #ifndef ENTRY_DEBUG
 #define PRINT_DEBUG(...)
