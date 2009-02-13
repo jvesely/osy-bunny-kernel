@@ -80,7 +80,7 @@ Thread::Thread( uint stackSize ):
 	ListInsertable<Thread>(),
 	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(), m_otherStackTop( NULL ),
 	m_stackSize( stackSize ),	m_detached( false ), m_status( UNINITIALIZED ),
-	m_id( 0 ), m_follower( NULL ), m_virtualMap( NULL )
+	m_id( 0 ), m_follower( NULL ), m_joinTarget( NULL ), m_virtualMap( NULL )
 {
 	if (!m_stackSize) return;
 	/* Alloc stack */
@@ -151,7 +151,7 @@ void Thread::switchTo()
 	/* plan my end if I'm not the idle thread */
 	if (this != SCHEDULER.m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
-			m_id, DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
+			id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
 		TIMER.plan( this, DEFAULT_QUANTUM );
 	}
 
@@ -159,18 +159,18 @@ void Thread::switchTo()
 
 	Processor::switch_cpu_context( old_stack, new_stack );
 
-	PRINT_DEBUG ("Thread %u, cleaning inactive.\n", m_id);
+	PRINT_DEBUG ("Thread %u, cleaning inactive.\n", id());
 	THREAD_BIN.clean();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::yield()
 {
 	InterruptDisabler inter;
-	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
+	PRINT_DEBUG ("Yielding thread %u.\n", id());
 
 	/* voluntary yield should remove me from the Timer */
 	if (status() == RUNNING) {
-		PRINT_DEBUG ("Removed from heap during yield. (%u)\n", m_id);
+		PRINT_DEBUG ("Removed from heap during yield. (%u)\n", id());
 		removeFromHeap();
 	}
 
@@ -279,10 +279,11 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	m_status           = JOINING;
 	m_joinTarget       = thread;
 
-  yield();
+	yield();
 
-	ASSERT (thread);
+	ASSERT (thread == m_joinTarget);
 
+	thread->m_follower = NULL;
 	m_joinTarget = NULL;
 
 	others_status = thread->status();
@@ -301,7 +302,6 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	PRINT_DEBUG ("Thread %u joining thread %u timedout.\n", m_id, thread->m_id);
 
 	/* I'm no longer waiting for his death */
-	thread->m_follower = NULL;
 	return ETIMEDOUT;
 }
 /*----------------------------------------------------------------------------*/
@@ -325,14 +325,14 @@ void Thread::resume()
 	SCHEDULER.enqueue( this );
 }
 /*----------------------------------------------------------------------------*/
-void Thread::kill()
+bool Thread::kill()
 {
 	InterruptDisabler inter;
 
 	/* only active threads can be killed */
 	if ( status() != READY  && status() != BLOCKED && status() != RUNNING) {
 		PRINT_DEBUG ("Thread %u cannot be killed its status is %u\n", id(), status());
-		return;
+		return false;
 	}
 
 	m_status = KILLED;
@@ -354,6 +354,7 @@ void Thread::kill()
 	} else {
 		if (m_detached) deactivate();
 	}
+	return true;
 }
 /*----------------------------------------------------------------------------*/
 void Thread::exit( void* return_value  )
@@ -366,20 +367,25 @@ void Thread::exit( void* return_value  )
 		m_status = FINISHED;
 }
 /*----------------------------------------------------------------------------*/
-void Thread::deactivate()
+bool Thread::deactivate()
 {
+	if (m_follower) return false; //cannot be deleted while i'm followed
+
 	PRINT_DEBUG ("Deactivating thread %u(%p).\n", m_id, this);
 
 	if (m_joinTarget)
 	{
+		PRINT_DEBUG ("FOUND Join target: %p.\n", m_joinTarget);
 		m_joinTarget->m_follower = NULL;
 		m_joinTarget = NULL;
 	}
 	
-	THREAD_BIN.add( this );
 	m_status = UNINITIALIZED;
+	THREAD_BIN.add( this );
 	SCHEDULER.returnId( m_id );
 	m_id = 0;
+	PRINT_DEBUG("Deactivating done.\n");
+	return true;
 }
 /*----------------------------------------------------------------------------*/
 thread_t Thread::registerWithScheduler()

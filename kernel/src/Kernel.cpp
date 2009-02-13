@@ -144,6 +144,10 @@ void Kernel::run()
 		
 		const uintptr_t total_stacks = COUNT_CPU * KERNEL_STATIC_STACK_SIZE;
 
+		printf( "Kernel ends at: %p.\n", &_kernel_end );
+		printf( "Stacks(%x) end at: %p.\n",
+			total_stacks, (uintptr_t)&_kernel_end + total_stacks );
+
 		// detect memory
 		m_physicalMemorySize = getPhysicalMemorySize( (uintptr_t)&_kernel_end + total_stacks );
 		printf( "Detected %d MB of accessible memory\n",
@@ -151,9 +155,6 @@ void Kernel::run()
 
 
 		// init frame allocator
-		printf( "Kernel ends at: %p.\n", &_kernel_end );
-		printf( "Stacks(%x) end at: %p.\n",
-			total_stacks, (uintptr_t)&_kernel_end + total_stacks );
 
 		MyFrameAllocator::instance().init( 
 			m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
@@ -180,24 +181,25 @@ sleep:
 /*----------------------------------------------------------------------------*/
 size_t Kernel::getPhysicalMemorySize(uintptr_t from)
 {
-	printf( "Probing memory range..." );
+	printf( "Probing memory range...(%x)", from );
 	
 	TLB::instance().switchAsid( 0 );
 	const uint32_t MAGIC = 0xDEADBEEF;
 
 	size_t size = 0;
-	const size_t range = Processor::pages[Processor::PAGE_512K].size / sizeof(uint32_t);
+	const size_t range = Processor::pages[Processor::PAGE_512K].size;
 	volatile uint32_t* front = (uint32_t*)ADDR_TO_USEG(from);
 	volatile uint32_t* back  = (uint32_t *)range - 1;
-	volatile uint32_t* point = front;
+	volatile char* point = (char*)front;
 
 	while (true) {
 		TLB::instance().setMapping(
 			(uintptr_t)front, (uintptr_t)point, Processor::PAGE_512K, 0 );
+//		printf("Writing to %x-%x.\n", front, back);
 		(*front) = MAGIC; //write
 		(*back) = MAGIC; //write
 		if ( (*front != MAGIC) || (*back != MAGIC) ) break; //check
-		size  += range * sizeof(uint32_t);
+		size  += range;
 		point += range; //add
 		TLB::instance().clearAsid( 0 );
 	}
@@ -217,7 +219,6 @@ void Kernel::exception( Processor::Context* registers )
 		) {
 			printf( "Exception handling for: %s(%u) UNHANDLED or FAILED => KILLING offending thread (%u).\n",
 				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
-
 			Thread::getCurrent()->kill();
 		}
 	

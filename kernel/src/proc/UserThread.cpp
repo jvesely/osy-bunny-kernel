@@ -71,7 +71,6 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data, void* data2,
 	m_otherStackTop = (char*)m_userstack + stack_size;
 
 	m_status = INITIALIZED;
-	return;
 }
 /*----------------------------------------------------------------------------*/
 UserThread::~UserThread()
