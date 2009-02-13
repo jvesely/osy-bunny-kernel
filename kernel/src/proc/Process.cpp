@@ -137,7 +137,7 @@ void Process::clearThreads()
 void Process::exit()
 {
 	clearEvents();
-	clearThreads();
+//	clearThreads();
 }
 /*----------------------------------------------------------------------------*/
 Process* Process::getCurrent()

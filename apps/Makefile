@@ -37,7 +37,16 @@ BINS := $(addprefix $(BIN_DIR)/, $(addsuffix .bin, $(basename $(OBJS))))
 
 ### Rules ###
 .PHONY: apps
-apps: $(BINS)
+apps: depend $(BINS)
+
+### Dependencies ###
+DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -I $(INC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
+
+.PHONY: depend
+depend:
+	@touch $(addprefix ../, $(USER_TEST)) /dev/null
+	@$(DEPEND) > Makefile.depend
+#	@echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
 
 -include Makefile.depend
 .SUFFIXES:
@@ -66,14 +75,6 @@ $(OBJ_DIR)/%.o : %.S
 
 
 
-### Dependencies ###
-DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -I $(INC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
-
-.PHONY: depend
-depend:
-	@touch $(addprefix ../, $(USER_TEST)) /dev/null
-	@$(DEPEND) > Makefile.depend
-#	@echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
 		
 
 
