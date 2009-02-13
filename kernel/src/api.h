@@ -226,23 +226,12 @@ int copy_to_thread( const thread_t thr,
  * @struct mutex api.h "api.h"
  * @brief Sructure for mutex (mutual exclusion).
  *
- * Mutex structure for use in C and C++ code. It is possible to use it as struct mutex
- * or mutex_t, which is a typedef for it.
+ * Mutex structure for use in C and C++ code. It is possible to use it as struct
+ * mutex or mutex_t, which is a typedef for it. Contains only a placeholder
+ * for the C++ class.
  */
 typedef struct mutex {
-	/**
-	 * Identification of the thread, for which is the lock locked. If 0 (zero)
-	 * the lock is unlocked.
-	 */
-	volatile thread_t locked;
-
-	/**
-	 * The list of blocked (waiting) threads on this mutex. It is a placeholder
-	 * for List<Thread *> because it is not possible to include C++ code to C code.
-	 * The size of waitingList[] should be ceil of
-	 * sizeof(List<Thread *>) / sizeof(unative_t).
-	 */
-	volatile unative_t waitingList[4];
+	byte payload[24];
 } mutex_t;
 
 /**
@@ -337,7 +326,7 @@ int timer_pending(struct timer *tmr);
  * @brief Semaphore class placeholder for C code.
  */
 typedef struct semaphore {
-	char payload[20];
+	byte payload[20];
 } semaphore_t;
 
 void sem_init(semaphore_t* s, const int value);
@@ -357,7 +346,7 @@ int sem_down_timeout(semaphore_t* s, const unsigned int usec);
  * @brief Spinlock class placeholder for C code.
  */
 typedef struct spinlock {
-	char payload[4];
+	byte payload[4];
 } spinlock_t;
 
 void spinlock_init(spinlock_t* s);

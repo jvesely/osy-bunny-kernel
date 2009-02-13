@@ -32,12 +32,14 @@
  * at least people can understand it.
  */
 
+#include "SysCall.h"
+#include "syscallcodes.h"
 #include "api.h"
-#include "Entry.h"
-#include "drivers/DiskDevice.h"
 
-bool Entry::readFromDevice(void* buffer, size_t count, uint start_block, uint offset)
+
+Time Time::getCurrentTime()
 {
-	ASSERT (m_storage);
-	return m_storage->read(buffer, count, start_block, offset);
+	Time result;
+	SysCall::getCurrentTime(&result);
+	return result;
 }

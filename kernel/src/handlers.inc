@@ -309,3 +309,24 @@ static unative_t handleVMAFree( unative_t params[] )
 	return vmm->free((void *)params[0]);
 }
 /*----------------------------------------------------------------------------*/
+unative_t handleVMAResize( unative_t params[] )
+{
+	void*  area_start = (void*)  CHECK_PTR_IN_USEG(params[0]);
+	size_t* size      = (size_t*)CHECK_PTR_IN_USEG(params[1]);
+	//the same as vma_resize in api.h
+	IVirtualMemoryMap* vmm = IVirtualMemoryMap::getCurrent().data();
+	ASSERT (vmm);
+
+	//round the size according to HW specifications
+	*size = roundUp(*size, Processor::pages[Processor::PAGE_MIN].size);
+
+	return vmm->resize(area_start, *size);
+}
+//------------------------------------------------------------------------------
+unative_t handleGetTime( unative_t params[])
+{
+	Time* time_place = (Time*) CHECK_PTR_IN_USEG(params[0]);
+	*time_place = Time::getCurrentTime();
+
+	return EOK;
+}

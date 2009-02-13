@@ -10,28 +10,29 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Short description.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 
+#include "api.h"
 #include "Process.h"
 #include "flags.h"
 #include "proc/UserThread.h"
@@ -56,11 +57,10 @@ Process* Process::create( const char* image, size_t size )
 	InterruptDisabler inter;
 
 	PRINT_DEBUG ("Creating process.\n");
-	
 
 	void * (*start)(void*) = (void*(*)(void*))0x1000000;
 
-	UserThread* main = new UserThread( 
+	UserThread* main = new UserThread(
 		start, NULL, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
 
 	/* Thread creation might have failed. */
@@ -97,7 +97,7 @@ Process* Process::create( const char* image, size_t size )
 
 
 	old_vmm->copyTo( image, vmm, (void*)start, size );
-	
+
 	Process* me = new Process();
 	me->m_mainThread = main;
 	me->m_mainThread->resume();
@@ -156,7 +156,7 @@ UserThread* Process::addThread( thread_t* thread_ptr,
 	void* stack_pos =
 		(char*)ADDR_PREFIX_KSEG0 - (m_list.size() + 2) * Thread::DEFAULT_STACK_SIZE;
 
-  UserThread* new_thread = new UserThread( 
+  UserThread* new_thread = new UserThread(
 		thread_start, arg1, arg2, stack_pos, thread_flags);
 
   PRINT_DEBUG ("Thread created at address: %p.\n", new_thread);

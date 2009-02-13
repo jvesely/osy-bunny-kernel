@@ -26,19 +26,26 @@
 
 /*!
  * @file
- * @brief List implementation
+ * @brief List implementation and declaration
  *
- * doubly linkes list template class
+ * Doubly linkes list template class. This list is not cyclical.
  */
 
 #pragma once
-#include <api.h>
-#include <structures/ListItem.h>
+//#include "api.h"
+#include "structures/ListItem.h"
 
 
 //------------------------------------------------------------------------------
 /** @brief doubly-linked list
+*
 *	@note type T must have defined: ctor, dtor, cpy-ctor, operator == and !=
+*
+*	Standart linked-list implementation. Enables to insert values (allocating
+*	needed space) and as well items without allocation. Also erasing is done
+*	with deleting he item and remove membrt function will only disconnect item
+*	from list.
+*
 */
 template <typename T> class List
 {
@@ -46,29 +53,35 @@ public:
 
 	/**	@class Iterator
 	*	@brief list iterator
-	*	enables to iterate trough the List elements
-	*	iterator stores a pointer to listItem, see method getItem()
-	**/
+	*
+	*	Enables to iterate trough the List elements.
+	*	Iterator stores a pointer to listItem, see method getItem().
+	*/
 	class Iterator
 	{
 	public:
 
-		/** @brief default ctor
-		*	m_item is set to NULL
+		/** @brief default constructor
+		*
+		*	m_item pointer is set to NULL.
 		*/
 		inline Iterator () : m_item ( NULL ) {}
 
-		/** @brief ctor with initialisation value */
+		/** @brief constructor with initialisation value */
 		inline Iterator ( ListItem<T> * item ) : m_item ( item ) {}
 
-		/** @brief copy ctor */
+		/** @brief copy constructor */
 		inline Iterator ( const Iterator & it ) : m_item ( it.getItem() ) {}
 
-		inline const T& operator * () const { return getData(); }	/**< @brief const dereference operator	*/
-		inline T& operator * () { return getData(); } 				/**< @brief dereference operator */
+		/**< @brief const dereference operator	*/
+		inline const T& operator * () const { return getData(); }
+		/**< @brief dereference operator */
+		inline T& operator * () { return getData(); }
 
-		inline const T * operator -> () const { return &getData(); } 	/**< @brief const dereference postfix operator */
-		inline T * operator -> () { return &getData(); } 				/**< @brief dereference postfix operator */
+		/**< @brief const dereference postfix operator */
+		inline const T * operator -> () const { return &getData(); }
+		/**< @brief dereference postfix operator */
+		inline T * operator -> () { return &getData(); }
 
 		/** @brief get const data stored in item
 		*	@return const reference to data
@@ -76,10 +89,6 @@ public:
 		*/
 		inline const T& getData() const
 		{
-			/*if ( m_item == NULL )
-				return T();
-			else
-				return m_item->getData(); - old null-safe implementation; */
 			return m_item->getData();
 		}
 
@@ -92,11 +101,14 @@ public:
 			return m_item->getData();
 		}
 
-		inline const T & data() const { return getData(); } /**< @brief calls getData() */
+		/**< @brief wrapper for getData(), convenience function */
+		inline const T & data() const { return getData(); }
 
 		inline T & data() { return getData(); } /**< @brief calls getData() */
 
 		/** @brief ++ prefix operator
+		*
+		*	After change points to next ListItem.
 		*	@return reference to self after increment
 		*/
 		Iterator& operator ++ ()
@@ -107,8 +119,10 @@ public:
 		}
 
 		/** @brief postfix ++ operator
+		*
+		*	After change points to next ListItem.
+		*	Increments self.
 		*	@return copy of self before change
-		*	increments self
 		*/
 		Iterator operator ++ ( int )
 		{
@@ -119,6 +133,8 @@ public:
 		}
 
 		/** @brief ++ prefix operator
+		*
+		*	After change points to previous ListItem.
 		*	@return reference to self after decrement
 		*/
 		Iterator operator -- ()
@@ -129,8 +145,10 @@ public:
 		}
 
 		/** @brief postfix ++ operator
+		*
+		*	After change points to previous ListItem.
+		*	Decrements self.
 		*	@return copy of self before change
-		*	decrements self
 		*/
 
 		Iterator operator -- ( int )
@@ -141,16 +159,18 @@ public:
 			return ret;
 		}
 
-		/** @brief compares iterators
-		*	compares stored pointers
+		/** @brief comparator operator
+		*
+		*	Compares stored pointers.
 		*/
 		inline bool operator == ( Iterator it ) const
 		{
 			return ( it.getItem() == m_item );
 		}
 
-		/** @brief compares iterators
-		*	compares stored pointers
+		/** @brief comparator operator
+		*
+		*	Compares stored pointers.
 		*/
 
 		inline bool operator != ( Iterator it ) const
@@ -165,35 +185,44 @@ public:
 			return *this;
 		}
 
-		inline ListItem<T> * getItem() const { return m_item; } /**< @brief returns stored pointer to list item */
-		inline ListItem<T> * item() const { return getItem(); } /**< @brief returns stored pointer to list item */
+		/**< @brief get pointer to list item */
+		inline ListItem<T> * getItem() const { return m_item; }
+		/**< @brief get pointer to list item */
+		inline ListItem<T> * item() const { return getItem(); }
 
 	protected:
 
-		ListItem<T> * m_item; /**< @brief stored pointer to list item with data */
+		/**< @brief stored pointer to list item with data */
+		ListItem<T> * m_item;
 
 	private:
 	};
 
-	/** @brief default ctor
-	*	creaets empty list
+	/** @brief default costructor
+	*
+	*	Creates empty list
 	*/
 	inline List() {	init(); }
 
-	/** @brief copy ctor */
+	/** @brief copy costructor
+	*
+	*	Copies all values from oldList.
+	*/
 	List ( const List<T> & oldList )
 	{
 		init();
 		appendList ( oldList );
 	}
 
-	/** @brief dtor
+	/** @brief destructor
+	*
 	*	deletes list and all entries
 	*/
 	virtual ~List() { clear(); }
 
 	/** @brief copy list
-	*	clears data first
+	*
+	*	Clears data first.
 	*	implementation note: calls copyList()
 	*/
 	inline const List<T> & operator = ( const List<T> & oldList ) {
@@ -201,14 +230,18 @@ public:
 		return *this;
 	}
 
-	inline bool empty() const 	{ return ( m_first == NULL ); }/**< @brief no comment :) */
+	/**< @brief no comment :) */
+	inline bool empty() const 	{ return ( m_first == NULL ); }
 
-	inline int size() const { return m_count; } /**< @brief count of stored items */
+	/**< @brief count of stored items */
+	inline int size() const { return m_count; }
 
-	inline int getSize() const { return size(); } /**< @brief count of stored items */
+	/**< @brief count of stored items */
+	inline int getSize() const { return size(); }
 
 	/** @brief removes from front
-	*	if empty() returns without changes
+	*
+	*	If empty(), does nothing.
 	*/
 	void popFront()
 	{
@@ -230,7 +263,8 @@ public:
 	}
 
 	/** @brief removes from back
-	*	if empty() returns without changes
+	*
+	*	If empty(), does nothing.
 	*/
 	void popBack()
 	{
@@ -252,8 +286,8 @@ public:
 	}
 
 	/** @brief get data in first element
-	*	@return no reference, copied data; if no first element exists, default T is returned
-	*	@note recommended to use iterator begin(), rbegin() instead
+	*	@return no reference, copies data; if no first element exists, default T is returned
+	*	@note It is recommended to use iterator begin(), rbegin() instead.
 	*/
 	inline T getFront() const
 	{
@@ -262,8 +296,8 @@ public:
 	}
 
 	/** @brief get data in last element
-	*	@return no reference, copied data; if no last element exists, default T is returned
-	*	@note recommended to use iterator begin(), rbegin() instead
+	*	@return no reference, copies data; if no last element exists, default T is returned
+	*	@note It is recommended to use iterator begin(), rbegin() instead.
 	*/
 	inline T getBack() const
 	{
@@ -272,7 +306,8 @@ public:
 	}
 
 	/** @brief clear
-	*	implementation note: uses popBack()
+	*
+	*	implementation note: uses popBack() to remove all items
 	*/
 	inline void clear()
 	{
@@ -282,7 +317,7 @@ public:
 	}
 
 	/** @brief add item to the end
-	*	@return iterator to new element if succesfull; end() else
+	*	@return iterator to new element if succesfull, end() iterator else
 	*/
 	inline Iterator pushBack ( const T & data )
 	{
@@ -294,7 +329,9 @@ public:
 	}
 
 	/** @brief add already created ListItem to the end
+	*
 	*	implementation note: does not create anything new and does not use local variables (except parameters)
+	*	@note does not need to allocate memory
 	*	@return iterator to new element
 	*/
 	Iterator pushBack ( ListItem<T> * item )
@@ -317,7 +354,7 @@ public:
 	}
 
 	/** @brief add item to head
-	*	@return iterator to new element if succesfull; rend() else
+	*	@return iterator to new element if succesfull, rend() else
 	*/
 	inline Iterator pushFront ( const T & data )
 	{
@@ -329,7 +366,9 @@ public:
 	}
 
 	/** @brief add already created ListItem to head
+	*
 	*	implementation note: does not create anything new and does not use local variables (except parameters)
+	*	@note does not need to allocate memory
 	*	@return iterator to new element
 	*/
 	Iterator pushFront ( ListItem<T> * item )
@@ -349,8 +388,8 @@ public:
 	}
 
 	/** @brief disconnect first from list
-	*	does not delete the item, this is the difference against popFront
-	*	implementation note: does not allocate anything
+	*
+	*	Does not delete the item, this is the difference against popFront.
 	*	@return pointer to disconnected element; if nothing in list, NULL is returned
 	*/
 	ListItem<T> * removeFront()
@@ -375,8 +414,8 @@ public:
 	}
 
 	/** @brief disconnect last from list
-	*	does not delete the item, this is the difference against popBack
-	*	implementation note: does not allocate anything
+	*
+	*	Does not delete the item, this is the difference against popBack
 	*	@return pointer to disconnected element; if nothing in list, NULL is returned
 	*/
 	ListItem<T> * removeBack()
@@ -401,9 +440,11 @@ public:
 	}
 
 	/** @brief disconects item from list
-	*	does not delete the item, this is the difference against erase
-	*	item is after this operation definitelly not conencted to this list
-	*	(but can be connected in other, if method was called on bad object)
+	*
+	*	Does not delete the item, this is the difference against erase.
+	*	Item is after this operation definitelly not conencted to this list.
+	*	If method was not called on correct object, or with incorrect item,
+	*	list might end in inconsistent state.
 	*	@note does not check whether item is in 'this' list
 	*	@param item removed list item
 	*	@return pointer to removed item
@@ -429,9 +470,11 @@ public:
 	}
 
 	/** @brief disconects item from list - wrapper over remove(ListItem) method
-	*	does not delete the item, this is the difference against erase
-	*	item is after this operation definitelly not conencted to this list
-	*	(but can be connected in other, if method was called on bad object)\n
+	*
+	*	Does not delete the item, this is the difference against erase
+	*	Item is after this operation definitelly not conencted to this list.
+	*	If method was not called on correct object, or with incorrect item,
+	*	list might end in inconsistent state.
 	*	@note does not check whether item is in 'this' list. does not invalidate iterator it
 	*	@param it iterator to item removed from list
 	*	@return pointer to removed ListItem
@@ -442,10 +485,11 @@ public:
 	}
 
 	/** @brief rotates list by 1 item forward
-	*	moves first element behind the last
-	*	implementation note: does not use any local variables and does not allocate or delete anything
+	*
+	*	Moves first element behind the last.
+	*	Result should be the same as pushBack( rotatedList.removeFront() ).\n
+	*	implementation note: does not use any local variables and does not allocate or delete anything\n
 	*	implementation note: calls ListItem->disconnect()
-	*	result should be the same as pushBack( rotatedList.removeFront() );
 	*	@return iterator to new \a first element
 	*/
 	inline Iterator rotate() {
@@ -463,11 +507,12 @@ public:
 	}
 
 	/** @brief reverse-rotate
-	*	rotates list by 1 item backwards
-	*	moves last element before the first
-	*	implementation note: does not use any local variables and does not allocate or delete anything
+	*
+	*	Rotates list by 1 item backwards.
+	*	Moves last element before the first.
+	*	Result should be the same as pushFront( rotatedList.removeBack() ).\n
+	*	implementation note: does not use any local variables and does not allocate or delete anything\n
 	*	implementation note: calls ListItem->disconnect()
-	*	result should be the same as pushFront( rotatedList.removeBack() );
 	*	@return iterator to new \a first element
 	*/
 	inline Iterator rrotate() {
@@ -485,8 +530,9 @@ public:
 	}
 
 	/** @brief find
-	*	searches for first matching item from start; uses defined == operator for type T
-	*	searches towards front
+	*
+	*	Searches for first matching item from start, uses defined == operator for type T.
+	*	Searches towards front.
 	*	@return iterator to found item; end() if nothing has been found
 	*/
 	Iterator find ( const T& data, const Iterator& start ) const
@@ -497,8 +543,9 @@ public:
 	}
 
 	/** @brief reverse find
-	*	searches for first matching item from rstart; uses defined == operator for type T
-	*	searches towards back
+	*
+	*	Searches for first matching item from rstart, uses defined == operator for type T.
+	*	Searches towards back.
 	*	@return iterator to found item; rend() if nothing has been found
 	*/
 
@@ -509,9 +556,9 @@ public:
 		return it;
 	}
 
-	/*! @brief gets ListItem containing value from the middle of the list
+	/*! @brief gets ListItem containing value from the list
 	 * @param value value to find
-	 * @return pointer to listItem contaning value and detached from the list
+	 * @return pointer to listItem contaning value and disconnected from the list
 	 * NULL on failure
 	 */
 	ListItem<T>* removeFind(const T& value)
@@ -520,26 +567,6 @@ public:
 		if(it==end()) return NULL;
 		remove(it);
 		return it.getItem();
-
-
-		/*if (!m_first) return NULL;
-		if (m_first->data() == value)
-			return removeFront();
-		assert(m_last);
-		if (m_last->data() == value)
-			return removeBack();
-		ListItem<T>* ptr = m_first->next();
-		while (ptr) {
-			if(ptr->data() == value) break;
-			ptr = ptr->next();
-		}
-		if (ptr) {
-			assert(ptr->next()); //it's not last
-			ptr->next()->setPrev(ptr->prev());
-			assert(ptr->prev()); //it'snot first
-			ptr->prev()->setNext(ptr->next());
-		}*/
-//		return ptr;
 	}
 
 
@@ -565,19 +592,24 @@ public:
 		}//else nothing
 	}
 
-	inline Iterator begin() const { return Iterator ( m_first ); } /**< @brief iterator to first element */
+	/**< @brief iterator to first element */
+	inline Iterator begin() const { return Iterator ( m_first ); }
 
-	inline Iterator end()  const {return Iterator ( NULL );} /**< @brief invalid iterator */
+	/**< @brief invalid iterator */
+	inline Iterator end()  const {return Iterator ( NULL );}
 
-	inline Iterator rbegin() const { return Iterator ( m_last ); } /**< @brief iterator to last element */
+	/**< @brief iterator to last element */
+	inline Iterator rbegin() const { return Iterator ( m_last ); }
 
-	/** @brief invalid pointer
+	/** @brief invalid iterator
+	*
 	*	implementation note: iterator to reverse end() is the same as end() - both are iterators with NULL m_item
 	*/
 	inline Iterator rend()  const {return Iterator ( NULL );}
 
 	/** @brief insert before iterator
-	*	if it == end() element is inserted on the end of list
+	*
+	*	If it == end() element is inserted on the end of list
 	*	@return iterator to new element; if fails, end() is returned
 	*/
 	Iterator insert ( const Iterator& it, const T& value )
@@ -591,7 +623,8 @@ public:
 	}
 
 	/** @brief insert after iterator
-	*	if it == rend() element is inserted on the begin of list
+	*
+	*	If it == rend() element is inserted on the begin of list.
 	*	@return iterator to new element; if fails, rend() is returned
 	*/
 
@@ -605,8 +638,9 @@ public:
 		return rinsert(item,newItem);
 	}
 
-	/** @brief new-free insert before item
-	*	if item == NULL, new item is inserted on the end of list
+	/** @brief insert before item, without allocation
+	*
+	*	If item == NULL, new item is inserted on the end of list.
 	*	@param item listItem before which will be insertedItem inserted
 	*	@param insertedItem inserted item
 	*	@return iterator to new element; if fails(insertedItem is NULL), end() is returned
@@ -624,19 +658,21 @@ public:
 		return Iterator ( insertedItem );
 	}
 
-	/** @brief new-free insert before item
-	*	if item == NULL, new item is inserted on the end of list
+	/** @brief insert before item without allocation
+	*
+	*	If item == NULL, new item is inserted on the end of list.\n
+	*	(wrapper for insert(item,insertedItem))
 	*	@param item listItem before which will be insertedItem inserted; default NULL
 	*	@param insertedItem inserted item
 	*	@return iterator to new element; if fails(insertedItem is NULL), end() is returned
-	*	wrapper for insert(item,insertedItem)
 	*/
 	inline Iterator insertBefore( ListItem<T> * insertedItem ,ListItem<T> * item = NULL){
 		return insert(item,insertedItem);
 	}
 
-	/** @brief new-freeinsert after iterator
-	*	if it == rend() element is inserted on the begin of list
+	/** @brief insert after iterator without allocation
+	*
+	*	If it == rend() element is inserted on the begin of list
 	*	@param item listItem after which will be insertedItem inserted
 	*	@param inertedItem inserted item
 	*	@return iterator to new element; if fails(insertedItem is NULL), rend() is returned
@@ -654,19 +690,20 @@ public:
 		return Iterator ( insertedItem );
 	}
 
-	/** @brief new-freeinsert after iterator
-	*	if it == rend() element is inserted on the begin of list
+	/** @brief insert after iterator without allocation
+	*
+	*	If it == rend() element is inserted on the begin of list.\n
+	*	(wrapper for rinsert(item,insertedItem))
 	*	@param item listItem after which will be insertedItem inserted; default NULL
 	*	@param inertedItem inserted item
 	*	@return iterator to new element; if fails(insertedItem is NULL), rend() is returned
-	*	wrapper for rinsert(item,insertedItem)
 	*/
 	inline Iterator insertAfter ( ListItem<T> * insertedItem, ListItem<T> * item = NULL ){
 		return rinsert(item,insertedItem);
 	}
 
-
 	/** @brief copies list
+	*
 	*	clears list first
 	*/
 	inline void copyList ( const List<T> & oldList )
@@ -690,7 +727,8 @@ public:
 protected:
 
 	/** @brief init of values
-	*	iterators to NULL, count to 0
+	*
+	*	Iterators are set to NULL, count to 0
 	*/
 	void init()
 	{
@@ -700,7 +738,8 @@ protected:
 	}
 
 	/** @brief correctly removes and deletes item from list
-	*	item is deleted
+	*
+	*	Item is deleted.
 	*/
 	void removeDelete ( ListItem<T> * item )
 	{
@@ -723,10 +762,13 @@ protected:
 	}
 
 
-	ListItem<T> * m_first; /**< @brief first element in list */
-	ListItem<T> * m_last; /**< @brief lst element in list */
+	/**< @brief first element in list */
+	ListItem<T> * m_first;
+	/**< @brief lst element in list */
+	ListItem<T> * m_last;
 
-	int m_count; /**< @brief count of elements */
+	/**< @brief count of elements */
+	int m_count;
 
 private:
 };

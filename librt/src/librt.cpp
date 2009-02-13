@@ -94,6 +94,42 @@ void free( const void *ptr )
 {
 	UserMemoryAllocator::instance().freeMemory( ptr );
 }
+//------------------------------------------------------------------------------
+void mallocStrategyDefault()
+{
+	UserMemoryAllocator::instance().setStrategyDefault();
+}
+
+void mallocStrategyFirstFit()
+{
+	UserMemoryAllocator::instance().setStrategyFirstFit();
+}
+
+void mallocStrategyNextFit()
+{
+	UserMemoryAllocator::instance().setStrategyNextFit();
+}
+
+void mallocStrategyBestFit()
+{
+	UserMemoryAllocator::instance().setStrategyBestFit();
+}
+
+void mallocStrategyWorstFit()
+{
+	UserMemoryAllocator::instance().setStrategyWorstFit();
+}
+
+size_t mallocatorGetFreeSize()
+{
+	return UserMemoryAllocator::instance().getFreeSize();
+}
+
+size_t mallocatorGetTotalSize()
+{
+	return UserMemoryAllocator::instance().getTotalSize();
+}
+
 /* -------------------------------------------------------------------------- */
 /* --------------------------   THREADS   ----------------------------------- */
 /* -------------------------------------------------------------------------- */
@@ -227,3 +263,41 @@ int mutex_unlock_check( struct mutex* mtx )
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	return ((Mutex*)mtx)->unlockCheck();
 }
+
+/*----------------------------------------------------------------------------*/
+void spinlock_init(spinlock_t* s) {
+	ASSERT(sizeof(spinlock_t) >= sizeof(Spinlock));
+	new (s) Spinlock();
+}
+/*----------------------------------------------------------------------------*/
+void spinlock_destroy(spinlock_t* s) {
+	((Spinlock *)s)->~Spinlock();
+}
+/*----------------------------------------------------------------------------*/
+void spinlock_lock(spinlock_t* s) {
+	((Spinlock *)s)->lock();
+}
+/*----------------------------------------------------------------------------*/
+void spinlock_unlock(spinlock_t* s) {
+	((Spinlock *)s)->unlock();
+}
+
+/* -------------------------------------------------------------------------- */
+int vma_alloc(void **from, size_t * size)
+{
+	return SysCall::vma_alloc( from, size, ((VF_AT_KUSEG << VF_AT_SHIFT) | (VF_VA_AUTO << VF_VA_SHIFT)) );
+}
+
+/* -------------------------------------------------------------------------- */
+int vma_free(void *from)
+{
+	return SysCall::vma_free(from);
+}
+/* -------------------------------------------------------------------------- */
+int vma_resize(const void *from, size_t * size)
+{
+	return SysCall::vma_resize(from,size);
+}
+
+
+

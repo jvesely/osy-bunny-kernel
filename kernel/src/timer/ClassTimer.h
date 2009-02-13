@@ -31,8 +31,9 @@
  */
 
 #pragma once
-#include <structures/List.h>
-#include <structures/HeapInsertable.h>
+#include "api.h"
+//#include "structures/List.h"
+#include "structures/HeapInsertable.h"
 #include "Time.h"
 
 

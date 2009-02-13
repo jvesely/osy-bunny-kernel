@@ -25,19 +25,15 @@
 
 /*!
  * @file
- * @brief Short description.
+ * @brief int hash funtion
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but
- * at least people can understand it.
+ *
  */
 
 #include "api.h"
-#include "Entry.h"
-#include "drivers/DiskDevice.h"
+#include "structures/HashMap.h"
 
-bool Entry::readFromDevice(void* buffer, size_t count, uint start_block, uint offset)
-{
-	ASSERT (m_storage);
-	return m_storage->read(buffer, count, start_block, offset);
+unsigned int hash ( int key, int rng ) {
+	return ((key % rng)+rng) % rng;
 }
+

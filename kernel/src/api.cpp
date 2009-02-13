@@ -35,7 +35,7 @@
 
 #include "proc/KernelThread.h"
 
-#include "synchronization/MutexManager.h"
+#include "synchronization/Mutex.h"
 #include "synchronization/Semaphore.h"
 #include "synchronization/Spinlock.h"
 #include "InterruptDisabler.h"
@@ -251,31 +251,38 @@ int copy_to_thread( const thread_t thr,
 /*----------------------------------------------------------------------------*/
 
 void mutex_init(struct mutex *mtx) {
-	MutexManager::instance().mutex_init(mtx);
+	ASSERT(mtx != NULL);
+	ASSERT(sizeof(struct mutex) >= sizeof(Mutex));
+
+	new (mtx) Mutex();
 }
 
 /*----------------------------------------------------------------------------*/
 
 void mutex_destroy(struct mutex *mtx) {
-	MutexManager::instance().mutex_destroy(mtx);
+	ASSERT(mtx != NULL);
+	((Mutex *)mtx)->~Mutex();
 }
 
 /*----------------------------------------------------------------------------*/
 
 void mutex_lock(struct mutex *mtx) {
-	MutexManager::instance().mutex_lock(mtx);
+	ASSERT(mtx != NULL);
+	((Mutex *)mtx)->lock();
 }
 
 /*----------------------------------------------------------------------------*/
 
 int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec) {
-	return MutexManager::instance().mutex_lock_timeout(mtx, usec);
+	ASSERT(mtx != NULL);
+	return ((Mutex *)mtx)->lockTimeout(Time(0, usec));
 }
 
 /*----------------------------------------------------------------------------*/
 
 void mutex_unlock(struct mutex *mtx) {
-	MutexManager::instance().mutex_unlock(mtx);
+	ASSERT(mtx != NULL);
+	((Mutex *)mtx)->unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -308,44 +315,56 @@ int timer_pending(struct timer *tmr)
 /*----------------------------------------------------------------------------*/
 
 void sem_init(semaphore_t* s, const int value) {
+	ASSERT(s != NULL);
 	ASSERT(sizeof(semaphore_t) >= sizeof(Semaphore));
 	new (s) Semaphore((const unsigned int)value);
 }
 /*----------------------------------------------------------------------------*/
 void sem_destroy(semaphore_t* s) {
+	ASSERT(s != NULL);
 	((Semaphore *)s)->~Semaphore();
 }
 /*----------------------------------------------------------------------------*/
 int sem_get_value(semaphore_t* s) {
+	ASSERT(s != NULL);
 	return ((Semaphore *)s)->get();
 }
 /*----------------------------------------------------------------------------*/
 void sem_up(semaphore_t* s) {
+	ASSERT(s != NULL);
 	((Semaphore *)s)->up();
 }
 /*----------------------------------------------------------------------------*/
 void sem_down(semaphore_t* s) {
+	ASSERT(s != NULL);
 	((Semaphore *)s)->down();
 }
 /*----------------------------------------------------------------------------*/
 int sem_down_timeout(semaphore_t* s, const unsigned int usec) {
+	ASSERT(s != NULL);
 	return ((Semaphore *)s)->downTimeout(1, Time(0, usec));
 }
+
 /*----------------------------------------------------------------------------*/
+
 void spinlock_init(spinlock_t* s) {
+	ASSERT(s != NULL);
 	ASSERT(sizeof(spinlock_t) >= sizeof(Spinlock));
 	new (s) Spinlock();
 }
 /*----------------------------------------------------------------------------*/
 void spinlock_destroy(spinlock_t* s) {
+	ASSERT(s != NULL);
 	((Spinlock *)s)->~Spinlock();
 }
 /*----------------------------------------------------------------------------*/
 void spinlock_lock(spinlock_t* s) {
+	ASSERT(s != NULL);
 	((Spinlock *)s)->lock();
 }
 /*----------------------------------------------------------------------------*/
 void spinlock_unlock(spinlock_t* s) {
+	ASSERT(s != NULL);
 	((Spinlock *)s)->unlock();
 }
 

@@ -60,9 +60,12 @@ SyscallHandler::SyscallHandler()
 	m_handles[SYS_EVENT_WAIT_TIMEOUT] = handleEventWaitTimeout;
 	m_handles[SYS_EVENT_FIRE]    = handleEventFire;
 	m_handles[SYS_EVENT_DESTROY] = handleEventDestroy;
-	
-	m_handles[SYS_VMA_ALLOC] = handleVMAAlloc;
-	m_handles[SYS_VMA_FREE]  = handleVMAFree;
+
+	m_handles[SYS_VMA_ALLOC]  = handleVMAAlloc;
+	m_handles[SYS_VMA_FREE]   = handleVMAFree;
+	m_handles[SYS_VMA_RESIZE] = handleVMAResize;
+
+	m_handles[SYS_GET_TIME] = handleGetTime;
 }
 /*----------------------------------------------------------------------------*/
 bool SyscallHandler::handleException( Processor::Context* registers )

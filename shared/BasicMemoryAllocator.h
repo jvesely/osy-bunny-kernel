@@ -36,7 +36,7 @@
 
 
 #pragma once
-#include <structures/SimpleList.h>
+#include "structures/SimpleList.h"
 #include "types.h"
 //------------------------------------------------------------------------------
 /*	debug/no debug setting
@@ -53,13 +53,12 @@
 //------------------------------------------------------------------------------
 /** @brief Class responsible for memory allocation
 *
-*	Allows use of basic memory allocation strategy:
-*	first fit, next fit (maybe one best and worst fit).
-*	Blocks allocated by this allocator should not be managed by other
-*	allocators, because memory allocators may not be compatible.
+*	Allows use of basic memory allocation strategies:
+*	first fit, next fit, best, worst fit and default strategy.
 *
 *	It is possible to change allocation strategy during runtime. For this is
 *	needed to call function setStrategy....().
+*	Memory is allocated via method getMemory and freed by method freeMemory.
 */
 class BasicMemoryAllocator
 {
@@ -99,11 +98,11 @@ public:
 	/** @brief class representing memory block header
 	*
 	*	Contains state, size and pointer on previous and next memory
-	*	block(header). Memory blocks are in linked lists of non-fixed size.
-	*	There are two lists of memory blocks: free and used.
+	*	block(header). Memory blocks are in linked lists.
+	*	There are two lists of memory blocks: free and used and
+	*	also memory chunks are listed in similar list.
 	*	This will allow to dealloc all used memory, even if not all was
 	*	freed by user.
-	*	(note that next memory block is not allways neighbour block)
 	*	@note default copy constructor and operator '=' are allowed, but
 	*	copied header is not connected to list (must be either normally added to list
 	*	or reconnected - for more see SimpleList and SimpleListItem).
@@ -172,7 +171,10 @@ class BlockHeader: public SimpleListItem
 		*/
 		inline void setUndefined() { m_state = NULL; }
 
-		/** @brief get block footer*/
+		/** @brief get block footer
+		*
+		*	Is only for memory blocks - not for chunk borders.
+		*/
 		inline BlockFooter * getFooter()
 		{
 			assert(!isBorder());
@@ -183,7 +185,7 @@ class BlockHeader: public SimpleListItem
 	protected:
 		/** @brief forbidden default constructor
 		*
-		*	has no reason to be used
+		*	It has no reason to be used.
 		*/
 		BlockHeader();
 
@@ -204,7 +206,8 @@ class BlockHeader: public SimpleListItem
 	/*---------------- internal class BlockFooter-------------------------*/
 	/** @brief class representing block footer
 	*
-	*	Holds size and state value.
+	*	Holds size and state value. Should be at the end of each memory block,
+	*	or at the beginning of memory chunk.
 	*/
 	class BlockFooter
 	{
@@ -270,7 +273,10 @@ class BlockHeader: public SimpleListItem
 		*/
 		inline void setUndefined() { m_state = 0; }
 
-		/** @brief get block header	*/
+		/** @brief get block header
+		*
+		*	Is only for memory blocks - not for chunk borders.
+		*/
 		inline BlockHeader * getHeader()
 		{
 			assert(!isBorder());
@@ -302,18 +308,15 @@ class BlockHeader: public SimpleListItem
 
 	/** @brief initialisator of values
 	*
-	*	Does not get memory from frame allocator. Sets free momeory from
-	*	frame allocator to 0, first memory block pointer to null.
+	*	Does not need memory from frame/vma allocator. Sets free memory from
+	*	frame/wma allocator to 0, first memory block pointer to null.
 	*/
 	BasicMemoryAllocator();
 
-	/** @brief clears everything allocated
-	*
-	*	Does not return memory to frame allcator, because don`t know how...
-	*/
+	/** @brief clears everything allocated */
 	~BasicMemoryAllocator();
 
-	/*! @brief returns free block of size >= amount (first fit)
+	/*! @brief returns free block of size >= amount
 	 *
 	 * 	Finds free block big enough and uses it. If possible, divides it
 	 *	into used and free remaining part.
@@ -324,62 +327,89 @@ class BlockHeader: public SimpleListItem
 
 	/*! @brief returns used block to the heap
 	 *
-	 * Marks Block as free and merges it with adjecent free blocks
-	 * (if there are any), checks whether address is from given chunk.
+	 * Marks Block as free and merges it with adjacted free blocks
+	 * (if there are any). If needed, returns memory to frame/vma allocator.
 	 * @param address of the returned block
 	 */
 	virtual void freeMemory( const void* address );
 
 	/** @brief frees all allocated memory and returns it to frame allocator
 	*
-	*	Should be called only at the end of application (process).
+	*	Should be called only at the end of application (process), that means
+	*	in destructor of allocator.
 	*/
 	void freeAll();
 
 	/** @brief getter for m_freeSize
 	*
-	*	Debug function
+	*	Returns total size of memory in free blocks, excluding block structures.
+	*	@note Is not thread safe.
 	*/
 	inline size_t getFreeSize() const { return m_freeSize; }
 
-		/** @brief sets strategy to default
+	/** @brief getter for m_totalSize
+	*
+	*	Returns total size of memory chunks, including block structures and excluding
+	*	chunk bordes.
+	*	@note Is not thread safe.
+	*/
+	inline size_t getTotalSize() const { return m_totalSize; }
+
+	/** @brief get list of free blocks
+	*
+	*	Free blocks list can be used to measure free space fragmentation. Do not use to
+	*	modify the list or blocks!
+	*	@note Is not thread safe.
+	*/
+	inline SimpleList * getFreeList(){ return &m_freeBlocks;}
+
+	/** @brief get list of used blocks
+	*
+	*	This can be used to get some information about memory use. Do not use to
+	*	modify the list or blocks!
+	*	@note Is not thread safe.
+	*/
+	inline SimpleList * getUsedList(){ return &m_usedBloks;}
+
+	/** @brief get list of memory chunks
+	*
+	*	Can be used to get some information about memory usage. Do not use to
+	*	modify the list or blocks!
+	*	@note Is not thread safe.
+	*/
+	inline SimpleList * getChunkList(){ return &m_chunks;}
+
+	/** @brief sets strategy to default
 	*
 	*	Changes pointer to functions only. Is not dependant on any free block order,
 	*	therefore does not rearrange free blocks.
 	*	Changes pointers getFreeBlockFunction, setSizeFunction and
 	*	insertIntoFreeListFunction.
+	*	@note Is not thread safe.
 	*/
 	inline void setStrategyDefault();
 
 	/** @brief set strategy to FirstFit
 	*
-	*	@todo change : must use sorted lists
 	*	Changes pointers getFreeBlockFunction, setSizeFunction and
 	*	insertIntoFreeListFunction.
 	*	For setSizeFunction is enough to use setSizeDefault.
-	*	Inserting into list of free blocks has no effect on allocator work,
-	*	so it is enough to use default implementation.
+	*	Inserting into list of free blocks must insert it according to it`s address.
 	*	getFreeBlockFunction must search blocks according to their addresses.
-	*	This strategy does not use blockLists at all, it uses list of memory chunks
-	*	and iterates trough blocks sequentially as they are stored in memory chunk.
-	*	On the other hand, it must maintains consistency of free/used memory blocks lists.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyFirstFit();
 
 	/** @brief set strategy to next fit
 	*
-	*	@todo change : must use sorted lists
 	*	Changes pointers getFreeBlockFunction, setSizeFunction and
 	*	insertIntoFreeListFunction according to next fit strategy.
 	*	Next fit strategy has the same principle as the first it strategy,
 	*	except that it finds 'second' fit.
-	*	This strategy again sequentialy iterates trough blocks in chunks and therefore does
-	*	not use memory blocks lists, but must maintain them.
-	*	Inserting into list of free blocks has no effect on allocator work,
-	*	so it is enough to use default implementation.
-	*	getFreeBlockFunction must iterate blocks according to their addresses and if
-	*	possible, must return second suitable block.
 	*	For setSizeFunction is enough to use setSizeDefault.
+	*	Inserting into list of free blocks must insert it according to it`s address.
+	*	getFreeBlockFunction must search blocks according to their addresses.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyNextFit();
 
@@ -390,25 +420,28 @@ class BlockHeader: public SimpleListItem
 	*	list of free blocks.
 	*	Strategy searches for smallest block bigger or equal to required size.
 	*	Iterating trough blocks is the same as in first fit or default strategy,
-	*	blocks are sorted according to their sizes. Resized blocks must be reintegrated
-	*	into list.
-	*	@todo
+	*	blocks are sorted according to their sizes.
+	*	Resized blocks must be reintegrated	into list, therefore setSizeFunction
+	*	must be implemented differently than in default strategy.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyBestFit();
 
 	/** @brief set strategy to worst fit
 	*
 	*	Changes pointers getFreeBlockFunction, setSizeFunction and
-	*	insertIntoFreeListFunction according to best fit strategy and sorts
+	*	insertIntoFreeListFunction according to worst fit strategy and sorts
 	*	list of free blocks.
 	*	Iterating trough blocks is reverse to the iterating in first fit or default strategy,
-	*	blocks are sorted according to their sizes. Resized blocks must be reintegrated
-	*	into list.
+	*	blocks are sorted according to their sizes.
+	*	Resized blocks must be reintegrated	into list, therefore setSizeFunction
+	*	must be implemented differently than in default strategy.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyWorstFit();
 
 protected:
-	/** @brief get some memory from frame allocator
+	/** @brief get some memory from frame/vma allocator
 	*
 	*	Gets memory block and inserts it into list of free blocks. Allocates
 	*	DEFAULT_SIZE sized block(plus block header and footer), except cases
@@ -438,10 +471,8 @@ protected:
 	*	@param oldChunk old chunk FOOTER pointer
 	*	@param finalSize pointer to required size of new memory.Function alligns this value according to
 	*		page size (and returns final size of chunk via pointer).
+	*	@param originalSize original size of memory chunk
 	*	@return true if success, false otherwise
-	*	@note Although there is almost no way to get resultant finalSize (alligned to
-	*	actual page size), this can be ignored and structures will be correctly
-	*	created.
 	*/
 	virtual bool extendExistingChunk(BlockFooter * oldChunk, size_t * finalSize, size_t originalSize)
 	{
@@ -471,7 +502,7 @@ protected:
 	*	If such condition is not met, or such operation was not succesfull, does nothing.
 	*	If block is not the last one in chunk, nothing happens as well, and the same pays if
 	*	block is not free.
-	*	@param header blockheader
+	*	@param header Free block header, expected to be the last in memory chunk.
 	*	@return TRUE if chunk was shrinked, FALSE otherwise
 	*/
 	bool reduceChunkWithBlockIfNeeded(BlockHeader * header);
@@ -498,9 +529,6 @@ protected:
 	*		page size (and returns final size of chunk via pointer).
 	*	@param originalSize original size of chunk
 	*	@return TRUE if succesful, FALSE otherwise (function might not be implemented)
-	*	@note Although there is almost no way to get resultant finalSize (alligned to
-	*	actual page size), this can be ignored and structures will be correctly
-	*	created.
 	*/
 	virtual bool reduceChunk(BlockFooter * frontBorder, size_t * finalSize, size_t originalSize)
 	{
@@ -515,19 +543,7 @@ protected:
 	*	@param header header of returned block
 	*	@return true if block was returned, false otherwise
 	*/
-	inline bool returnChunkIfPossible(BlockHeader * header)
-	{
-		assert(!header->isBorder());
-
-		BlockFooter * frontBorder = ((BlockFooter*)header) - 1;
-		if (!frontBorder->isBorder()) return false;
-
-		BlockHeader * backBorder = (BlockHeader*)(header->getFooter() + 1);
-		if (!backBorder->isBorder()) return false;
-
-		returnChunk(frontBorder,frontBorder->size());
-		return true;
-	}
+	bool returnChunkIfPossible(BlockHeader * header);
 
 	/** @brief try to expand some memory chunk and create correct structures
 	*
@@ -593,7 +609,7 @@ protected:
 	*	is expected available memory from frame/vma allocator.
 	*	@param frontBorder front border of memory chunk
 	*	@param backBorder old back border of chunk
-	*	@param totalSize size of memory chunk extension (NOT new memory chunk size)
+	*	@param totalSize size of chunk extension (NOT new memory chunk size)
 	*	@return pointer to newly created/joined free block
 	*/
 	BlockHeader * joinChunk(
@@ -605,10 +621,10 @@ protected:
 	*	from old list and connects to new list of blocks. Also changes state of block
 	*	(both in header and footer). If block has undefined state, it is not removed from
 	*	list (is state-safe).
-	*	No checking is performed. Expects that list is locked.
+	*	No checking is performed.
 	*
-	*	Keep in ming, that some strategies requires, that after each correct blockfooter
-	*	follows correct header!!
+	*	@note for programmers: Keep in mind, that some strategies require, that after each correct
+	*	blockfooter	follows correct header!!
 	*
 	*	@param header block header
 	*	@param used specifies whether block will be used or free
@@ -648,12 +664,13 @@ protected:
 	/** @brief initializes block and inserts it into correct list
 	*
 	*	Footer is 'created' as well. Should not be called more than once on
-	*	one block. Block really should not be used in any list.
+	*	one block. Block really should not be used in any list, it will be inserted into
+	*	correct one.
 	*	@param header block header
-	*	@param free true == state of block will be free (else used)(default true)
+	*	@param free true == state of block will be free (else used). Default value is true.
 	*	@param realSize real size of initialised block
 	*/
-	inline void initBlock(BlockHeader * header, size_t realSize, bool free = true);
+	void initBlock(BlockHeader * header, size_t realSize, bool free = true);
 
 	/** @brief receives front chunk border from information in back border
 	*
@@ -694,7 +711,7 @@ protected:
 	/** @brief logicaly resizes block
 	*
 	*	Does not really change size of block, only changes size value in block header,
-	*	and on space, where block footer is supposed to be, sets size as well.
+	*	and on space, where block footer is supposed to be, creates block footer.
 	*	Use with care, could destroy structure of list.
 	*	Copies state as well (only free or used). Does not handle lists.
 	*	@note Does not handle old footer. This might lead to loose of data.
@@ -704,10 +721,10 @@ protected:
 	/** @brief logically resizes block and reintegrates it into list
 	*
 	*	Does not really change size of block, only changes size value in block header,
-	*	and on space, where block footer is supposed to be, sets size as well.
+	*	and on space, where block footer is supposed to be, creates block footer.
 	*	Use with care, could destroy structure of list.
 	*	Copies state as well (only free or used).
-	*	Also reintegrates block, if needed, to list of free blocks, so this list is
+	*	Also reintegrates block, if needed, to list of free blocks, so the list is
 	*	sorted by block`s size.
 	*	@note Does not handle old footer. This might lead to loose of data.
 	*/
@@ -755,14 +772,12 @@ protected:
 	/** @brief pointer to function which finds and uses block
 	*
 	*	Function is supposed to find free block big enough, divide it into two (if
-	*	possible) mark it as used and insert it into list of used blocks. Please note,
-	*	that some strategies such as best fit, requires to reintegrate divided block into
-	*	list of free blocks, because of way they are ordered.
+	*	possible).
 	*	@note This function changes according to used allocation strategy.
-	*	Should be changed only via changeStrategy...() member function.
-	*	Pointer to useMemoryFunction, freeBlockFunction, insertIntoFreeListFunction
-	*	and setSizeFunction	and order of free blocks should be changed only trough this
-	*	function.
+	*	Should be changed only via changeStrategy...() member functions.
+	*	Pointer to getFreeBlockFunction, insertIntoFreeListFunction
+	*	and setSizeFunction	and order of free blocks should be changed only trough these
+	*	functions.
 	*	@return found and used memory block
 	*/
 	BlockHeader * (BasicMemoryAllocator::*getFreeBlockFunction) (size_t) const;
@@ -773,33 +788,33 @@ protected:
 	*	This depends on allocation strategy: in default strategy, these blocks are not
 	*	ordered in any way, byt first fit strategy orders them according to their adress.
 	*	@note This function changes according to used allocation strategy.
-	*	Should be changed only via changeStrategy...() member function.
-	*	Pointer to useMemoryFunction, freeBlockFunction, insertIntoFreeListFunction
-	*	and setSizeFunction	and order of free blocks should be changed only trough this
-	*	function.
+	*	Should be changed only via changeStrategy...() member functions.
+	*	Pointer to getFreeBlockFunction, insertIntoFreeListFunction
+	*	and setSizeFunction	and order of free blocks should be changed only trough these
+	*	functions.
 	*	@param block header with free state, not yet connected
 	*/
 	void (BasicMemoryAllocator::*insertIntoFreeListFunction) (BlockHeader*);
 
 	/** @brief pointer to function which changes size of block
 	*
-	*	This function is used everytime a block changes it`s size.
+	*	This function is used if a block changes it`s size.
 	*	Function should correctly create BlockFooter for block and ignore old
 	*	BlockFooter. If needed, reintegrates it into free blocks list.
 	*	Function changes accoring to strategy, sometimes change of size of free block
 	*	requires reintegration of block into list of free blocks.
 	*	@note This function changes according to used allocation strategy.
-	*	Should be changed only via changeStrategy...() member function.
-	*	Pointer to useMemoryFunction, freeBlockFunction, insertIntoFreeListFunction
-	*	and setSizeFunction	and order of free blocks should be changed only trough this
-	*	function.
+	*	Should be changed only via changeStrategy...() member functions.
+	*	Pointer to getFreeBlockFunction, insertIntoFreeListFunction
+	*	and setSizeFunction	and order of free blocks should be changed only trough these
+	*	functions.
 	*/
 	void (BasicMemoryAllocator::*setSizeFunction) (BlockHeader * , size_t );
 
 	/** @brief size of free memory from frame allocator
 	*
 	*	If is less than size required in malloc operation, new frame is
-	*	allocated (user-process manager will first try to enlarge memory block).
+	*	allocated (user-process allocator will first try to enlarge memory block).
 	*/
 	size_t m_freeSize;
 
@@ -822,7 +837,7 @@ protected:
 
 	/** @brief list of used blocks
 	*
-	*	List is used only to deallocate all blocks at the end of process.
+	*	List has now only debug and diagnostic purpose.
 	*/
 	SimpleList m_usedBloks;
 
@@ -836,30 +851,12 @@ protected:
 #ifdef BMA_DEBUG
 	/** @brief debug variable substituting lock
 	*
-	*	Is used to solve problem with program failing if printk used in
-	*	insertIntoFreeListDefault function.
+	*	Is used for debug purposes.
 	*/
 	int m_mylock;
 #endif
 };
 
-//------------------------------------------------------------------------------
-inline void BasicMemoryAllocator::initBlock
-(BlockHeader * header, size_t realSize, bool free )
-{
-	assert(!header->isBorder());
-
-	//setting undefined state
-	header->setUndefined();
-
-	//set size (=create footer)
-	//(this->*setSizeFunction)(header, realSize);
-	setSizeDefault(header,realSize);
-
-	//set state of block (which handless also footer state)
-	setState(header, free);
-
-}
 //------------------------------------------------------------------------------
 inline void BasicMemoryAllocator::setStrategyDefault()
 {

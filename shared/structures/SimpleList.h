@@ -25,11 +25,11 @@
 
 /*!
  * @file
- * @brief Short description.
+ * @brief Simple list declaration
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but
- * at least people can understand it.
+ * Simple list is cyclical and has far less functionalit than normal list.
+ * On the other hand, list items can be disconnected and reconnected to list
+ * (see documentation of SimpleListItem).
  */
 #pragma once
 #include "SimpleListItem.h"
@@ -37,8 +37,10 @@
 
 /** @brief minimal cyclical list
 *
-*	Only pointer to first and last item and basic methods. No count method,
+*	Only pointer to main item and basic methods. No count method,
 *	no creation/deletion. Basic insertion to the end.
+*	Main item is item which exists even in empty list. Tis simplifies some
+*	list operations.
 */
 class SimpleList
 {
@@ -48,28 +50,14 @@ public:
 	SimpleList();
 
 	/** @brief inserts new item (to the end)
+	*
+	*	Does not allocate anything.
 	*/
 	void insert(SimpleListItem * item);
 
-	/** @brief correctly reconnects item
-	*
-	*	if item.prev == NULL and item.next == first,
-	*	item will be new first.
-	*	if item.next == NULL and item.prev == last,
-	*	item will be new second.
-	*	If both prev and nextare not null, only reconnects item.
-	*	If some logical error occurrs stops on assert.
-	*/
-	//void reconnect(SimpleListItem * item);
-
-	/** @brief correctly removes from list, does not delete item
-	*
-	*	Disconnects item and if needed changes first/last.
-	*/
-	//void remove(SimpleListItem * item);
-
-
 	/** @brief get item connecting head and tail of list
+	*
+	*	Main item is the only one item which is allways in the list.
 	*/
 	inline const SimpleListItem * getMainItem() const{
 		return & m_mainItem;
@@ -77,36 +65,26 @@ public:
 
 	/** @brief get item connecting head and tail of list
 	*
-	*	Non-const function.
+	*	Non-const version of function.
+	*	Main item is the only one item which is allways in the list.
 	*/
 	inline SimpleListItem * getMainItem(){
 		return & m_mainItem;
 	}
 
 
-	/** @brief no comment
+	/** @brief
+	*
+	*	SimpleList is empty if only main item is in list.
 	*/
-	//inline bool empty(){return m_first==NULL;}
 	inline bool empty()const{return m_mainItem.next == getMainItem();}
 
 
 
 protected:
-	/** @brief
-	*
-	*	Null if empty.
-	*/
-	//SimpleListItem * m_first;
-
-	/** @brief
-	*
-	*	Null if empty.
-	*/
-	//SimpleListItem * m_last;
-
 	/** @brief item connecting head and tail
 	*
-	*	Must allways remain in list
+	*	Must allways remain in list.
 	*/
 	SimpleListItem m_mainItem;
 

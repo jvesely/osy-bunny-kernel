@@ -10,30 +10,30 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Thread class implementation.
  *
  * Constians Thread member functions' implementations.
  */
 
+#include "api.h"
 #include "KernelThread.h"
 #include "InterruptDisabler.h"
 #include "address.h"
-#include "api.h"
 #include "timer/Timer.h"
 #include "mem/VirtualMemory.h"
 
@@ -51,14 +51,14 @@
 void KernelThread::run()
 {
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
-	
+
 	m_runFunc( m_runData );
-	
+
 	m_status = FINISHED;
 	PRINT_DEBUG ("Finished thread %u.\n", m_id);
 
 	if (m_follower) {
-		PRINT_DEBUG ("Waking up JOINING thread(%u) by thread %u.\n", 
+		PRINT_DEBUG ("Waking up JOINING thread(%u) by thread %u.\n",
 			m_id, m_follower->id());
 		ASSERT (m_follower->status() == JOINING);
 		m_follower->resume();
@@ -66,11 +66,11 @@ void KernelThread::run()
 
 	block();
 	yield();
-	
+
 	panic("[ THREAD %u ] Don't you wake me. I'm dead.\n", m_id);
 }
 /*----------------------------------------------------------------------------*/
-KernelThread::KernelThread( void* (*thread_start)(void*), void* data, 
+KernelThread::KernelThread( void* (*thread_start)(void*), void* data,
 	unative_t flags, uint stackSize ):
 	Thread( stackSize ), m_runFunc( thread_start ), m_runData( data )
 {
@@ -96,7 +96,7 @@ Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*)
 		delete new_thread;
 		return NULL;
 	}
-	
+
 	*thread_ptr = new_thread->registerWithScheduler();
 	if (!(*thread_ptr)) { //id space allocation failed
 		delete new_thread;

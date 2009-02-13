@@ -27,22 +27,23 @@
  * @file
  * @brief Simple list item base struture declaration
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but
- * at least people can understand it.
+ * 	Simple list item has slightly more functionality than normal list item,
+ *	it is possible to disconnect self from SimpleList and to reconnect self.
  */
 
 #pragma once
 
-#include "api.h"
+#include "types.h"
 
 /** @brief base class for any simple list item
 *
 *	Because of simplicity of this class, everything in it is public.
-*	Only reason why this is class is disconnect method, which is better
-*	here (and not in SimpleList), because there is no direct (read easily
-*	computable) connection between SimpleList instance and list item.
-*	It is unsafe to use implicit operator = and copy constructor.
+*	Only reason why this is class(and not struct), is disconnect method,
+*	which is better	here (and not in SimpleList), because there is no direct
+*	(read easily computable) connection between SimpleList instance and
+*	list item.
+*	@note It is unsafe to use implicit operator = and copy constructor, be sure
+*		you know what you are doing.
 */
 class SimpleListItem
 {
@@ -52,20 +53,25 @@ public:
 	SimpleListItem * next;
 
 	/** @brief disconnects item from list
+	*
+	*	Correctly disconnects from previous and next list item and
+	*	nulls next and prev pointer.
 	*/
 	inline void disconnect();
 
 	/** @brief validates pointers in prev and next
 	*
-	*	Is used when operator = or copy constructor is applied. This will make
-	*	copied item unreachable from list of course and copy correctly connected.
+	*	If prev and next pointers are set, item is connected between these.
+	*	Function might be used after using copy constructor or operator =,
+	*	to connect new item (and disconnect old item).This will make
+	*	copied item unreachable from list of course.
 	*/
 	inline void reconnect();
 
 
 };
 
-/*
+/* this code is intentionally obfuscated ;)
    __________________
    |               . \
    |                  \

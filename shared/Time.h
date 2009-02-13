@@ -31,7 +31,7 @@
  */
 #pragma once
 
-#include "api.h"
+#include "assert.h"
 
 //------------------------------------------------------------------------------
 /** @brief time respresentation
@@ -45,9 +45,6 @@
 class Time
 {
 public:
-	/** @brief million*/
-	static const uint MILLION = 1000000;  /* deprecated constant */
-
 	static const uint MILLI_SECOND = 1000;    /*!< @brief Microsecs in 1 ms. */
 	static const uint SECOND       = 1000000; /*!< @brief Microsecs in 1 s.  */
 
@@ -58,26 +55,26 @@ public:
 	*/
 	static const uint MAX_USEC_SECS = -2 / SECOND;
 
-	/** @brief no brief comment
+	/** @brief constructor
 	*
-	*	default time is 0 seconds, 0 microSecs
+	*	Default time is 0 seconds, 0 microSecs.
 	*/
-	inline Time( uint sec = 0, uint usec = 0 ) 
+	inline Time( uint sec = 0, uint usec = 0 )
 	{
 		setTime( sec, usec );
 	}
 
 	/*  Time(const Time & time)
-	*	implicit implementation is sufficient and safe
+	*	implicit implementation is sufficient and safe. No need to implement this function.
 	*/
 
 	/*	operator =
-	*	implicit implementation is sufficient and safe
+	*	implicit implementation is sufficient and safe. No need to implement this function.
 	*/
 
-	/** @brief
+	/** @brief standart += operator
 	*
-	*	calls setTime (normalizes time, so that usec part is less than million)
+	*	@note Calls setTime (normalizes time, so that usec part is less than million)
 	*	@return *this const
 	*/
 	inline const Time& operator += ( const Time& other ) {
@@ -88,7 +85,7 @@ public:
 		return *this;
 	}
 
-	/** @brief
+	/** @brief standart -= operator
 	*
 	*	calls setTime (normalizes time, so that usec part is less than million)
 	*	@note Due to usage of unsigned types may the result of this operation be
@@ -103,9 +100,8 @@ public:
 		setTime( (m_secs - other.m_secs) - 1, (SECOND + m_usecs) - other.m_usecs );
 		return *this;
 	}
-	/** @brief
+	/** @brief standart == operator
 	*
-	*	compares Time values
 	*	Times are equal if both their timestamp (seconds) parts and their
 	*	useconds parts are equal.
 	*/
@@ -117,11 +113,11 @@ public:
 		return ( (m_secs == other.m_secs) && (m_usecs == other.m_usecs) );
 	}
 
-	/** @brief
+	/** @brief standart != operator
 	*
 	*	Times are equal if both their timestamp (seconds) parts and their
 	*	useconds parts are equal.
-	*	function is wrapper for !(operator==)
+	*	Function is wrapper for !(operator==)
 	*/
 	inline bool operator != ( const Time& other ) const {
 		ASSERT (m_usecs < SECOND);
@@ -130,7 +126,7 @@ public:
 		return !( operator == ( other ) );
 	}
 
-	/** @brief
+	/** @brief standart < operator
 	*
 	*	Time is less than other if either timestamp (seconds) is smaller
 	*	than other's, or timestamp parts are equal and useconds part is less
@@ -144,7 +140,7 @@ public:
 	      || ( ( m_secs  == other.m_secs ) && ( m_usecs <  other.m_usecs ) );
 	}
 
-	/** @brief
+	/** @brief standart > operator
 	*
 	*	Time is less than other if either timestamp (seconds) is smaller
 	*	than other's, or timestamp parts are equal and useconds part is less
@@ -155,10 +151,10 @@ public:
 		ASSERT (m_usecs < SECOND);
 		ASSERT (other.m_usecs < SECOND);
 
-		return other < *this;	
+		return other < *this;
 	}
 
-	/** @brief
+	/** @brief standart >= operator
 	*
 	*	Time is greater than or equals other if either timestamp (seconds) is
 	*	greater than or equals other's, or timestamp parts are equal and
@@ -172,7 +168,7 @@ public:
 		return !( operator < ( other ) );
 	}
 
-	/** @brief
+	/** @brief standart <= operator
 	*
 	*	Time is less than or equals other if either timestamp (seconds) is
 	*	less than or equals other's, or timestamp parts are equal and
@@ -197,16 +193,15 @@ public:
 		correctTime();
 	}
 
-	/** @brief Returns new time that is sum of this Time and the other Time.
+	/** @brief Returns sum of 'this' Time and the other Time.
 	*
-	*	Each component is added separately and then they are normalized.
 	*	@note Implementation uses Time& operator += (const Time& other);
 	*/
 	inline Time operator + ( const Time& other ) const
 	{
 		ASSERT (m_usecs < SECOND);
 		ASSERT (other.m_usecs < SECOND);
-		
+
 		Time result( *this );
 		result += other;
 		return result;
@@ -214,33 +209,38 @@ public:
 
 	/** @brief Returns new time that is equal to this Time - other Time.
 	*
-	*	Each component is substracted separately and then they are normalized.
 	*	@note Implementation uses Time& operator -= (const Time& other);
 	*/
 	inline Time operator - ( const Time& other ) const
 	{
 		ASSERT (m_usecs < SECOND);
 		ASSERT (other.m_usecs < SECOND);
-	
+
 		Time result( *this );
 		result -= other;
 		return result;
 	};
 
+	/** @brief convertor to bool
+	*
+	*	bool(Time) is false if both sec and usec part is 0, otherwise it
+	*	is true.
+	*/
 	inline operator bool () const { return m_secs || m_usecs; }
 
-	/** @brief Gets timestamp part. */
+	/** @brief Gets seconds part. */
 	inline uint secs() const { return m_secs; }
 
 	/** @brief Gets useconds part. */
 	inline uint usecs() const { return m_usecs; }
 
-	/** @brief Gets timestamp part. wrapper for usecs. */
+	/** @brief Gets timestamp part. wrapper for secs. */
 	inline uint getSecs() const { return secs(); }
 
-	/** @brief Gets useconds part. wrapper for secs. */
+	/** @brief Gets useconds part. wrapper for usecs. */
 	inline uint getUsecs() const { return usecs(); }
 
+	/** @brief converts time to micro seconds*/
 	inline uint toUsecs() const  { return m_secs * SECOND + m_usecs; };
 
 	/** @brief Gets current time.
@@ -252,7 +252,7 @@ public:
 	/** @brief Gets current time.
 	*
 	* Returned time should not differ from actual time by more than 1 second.
-	*	wrapper for getCurrentTime()
+	* Function is wrapper for getCurrentTime()
 	*/
 	inline static Time getCurrent() { return getCurrentTime(); }
 

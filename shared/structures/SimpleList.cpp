@@ -25,16 +25,15 @@
 
 /*!
  * @file
- * @brief Simple list
+ * @brief Simple list implementation
  *
  */
 
+#include "api.h"
 #include "SimpleList.h"
 
 //------------------------------------------------------------------------------
-SimpleList::SimpleList()//:
-//m_first(NULL),
-//m_last(NULL)
+SimpleList::SimpleList()
 {
 	m_mainItem.prev = &m_mainItem;
 	m_mainItem.next = &m_mainItem;
@@ -42,7 +41,7 @@ SimpleList::SimpleList()//:
 
 
 //------------------------------------------------------------------------------
-/*
+/* this code is intentionally obfuscated ;)
    __________________
    |               . \
    |                  \
@@ -53,53 +52,10 @@ SimpleList::SimpleList()//:
 */
 void SimpleList::insert(SimpleListItem * item)
 {
-	/* //non-cyclical implementatio
-	(!m_first)||(m_first=item);
-	item->prev=m_last;
-	item->next=NULL;
-	m_last=item;
-	*/
-	//cyclical implementation
+
 	assert(item != &m_mainItem);
 	item->prev = m_mainItem.prev;
 	item->next = &m_mainItem;
 	item->reconnect();
 
 }
-//------------------------------------------------------------------------------
-/*void SimpleList::reconnect(SimpleListItem * item)
-{
-	item->reconnect();
-
-	if(!item->prev)
-	{
-		assert(item->next == m_first);
-		m_first = item;
-	}
-	if(!item->next)
-	{
-		assert(item->prev == m_last);
-		m_last = item;
-	}
-}*/
-//------------------------------------------------------------------------------
-
-/*void SimpleList::remove(SimpleListItem * item)
-{
-	if(item == m_first)
-		m_first = item->next;
-
-	if(item == m_last)
-		m_last = item->prev;
-	item->disconnect();
-}
-*/
-
-
-
-
-
-
-
-
-

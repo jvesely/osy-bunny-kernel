@@ -53,8 +53,11 @@
 #define SYS_EVENT_FIRE     17
 #define SYS_EVENT_DESTROY  18
 
-#define SYS_VMA_ALLOC      19
-#define SYS_VMA_FREE       20
+#define SYS_VMA_ALLOC		19
+#define SYS_VMA_FREE		20
+#define SYS_VMA_RESIZE		21
 
-#define SYS_COUNT          21
+#define SYS_GET_TIME		22
+
+#define SYS_COUNT			23
 

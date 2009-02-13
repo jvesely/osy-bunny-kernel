@@ -25,60 +25,72 @@
 
 /*!
  * @file 
- * @brief Declaration and definition of a wrapper class on mutex locks providing
- * object oriented API.
+ * @brief Mutex lock - synchronization primitive for mutual exclusion.
  *
- * Mutex class holds one mutex lock and provides interface (member functions)
- * to lock() and unlock() it.
+ * Mutex (mutual exclusion) is a common synchronization technique. The Mutex
+ * class provides interface to init (constructor), lock, unlock and destroy
+ * (destructor) a single mutex lock. It manages the waiting list of the threads
+ * locked on the mutex. It dequeues/enques the threads in Scheduler.
  */
 
 #pragma once
 
 #include "api.h"
+
 #include "Time.h"
-#include "synchronization/MutexManager.h"
+#include "proc/Thread.h"
 
 /**
  * @class Mutex Mutex.h "Mutex.h"
- * @brief Class with C++ class interface for mutex struct.
+ * @brief Mutex lock - synchronization primitive for mutual exclusion.
  *
- * Class wich holds one mutex lock and provides interface (member functions)
- * to lock() and unlock() it. All member functions are defined as inline.
+ * Mutex (mutual exclusion) is a common synchronization technique. The Mutex
+ * class provides interface to init (constructor), lock, unlock and destroy
+ * (destructor) a single mutex lock. It manages the waiting list of the threads
+ * locked on the mutex. It dequeues/enques the threads in Scheduler.
  */
 class Mutex {
 public:
-	/** Initialize the mutex lock. */
-	inline Mutex() {
-		mutex_init(&m_mutex);
-	}
-
-	/** Destroy the mutex lock. */
-	inline ~Mutex() {
-		mutex_destroy(&m_mutex);
-	}
-
-	/** Lock the mutex. */
-	inline void lock() {
-		mutex_lock(&m_mutex);
-	}
+	/**
+	 * Initialize the mutex lock (to unlocked state).
+	 */
+	Mutex();
 
 	/**
-	 * Lock the mutex within a timelimit.
+	 * Destroy the mutex lock. Remove it from all kernel structures.
+	 * If there are any locked threads on this mutex, destroy will cause panic.
+	 */
+	virtual ~Mutex();
+
+	/** 
+	 * Lock the mutex. If the mutex is already locked, blocks untill it is unlocked.
+	 */
+	void lock();
+
+	/**
+	 * Lock the mutex, but don't let it take more than the given timelimit.
 	 *
 	 * @param time Timelimit for trying to lock the mutex.
 	 * @return EOK on success (we locked the lock) and ETIMEDOUT if failed to lock it.
 	 */
-	inline int lockTimeout(const Time time) {
-		return MutexManager::instance().mutex_lock_timeout(&m_mutex, time);
-	}
+	int lockTimeout(const Time time);
 
-	/** Unlock the mutex. */
-	inline void unlock() {
-		mutex_unlock(&m_mutex);
-	}
+	/**
+	 * Unlock the mutex.
+	 */
+	void unlock();
 
 private:
-	/** The lock. */
-	mutex_t m_mutex;
+	/**
+	 * Identification of the thread, for which is the lock locked. If 0 (zero)
+	 * the lock is unlocked.
+	 */
+	volatile thread_t m_locked;
+
+	/**
+	 * The list of blocked (waiting) threads on this mutex.
+	 */
+	ThreadList m_waitingList;
+
 };
 

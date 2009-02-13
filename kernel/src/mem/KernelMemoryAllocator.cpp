@@ -31,11 +31,11 @@
  * It would stay that way. Not that this comment is by any means ingenious but
  * at least people can understand it.
  */
+#include "api.h"
 #include "KernelMemoryAllocator.h"
 #include "mem/FrameAllocator.h"
 #include "InterruptDisabler.h"
 #include "drivers/Processor.h"
-#include "api.h"
 
 //debug messages for frame allocation
 //#define ALLOCATOR_DEBUG_FRAME
