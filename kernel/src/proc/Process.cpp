@@ -10,36 +10,37 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Short description.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * It would stay that way. Not that this comment is by any means ingenious but
+ * at least people can understand it.
  */
 
-#include "Process.h"
-#include "Kernel.h"
+#include "api.h"
 #include "flags.h"
 #include "proc/UserThread.h"
 #include "tools.h"
 #include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
+#include "Process.h"
+#include "Kernel.h"
 
 //#define PROCESS_DEBUG
 
@@ -59,13 +60,13 @@ Process* Process::create( const char* filename )
 	PRINT_DEBUG ("Creating process.\n");
 	VFS* fs = KERNEL.rootFS();
 	file_t bin_file = fs->openFile( filename, OPEN_R );
-	
+
 	if (bin_file < 0) {
 		PRINT_DEBUG ("Failed to open file %d.\n", bin_file);
 		return 0;
 	}
 
-	const size_t file_size = fs->sizeFile( bin_file ); 
+	const size_t file_size = fs->sizeFile( bin_file );
 
 	if (file_size == 0) {
 		PRINT_DEBUG ("File is empty.\n");
@@ -74,7 +75,7 @@ Process* Process::create( const char* filename )
 
 	void * (*start)(void*) = (void*(*)(void*))0x1000000;
 
-	UserThread* main = new UserThread( 
+	UserThread* main = new UserThread(
 		start, NULL, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
 
 	/* Thread creation might have failed. */
@@ -113,7 +114,7 @@ Process* Process::create( const char* filename )
 	fs->readFile( bin_file, place, file_size );
 
 	old_vmm->copyTo( place, vmm, (void*)start, file_size );
-	
+
 	free(place);
 
 	Process* me = new Process();
@@ -150,7 +151,7 @@ UserThread* Process::addThread( thread_t* thread_ptr,
 	void* stack_pos =
 		(char*)ADDR_PREFIX_KSEG0 - (m_list.size() + 2) * Thread::DEFAULT_STACK_SIZE;
 
-  UserThread* new_thread = new UserThread( 
+  UserThread* new_thread = new UserThread(
 		thread_start, arg1, arg2, stack_pos, thread_flags);
 
   PRINT_DEBUG ("Thread created at address: %p.\n", new_thread);

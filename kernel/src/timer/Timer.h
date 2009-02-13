@@ -10,21 +10,21 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Timer class declaration.
  *
  * Timer class stores Threads in the heap and wakes when their time comes.
@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "api.h"
 #include "structures/Heap.h"
 #include "Singleton.h"
 #include "Time.h"
@@ -41,10 +42,10 @@
 typedef Heap<Thread*, THREAD_HEAP_CHILDREN> ThreadHeap;
 
 /*! class Timer Timer.h "timer/Timer.h"
- * @brief Timer class keeps truck of sleeping threads that wish to be awaken 
+ * @brief Timer class keeps truck of sleeping threads that wish to be awaken
  * on given time.
  *
- * This class only implements two methods, plan and interupt. Plan is used 
+ * This class only implements two methods, plan and interupt. Plan is used
  * to add an event to the event heap. Interupt signals that some events might
  * be due. Future interupts are planned using timer interrupts.
  */
@@ -58,7 +59,7 @@ public:
 	 */
 	void plan(Thread* thread, const Time& time);
 
-	/*! @brief Signals that some events might be due. 
+	/*! @brief Signals that some events might be due.
 	 *
 	 * Takes the thread and acts according to it's status:
 	 *		RUNNING threads are switched (at the end of processing)

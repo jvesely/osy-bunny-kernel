@@ -325,7 +325,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::tryExpandSomeChunk(siz
 {
 	if (!m_chunkResizingEnabled) return NULL;
 
-	size_t finalSize = totalSize;
+	size_t finalSize;// = totalSize;
 
 	//bear in mind that chunk has footer at the front and header at the end
 	BlockFooter * frontBorder = NULL;
@@ -335,12 +335,16 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::tryExpandSomeChunk(siz
 	//trying to find some chunk to resize
 	while ((!success) && (backBorder != m_chunks.getMainItem()))
 	{
+		assert(backBorder->isBorder());
 		frontBorder = (BlockFooter*)((uintptr_t)backBorder - backBorder->size() + sizeof(BlockHeader));
 
 		assert(frontBorder->isBorder());
+		BlockHeader copyOfHeader = *backBorder;
 
 		//also get real finalSize
-		success = extendExistingChunk(frontBorder, &finalSize, frontBorder->size());
+		finalSize = totalSize + frontBorder->size();
+
+		success = extendExistingChunk(frontBorder, &finalSize , frontBorder->size());
 		backBorder = (BlockHeader*) backBorder->next;
 	}
 
@@ -349,7 +353,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::tryExpandSomeChunk(siz
 		//expanding was succesful - joining expanded piece
 		PRINT_DEBUG_FRAME("expanding existing chunk was possible\n");
 		backBorder = (BlockHeader*) backBorder->prev;
-		return joinChunk(frontBorder, backBorder, finalSize);
+		return joinChunk(frontBorder, backBorder, finalSize - backBorder->size());
 	}
 	//else success = false and NULL is returned
 	PRINT_DEBUG_FRAME("expanding existing chunk was NOT possible\n");
@@ -452,7 +456,7 @@ bool BasicMemoryAllocator::reduceChunkWithBlockIfNeeded(BlockHeader * header)
 			backBorder = (BlockHeader*)((uintptr_t)(frontBorder) + finalSize - sizeof(BlockHeader));
 			(*backBorder) = storedBorder;//implicit operator =
 			size_t reduction = frontBorder->size() - finalSize;
-			//chunkend is now valid
+			//chunkend is now validated
 			frontBorder->setSize(finalSize);
 			backBorder->setSize(finalSize);
 			backBorder->reconnect();
@@ -481,6 +485,7 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::joinChunk(
 	size_t finalSize = frontBorder->size() + totalSize;
 
 	BlockHeader * finalBackBorder = (BlockHeader*)((uintptr_t)(backBorder) + totalSize);
+
 	(*finalBackBorder) = (*backBorder);
 
 	assert(finalBackBorder->isBorder());
@@ -495,7 +500,6 @@ BasicMemoryAllocator::BlockHeader * BasicMemoryAllocator::joinChunk(
 	//From now on consider backBorder as a BlockHeader of new free block!
 	backBorder->setUndefined();
 	initBlock(backBorder, totalSize);//free=true
-
 	//extending free and total size allocator is working with
 	m_totalSize += totalSize;
 	m_freeSize += totalSize - sizeof(BlockHeader) - sizeof(BlockFooter);

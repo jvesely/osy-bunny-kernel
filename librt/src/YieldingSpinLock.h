@@ -29,6 +29,8 @@
  *
  */
 
+#pragma once
+
 #include "synchronization/Spinlock.h"
 
 /** @brief Yielding spinlock
@@ -45,5 +47,7 @@ private:
 	*	Instead of active waiting, yiedlds.
 	*/
 	void wait()
-	{ thread_yield(); }
+	{
+		thread_yield();
+	}
 };

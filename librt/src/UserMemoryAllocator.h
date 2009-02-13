@@ -50,6 +50,15 @@ class UserMemoryAllocator:
 	public BasicMemoryAllocator, public Singleton<UserMemoryAllocator>
 {
 public:
+
+	/** @brief initialisator of values
+	*
+	*	Does not need memory from vma allocator. Sets free memory from
+	*	frame/wma allocator to 0, first memory block pointer to null.
+	*	Enables use of vma resize.
+	*/
+	UserMemoryAllocator();
+
 	virtual void* getMemory( size_t ammount );
 	virtual void freeMemory( const void* address );
 
@@ -69,17 +78,18 @@ protected:
 	*
 	*	Virtual function responsible for extending existing memory chunk. Result should be,
 	*	that new piece of usable(yet unformatted) memory is right behind old chunk of memory.
+	*	Function does not handle chunk borders and structures, only returns part of
+	*	memory chunk!!! Also does not do any checks.
 	*	@param oldChunk old chunk FOOTER pointer
 	*	@param finalSize reference to required size of new memory.
+	*	@param originalSize original size of memory chunk
 	*	@return if succesfull beginning of new memory piece, else NULL.
 	*		Return address is virtual.
 	*	@note this is NOT final implementation (dummy implementation has no sense :) )
 	*	@note there is almost no way to return finalSize
 	*/
-	virtual bool extendExistingChunk(BlockFooter * oldChunk, size_t & finalSize, size_t originalSize)
-	{
-		return NULL;
-	}
+	virtual bool extendExistingChunk(BlockFooter * oldChunk, size_t * finalSize, size_t originalSize);
+
 	/** @brief return memory chunk to frame allocator
 	*
 	*	Returns whole chunk with given size to the frame allocator.
@@ -103,10 +113,7 @@ protected:
 	*	@return TRUE if succesful, FALSE otherwise (function might not be implemented)
 	*	@note this is NOT final implementation (dummy implementation has no sense :) )
 	*/
-	virtual bool reduceChunk(BlockFooter * frontBorder, size_t & finalSize, size_t originalSize)
-	{
-		return false;
-	}
+	virtual bool reduceChunk(BlockFooter * frontBorder, size_t * finalSize, size_t originalSize);
 
 	/** @brief lock for allocator synchronisation
 	*

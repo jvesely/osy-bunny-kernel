@@ -317,6 +317,80 @@ int mutex_unlock_check( struct mutex* mtx );
 
 int mutex_unlock_uncheck( struct mutex* mtx );
 
+/* --------------------------------------------------------------------- */
+/* ----------------------    SPINLOCK   -------------------------------- */
+/* --------------------------------------------------------------------- */
+
+/**
+ * @struct spinlock_t librt.h "librt.h"
+ * @brief Spinlock class placeholder for C code.
+ */
+typedef struct spinlock {
+	char payload[4];
+} spinlock_t;
+
+/** @brief initializes spinlock
+*
+*	Uninitializes spinlock should not be used.
+*/
+void spinlock_init(spinlock_t* s);
+/** @brief uninitializes spinlock
+*
+*	Does not dealloc spinlock structure.
+*/
+void spinlock_destroy(spinlock_t* s);
+
+/** @brief lock spinlock
+*
+*	Waits actively in loop until lock is acquired.
+*/
+void spinlock_lock(spinlock_t* s);
+
+/** @brief unlock spinlock*/
+void spinlock_unlock(spinlock_t* s);
+
+
+/* --------------------------------------------------------------------- */
+/* ---------------------   VIRTUAL MEMORY AREA  ------------------------ */
+/* --------------------------------------------------------------------- */
+
+/** @brief allocate virtual memory area
+*
+*	Wrapper for syscall vma_alloc. Because size might need to be alligned
+*	to some value (supported page size), resultant size is returned via size
+*	pointer. This is main difference from kernel space vma_alloc funcion.
+*	Also there is no flags parameter, only allowed space for user vma_alloc
+*	is user segment.
+*	@param from pointer to pointer where result should be stored
+*		address of newly allocated area is stored in this pointer
+*	@param size pointer to required size of new virtual memory area
+*		Resultant size of new area is returned via this pointer.
+*	@return EOK if success, EINVAL if could not allocate on address *from
+*		(if from was required- see flags parameter) or ENOMEM if there
+*		was not enough memory
+*/
+int vma_alloc(void **from, size_t * size);
+
+/** @brief deallocate virtual memory area
+*
+*	Wrapper for syscall vma_free.
+*/
+int vma_free(const void *from);
+
+/** @brief resize virtual memory area
+*
+*	Wrapper for syscall vma_resize. Because size might need to be alligned
+*	to some value (supported page size), resultant size is returned via size
+*	pointer. This is main difference from kernel space vma_resize funcion.
+*	@param from pointer to pointer where result should be stored
+*		address of newly allocated area is stored in this pointer
+*	@param size pointer to required new size of virtual memory area
+*		Resultant size of area is returned via this pointer.
+*	@return EOK on success, ENOMEM if it was not possible to
+*		increase vma size
+*/
+int vma_resize(const void *from, size_t * size);
+
 
 #ifdef __cplusplus
 }

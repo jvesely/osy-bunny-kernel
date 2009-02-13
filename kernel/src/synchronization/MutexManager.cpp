@@ -10,21 +10,21 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief MutexManager member function definitions.
  *
  * MutexManager is a singleton class providing interface to init, lock, unlock and
@@ -111,7 +111,7 @@ void MutexManager::mutex_lock(mutex_t *mtx) {
 		// block the thread (this will remove it from the timer's heap and the scheduler)
 		thread->block();
 		// put the thread to mutex's waiting list (this will unschedule it)
-		thread->append((ThreadList *)mtx->waitingList); 
+		thread->append((ThreadList *)mtx->waitingList);
 		// set the thread state to blocked
 		thread->setStatus(Thread::BLOCKED);
 		// switch to other thread
@@ -162,7 +162,7 @@ int MutexManager::mutex_lock_timeout(mutex_t *mtx, const Time time) {
 	// plan to wake up after given time
 	thread->alarm(time);
 	// put the thread to mutex's waiting list (this will unschedule it)
-	thread->append((ThreadList *)mtx->waitingList); 
+	thread->append((ThreadList *)mtx->waitingList);
 	// set the thread state to blocked
 	thread->setStatus(Thread::BLOCKED);
 	// switch to other thread

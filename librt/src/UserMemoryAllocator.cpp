@@ -37,11 +37,14 @@
 
 #include "SysCall.h"
 #include "syscallcodes.h"
-#include "synchronization/SpinLockLocker.h"
 
 
-//debug messages for frame allocation
+//debug messages for vma allocation
 //#define ALLOCATOR_DEBUG_FRAME
+
+//debug messages for vma resize
+//#define ALLOCATOR_DEBUG_VMA_RESIZE
+
 
 #ifndef ALLOCATOR_DEBUG_FRAME
 #define PRINT_DEBUG_FRAME(...)
@@ -51,7 +54,23 @@
 	printf(ARGS);
 #endif
 
+#ifndef ALLOCATOR_DEBUG_VMA_RESIZE
+#define PRINT_DEBUG_VMA_RESIZE(...)
+#else
+#define PRINT_DEBUG_VMA_RESIZE(ARGS...) \
+	printf("[ ALLOCATOR_DEBUG_VMA_RESIZE ]: "); \
+	printf(ARGS);
+#endif
+//------------------------------------------------------------------------------
+UserMemoryAllocator::UserMemoryAllocator():
+BasicMemoryAllocator()
+{
+	m_chunkResizingEnabled = true;
+}
 
+
+
+//------------------------------------------------------------------------------
 void* UserMemoryAllocator::getMemory( size_t amount )
 {
 	SpinlockLocker locker(&m_lock);
@@ -89,4 +108,39 @@ void UserMemoryAllocator::returnChunk(BlockFooter * frontBorder, size_t finalSiz
 		PRINT_DEBUG_FRAME("ERROR: returning memory to vma alocator not succesful \n");
 	}
 }
+//------------------------------------------------------------------------------
+bool UserMemoryAllocator::extendExistingChunk(BlockFooter * oldChunk, size_t * finalSize, size_t originalSize)
+{
+	PRINT_DEBUG_VMA_RESIZE("resizing chunk at %x, finalSize %x \n",oldChunk,*finalSize);
+
+	int success = SysCall::vma_resize(oldChunk,finalSize);
+
+	if (success!=EOK)
+	{
+		PRINT_DEBUG_VMA_RESIZE("vma allocator did not return ok(%d) but %d\n",EOK,success);
+		return false;
+	}
+	PRINT_DEBUG_VMA_RESIZE("resized chunk at %x, finalSize %x \n",oldChunk,*finalSize);
+	return true;
+}
+//------------------------------------------------------------------------------
+bool UserMemoryAllocator::reduceChunk(BlockFooter * frontBorder, size_t * finalSize, size_t originalSize)
+{
+	PRINT_DEBUG_VMA_RESIZE("resizing chunk at %x, finalSize %x \n",frontBorder,*finalSize);
+	int success = SysCall::vma_resize(frontBorder,finalSize);
+
+	if (success!=EOK)
+	{
+		PRINT_DEBUG_VMA_RESIZE("Vma allocator was not able to reduce chunk. Something ba happened!\n");
+		return false;
+	}
+	return true;
+}
+
+
+
+
+
+
+
 

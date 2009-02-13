@@ -73,7 +73,7 @@ private:
 	/** @brief vma alloc syscall handler
 	*
 	*	Because in user space are page sizes unknown, this call differs from kernel vma_alloc.
-	*	This function accepts not-alligned size and returns alligned size in (*size).
+	*	This syscall accepts not-alligned size and returns alligned size in (*size).
 	*	@param from pointer to return pointer
 	*	@param size pointer to required size
 	*	@param flags standart vma_alloc flags (see api.h in /kernel/src)
@@ -89,6 +89,18 @@ private:
 	*	@return result of vma_free(see api.h)
 	*/
 	unative_t handleVMAFree();
+
+	/** @brief vma resize syscall
+	*
+	*	Because in user space are page sizes unknown, this call differs from kernel vma_resize.
+	*	This function accepts not-alligned size and returns alligned size in (*size).
+	*	@param from pointer to resized vma
+	*	@param size pointer to new size
+	*	@return result of vma_alloc(see api.h)
+	*	@note This function accepts unalligned size.
+	*/
+	unative_t handleVMAResize();
+
 
 	/** @brief get current time for user mode
 	*

@@ -34,15 +34,18 @@
 
 #include "librt.h"
 #include "../include/defs.h"
-#include "BasicMemoryAllocator.h"
 #include "../librt/src/UserMemoryAllocator.h"
 #include "structures/SimpleList.h"
 #include "structures/HashMap.h"
 #include "Time.h"
+#include "../librt/src/Mutex.h"
+#include "../librt/src/YieldingSpinLock.h"
+#include "synchronization/Spinlock.h"
+
 
 
 static const char * desc =
-	"Basic test for testing performance of memory allocator.\n"
+	"Multithread test for testing performance of memory allocator.\n"
 	"Test will try to allocate at least NEEDED_MEMORY of random "
 	"char * strings of maximum length MAX_LENGTH  and store them into "
 	"hash table. \n"
@@ -50,7 +53,8 @@ static const char * desc =
 	"free operations, what means a random item from hash table will be chosen, removed "
 	"and string related to it will be deleted.\n"
 	"When NEEDED_MEMORY is allocated, allocator information will be written: \n"
-	"free memory, allocated memory in hash table and total memory used by memory allocator.\n\n";
+	"free memory, allocated memory in hash table and total memory used by memory allocator.\n"
+	"Test will run for this THREAD_COUNT threads, which will allocate into the same hashMap.\n\n";
 
 
 //how much memory should allocate test
@@ -63,15 +67,25 @@ const unsigned int MAX_LENGTH = 2048;
 */
 const unsigned int FREE_PERCENTAGE = 75;
 
+/*	this is multithread test, and therefore it should be possible to
+*	set thread count. This value sets thread count in test.
+*/
+const unsigned int THREAD_COUNT = 10;
+
 unsigned int count;
 int counter;
 size_t allocated;
+//YieldingSpinLock allocatedCountTableLock;
+//Spinlock allocatedCountTableLock;
+Mutex allocatedCountTableLock;
+Spinlock counterLock;
 
 struct strSize
 {
 	char * s;
 	size_t size;
 };
+
 
 
 /**
@@ -107,36 +121,80 @@ char * createRandomString(size_t & resSize)
 }
 
 
-void addRandomItem(HashMap<int,strSize> & myMap)
+void addRandomItem(HashMap<int,strSize> * myMap)
 {
 	size_t resSize;
 	char * s = createRandomString(resSize);
 	strSize str;
 	str.s = s;
 	str.size = resSize;
-	myMap.insert(counter,str);
+	allocatedCountTableLock.lock();
+	//printf("adding item\n");
+	counterLock.lock();
+	myMap->insert(counter,str);
 	counter++;
+	counterLock.unlock();
 	allocated += sizeof(Pair<int,strSize>) + resSize;
 	count++;
+	//printf("added item\n");
+	allocatedCountTableLock.unlock();
 }
 
-void removeRandomItem(HashMap<int,strSize> & myMap)
+void removeRandomItem(HashMap<int,strSize> * myMap)
 {
-	unsigned int hsh = (unsigned int)tst_rand() % myMap.getArraySize();
+	allocatedCountTableLock.lock();
+	//printf("removinf item\n");
+	unsigned int hsh = (unsigned int)tst_rand() % myMap->getArraySize();
 	//this can be unsafe operation ...
-	while(myMap.getList(hsh)->empty()){
-		hsh = (hsh+1)%myMap.getArraySize();
+	while(myMap->getList(hsh)->empty()){
+		hsh = (hsh+1)%(myMap->getArraySize());
 	}
+	int key = myMap->getList(hsh)->begin()->first;
 
-	int key = myMap.getList(hsh)->begin()->first;
+	size_t size = (*myMap)[key].size;
+	free((*myMap)[key].s);
 
-	size_t size = myMap[key].size;
 	allocated -= size + sizeof(Pair<int,strSize>);
 	count--;
 
-	free(myMap[key].s);
-	myMap.erase(key);
+	myMap->erase(key);
+	//printf("removed item\n");
+	allocatedCountTableLock.unlock();
 }
+
+void * oneThreadWork (void * param)
+{
+	printf("getting hashmap at %x\n",param);
+	HashMap<int,strSize> * myMap = (HashMap<int,strSize>*)param;
+	printf("locking\n");
+
+	allocatedCountTableLock.init();
+	//counterLock.init();
+
+	allocatedCountTableLock.lock();
+	printf("lock before cycle\n");
+	while(allocated < NEEDED_MEMORY)
+	{
+		printf("in cycle\n");
+		allocatedCountTableLock.unlock();
+		printf("allocating\n");
+		for(unsigned int i =0;i<100;i++){
+			addRandomItem(myMap);
+		}
+		printf("freeing\n");
+		for(unsigned int i = 0; i<FREE_PERCENTAGE; i++){
+			removeRandomItem(myMap);
+		}
+		printf("done\n");
+		allocatedCountTableLock.lock();
+		printf("results: \nallocated: %d \nfree:      %d \ntotalUsed: %d \n",allocated,mallocatorGetFreeSize(),mallocatorGetTotalSize());
+	}
+	allocatedCountTableLock.unlock();
+
+	return NULL;
+}
+
+
 
 void
 main (void)
@@ -152,22 +210,25 @@ main (void)
 	count = 0;
 	counter = 0;
 	allocated  = 0;
+	void * resultStore;
 
 	//used has table
 	unsigned int tableSize = 1999;
 	HashMap<int,strSize> myMap(tableSize);
 	allocated = tableSize * (sizeof(List<Pair<int, strSize> >));
 
-	while(allocated < NEEDED_MEMORY)
+	printf("hashmap at %x \n",&myMap);
+	thread_t * threads = new thread_t[THREAD_COUNT];
+	for(unsigned int i =0; i<THREAD_COUNT; i++)
 	{
-		for(unsigned int i =0;i<100;i++){
-			addRandomItem(myMap);
-		}
-		for(unsigned int i = 0; i<FREE_PERCENTAGE; i++){
-			removeRandomItem(myMap);
-		}
-		printf("results: \nallocated: %d \nfree:      %d \ntotalUsed: %d \n",allocated,mallocatorGetFreeSize(),mallocatorGetTotalSize());
+		thread_create(threads+i, oneThreadWork, &myMap );
 	}
+	printf("all threads are running\n");
+	for(unsigned int i =0; i<THREAD_COUNT; i++){
+		thread_join( *(threads+i), &resultStore );
+	}
+	printf("all threads have stopped\n");
+
 	size_t overhead = mallocatorGetTotalSize() - mallocatorGetFreeSize() - allocated;
 	printf("results: \nallocated: %d \nfree:      %d \ntotalUsed: %d \noverhead:  %d \n",allocated,mallocatorGetFreeSize(),mallocatorGetTotalSize(),overhead);
 
@@ -205,3 +266,9 @@ main (void)
 	printf("total count of memory chunks is %d \n",chunkCount);
 
 }
+
+
+
+
+
+

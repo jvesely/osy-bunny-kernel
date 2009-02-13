@@ -122,7 +122,7 @@ void SysCall::thread_exit( void* retval )
 	while (1) ;
 }
 
-int SysCall::vma_alloc(void ** from, size_t * size, const unsigned int flags)
+int SysCall::vma_alloc(void ** from, volatile size_t * size, const unsigned int flags)
 {
 	return SYSCALL( SYS_VMA_ALLOC, from, size, flags, 0);
 }
@@ -131,6 +131,12 @@ int SysCall::vma_free(const void * from)
 {
 	return SYSCALL( SYS_VMA_FREE, from, 0, 0, 0);
 }
+
+int SysCall::vma_resize(const void *from, volatile size_t * size)
+{
+	return SYSCALL( SYS_VMA_RESIZE, from, size, 0, 0);
+}
+
 
 int SysCall::event_init( event_t* id )
 {

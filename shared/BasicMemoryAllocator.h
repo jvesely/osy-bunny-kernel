@@ -343,6 +343,7 @@ class BlockHeader: public SimpleListItem
 	/** @brief getter for m_freeSize
 	*
 	*	Returns total size of memory in free blocks, excluding block structures.
+	*	@note Is not thread safe.
 	*/
 	inline size_t getFreeSize() const { return m_freeSize; }
 
@@ -350,6 +351,7 @@ class BlockHeader: public SimpleListItem
 	*
 	*	Returns total size of memory chunks, including block structures and excluding
 	*	chunk bordes.
+	*	@note Is not thread safe.
 	*/
 	inline size_t getTotalSize() const { return m_totalSize; }
 
@@ -357,6 +359,7 @@ class BlockHeader: public SimpleListItem
 	*
 	*	Free blocks list can be used to measure free space fragmentation. Do not use to
 	*	modify the list or blocks!
+	*	@note Is not thread safe.
 	*/
 	inline SimpleList * getFreeList(){ return &m_freeBlocks;}
 
@@ -364,6 +367,7 @@ class BlockHeader: public SimpleListItem
 	*
 	*	This can be used to get some information about memory use. Do not use to
 	*	modify the list or blocks!
+	*	@note Is not thread safe.
 	*/
 	inline SimpleList * getUsedList(){ return &m_usedBloks;}
 
@@ -371,6 +375,7 @@ class BlockHeader: public SimpleListItem
 	*
 	*	Can be used to get some information about memory usage. Do not use to
 	*	modify the list or blocks!
+	*	@note Is not thread safe.
 	*/
 	inline SimpleList * getChunkList(){ return &m_chunks;}
 
@@ -380,6 +385,7 @@ class BlockHeader: public SimpleListItem
 	*	therefore does not rearrange free blocks.
 	*	Changes pointers getFreeBlockFunction, setSizeFunction and
 	*	insertIntoFreeListFunction.
+	*	@note Is not thread safe.
 	*/
 	inline void setStrategyDefault();
 
@@ -390,6 +396,7 @@ class BlockHeader: public SimpleListItem
 	*	For setSizeFunction is enough to use setSizeDefault.
 	*	Inserting into list of free blocks must insert it according to it`s address.
 	*	getFreeBlockFunction must search blocks according to their addresses.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyFirstFit();
 
@@ -402,6 +409,7 @@ class BlockHeader: public SimpleListItem
 	*	For setSizeFunction is enough to use setSizeDefault.
 	*	Inserting into list of free blocks must insert it according to it`s address.
 	*	getFreeBlockFunction must search blocks according to their addresses.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyNextFit();
 
@@ -415,6 +423,7 @@ class BlockHeader: public SimpleListItem
 	*	blocks are sorted according to their sizes.
 	*	Resized blocks must be reintegrated	into list, therefore setSizeFunction
 	*	must be implemented differently than in default strategy.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyBestFit();
 
@@ -427,6 +436,7 @@ class BlockHeader: public SimpleListItem
 	*	blocks are sorted according to their sizes.
 	*	Resized blocks must be reintegrated	into list, therefore setSizeFunction
 	*	must be implemented differently than in default strategy.
+	*	@note Is not thread safe.
 	*/
 	void setStrategyWorstFit();
 
@@ -461,6 +471,7 @@ protected:
 	*	@param oldChunk old chunk FOOTER pointer
 	*	@param finalSize pointer to required size of new memory.Function alligns this value according to
 	*		page size (and returns final size of chunk via pointer).
+	*	@param originalSize original size of memory chunk
 	*	@return true if success, false otherwise
 	*/
 	virtual bool extendExistingChunk(BlockFooter * oldChunk, size_t * finalSize, size_t originalSize)
@@ -491,7 +502,7 @@ protected:
 	*	If such condition is not met, or such operation was not succesfull, does nothing.
 	*	If block is not the last one in chunk, nothing happens as well, and the same pays if
 	*	block is not free.
-	*	@param header Free block header, expected to be the lasti n memory chunk.
+	*	@param header Free block header, expected to be the last in memory chunk.
 	*	@return TRUE if chunk was shrinked, FALSE otherwise
 	*/
 	bool reduceChunkWithBlockIfNeeded(BlockHeader * header);
@@ -598,7 +609,7 @@ protected:
 	*	is expected available memory from frame/vma allocator.
 	*	@param frontBorder front border of memory chunk
 	*	@param backBorder old back border of chunk
-	*	@param totalSize size of memory chunk extension (NOT new memory chunk size)
+	*	@param totalSize size of chunk extension (NOT new memory chunk size)
 	*	@return pointer to newly created/joined free block
 	*/
 	BlockHeader * joinChunk(

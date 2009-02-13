@@ -78,6 +78,8 @@ SyscallHandler::SyscallHandler()
 
 	m_handles[SYS_VMA_ALLOC] = (&SyscallHandler::handleVMAAlloc);
 	m_handles[SYS_VMA_FREE] = (&SyscallHandler::handleVMAFree);
+	m_handles[SYS_VMA_RESIZE] = (&SyscallHandler::handleVMAResize);
+
 	m_handles[SYS_GET_TIME] = (&SyscallHandler::handleGetTime);
 }
 /*----------------------------------------------------------------------------*/
@@ -338,7 +340,6 @@ unative_t SyscallHandler::handleVMAAlloc()
 	void**  area_start     = (void**) CHECK_PTR_IN_USEG(m_params[0]);
 	size_t* size           = (size_t*)CHECK_PTR_IN_USEG(m_params[1]);
 	IVirtualMemoryMap* vmm = IVirtualMemoryMap::getCurrent().data();
-
 	ASSERT (vmm);
 
 	//round the size according to HW specifications
@@ -354,6 +355,22 @@ unative_t SyscallHandler::handleVMAFree()
 	ASSERT (vmm);
 
 	return vmm->free((void *)m_params[0]);
+}
+
+/*----------------------------------------------------------------------------*/
+unative_t SyscallHandler::handleVMAResize()
+{
+	void*  area_start     = (void*) CHECK_PTR_IN_USEG(m_params[0]);
+	size_t* size           = (size_t*)CHECK_PTR_IN_USEG(m_params[1]);
+	//the same as vma_resize in api.h
+	IVirtualMemoryMap* vmm = IVirtualMemoryMap::getCurrent().data();
+	ASSERT (vmm);
+
+	//round the size according to HW specifications
+	*size = roundUp(*size, Processor::pages[Processor::PAGE_MIN].size);
+
+	return vmm->resize(area_start, *size);
+	//return vma_resize(area_start,*size);
 }
 
 //------------------------------------------------------------------------------

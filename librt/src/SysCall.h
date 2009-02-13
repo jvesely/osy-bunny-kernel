@@ -76,9 +76,41 @@ int thread_wakeup( thread_t thr ) __attribute__ ((noinline));
 
 void thread_exit( void* retval ) __attribute__ ((noinline, noreturn));
 
-int vma_alloc(void ** from, size_t * size, const unsigned int flags);
+/** @brief allocate virtual memory area
+*
+*	Wrapper for kernel space vma_alloc, except that parameter size is pointer.
+*	Because size might need to be alligned to some value (supported page size),
+*	resultant size is returned via size pointer. This is main difference from
+*	kernel space vma_alloc funcion.
+*	@param from pointer to pointer where result should be stored
+*		address of newly allocated area is stored in this pointer
+*	@param size pointer to required size of new virtual memory area
+*		Resultant size of new area is returned via this pointer.
+*	@param flags flags for vma_allocator, see kernel space vma_alloc reference
+*	@return
+*/
+int vma_alloc(void ** from, volatile size_t * size, const unsigned int flags);
 
+/** @brief deallocate virtual memory area
+*
+*	Wrapper for kernel space vma_free.
+*/
 int vma_free(const void * from);
+
+/** @brief resize virtual memory area
+*
+*	Wrapper for syscall vma_resize. Because size might need to be alligned
+*	to some value (supported page size), resultant size is returned via size
+*	pointer. This is main difference from kernel space vma_resize funcion.
+*	@param from pointer to pointer where result should be stored
+*		address of newly allocated area is stored in this pointer
+*	@param size pointer to required new size of virtual memory area
+*		Resultant size of area is returned via this pointer.
+*	@return EOK on success, ENOMEM if it was not possible to
+*		increase vma size
+*/
+int vma_resize(const void *from, volatile size_t * size);
+
 
 int event_init( event_t* id );
 

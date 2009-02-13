@@ -10,21 +10,21 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Semaphore declaration and implementation of the inline member functions.
  *
  * Semaphore is a common synchronization technique using a counter, which
@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include "api.h"
 #include "types.h"
 #include "InterruptDisabler.h"
 #include "proc/Thread.h"

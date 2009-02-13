@@ -10,26 +10,27 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Scheduler implementation.
  *
  * Contains some member functions' implementations both public and private.
  */
 
+#include "api.h"
 #include "Scheduler.h"
 #include "Thread.h"
 #include "InterruptDisabler.h"
@@ -63,8 +64,8 @@ thread_t Scheduler::getId( Thread* newThread )
 {
 	/* there has to be free id becasue if all were occupied, than
 	 * the system would have thread at every byte of adressable memory,
-	 * but the next variable and the parameter take up 8 bytes 
-	 * (and even more is used by the rest of the kernel), 
+	 * but the next variable and the parameter take up 8 bytes
+	 * (and even more is used by the rest of the kernel),
 	 * thus there must be a free id
 	 */
 	thread_t id = m_nextThreadId++;
@@ -96,7 +97,7 @@ Thread* Scheduler::nextThread()
 		return m_idle;
 	}
 
-	/* if the running thread is not the first thread in the list 
+	/* if the running thread is not the first thread in the list
 	 * (is not in the list at all), then skip rotating and just plan
 	 * the first thread.
 	 */
@@ -122,7 +123,7 @@ void Scheduler::enqueue( Thread* thread )
 	thread->append(&m_activeThreadList);
 	PRINT_DEBUG ("Enqueued thread: %d.\n", thread->id());
 	thread->setStatus( Thread::READY );
-	
+
 	/* if the idle thread is running and other thread became ready,
 	 * idle thread is planned for switch as soon as possible
 	 */
@@ -130,7 +131,7 @@ void Scheduler::enqueue( Thread* thread )
 		PRINT_DEBUG("Ending IDLE thread reign.\n");
 		m_shouldSwitch = true;
 	}
-	
+
 }
 /*----------------------------------------------------------------------------*/
 void Scheduler::dequeue( Thread* thread )

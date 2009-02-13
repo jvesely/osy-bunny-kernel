@@ -10,32 +10,32 @@
  *   jgs (____/^\____)
  *   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-/*! 	 
+/*!
  *   @author Matus Dekanek, Tomas Petrusek, Lubos Slovak, Jan Vesely
  *   @par "SVN Repository"
  *   svn://aiya.ms.mff.cuni.cz/osy0809-depeslve
- *   
+ *
  *   @version $Id$
  *   @note
  *   Semestral work for Operating Systems course at MFF UK \n
  *   http://dsrg.mff.cuni.cz/~ceres/sch/osy/main.php
- *   
+ *
  *   @date 2008-2009
  */
 
 /*!
- * @file 
+ * @file
  * @brief Thread class implementation.
  *
  * Contians Thread member functions' implementation.
  */
 
+#include "api.h"
 #include "Thread.h"
 #include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "timer/Timer.h"
-#include "api.h"
 
 //#define THREAD_DEBUG
 
@@ -73,36 +73,36 @@ bool Thread::shouldSwitch()
 Thread::Thread( uint stackSize ):
 	ListInsertable<Thread>(),
 	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(), m_otherStackTop( NULL ),
-	m_stackSize( stackSize ),	m_detached( false ), m_status( UNINITIALIZED ), 
+	m_stackSize( stackSize ),	m_detached( false ), m_status( UNINITIALIZED ),
 	m_id( 0 ), m_follower( NULL ), m_virtualMap( NULL )
 {
 	if (!m_stackSize) return;
-	/* Alloc stack */	
+	/* Alloc stack */
 	m_stack = malloc( m_stackSize );
 	if (m_stack == NULL) return;  /* test stack */
 
 	/* stack is created OK */
 	using namespace Processor;
 
-	/* Stack is moving down so we need to set it sizeof(Context), below 
+	/* Stack is moving down so we need to set it sizeof(Context), below
 	 * its end.
 	 */
 	m_stackTop = (void*)((uintptr_t)m_stack + m_stackSize - sizeof(Context));
 	Context * context = (Context*)(m_stackTop);
-	
+
 	/* Pointer to my member function that just calls virtual run()
 	 * http://www.goingware.com/tips/member-pointers.html
-	 * taking adress converting pointer and dereferencing trick 
+	 * taking adress converting pointer and dereferencing trick
 	 * was advised by M. Burda
 	 */
-	void (Thread::*runPtr)(void) = &Thread::start; 
-	
+	void (Thread::*runPtr)(void) = &Thread::start;
+
 	context->ra = *(unative_t*)(&runPtr);  /* return address (run this)       */
 
 	context->a0 = (unative_t)this;         /* the first and the only argument */
 	context->gp = ADDR_TO_KSEG0(0);        /* global pointer                  */
 	context->status = STATUS_IM_MASK | STATUS_IE_MASK;
-	
+
 	PRINT_DEBUG ("Successfully created thread.\n");
 
 	m_status = INITIALIZED;
@@ -111,7 +111,7 @@ Thread::Thread( uint stackSize ):
 void Thread::switchTo()
 {
 	InterruptDisabler interrupts;
-	
+
 	PRINT_DEBUG ("Switching to thread %u.\n", m_id);
 
 	static const Time DEFAULT_QUANTUM(0, 20000);
@@ -133,7 +133,7 @@ void Thread::switchTo()
 			old_stack = &old_thread->m_stackTop;
 		}
 	}
-	
+
 	setStatus( RUNNING );
 
 	SCHEDULER.m_currentThread = this;
@@ -177,12 +177,12 @@ void Thread::yield()
 void Thread::alarm( const Time& alarm_time )
 {
 	InterruptDisabler interrupts;
-	
+
 	removeFromHeap();
 
 	/* Plan self for enqueueing in proper time */
 	Timer::instance().plan( this, alarm_time );
-	
+
 	/* remove from the sheduling queue */
 	SCHEDULER.dequeue( this );
 
@@ -230,8 +230,8 @@ void Thread::wakeup()
 bool Thread::detach()
 {
 	Status my_status = status();
-	if ( m_detached || (my_status == FINISHED) || (my_status == KILLED) 
-		|| m_follower ) return false; 
+	if ( m_detached || (my_status == FINISHED) || (my_status == KILLED)
+		|| m_follower ) return false;
 	PRINT_DEBUG ("Thread %u detached.\n", m_id);
 	return m_detached = true;
 }
@@ -242,7 +242,7 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	 * may not survive during reschedule
 	 */
 	InterruptDisabler interrupts;
-	
+
 	/* Initial check */
 	if (!thread                                          /* no such thread */
 		|| thread == this                                  /* it's me */
@@ -251,8 +251,8 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	) {
 		return EINVAL;
 	}
-	
-	PRINT_DEBUG ("Thread %u joining thread %u%s.\n", 
+
+	PRINT_DEBUG ("Thread %u joining thread %u%s.\n",
 		m_id, thread->m_id, timed ? " (TIMED)" : "");
 
 	Status others_status = thread->status();
@@ -267,20 +267,20 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 
 	/* set the joining stuff */
 	thread->m_follower = this;
-	
+
 	if ( timed ) {
 		alarm( wait_time );
 	} else {
 		/* No more action for me until thread is dead. */
 		block();
-	} 
+	}
 
 	m_status = JOINING;
   yield();
 
 	others_status = thread->status();
 	/* Woken by the death of the thread (either timed or untimed) */
-	if ( (others_status == FINISHED) || (others_status == KILLED))	
+	if ( (others_status == FINISHED) || (others_status == KILLED))
 	{
 		PRINT_DEBUG ("Thread %u joined thread %u %s.\n", m_id, thread->m_id, timed ? "TIMED" : "");
 		if (retval) *retval = thread->m_ret;
@@ -291,7 +291,7 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	/* I was obviously awaken by the timer */
 	ASSERT (timed);
 	PRINT_DEBUG ("Thread %u joining thread %u timedout.\n", m_id, thread->m_id);
-	
+
 	/* I'm no longer waiting for his death */
 	thread->m_follower = NULL;
 	return ETIMEDOUT;
@@ -320,7 +320,7 @@ void Thread::resume()
 void Thread::kill()
 {
 	InterruptDisabler inter;
-	
+
 	/* only active threads can be killed */
 	if ( status() != READY  && status() != BLOCKED && status() != RUNNING) {
 		PRINT_DEBUG ("Thread %u cannot be killed its status is %u\n", id(), status());
@@ -330,7 +330,7 @@ void Thread::kill()
 	m_status = KILLED;
 
 	if (m_follower) {
-		/* if i had a follower than wake him up */	
+		/* if i had a follower than wake him up */
 		ASSERT (m_follower->status() == JOINING);
 		ASSERT (!m_detached);
 		m_follower->resume();
@@ -341,7 +341,7 @@ void Thread::kill()
 	/* remove from both timer and scheduler */
 	block();
 
-	
+
 	if (Thread::getCurrent() == this) {
 		SCHEDULER.m_shouldSwitch = true;
 	} else {
