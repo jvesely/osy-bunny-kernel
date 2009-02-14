@@ -192,6 +192,8 @@ size_t Kernel::getPhysicalMemorySize(uintptr_t from)
 	volatile uint32_t* back  = (uint32_t *)range - 1;
 	volatile char* point = (char*)front;
 
+	ASSERT(front < back);
+
 	while (true) {
 		TLB::instance().setMapping(
 			(uintptr_t)front, (uintptr_t)point, Processor::PAGE_512K, 0 );

@@ -41,7 +41,7 @@
 #include "address.h"
 #include "synchronization/Event.h"
 
-#define PROCESS_DEBUG
+//#define PROCESS_DEBUG
 
 #ifndef PROCESS_DEBUG
 #define PRINT_DEBUG(...)
