@@ -58,13 +58,6 @@ String::String( const String& other ):
 	ASSERT (data() == other.data());
 };
 /*----------------------------------------------------------------------------*/
-String& String::operator = ( const char* text )
-{
-	InnerString* inner = new InnerString( text );
-	static_cast<Pointer<InnerString>*>(this)->operator = (inner);
-	return *this;
-}
-/*----------------------------------------------------------------------------*/
 String& String::operator = ( const String& other )
 {
 	static_cast<Pointer<InnerString>*>(this)->operator = (
@@ -92,8 +85,8 @@ bool String::operator == ( const String& other ) const
 bool String::operator < ( const String& other ) const
 {
 	if (cstr()  == other.cstr()) return false;
-	if (!cstr() && other.cstr()) return false;
-	if (cstr()  && !other.cstr()) return true;
+	if (!cstr() && other.cstr()) return true;
+	if (cstr()  && !other.cstr()) return false;
 	
 	const char* me  = cstr();
 	const char* him = other.cstr();
@@ -106,10 +99,16 @@ bool String::operator < ( const String& other ) const
 	return *me < *him;
 }
 /*----------------------------------------------------------------------------*/
+size_t String::size() const
+{
+	ASSERT (data());
+	return data()->size();
+}
+/*----------------------------------------------------------------------------*/
 bool String::empty() const
 {
-		ASSERT (data());
-		return !cstr();
+	ASSERT (data());
+	return !cstr();
 }
 /*----------------------------------------------------------------------------*/
 const char* String::cstr() const

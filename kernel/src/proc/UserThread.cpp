@@ -35,10 +35,8 @@
 #include "api.h"
 #include "address.h"
 #include "UserThread.h"
-#include "proc/Process.h"
-#include "drivers/Processor.h"
-#include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
+#include "proc/Process.h"
 
 //#define USER_THREAD_DEBUG
 
@@ -73,7 +71,6 @@ UserThread::UserThread( void* (*thread_start)(void*), void* data, void* data2,
 	m_otherStackTop = (char*)m_userstack + stack_size;
 
 	m_status = INITIALIZED;
-	return;
 }
 /*----------------------------------------------------------------------------*/
 UserThread::~UserThread()

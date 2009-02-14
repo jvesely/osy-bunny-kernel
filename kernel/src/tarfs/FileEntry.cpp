@@ -35,6 +35,17 @@
 #include "FileEntry.h"
 #include "VFS.h"
 
+//#define ENTRY_DEBUG
+
+#ifndef ENTRY_DEBUG
+#define PRINT_DEBUG(...)
+#else
+#define PRINT_DEBUG(ARGS...)\
+  puts("[ FILE ENTRY DEBUG ]: ");\
+  printf(ARGS);
+#endif
+
+
 FileEntry::FileEntry( TarHeader& header, uint start_block, DiskDevice* disk ):
 	Entry( disk )
 {
@@ -65,17 +76,19 @@ ssize_t FileEntry::read( void* buffer, int size )
 /*----------------------------------------------------------------------------*/
 uint FileEntry::seek( FilePos pos, int offset )
 {
+	PRINT_DEBUG ("Seeking pos: %u, offset %u.\n", pos, offset);
 	switch (pos) {
 		case POS_START:
-			if (offset > 0 && (uint)offset < m_size) m_pos = offset;
+			if (offset >= 0 && (uint)offset < m_size) m_pos = offset;
 			break;
 		case POS_CURRENT:
 			if (offset > 0 && (m_pos + offset) < m_size) m_pos += offset;
 			if (offset < 0 && (m_pos >= (uint)-offset))  m_pos -= offset;
 			break;
 		case POS_END:
-			if (offset < 0 && (m_size  > (uint)-offset)) m_pos = m_size + offset;
+			if (offset <= 0 && (m_size  > (uint)-offset)) m_pos = m_size + offset;
 	}
+	PRINT_DEBUG ("Result: %u.\n", m_pos);
 	return m_pos;
 }
 /*----------------------------------------------------------------------------*/

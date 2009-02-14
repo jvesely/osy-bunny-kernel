@@ -47,11 +47,16 @@
 	printf(ARGS);
 #endif
 
+Event::Event()
+{
+	PRINT_DEBUG ("Event created at address %x.\n", this);
+}
+/*----------------------------------------------------------------------------*/
 Event::~Event()
 {
 	ASSERT(m_list.empty());
 }
-
+/*----------------------------------------------------------------------------*/
 void Event::wait()
 {
 	InterruptDisabler interrupts;
@@ -62,7 +67,7 @@ void Event::wait()
 
 	thr->yield();
 }
-
+/*----------------------------------------------------------------------------*/
 void Event::waitTimeout( const Time& timeout )
 {
 	InterruptDisabler interrupts;
@@ -79,7 +84,7 @@ void Event::waitTimeout( const Time& timeout )
 	thr->yield();
 	PRINT_DEBUG("Event::waitTimeout() finished.\n");
 }
-
+/*----------------------------------------------------------------------------*/
 void Event::fire()
 {
 	InterruptDisabler interrupts;

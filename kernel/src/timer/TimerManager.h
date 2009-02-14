@@ -32,14 +32,15 @@
 
 #pragma once
 
-#include "api.h"
-#include "proc/Scheduler.h"
 #include "structures/List.h"
 #include "structures/Heap.h"
 #include "synchronization/Mutex.h"
 #include "synchronization/Semaphore.h"
+
 #include "Time.h"
 #include "timer/ClassTimer.h"
+#include "proc/Thread.h"
+#include "Singleton.h"
 
 
 typedef Heap<ClassTimer*,4> eventHeap;

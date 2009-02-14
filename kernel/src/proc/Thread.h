@@ -88,13 +88,14 @@ public:
 
 	static bool shouldSwitch();
 
+	static void requestSwitch();
+
 	/*! @brief Contructs Thread usinng the given parameters.
 	 *
 	 * Unless paramters are given contructs the thread using defaults.
 	 * Construction involves allocating stack and preparing context.
 	 * If successfull thread's status will be INITIALIZED, if something went 
-	 * wrong it will be UNITIALIZED.
-	 * @param flags Thread flags -- ingored
+	 * wrong it will be UNINITIALIZED.
 	 * @param stackSize size of requested stack
 	 */
 	Thread(	uint stackSize = DEFAULT_STACK_SIZE );
@@ -140,7 +141,7 @@ public:
 	/*! @brief Takes the thread off the queue, and if it was detached 
 	 * deletes it on the spot.
 	 */
-	virtual void kill();
+	virtual bool kill();
 
 	void exit( void* retval );
 
@@ -182,9 +183,6 @@ public:
 	/*! @brief Resumes thread to the scheduling queue */
 	void resume();
 
-	/*! @brief Sets my thread_t identifier. */
-	inline void setId( thread_t id ) { m_id = id; };
-
 	/*! @brief Gets current thread status.
 	 * @return current status
 	 */
@@ -198,29 +196,33 @@ public:
 	inline void setStatus( Status status ) { m_status = status; };
 	
 	inline Pointer<IVirtualMemoryMap> getVMM() { return m_virtualMap; }
+	
+	/*! @brief Sets my thread_t identifier. */
+	thread_t registerWithScheduler();
 
 protected:
-	void* m_stack;	                           /*!< that's my stack            */
-	void* m_stackTop;                          /*!< top of my stack            */
-	void* m_otherStackTop;
-	void* m_ret;
-	unsigned int m_stackSize;                  /*!< size of my stack           */
+	void*  m_stack;                            /*!< that's my stack            */
+	void*  m_stackTop;                         /*!< top of my stack            */
+	void*  m_otherStackTop;                    /*!< may switch to this stack   */
+	void*  m_ret;                              /*!< return value               */
+	size_t m_stackSize;                        /*!< size of my stack           */
 	Process*  m_process;                       /*!< my process                 */
 
 	bool m_detached;                           /*!< detached flag              */
 	Status m_status;                           /*!< my status                  */
 	thread_t m_id;	                           /*!< my id                      */
-	Thread* m_follower;                        /*!< someone waiting            */
+	Thread* m_follower;                        /*!< someone waiting for me     */
+	Thread* m_joinTarget;                      /*!< I'm waiting for this       */
 	Pointer<IVirtualMemoryMap> m_virtualMap;   /*!< @brief Virtual Memory Map. */
 
 private:
 	Thread( const Thread& other );              /*!< no copying   */
 	Thread& operator = ( const Thread& other ); /*!< no assigning */
 
+	bool deactivate();
+
+	friend class Process;
 };
 
 template class ListInsertable<Thread>; 
 template class HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>;
-
-typedef List<Thread *> ThreadList;
-

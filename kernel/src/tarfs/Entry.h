@@ -41,7 +41,6 @@ class Entry
 {
 public:
 	Entry(DiskDevice* storage): m_storage( storage ) {};
-	virtual size_t size() const = 0;
 	virtual ssize_t read( void* buffer, int size ) = 0;
 	virtual uint seek( FilePos pos, int offset ) = 0;
 	virtual bool open( const char mode ) { return false; };

@@ -33,14 +33,13 @@
  */
 
 #include "api.h"
+#include "Process.h"
 #include "flags.h"
 #include "proc/UserThread.h"
 #include "tools.h"
-#include "proc/Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
-#include "Process.h"
-#include "Kernel.h"
+#include "synchronization/Event.h"
 
 //#define PROCESS_DEBUG
 
@@ -53,25 +52,11 @@
 #endif
 
 
-Process* Process::create( const char* filename )
+Process* Process::create( const char* image, size_t size )
 {
 	InterruptDisabler inter;
 
 	PRINT_DEBUG ("Creating process.\n");
-	VFS* fs = KERNEL.rootFS();
-	file_t bin_file = fs->openFile( filename, OPEN_R );
-
-	if (bin_file < 0) {
-		PRINT_DEBUG ("Failed to open file %d.\n", bin_file);
-		return 0;
-	}
-
-	const size_t file_size = fs->sizeFile( bin_file );
-
-	if (file_size == 0) {
-		PRINT_DEBUG ("File is empty.\n");
-		return 0;
-	}
 
 	void * (*start)(void*) = (void*(*)(void*))0x1000000;
 
@@ -86,7 +71,7 @@ Process* Process::create( const char* filename )
 	}
 
 	/* Getting id might fail */
-	if (!Scheduler::instance().getId( main )) {
+	if (! main->registerWithScheduler()) {
 		PRINT_DEBUG ("Getting ID failed.\n");
 		delete main;
 		return 0;
@@ -100,7 +85,7 @@ Process* Process::create( const char* filename )
 
 
 	/* Space allocation may fail. */
-	if (vmm->allocate( (void**)&start, roundUp( file_size, Processor::pages[Processor::PAGE_MIN].size ), flags ) != EOK) {
+	if (vmm->allocate( (void**)&start, roundUp( size, Processor::pages[Processor::PAGE_MIN].size ), flags ) != EOK) {
 		PRINT_DEBUG ("Main area allocation failed.\n");
 		delete main;
 		return 0;
@@ -110,12 +95,8 @@ Process* Process::create( const char* filename )
 	ASSERT (old_vmm);
 	ASSERT (old_vmm != vmm);
 
-	char* place = (char*)malloc( file_size );
-	fs->readFile( bin_file, place, file_size );
 
-	old_vmm->copyTo( place, vmm, (void*)start, file_size );
-
-	free(place);
+	old_vmm->copyTo( image, vmm, (void*)start, size );
 
 	Process* me = new Process();
 	me->m_mainThread = main;
@@ -124,15 +105,45 @@ Process* Process::create( const char* filename )
 	return me;
 }
 /*----------------------------------------------------------------------------*/
+void Process::clearEvents()
+{
+	PRINT_DEBUG ("Clearing used events: %u.\n", eventTable.map().size());
+	const uint list_count = eventTable.map().getArraySize();
+	for (uint i = 0; i < list_count; ++i)
+	{
+		List< Pair<event_t, Event*> >* list =	eventTable.map().getList( i );
+		List< Pair<event_t, Event*> >::Iterator it;
+		ASSERT (list);
+		for (it = list->begin(); it != list->end(); ++it) {
+			if (it->second) {//don't fire dummy event
+				PRINT_DEBUG ("Found event FIRING.\n");
+				it->second->fire();
+			}
+			delete it->second;
+		}
+		list->clear();
+	}
+	PRINT_DEBUG ("Events cleared.\n");
+}
+/*----------------------------------------------------------------------------*/
+void Process::clearThreads()
+{
+	PRINT_DEBUG ("Clearing process threads.\n");
+	m_mainThread->deactivate() || m_mainThread->kill();
+	
+	UserThreadList::Iterator it;
+	for ( it = m_list.begin(); it != m_list.end(); ++it )
+	{
+		(*it)->deactivate() || (*it)->kill();
+	}
+	m_list.clear();
+	PRINT_DEBUG ("Threads cleared");
+}
+/*----------------------------------------------------------------------------*/
 void Process::exit()
 {
-	m_mainThread->kill();
-	for ( UserThreadList::Iterator it = m_list.begin(); it != m_list.end(); ++it)
-	{
-		Thread::Status st = (*it)->status();
-		if (st != Thread::KILLED && st != Thread::FINISHED)
-			(*it)->kill();
-	}
+	//clearEvents();
+	clearThreads();
 }
 /*----------------------------------------------------------------------------*/
 Process* Process::getCurrent()
@@ -161,7 +172,7 @@ UserThread* Process::addThread( thread_t* thread_ptr,
     return NULL;
   }
 
-  *thread_ptr = Scheduler::instance().getId( new_thread );
+  *thread_ptr =  new_thread->registerWithScheduler();
   if (!(*thread_ptr)) { //id space allocation failed
     delete new_thread;
     return NULL;
@@ -174,7 +185,7 @@ UserThread* Process::addThread( thread_t* thread_ptr,
 	m_list.pushBack( storage );
 	new_thread->m_process = this;
   new_thread->resume();
-	PRINT_DEBUG ("New thread added to the process and scheduler.\n");
+	PRINT_DEBUG ("New thread added to the process and scheduler %u.\n", new_thread->id());
 	return new_thread;
 }
 /*----------------------------------------------------------------------------*/

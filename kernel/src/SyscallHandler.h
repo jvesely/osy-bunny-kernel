@@ -25,87 +25,41 @@
 
 /*!
  * @file
- * @brief Short description.
+ * @brief SyscallHandler class declaration.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but
- * at least people can understand it.
+ * SyscallHandler class is a class that stores handling routines and
+ * calls them when necessary.
  */
 #pragma once
 #include "drivers/Processor.h"
 #include "ExceptionHandler.h"
 #include "syscallcodes.h"
 
-
+/*!
+ * @class SyscallHandler SyscallHandler.h "SyscallHandler.h"
+ * @brief Syscall handling class.
+ *
+ * Stores handling routines in the vector, identifies Syscall and
+ * calls appropriate routine. As syscall is one of the expcetions
+ * SyscallHandler implements ExceptionHandler interface.
+ */
 class SyscallHandler: public ExceptionHandler
 {
 public:
+	/*!
+	 * @brief Constructs handling vector.
+	 */
 	SyscallHandler();
+
+	/*!
+	 * @brief Handles Exception.
+	 * @param registers Stored context of the thread that caused the exception.
+	 * @return @a true if handler to the identified syscall was found and called, 
+	 * 	@a false otherwise.
+	 */
 	bool handleException( Processor::Context* registers );
 
 private:
-
-	unative_t m_call;
-	unative_t m_params[4];
-	unative_t (SyscallHandler::*m_handles[SYS_COUNT])(void);
-
-	unative_t handlePuts();
-	unative_t handleGets();
-	unative_t handleExit();
-
-	unative_t handleThreadCreate();
-	unative_t handleThreadJoin();
-	unative_t handleThreadSleep();
-	unative_t handleThreadYield();
-	unative_t handleThreadSuspend();
-	unative_t handleThreadWakeup();
-	unative_t handleThreadSelf();
-	unative_t handleThreadDetach();
-	unative_t handleThreadCancel();
-	unative_t handleThreadExit();
-
-	unative_t handleEventInit();
-	unative_t handleEventWait();
-	unative_t handleEventWaitTimeout();
-	unative_t handleEventFire();
-	unative_t handleEventDestroy();
-
-	/** @brief vma alloc syscall handler
-	*
-	*	Because in user space are page sizes unknown, this call differs from kernel vma_alloc.
-	*	This syscall accepts not-alligned size and returns alligned size in (*size).
-	*	@param from pointer to return pointer
-	*	@param size pointer to required size
-	*	@param flags standart vma_alloc flags (see api.h in /kernel/src)
-	*	@return result of vma_alloc(see api.h)
-	*	@note This function accepts unalligned size.
-	*/
-	unative_t handleVMAAlloc();
-
-	/** @brief vma free syscall
-	*
-	*	Standart vma_free behaviour. For more details see /kernel/api.h
-	*	vma_free specification.
-	*	@return result of vma_free(see api.h)
-	*/
-	unative_t handleVMAFree();
-
-	/** @brief vma resize syscall
-	*
-	*	Because in user space are page sizes unknown, this call differs from kernel vma_resize.
-	*	This function accepts not-alligned size and returns alligned size in (*size).
-	*	@param from pointer to resized vma
-	*	@param size pointer to new size
-	*	@return result of vma_alloc(see api.h)
-	*	@note This function accepts unalligned size.
-	*/
-	unative_t handleVMAResize();
-
-
-	/** @brief get current time for user mode
-	*
-	*	Just a syscall wrapper for Time::getCurrentTime()
-	*/
-	unative_t handleGetTime();
-
+	/*! @brief Syscall handling vector. */
+	unative_t (*m_handles[SYS_COUNT])(unative_t par[]);
 };

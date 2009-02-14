@@ -32,6 +32,7 @@
  * at least people can understand it.
  */
 
+#include "api.h"
 #include "TarFS.h"
 #include "TarHeader.h"
 #include "FileEntry.h"
@@ -116,7 +117,6 @@ void TarFS::closeFile( file_t file )
 {
 	Entry* entry = getFile( file );
 	if (entry) entry->close();
-
 }
 /*----------------------------------------------------------------------------*/
 ssize_t TarFS::readFile( file_t src, void* buffer, size_t size )
@@ -133,19 +133,12 @@ uint TarFS::seekFile( file_t file, FilePos pos, int offset )
 	Entry* entry = getFile( file );
 	if (entry)
 		return entry->seek( pos, offset );
-	return 0;
+	return EIO;
 }
 /*----------------------------------------------------------------------------*/
 bool TarFS::existsFile( file_t file )
 {
 	return (bool) getFile( file );
-}
-/*----------------------------------------------------------------------------*/
-size_t TarFS::sizeFile( file_t file )
-{
-	Entry* entry = getFile( file );
-	if (entry) return entry->size();
-		else     return 0;
 }
 /*----------------------------------------------------------------------------*/
 bool TarFS::eof( file_t file )

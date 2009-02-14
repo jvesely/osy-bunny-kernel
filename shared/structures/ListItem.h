@@ -33,7 +33,9 @@
  */
 
 #pragma once
-//#include "api.h"
+
+#include "types.h"
+#include "api.h"
 //------------------------------------------------------------------------------
 /** @brief element in doubly-linked list
 *	@note type T must have defined: ctor, dtor, cpy-ctor, operator == and !=

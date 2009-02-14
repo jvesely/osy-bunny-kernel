@@ -62,15 +62,14 @@
 	printf("[ ALLOCATOR_DEBUG_VMA_RESIZE ]: "); \
 	printf(ARGS);
 #endif
+
+
 //------------------------------------------------------------------------------
 UserMemoryAllocator::UserMemoryAllocator():
 BasicMemoryAllocator()
 {
 	m_chunkResizingEnabled = true;
 }
-
-
-
 //------------------------------------------------------------------------------
 void* UserMemoryAllocator::getMemory( size_t amount )
 {
@@ -83,7 +82,6 @@ void UserMemoryAllocator::freeMemory( const void* address )
 	SpinlockLocker locker(&m_lock);
 	return this->BasicMemoryAllocator::freeMemory( address );
 }
-
 //------------------------------------------------------------------------------
 void * UserMemoryAllocator::getNewChunk(size_t * finalSize)
 {

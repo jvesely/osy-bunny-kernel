@@ -32,7 +32,6 @@
 
 #include "api.h"
 #include "KernelThread.h"
-#include "Scheduler.h"
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "timer/Timer.h"
@@ -98,7 +97,7 @@ Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*)
 		return NULL;
 	}
 
-	*thread_ptr = SCHEDULER.getId(new_thread);
+	*thread_ptr = new_thread->registerWithScheduler();
 	if (!(*thread_ptr)) { //id space allocation failed
 		delete new_thread;
 		return NULL;
@@ -110,5 +109,5 @@ Thread* KernelThread::create( thread_t* thread_ptr, void* (*thread_start)(void*)
 
 KernelThread::~KernelThread()
 {
-	PRINT_DEBUG ("Thread %d dying.\n", m_id);
+	PRINT_DEBUG ("Thread %u dying.\n", m_id);
 }

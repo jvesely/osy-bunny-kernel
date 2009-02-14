@@ -35,8 +35,6 @@
 #include "Timer.h"
 #include "Kernel.h"
 #include "InterruptDisabler.h"
-#include "proc/Thread.h"
-#include "proc/Scheduler.h"
 
 //#define TIMER_DEBUG
 
@@ -76,7 +74,7 @@ void Timer::plan(Thread* thread, const Time& time)
 		PRINT_DEBUG ("Replanning interupt to time: %u:%u.\n", 
 			thread->key().secs(), thread->key().usecs());
 
-		Kernel::instance().setTimeInterrupt( thread->key() );
+		KERNEL.setTimeInterrupt( thread->key() );
 	}
 
 	PRINT_DEBUG ("Pending events: %u.\n %s\n", 
@@ -106,7 +104,7 @@ void Timer::handleInterrupt()
 			ASSERT (thr == Thread::getCurrent());
 			PRINT_DEBUG ("Timer to replan thread %u.\n", thr->id());
 			thr->removeFromHeap();
-			Scheduler::instance().m_shouldSwitch = true;
+			Thread::requestSwitch();
 		} else {
 			/* Other thread might have only requested waking up */
 			ASSERT (thr->status() != Thread::READY);
@@ -122,7 +120,7 @@ void Timer::handleInterrupt()
 
 	PRINT_DEBUG ("Next event in %u,%u.\n", nextEvent.secs(), nextEvent.usecs());
 
-	Kernel::instance().setTimeInterrupt(nextEvent);
+	KERNEL.setTimeInterrupt( nextEvent );
 
 	PRINT_DEBUG ("=====================INTERRUPT END==================\n");
 }

@@ -41,7 +41,7 @@ typedef List<Thread *> ThreadList;
 class Event
 {
 public:
-	inline Event() {};
+	Event();
 	~Event();
 
 	void wait();
@@ -61,7 +61,7 @@ private:
 	ThreadList m_list;
 };
 
-
+/*----------------------------------------------------------------------------*/
 inline bool Event::waiting()
 {
 	return !m_list.empty();

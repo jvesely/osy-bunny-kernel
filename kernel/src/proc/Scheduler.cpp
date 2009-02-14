@@ -46,44 +46,11 @@
 	printf(ARGS);
 #endif
 
-//const Time Scheduler::DEFAULT_QUANTUM(0, 20000);
 /*----------------------------------------------------------------------------*/
-Scheduler::Scheduler(): m_threadMap(61), m_currentThread(NULL)
+Scheduler::Scheduler():ThreadMap( 61 )
 {
-	/* create idle thread */
-	m_idle = &KERNEL; //new IdleThread();
+	m_idle = &KERNEL;
 	m_currentThread = &KERNEL;
-	/* reserve thread_t 0 to be out of the reach for other threads */
-	m_threadMap.insert(0, NULL);
-
-	/* idle thread must be created successfully */
-	ASSERT (m_idle->status() == Thread::INITIALIZED);
-}
-/*----------------------------------------------------------------------------*/
-thread_t Scheduler::getId( Thread* newThread )
-{
-	/* there has to be free id becasue if all were occupied, than
-	 * the system would have thread at every byte of adressable memory,
-	 * but the next variable and the parameter take up 8 bytes
-	 * (and even more is used by the rest of the kernel),
-	 * thus there must be a free id
-	 */
-	thread_t id = m_nextThreadId++;
-
-	/* if it is taken repeat */
-	int result;
-	while ( !id || (result = m_threadMap.insert(id, newThread)) == EINVAL) {
-		PRINT_DEBUG("ID %u already in use getting new one.\n", id);
-		id = m_nextThreadId++;
-	}
-
-	if (result == ENOMEM)
-		return 0;
-
-	/* set the id to the thread */
-	newThread->setId(id);
-
-	return id;
 }
 /*----------------------------------------------------------------------------*/
 Thread* Scheduler::nextThread()

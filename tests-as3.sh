@@ -40,10 +40,10 @@ for TEST in \
 	tests/as3/uspace2/test.c \
 	tests/as3/uspace3/test.c \
 	; do
-	emake distclean || fail "Cleanup before compilation"
-	emake "USER_TEST=$TEST" || fail "Compilation"
+#	emake distclean || fail "Cleanup before compilation"
+	emake -j3 "USER_TEST=$TEST" || fail "Compilation"
 	msim
-	emake distclean "USER_TEST=$TEST" || fail "Cleanup after compilation"
+#	emake distclean "USER_TEST=$TEST" || fail "Cleanup after compilation"
 done
 
 echo " *** Non-interactive tests ***"
@@ -57,12 +57,12 @@ for TEST in \
 	tests/as3/mutex4/test.c \
 	tests/as3/malloc1/test.c \
 	; do
-	emake distclean || fail "Cleanup before compilation"
-	emake "USER_TEST=$TEST" || fail "Compilation"
+#	emake distclean || fail "Cleanup before compilation"
+	emake -j3 "USER_TEST=$TEST" || fail "Compilation"
 	msim | tee test.log || fail "Execution"
 	grep '^Test passed\.\.\.$' test.log > /dev/null || fail "Test $TEST"
 	rm -f test.log
-	emake distclean "USER_TEST=$TEST" || fail "Cleanup after compilation"
+#	emake distclean "USER_TEST=$TEST" || fail "Cleanup after compilation"
 done
 
 echo

@@ -42,12 +42,14 @@ class InnerString: public Object
 public:
 	inline InnerString( const char* text );
 	inline ~InnerString();
-	inline const char* data() const { return m_text; }
-	//InnerString& operator = ( char* text );
+	inline const char*  data() const { return m_text; }
+	inline size_t size() const { return m_size; }
+
 private:
 	InnerString( const InnerString& other );
 	InnerString& operator = ( InnerString& other );
-	char* m_text;
+	char*  m_text;
+	size_t m_size;
 };
 /*----------------------------------------------------------------------------*/
 inline InnerString::InnerString( const char* text )
@@ -58,6 +60,7 @@ inline InnerString::InnerString( const char* text )
 	}
 	ASSERT (text);
 	for ( count = 0; text[count]; ++count ) {};
+	m_size = count;
 	++count; /* count the last \0 */
 	m_text = (char*)malloc( count );
 	memcpy( m_text, text, count );

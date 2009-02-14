@@ -50,17 +50,18 @@ typedef unsigned long uint32_t;
 typedef signed long long int64_t;
 typedef unsigned long long uint64_t;
 
-typedef int32_t native_t;
+typedef int32_t  native_t;
 typedef uint32_t unative_t;
 typedef uint32_t uintptr_t;
 typedef uint32_t off_t;
 typedef uint32_t size_t;
-typedef int32_t ssize_t;
+typedef int32_t  ssize_t;
 
 typedef uint32_t thread_t;
 typedef uint32_t ipl_t;
 typedef uint32_t mtx_id_t;
 typedef uint32_t event_t;
+typedef uint32_t process_t;
 
 typedef unsigned int uint;
 

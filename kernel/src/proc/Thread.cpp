@@ -36,6 +36,7 @@
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "timer/Timer.h"
+#include "proc/ThreadCollector.h"
 
 //#define THREAD_DEBUG
 
@@ -44,7 +45,7 @@
 #else
 #define PRINT_DEBUG(ARGS...) \
   printf("[ THREAD_DEBUG ]: "); \
-  printf(ARGS);
+  printf(ARGS)
 #endif
 
 
@@ -70,11 +71,16 @@ bool Thread::shouldSwitch()
 	return SCHEDULER.m_shouldSwitch;
 }
 /*----------------------------------------------------------------------------*/
+void Thread::requestSwitch()
+{
+	SCHEDULER.m_shouldSwitch = true;
+}
+/*----------------------------------------------------------------------------*/
 Thread::Thread( uint stackSize ):
 	ListInsertable<Thread>(),
 	HeapInsertable<Thread, Time, THREAD_HEAP_CHILDREN>(), m_otherStackTop( NULL ),
 	m_stackSize( stackSize ),	m_detached( false ), m_status( UNINITIALIZED ),
-	m_id( 0 ), m_follower( NULL ), m_virtualMap( NULL )
+	m_id( 0 ), m_follower( NULL ), m_joinTarget( NULL ), m_virtualMap( NULL )
 {
 	if (!m_stackSize) return;
 	/* Alloc stack */
@@ -112,27 +118,21 @@ void Thread::switchTo()
 {
 	InterruptDisabler interrupts;
 
+	ASSERT (this); 
+
 	PRINT_DEBUG ("Switching to thread %u.\n", m_id);
 
 	static const Time DEFAULT_QUANTUM(0, 20000);
 
 	Thread* old_thread = getCurrent();
-	void** old_stack = NULL;
+
+	ASSERT ( old_thread );
+	
+	void** old_stack = &(old_thread->m_stackTop);
 	void** new_stack = &m_stackTop;
 
-	if ( old_thread ) {
-		if ((old_thread->status() == KILLED || old_thread->status() == FINISHED)
-			&& old_thread->m_detached)
-		{
-			delete old_thread;
-			old_thread = NULL;
-		} else {
-			if (old_thread->status() == RUNNING)
-				old_thread->setStatus( READY );
-
-			old_stack = &old_thread->m_stackTop;
-		}
-	}
+	if (old_thread->status() == RUNNING)
+		old_thread->setStatus( READY );
 
 	setStatus( RUNNING );
 
@@ -148,30 +148,34 @@ void Thread::switchTo()
 		IVirtualMemoryMap::switchOff();
 	}
 
+	/* plan my end if I'm not the idle thread */
 	if (this != SCHEDULER.m_idle) {
 		PRINT_DEBUG ("Planning preemptive strike for thread %u, quantum %u:%u.\n",
-			m_id, DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
-		Timer::instance().plan( this, DEFAULT_QUANTUM );
+			id(), DEFAULT_QUANTUM.secs(), DEFAULT_QUANTUM.usecs());
+		TIMER.plan( this, DEFAULT_QUANTUM );
 	}
 
 	PRINT_DEBUG ("Switching stacks: %p, %p.\n", old_stack, new_stack);
 
 	Processor::switch_cpu_context( old_stack, new_stack );
+
+	PRINT_DEBUG ("Thread %u, cleaning inactive.\n", id());
+	THREAD_BIN.clean();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::yield()
 {
 	InterruptDisabler inter;
-	PRINT_DEBUG ("Yielding thread %u.\n", m_id);
+	PRINT_DEBUG ("Yielding thread %u.\n", id());
 
 	/* voluntary yield should remove me from the Timer */
-	if (m_status == RUNNING) {
-		PRINT_DEBUG ("Removed from heap during yield. (%u)\n", m_id);
+	if (status() == RUNNING) {
+		PRINT_DEBUG ("Removed from heap during yield. (%u)\n", id());
 		removeFromHeap();
 	}
 
 	/* switch to the next thread */
-	getNext()->switchTo();
+	Thread::getNext()->switchTo();
 }
 /*----------------------------------------------------------------------------*/
 void Thread::alarm( const Time& alarm_time )
@@ -205,14 +209,12 @@ void Thread::sleep( const Time& interval)
 void Thread::suspend()
 {
 	/* may only suspend self */
-	ASSERT (m_status == RUNNING);
-
-	/* WAITING indicates that I have to waken by another thread */
-	m_status = WAITING;
-
-	PRINT_DEBUG ("Thread %u suspended.\n", m_id);
+	ASSERT (status() == RUNNING);
+	PRINT_DEBUG ("Thread %u suspending.\n", m_id);
 
 	block();
+	/* WAITING indicates that I have to waken by another thread */
+	m_status = WAITING;
 
 	/* surrender processor */
 	yield();
@@ -261,12 +263,9 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	if (others_status == KILLED || others_status == FINISHED) {
 		PRINT_DEBUG ("Thread %u(%p) joined %s thread %u.\n",
 			m_id, this, (others_status == KILLED)? "KILLED" : "FINISHED", thread->m_id);
-		delete thread;
+		thread->deactivate();
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
-
-	/* set the joining stuff */
-	thread->m_follower = this;
 
 	if ( timed ) {
 		alarm( wait_time );
@@ -275,16 +274,26 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 		block();
 	}
 
-	m_status = JOINING;
-  yield();
+	/* set the joining stuff */
+	thread->m_follower = this;
+	m_status           = JOINING;
+	m_joinTarget       = thread;
+
+	yield();
+
+	ASSERT (thread == m_joinTarget);
+
+	thread->m_follower = NULL;
+	m_joinTarget = NULL;
 
 	others_status = thread->status();
+
 	/* Woken by the death of the thread (either timed or untimed) */
 	if ( (others_status == FINISHED) || (others_status == KILLED))
 	{
 		PRINT_DEBUG ("Thread %u joined thread %u %s.\n", m_id, thread->m_id, timed ? "TIMED" : "");
 		if (retval) *retval = thread->m_ret;
-		delete thread;
+		thread->deactivate();
 		return (others_status == KILLED) ? EKILLED : EOK;
 	}
 
@@ -293,7 +302,6 @@ int Thread::join( Thread* thread, void** retval, bool timed, const Time& wait_ti
 	PRINT_DEBUG ("Thread %u joining thread %u timedout.\n", m_id, thread->m_id);
 
 	/* I'm no longer waiting for his death */
-	thread->m_follower = NULL;
 	return ETIMEDOUT;
 }
 /*----------------------------------------------------------------------------*/
@@ -317,14 +325,14 @@ void Thread::resume()
 	SCHEDULER.enqueue( this );
 }
 /*----------------------------------------------------------------------------*/
-void Thread::kill()
+bool Thread::kill()
 {
 	InterruptDisabler inter;
 
 	/* only active threads can be killed */
 	if ( status() != READY  && status() != BLOCKED && status() != RUNNING) {
 		PRINT_DEBUG ("Thread %u cannot be killed its status is %u\n", id(), status());
-		return;
+		return false;
 	}
 
 	m_status = KILLED;
@@ -341,13 +349,12 @@ void Thread::kill()
 	/* remove from both timer and scheduler */
 	block();
 
-
 	if (Thread::getCurrent() == this) {
 		SCHEDULER.m_shouldSwitch = true;
 	} else {
-	/* detached threads are removed immediately after they finish execution*/
-		if (m_detached) delete this;
+		if (m_detached) deactivate();
 	}
+	return true;
 }
 /*----------------------------------------------------------------------------*/
 void Thread::exit( void* return_value  )
@@ -360,11 +367,39 @@ void Thread::exit( void* return_value  )
 		m_status = FINISHED;
 }
 /*----------------------------------------------------------------------------*/
+bool Thread::deactivate()
+{
+	if (m_follower) return false; //cannot be deleted while i'm followed
+
+	PRINT_DEBUG ("Deactivating thread %u(%p).\n", m_id, this);
+
+	if (m_joinTarget)
+	{
+		PRINT_DEBUG ("FOUND Join target: %p.\n", m_joinTarget);
+		m_joinTarget->m_follower = NULL;
+		m_joinTarget = NULL;
+	}
+	
+	m_status = UNINITIALIZED;
+	THREAD_BIN.add( this );
+	SCHEDULER.returnId( m_id );
+	m_id = 0;
+	PRINT_DEBUG("Deactivating done.\n");
+	return true;
+}
+/*----------------------------------------------------------------------------*/
+thread_t Thread::registerWithScheduler()
+{
+	return m_id = SCHEDULER.getFreeId( this );
+}
+/*----------------------------------------------------------------------------*/
 Thread::~Thread()
 {
-	PRINT_DEBUG ("Thread %u erased from the world.\n", m_id);
-	free(m_stack);
+	PRINT_DEBUG ("Thread %p erased from the world.===\n", this);
 	if ( m_id ) {
+		PRINT_DEBUG ("Returning id %d.\n", m_id);
 		SCHEDULER.returnId( m_id );
 	}
+	PRINT_DEBUG ("Freeing stack.\n");
+	free(m_stack);
 }

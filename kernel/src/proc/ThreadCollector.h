@@ -33,30 +33,43 @@
  */
 
 #pragma once
-#include "TarHeader.h"
-#include "Entry.h"
+#include "Singleton.h"
+#include "structures/List.h"
+#include "api.h"
 
-class DiskDevice;
+class Thread;
+typedef List<Thread*> ThreadList;
 
-class FileEntry: public Entry
+
+class ThreadCollector: public Singleton<ThreadCollector>
 {
 public:
-	FileEntry( TarHeader& tarHeader, uint block, DiskDevice* disk );
-	ssize_t read( void* buffer, int size );
-	uint seek( FilePos pos, int offset );
-	bool open( const char mode );
-	void close();
-	~FileEntry();
-		
+	inline void add( Thread* thread)
+		{ thread->append(&m_list); }
+
+	inline void clean();
+
 private:
-	uint m_uid;
-	uint m_gid;
-	uint m_size;
-	uint m_startPos;
-	uint m_modTime;
-	uint m_readCount;
-	uint m_pos;
-		
-	FileEntry( const FileEntry& );
-	FileEntry& operator = ( const FileEntry& );
+	ThreadList m_list;
+
+	ThreadCollector() {};
+	ThreadCollector( const ThreadCollector& );
+	ThreadCollector& operator = ( const ThreadCollector& );
+
+	friend class Singleton<ThreadCollector>;
 };
+
+
+inline void ThreadCollector::clean()
+{
+//	printf("Clean: Collector count: %u.\n", m_list.size());
+	while (!m_list.empty()) { 
+		ListItem<Thread*>* item = m_list.getFront();
+		ASSERT (item && (item == item->data()));
+		delete item;
+	}
+//	printf("Clean: Collector count: %u.\n", m_list.size());
+}
+/*----------------------------------------------------------------------------*/
+
+#define THREAD_BIN ThreadCollector::instance()

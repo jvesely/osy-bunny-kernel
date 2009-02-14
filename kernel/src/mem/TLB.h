@@ -72,7 +72,7 @@ public:
 	 * @return @a true if translation was found and inserrted into the TLB
 	 * 		@a false otherwise.
 	 */
-	bool refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr, const bool hit );
+	bool refill( Pointer<IVirtualMemoryMap> vmm, native_t bad_addr );
 
 	/*! @brief Creates mapping from virtual to physical memory in the TLB..
 	 *
@@ -84,7 +84,6 @@ public:
 	 * 	the destination.
 	 * @param page_size Use page of this size.
 	 * @param asid Create entry using this ASID.
-	 * @param global Say true if you wish to make the mapping accessible to all.
 	 */
 	void setMapping(
 		const uintptr_t virtual_address, const uintptr_t physical_address, 

@@ -63,7 +63,22 @@ void* first_thread(void* data)
 		KERNEL.halt();
 	}
 
-	Process* main_proc = Process::create( file );
+	file_t first_proc = fs->openFile( file, OPEN_R );
+	
+	if (first_proc < 0) {
+		printf("Open file failed.\n");
+		KERNEL.halt();
+	}
+
+	const size_t file_size = fs->seekFile( first_proc, POS_END, 0 );
+	fs->seekFile( first_proc, POS_START, 0 );
+
+	char* image = (char*)malloc(file_size);
+	fs->readFile( first_proc, image, file_size );
+
+	Process* main_proc = Process::create( image, file_size );
+	free(image);
+
 	if (main_proc) {
 		printf( "Joining process: %s.\n", file );
 		Thread::getCurrent()->join( main_proc->mainThread(), NULL );
@@ -72,19 +87,5 @@ void* first_thread(void* data)
 	}
 	KERNEL.halt();	
 
-
-	file_t bin_file = fs->openFile( file, OPEN_R );
-	if (bin_file < 0) {
-		printf("Failed to open file: %s.\n", file);
-		KERNEL.halt();
-	}
-	size_t filesize = fs->sizeFile( bin_file );
-	printf( "Reading from file %s of size %u.\n", file, filesize );
-	char* content = (char*)malloc( filesize + 1 );
-	content[filesize] = 0;
-	fs->readFile( bin_file, content, filesize );
-	printf( "Contents: %s.\n", content );
-
-	KERNEL.halt();
 	return NULL;
 }
