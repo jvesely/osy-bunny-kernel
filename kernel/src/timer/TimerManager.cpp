@@ -32,7 +32,8 @@
  * at least people can understand it.
  */
 
-#include <timer/TimerManager.h>
+#include "api.h"
+#include "timer/TimerManager.h"
 
 //------------------------------------------------------------------------------
 TimerManager::TimerManager():
