@@ -280,9 +280,16 @@ int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec) {
 
 /*----------------------------------------------------------------------------*/
 
-void mutex_unlock(struct mutex *mtx) {
+void mutex_unlock_safe(struct mutex *mtx) {
 	ASSERT(mtx != NULL);
-	((Mutex *)mtx)->unlock();
+	((Mutex *)mtx)->unlock(true);
+}
+
+/*----------------------------------------------------------------------------*/
+
+void mutex_unlock_unsafe(struct mutex *mtx) {
+	ASSERT(mtx != NULL);
+	((Mutex *)mtx)->unlock(false);
 }
 
 //------------------------------------------------------------------------------

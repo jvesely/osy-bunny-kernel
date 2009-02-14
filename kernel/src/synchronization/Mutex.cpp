@@ -67,14 +67,6 @@ Mutex::~Mutex()
 {
 	InterruptDisabler lock;
 
-#ifdef DEBUG_MUTEX
-	// check if being unlocked by the locking thread
-	if (m_locked && m_locked != Thread::getCurrent()->id()) {
-		panic("Lock at %x being destroyed by thread %u while still locked by thread %u!\n",
-			this, Thread::getCurrent()->id(), m_locked);
-	}
-#endif
-
 	// if there is a waiting list created, check if empty and remove it or panic if not empty
 	if (m_waitingList.size() != 0) {
 		panic("Lock at %x being destroyed by thread %u while there are still locked threads waiting for it!\n",
@@ -161,7 +153,7 @@ int Mutex::lockTimeout(const Time time)
 
 /* --------------------------------------------------------------------- */
 
-void Mutex::unlock()
+void Mutex::unlock(bool safe)
 {
 	PRINT_DEBUG("[MUTEX] Unlock on mutex %p from thread %u. Waitinglist size before unlock: %u.\n",
 		this, Thread::getCurrent()->id(), m_waitingList.size());
@@ -169,13 +161,13 @@ void Mutex::unlock()
 	// disable interrupts
 	InterruptDisabler lock;
 
-#ifdef DEBUG_MUTEX
-	// check if being unlocked by the locking thread
-	if (m_locked != Thread::getCurrent()->id()) {
-		panic("Lock at %x being unlocked by thread %u while still locked by thread %u!\n",
-			this, Thread::getCurrent()->id(), m_locked);
+	if (safe) {
+		// check if being unlocked by the locking thread
+		if (m_locked != Thread::getCurrent()->id()) {
+			panic("Lock at %x being unlocked by thread %u while still locked by thread %u!\n",
+				this, Thread::getCurrent()->id(), m_locked);
+		}
 	}
-#endif
 
 	if (m_waitingList.size() != 0) {
 		// if the waiting list is not empty, unblock the first waiting thread

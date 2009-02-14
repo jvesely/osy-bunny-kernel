@@ -80,8 +80,11 @@ public:
 
 	/**
 	 * Unlock the mutex.
+	 *
+	 * @param safe Whether to check if the mutex is being unlocked by the owner
+	 * (locking thread). Default is true.
 	 */
-	void unlock();
+	void unlock(bool safe = true);
 
 private:
 	/**
