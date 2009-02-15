@@ -156,10 +156,10 @@ void Kernel::run()
 
 		// init frame allocator
 
-		MyFrameAllocator::instance().init( 
+		FrameAllocator::instance().init( 
 			m_physicalMemorySize, ((uintptr_t)&_kernel_end + total_stacks) );
 
-		ASSERT (MyFrameAllocator::instance().isInitialized());
+		ASSERT (FrameAllocator::instance().isInitialized());
 
 		attachDisks();
 	}
