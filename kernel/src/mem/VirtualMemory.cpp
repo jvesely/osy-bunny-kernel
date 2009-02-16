@@ -217,11 +217,13 @@ int VirtualMemory::resize(const void* from, const size_t size)
 		}
 	}
 
+	// call resize on the specific VM Area
+	int result = const_cast<VirtualMemoryArea&>(entry->data()).resize(size);
+
 	// clear the TLB
 	freed();
 
-	// call resize on the specific VM Area
-	return const_cast<VirtualMemoryArea&>(entry->data()).resize(size);
+	return result;
 }
 
 /* --------------------------------------------------------------------- */

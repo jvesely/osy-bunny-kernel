@@ -197,9 +197,6 @@ int VirtualMemoryArea::allocateAtKUSeg(const void* virtualAddress, const size_t 
 		frameType = addressAlignedFor;
 	}
 
-	// force 4K pages
-	//frameType = PAGE_MIN;
-
 	// new and old values the frameAlloc function changes
 	void* address = NULL;
 	size_t newCount = 0, oldCount = 0;
