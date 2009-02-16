@@ -229,6 +229,7 @@ int copy_to_thread( const thread_t thr,
 /* --------------------------------------------------------------------- */
 
 /**
+ * @typedef mutex mutex_t
  * @struct mutex api.h "api.h"
  * @brief Sructure for mutex (mutual exclusion).
  *
@@ -330,7 +331,8 @@ int timer_pending(struct timer *tmr);
 /* --------------------------------------------------------------------- */
 
 /**
- * @struct semaphore_t api.h "api.h"
+ * @typedef semaphore semaphore_t
+ * @struct semaphore api.h "api.h"
  * @brief Semaphore class placeholder for C code.
  */
 typedef struct semaphore {
@@ -350,7 +352,8 @@ int sem_down_timeout(semaphore_t* s, const unsigned int usec);
 /* --------------------------------------------------------------------- */
 
 /**
- * @struct spinlock_t api.h "api.h"
+ * @typedef spinlock spinlock_t
+ * @struct spinlock api.h "api.h"
  * @brief Spinlock class placeholder for C code.
  */
 typedef struct spinlock {
