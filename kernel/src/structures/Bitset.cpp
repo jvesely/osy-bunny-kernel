@@ -44,8 +44,8 @@
 #define PRINT_DEBUG(...)
 #else
 #define PRINT_DEBUG(ARGS...) \
-  printf("[ BITSET DEBUG ]: "); \
-  printf(ARGS);
+	printf("[ BITSET DEBUG ]: "); \
+	printf(ARGS);
 #endif
 
 
@@ -314,7 +314,7 @@ size_t Bitset::full(const size_t from, size_t enough) const {
 
 	size_t count = Bitset::BITS;
 
-	// if the  first element is the last one
+	// if the first element is the last one
 	if (ptr >= (m_begin + m_elements - 1)) {
 		count = ((m_size & Bitset::MOD_MASK) == 0)
 			? Bitset::BITS - bit
