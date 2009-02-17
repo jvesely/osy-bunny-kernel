@@ -25,11 +25,9 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Virtual memory.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Virtual memory map contains the tree where the VMAs are stored.
  */
 
 #pragma once
@@ -41,14 +39,23 @@
 #include "mem/IVirtualMemoryMap.h"
 #include "drivers/Processor.h"
 
+/**
+ * @typedef
+ * @brief Virtual memory map is implemented as splay tree of VMAs.
+ */
 typedef Trees<VirtualMemoryArea>::SplayTree VirtualMemoryMap;
+
+/**
+ * @typedef
+ * @brief Virtual memory map entry is a splay binary node of VMAs.
+ */
 typedef SplayBinaryNode<VirtualMemoryArea> VirtualMemoryMapEntry;
 
 /**
  * @class VirtualMemory VirtualMemory.h "mem/VirtualMemory.h"
  * @brief Virtual memory.
  *
- * Virtual memory.
+ * Virtual memory map contains the tree where the VMAs are stored.
  */
 class VirtualMemory: public IVirtualMemoryMap
 {
@@ -66,13 +73,36 @@ public:
 	// translate fnc
 	bool translate(void*& address, Processor::PageSize& frameSize);
 
+	/**
+	 * Dump the tree of VMAs. This dump is called always when TLB asks
+	 * for a non existent address translation.
+	 *
+	 * @note If VMA_NDEBUG is defined, dump is quiet.
+	 */
 	void dump();
 
 protected:
+	/**
+	 * Check if the requested block (range) is free.
+	 *
+	 * @param from Address where to start the check.
+	 * @param size How many bytes do we want to check.
+	 * @return Wheter the given block is free.
+	 */
 	bool isFree(const void* from, const size_t size);
+
+	/**
+	 * Calculate the first free address aligned to frameType of the given size after
+	 * the given address from.
+	 *
+	 * @param from The address where to start the search (in/out parameter).
+	 * @param size The requested size of the free block.
+	 * @param frameType Alignment request for the found address.
+	 */
 	void getFreeAddress(void*& from, const size_t size, Processor::PageSize frameType);
 
 private:
+	/** Tree of the virtual memory map. */
 	VirtualMemoryMap m_virtualMemoryMap;
 
 };
