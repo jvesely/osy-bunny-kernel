@@ -53,12 +53,6 @@
  * or of a type derived from HeapInsertable<@a T, @a Key, @a Children>.
  *
  * @note Obviously Heap accepts multiple equal items.
- *
- * @todo Add functions to insert pure data into the heap. The heap will then 
- * create a new HeapItem and store it. In this case, the destructor should
- * delete all items or only those inserted this way (maybe use some flag on
- * the items and in detructor, pop all items out and according to the flag
- * either delete it or not). 
  */
 template <class T, int Children> 
 class Heap
