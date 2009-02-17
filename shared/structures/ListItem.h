@@ -184,11 +184,11 @@ public:
 
 private:
 
-	/**< @brief data */
+	/** @brief data */
 	T m_data;
-	/**< @brief previous item in list */
+	/** @brief previous item in list */
 	ListItem<T> * m_prev;
-	/**< @brief next item in list */
+	/** @brief next item in list */
 	ListItem<T> * m_next;
 
 

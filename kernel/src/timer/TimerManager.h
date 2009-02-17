@@ -180,7 +180,6 @@ protected:
 	*	Events are inserted (and sometimes removed - see destroyTimer) by other threads,
 	*	removed by this thread when they are executed.
 	*/
-	//List<ClassTimer*> m_activeEvents;
 	eventHeap m_hactiveEvents;
 
 
@@ -189,7 +188,6 @@ protected:
 	*	Events in this list have already occured, but have not been executed yet.
 	*	They are ready to be executed.
 	*/
-	//List<ClassTimer*> m_readyEvents;
 	eventHeap m_hreadyEvents;
 
 
