@@ -24,27 +24,21 @@ ifneq ($(USER_TEST),)
 	OBJS      += $(USER_TEST)
 endif
 
-# Define DEBUG_MUTEX for mutex5 test
-#ifneq (, $(findstring mutex5,$(KERNEL_TEST)))
-#	CPPFLAGS += -DDEBUG_MUTEX
-#	CFLAGS   += -DDEBUG_MUTEX
-#endif
-
 OBJS := $(addsuffix .o, $(basename $(notdir $(OBJS))))
 BINS := $(addprefix $(BIN_DIR)/, $(addsuffix .bin, $(basename $(OBJS))))
 
-.PRECIOUS: $(OBJ_DIR)/%.o $(BIN_DIR)/%.raw
+#### preserve rw file (nedded by som utils like objdump)
+.PRECIOUS: $(BIN_DIR)/%.raw
 
 ### Rules ###
 .PHONY: apps
-apps: depend $(BINS)
+apps: Makefile.depend $(BINS)
 
 ### Dependencies ###
 DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -I $(INC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
 
-.PHONY: depend
-depend:
-	@touch $(addprefix ../, $(USER_TEST)) /dev/null
+.PHONY: Makefile.depend
+Makefile.depend:
 	@$(DEPEND) > Makefile.depend
 #	@echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
 

@@ -220,10 +220,10 @@ void thread_yield( void );
 void thread_suspend( void );
 
 /*!
- * @brief Start scheduling thread for execution again.
+ * @brief Starts scheduling thread for execution again.
  *
- * @param thr thread to be woken up.
- * @retval EINVAL if @thr is not a valid thread id.
+ * @param thr Thread to be woken up.
+ * @retval EINVAL if @a thr is not a valid id of a suspended thread.
  * @retval EOK otherwise.
  */
 int thread_wakeup( thread_t thr );

@@ -193,12 +193,20 @@ void thread_yield();
  */
 void thread_suspend();
 
-/*! Start scheduling thread for execution again.
- * @param thr thread to wake up.
+/*! @brief Starts scheduling thread for execution again.
+ *
+ * @param  thr Thread using this id will be woken.
+ * @return EINVAL if no thread with correspodning id exists, EOK if successfull.
  */
 int thread_wakeup(thread_t thr);
 
-/*! Kills thread. If the thread is detached it will be destroyed. Attached
+/*! @brief Kills thread. 
+ *
+ * @param thr Thread with this id will be killed.
+ * @retval EINVAL No thread with the given id exists, or it cannot be killed.
+ * @retval EOK Thread was sucessfully killed.
+ *
+ * If the thread is detached it will be destroyed. Attached
  * threads will stop executing and won't be scheduled, but will remain in
  * the memory until ... .
  */
