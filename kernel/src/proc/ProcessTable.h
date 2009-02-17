@@ -34,35 +34,14 @@
 
 #pragma once
 
-#include "proc/KernelThread.h"
+#include "Singleton.h"
+#include "structures/IdMap.h"
+#include "types.h"
 
-/*!
- * @class UserThread UserThread.h "proc/UserThread.h"
- * @brief Thread class with stack in USEG segment.
- *
- * Runs given function in separate thread, stack is mapped through 
- * virtual memory.
- * TODO: switch to userspace before executing function
- */
-class UserThread: public KernelThread
+class Process;
+
+class ProcessTable: public Singleton<ProcessTable>, public IdMap<process_t, Process*>
 {
-	virtual void switchTo();
-private:
-	void* m_userstack;
-	void* m_runData2;
-
-	UserThread();
-	UserThread( const UserThread& other );
-	const UserThread& operator = ( const UserThread& other );
-
-	void run();
-	~UserThread();
-
-	/*!
-	 * @brief Prepares stack and initial context.
-	 */
-	UserThread( void* (*func)(void*), void* data, void* data2, void* stack_pos,
-		native_t flags = 0, uint stackSize = DEFAULT_STACK_SIZE );
-
-	friend class Process;
 };
+
+#define PIDTable ProcessTable::instance()

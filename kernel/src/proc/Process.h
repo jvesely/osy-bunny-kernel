@@ -38,10 +38,12 @@
 #include "structures/List.h"
 #include "structures/IdMap.h"
 
-class Thread;
-class UserThread;
-class Event;
-class Process;
+class  Thread;
+class  UserThread;
+class  Event;
+class  Process;
+class  Time;
+struct ProcessInfo;
 
 template class List<UserThread*>;
 template class IdMap<event_t, Event*>;
@@ -49,7 +51,6 @@ template class IdMap<process_t, Process*>;
 
 typedef List<UserThread*>          UserThreadList;
 typedef IdMap<event_t, Event*>     EventTable;
-typedef IdMap<process_t, Process*> ProcessTable;
 
 class Process
 {
@@ -63,9 +64,10 @@ public:
 	bool removeThread( UserThread* );
 	void exit();
 	inline process_t id() { return m_id; }
+	void waitFor( const Time * time );
+	void setActiveThread( thread_t );
 
 	EventTable eventTable;
-	
 
 	static Process* getCurrent();
 
@@ -73,7 +75,9 @@ private:
 	UserThread* m_mainThread;
 	UserThreadList m_list;
 
-	process_t m_id;
+	process_t     m_id;
+	ProcessInfo * m_info;
+
 
 	Process(){};
 	void clearEvents();

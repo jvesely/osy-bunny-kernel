@@ -127,7 +127,7 @@ public:
 	 * Saves context of the currentThread() on its stack 
 	 * and loads new context from the Threads stack.
 	 */
-	void switchTo();
+	virtual void switchTo();
 
 	/*! @brief Stops execution of the current thread and switches to the next. */
 	void yield();

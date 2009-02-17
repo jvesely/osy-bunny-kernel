@@ -40,8 +40,10 @@
 #include "InterruptDisabler.h"
 #include "address.h"
 #include "synchronization/Event.h"
+#include "ProcessInfo.h"
+#include "ProcessTable.h"
 
-//#define PROCESS_DEBUG
+#define PROCESS_DEBUG
 
 #ifndef PROCESS_DEBUG
 #define PRINT_DEBUG(...)
@@ -59,22 +61,24 @@ Process* Process::create( const char* image, size_t size )
 	PRINT_DEBUG ("Creating process.\n");
 
 	void * (*start)(void*) = (void*(*)(void*))0x1000000;
+	const size_t request = roundUp( size + sizeof(ProcessInfo), Processor::pages[Processor::PAGE_MIN].size );
+	ProcessInfo * info   = (ProcessInfo*)((char*)&start + request - sizeof(ProcessInfo));
 
 	UserThread* main = new UserThread(
-		start, NULL, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
+		start, info, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
 
 	/* Thread creation might have failed. */
 	if (main == NULL || (main->status() != Thread::INITIALIZED)) {
 		PRINT_DEBUG ("Main thread creation failed %p.\n", main);
 		delete main;
-		return 0;
+		return NULL;
 	}
 
 	/* Getting id might fail */
 	if (! main->registerWithScheduler()) {
 		PRINT_DEBUG ("Getting ID failed.\n");
 		delete main;
-		return 0;
+		return NULL;
 	}
 
 	Pointer<IVirtualMemoryMap> vmm = main->getVMM();
@@ -85,10 +89,10 @@ Process* Process::create( const char* image, size_t size )
 
 
 	/* Space allocation may fail. */
-	if (vmm->allocate( (void**)&start, roundUp( size, Processor::pages[Processor::PAGE_MIN].size ), flags ) != EOK) {
+	if (vmm->allocate( (void**)&start, request, flags ) != EOK) {
 		PRINT_DEBUG ("Main area allocation failed.\n");
 		delete main;
-		return 0;
+		return NULL;
 	}
 
 	Pointer<IVirtualMemoryMap> old_vmm = IVirtualMemoryMap::getCurrent();
@@ -98,11 +102,28 @@ Process* Process::create( const char* image, size_t size )
 
 	old_vmm->copyTo( image, vmm, (void*)start, size );
 
-	Process* me = new Process();
+	Process* me  = new Process();
+	me->m_id     = PIDTable.getFreeId( me );
+
+	if (!me->m_id){
+		delete me;
+		delete main;
+		return NULL;
+	}
+
 	me->m_mainThread = main;
 	me->m_mainThread->resume();
 	me->m_mainThread->m_process = me;
+	me->m_info = info;
+	me->m_info->PID = me->m_id;
+	PRINT_DEBUG ("Created process, info at %p.\n", info);
 	return me;
+}
+/*----------------------------------------------------------------------------*/
+void Process::setActiveThread( thread_t thread )
+{
+	m_info->RunningThread = thread;
+	PRINT_DEBUG ("Setting active thread for process %u: %u.(%u,%u)\n", m_id, thread, m_info->PID, m_info->RunningThread);
 }
 /*----------------------------------------------------------------------------*/
 void Process::clearEvents()

@@ -84,6 +84,12 @@ UserThread::~UserThread()
 	m_process->removeThread( this );
 }
 /*----------------------------------------------------------------------------*/
+void UserThread::switchTo()
+{
+	m_process->setActiveThread( m_id );
+	this->Thread::switchTo();
+}
+/*----------------------------------------------------------------------------*/
 extern "C" void switch_to_usermode(void*, void*, void*(*)(void*), void*);
 void UserThread::run()
 {
