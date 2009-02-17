@@ -43,6 +43,7 @@ for TEST in \
 #	emake distclean || fail "Cleanup before compilation"
 	emake -j3 "USER_TEST=$TEST" || fail "Compilation"
 	msim
+	emake clean-apps
 #	emake distclean "USER_TEST=$TEST" || fail "Cleanup after compilation"
 done
 
@@ -62,6 +63,7 @@ for TEST in \
 	msim | tee test.log || fail "Execution"
 	grep '^Test passed\.\.\.$' test.log > /dev/null || fail "Test $TEST"
 	rm -f test.log
+	emake clean-apps
 #	emake distclean "USER_TEST=$TEST" || fail "Cleanup after compilation"
 done
 

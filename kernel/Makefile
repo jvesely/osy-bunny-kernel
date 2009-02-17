@@ -18,10 +18,9 @@ LDS_FILE   = ../shared/kernel.lds
 TEST_DIRS = 
 
 ifneq ($(KERNEL_TEST),)
-	OBJS      += $(addprefix ../, $(KERNEL_TEST))
 	CPPFLAGS  += -DKERNEL_TEST
 	CFLAGS    += -DKERNEL_TEST
-	TEST_DIRS += $(dir $(addprefix ../, $(KERNEL_TEST)))
+	TEST_DIRS  = $(sort $(dir $(addprefix ../, $(KERNEL_TEST))))
 	SRC_DIRS  += $(TEST_DIRS)
 	VPATH     += $(TEST_DIRS)
 endif
@@ -39,9 +38,9 @@ DEPEND = $(CC) $(addprefix -I ,$(INC_DIRS)) -MM $(SRC_FILES)   2>/dev/null | sed
 
 Makefile.depend: $(OBJS)
 	@$(DEPEND) > Makefile.depend
-#	@echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
+#	@echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS) "|" $(SRC_FILES)
 
-OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SRC_FILES)))))
+OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SRC_FILES)))))
 
 
 ### Rules ###
