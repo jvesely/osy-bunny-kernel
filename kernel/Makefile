@@ -31,19 +31,11 @@ ifneq ($(USER_TEST),)
 	CFLAGS   += -DUSER_TEST
 endif
 
-# Define DEBUG_MUTEX for mutex5 test
-ifneq (, $(findstring mutex5,$(KERNEL_TEST)))
-	CPPFLAGS += -DDEBUG_MUTEX
-	CFLAGS   += -DDEBUG_MUTEX
-endif
-
 ### Dependencies ###
 DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -I $(INC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
 
-.PHONY: Makefile.depend
 
 Makefile.depend: $(OBJS)
-	@touch $(addprefix ../, $(KERNEL_TEST)) /dev/null
 	@$(DEPEND) > Makefile.depend
 #	@echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
 
@@ -60,6 +52,8 @@ $(BIN_DIR)/$(KERNEL_BIN): $(BIN_DIR)/$(KERNEL_RAW)
 $(BIN_DIR)/$(KERNEL_RAW): Makefile.depend $(OBJS) $(INC_DIR)/$(LDS_FILE)
 	@echo -e "$(COL_WHITE)Linking kernel RAW image...$(COL_YELLOW)$@$(COL_END) <-- $(COL_CYAN)$(OBJS)$(COL_END)"
 	@$(LD) $(LDFLAGS) -T $(INC_DIR)/$(LDS_FILE) -Map $(BIN_DIR)/$(KERNEL_MAP) -o $@ $(OBJS)
+
+.PHONY: Makefile.depend
 
 -include Makefile.depend
 .SUFFIXES:
