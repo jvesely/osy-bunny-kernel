@@ -39,6 +39,12 @@
 #define PAGE_SIZE  (1 << 13)
 #define FRAME_SIZE PAGE_SIZE
 
+// assignment 1 asks to check DEBUG_MUTEX to greater or equal value than 1
+#if DEBUG_MUTEX >= 1
+	#define mutex_unlock mutex_unlock_safe
+#else
+	#define mutex_unlock mutex_unlock_unsafe
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -223,6 +229,7 @@ int copy_to_thread( const thread_t thr,
 /* --------------------------------------------------------------------- */
 
 /**
+ * @typedef mutex mutex_t
  * @struct mutex api.h "api.h"
  * @brief Sructure for mutex (mutual exclusion).
  *
@@ -235,7 +242,6 @@ typedef struct mutex {
 } mutex_t;
 
 /**
- * Wrapper to MutexManager member function.
  * Initialize the given mutex struct (to unlocked state).
  *
  * @param mtx Mutex struct to initialize.
@@ -243,7 +249,6 @@ typedef struct mutex {
 void mutex_init(struct mutex *mtx);
 
 /**
- * Wrapper to MutexManager member function.
  * Destroy the given mutex struct. Remove it from all kernel structures.
  * If there are any locked threads on this mutex, destroy will cause panic.
  *
@@ -252,7 +257,6 @@ void mutex_init(struct mutex *mtx);
 void mutex_destroy(struct mutex *mtx);
 
 /**
- * Wrapper to MutexManager member function.
  * Lock the given mutex. If the mutex is already locked, blocks untill it is unlocked.
  *
  * @param mtx Mutex to lock.
@@ -260,7 +264,6 @@ void mutex_destroy(struct mutex *mtx);
 void mutex_lock(struct mutex *mtx);
 
 /**
- * Wrapper to MutexManager member function.
  * Lock the given mutex, but don't let it take more than the given timelimit in microseconds.
  *
  * @param mtx Mutex to lock within time limit.
@@ -269,12 +272,18 @@ void mutex_lock(struct mutex *mtx);
 int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec);
 
 /**
- * Wrapper to MutexManager member function.
- * Unlock the mutex.
+ * Unlock the mutex and check if it's being unlocked by the thread which locked it.
  *
  * @param mtx Mutex struct to unlock.
  */
-void mutex_unlock(struct mutex *mtx);
+void mutex_unlock_safe(struct mutex *mtx);
+
+/**
+ * Unlock the mutex and don't check the owner.
+ *
+ * @param mtx Mutex struct to unlock.
+ */
+void mutex_unlock_unsafe(struct mutex *mtx);
 
 //------------------------------------------------------------------------------
 /** @brief struct of timer
@@ -322,7 +331,8 @@ int timer_pending(struct timer *tmr);
 /* --------------------------------------------------------------------- */
 
 /**
- * @struct semaphore_t api.h "api.h"
+ * @typedef semaphore semaphore_t
+ * @struct semaphore api.h "api.h"
  * @brief Semaphore class placeholder for C code.
  */
 typedef struct semaphore {
@@ -342,7 +352,8 @@ int sem_down_timeout(semaphore_t* s, const unsigned int usec);
 /* --------------------------------------------------------------------- */
 
 /**
- * @struct spinlock_t api.h "api.h"
+ * @typedef spinlock spinlock_t
+ * @struct spinlock api.h "api.h"
  * @brief Spinlock class placeholder for C code.
  */
 typedef struct spinlock {

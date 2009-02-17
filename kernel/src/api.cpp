@@ -280,9 +280,16 @@ int mutex_lock_timeout(struct mutex *mtx, const unsigned int usec) {
 
 /*----------------------------------------------------------------------------*/
 
-void mutex_unlock(struct mutex *mtx) {
+void mutex_unlock_safe(struct mutex *mtx) {
 	ASSERT(mtx != NULL);
-	((Mutex *)mtx)->unlock();
+	((Mutex *)mtx)->unlock(true);
+}
+
+/*----------------------------------------------------------------------------*/
+
+void mutex_unlock_unsafe(struct mutex *mtx) {
+	ASSERT(mtx != NULL);
+	((Mutex *)mtx)->unlock(false);
 }
 
 //------------------------------------------------------------------------------
@@ -374,7 +381,7 @@ int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags)
 	if (cnt == 0)
 		return ENOMEM;
 
-	if (MyFrameAllocator::instance().frameAlloc(paddr, cnt, Processor::pages[Processor::PAGE_MIN].size, flags) < cnt)
+	if (FrameAllocator::instance().frameAlloc(paddr, cnt, Processor::PAGE_MIN, flags) < cnt)
 		return ENOMEM;
 	
 	return EOK;
@@ -385,7 +392,7 @@ int frame_free(const void *paddr, const size_t cnt)
 	if (cnt == 0)
 		return ENOMEM;
 
-	if (!MyFrameAllocator::instance().frameFree(paddr, cnt, Processor::pages[Processor::PAGE_MIN].size))
+	if (!FrameAllocator::instance().frameFree(paddr, cnt, Processor::PAGE_MIN))
 		return ENOMEM;
 
 	return EOK;

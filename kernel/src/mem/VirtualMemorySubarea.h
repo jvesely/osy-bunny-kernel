@@ -25,11 +25,9 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief Virtual memory subarea.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * Virtual memory subarea is a part of virtual memory area.
  */
 
 #pragma once
@@ -48,27 +46,85 @@
 class VirtualMemorySubarea : public ListInsertable<VirtualMemorySubarea>
 {
 public:
+	/**
+	 * Create and initialize the virtual memory subarea.
+	 *
+	 * @param physicalAddress Physical address of the subarea.
+	 * @param frameType Frame (page) size (enum value).
+	 * @param frameCount Count of the subsequent frames.
+	 */
 	VirtualMemorySubarea(const void* physicalAddress, 
 		const Processor::PageSize frameType, const size_t frameCount)
 		: m_physicalAddress(physicalAddress), m_frameType(frameType), m_frameCount(frameCount)
 	{}
 
+	/**
+	 * Get the size of the subarea in bytes.
+	 *
+	 * @return Size in bytes.
+	 */
 	inline size_t size() const;
+
+	/**
+	 * Get the frame size used in the subarea in bytes.
+	 *
+	 * @return Size of the used frames in bytes.
+	 */
 	inline size_t frameSize() const;
+
+	/**
+	 * Get the physical address of the subarea.
+	 *
+	 * @param index Offset. Address of which block we want (default is 0).
+	 * @return The address of the physical block.
+	 */
 	inline void* address(size_t index = 0) const;
 
+	/**
+	 * Get the frame size (enum value) used in the subarea.
+	 *
+	 * @return Type of the used frames.
+	 */
 	inline Processor::PageSize frameType() const;
 
+	/**
+	 * Reduce the subarea to the given size.
+	 *
+	 * @param newSize The new size of the subarea.
+	 * @return Whether the reduction was successful.
+	 */
 	bool reduce(const size_t newSize);
+
+	/**
+	 * Cut of the end of the subarea to stay the given size.
+	 *
+	 * @param newSize The new size of the subarea. After this size will be the
+	 *   rest cut off.
+	 * @return The rest of the subarea (part after the given size).
+	 */
 	VirtualMemorySubarea* split(const size_t newSize);
 
+	/**
+	 * Free the physical memory.
+	 */
 	void free();
 
+	/**
+	 * Change used frame type in the subarea and recalculate the count.
+	 *
+	 * @param newFrameType The new frame (page) type (enum value).
+	 * @return Whether the conversion was successful.
+	 */
 	bool frameType(const Processor::PageSize newFrameType);
 
 private:
+	/** Physical address. */
 	const void* m_physicalAddress;
+
+	/** Frame (page) type used in the subarea. */
 	Processor::PageSize m_frameType;
+
+	/** Count of the subsequent frames. */
 	size_t m_frameCount;
 
 };

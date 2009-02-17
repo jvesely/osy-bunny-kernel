@@ -68,7 +68,7 @@ bool VirtualMemorySubarea::reduce(const size_t newSize)
 	m_frameCount -= freeCount;
 
 	// free the unnecessary frames in the end of the block
-	MyFrameAllocator::instance().frameFree(freeFrom, freeCount, frameSize());
+	FrameAllocator::instance().frameFree(freeFrom, freeCount, frameType());
 
 	return true;
 }
@@ -101,7 +101,7 @@ VirtualMemorySubarea* VirtualMemorySubarea::split(const size_t newSize)
 void VirtualMemorySubarea::free()
 {
 	// free the physical memory
-	MyFrameAllocator::instance().frameFree(m_physicalAddress, m_frameCount, frameSize());
+	FrameAllocator::instance().frameFree(m_physicalAddress, m_frameCount, frameType());
 }
 
 /* --------------------------------------------------------------------- */

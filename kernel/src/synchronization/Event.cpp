@@ -25,11 +25,7 @@
 
 /*!
  * @file
- * @brief Short description.
- *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but
- * at least people can understand it.
+ * @brief Class Event declaration - the simplest synchronization primitive.
  */
 
 #include "api.h"
@@ -47,16 +43,22 @@
 	printf(ARGS);
 #endif
 
+/*----------------------------------------------------------------------------*/
+
 Event::Event()
 {
 	PRINT_DEBUG ("Event created at address %x.\n", this);
 }
+
 /*----------------------------------------------------------------------------*/
+
 Event::~Event()
 {
 	ASSERT(m_list.empty());
 }
+
 /*----------------------------------------------------------------------------*/
+
 void Event::wait()
 {
 	InterruptDisabler interrupts;
@@ -67,15 +69,14 @@ void Event::wait()
 
 	thr->yield();
 }
+
 /*----------------------------------------------------------------------------*/
+
 void Event::waitTimeout( const Time& timeout )
 {
 	InterruptDisabler interrupts;
-	PRINT_DEBUG("Event::waitTimeout() started...Waiting for %u usecs\n", timeout.toUsecs());
-/*
-	if (timeout == Time(0, 0))
-		return;
-*/
+	PRINT_DEBUG("Event::waitTimeout() started...Waiting for %u usecs\n", 
+		timeout.toUsecs());
 
 	Thread* thr = Thread::getCurrent();
 	thr->alarm(timeout);
@@ -84,7 +85,9 @@ void Event::waitTimeout( const Time& timeout )
 	thr->yield();
 	PRINT_DEBUG("Event::waitTimeout() finished.\n");
 }
+
 /*----------------------------------------------------------------------------*/
+
 void Event::fire()
 {
 	InterruptDisabler interrupts;

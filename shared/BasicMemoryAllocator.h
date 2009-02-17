@@ -38,6 +38,7 @@
 #pragma once
 #include "structures/SimpleList.h"
 #include "types.h"
+
 //------------------------------------------------------------------------------
 /*	debug/no debug setting
 *
@@ -48,6 +49,12 @@
 *	during allocation/deallocation.
 */
 //#define BMA_DEBUG
+
+#ifdef BMA_DEBUG
+
+#include "synchronization/Spinlock.h"
+
+#endif
 
 
 //------------------------------------------------------------------------------
@@ -78,7 +85,8 @@ public:
 
 	/** @brief default size of newly allocated memory from frame allocator
 	*
-	*	1/2 MB
+	*	This ammount and it`s multiples is received and returned
+	*	to frame/vma allocator.	Is of size 1/2 MB.
 	*/
 	static const size_t DEFAULT_SIZE = 1024 * 512;
 
@@ -87,9 +95,9 @@ public:
 	*	Allocator will not return physical/vitual memory to frame/vma allocator,
 	*	if size of free blocks is less than this value.
 	*
-	*	1/4 MB
+	*	1/2 MB
 	*/
-	static const size_t MIN_FREE_SIZE = 1024 * 256;
+	static const size_t MIN_FREE_SIZE = 1024 * 512;
 
 	//forward declaration
 	class BlockFooter;
@@ -849,11 +857,18 @@ protected:
 
 
 #ifdef BMA_DEBUG
-	/** @brief debug variable substituting lock
+	/** @brief debug variable
 	*
 	*	Is used for debug purposes.
 	*/
-	int m_mylock;
+	int m_debug;
+
+	/** @brief debug lock
+	*
+	*	Used to lock access to m_mylock
+	*/
+	Spinlock m_debugLock;
+
 #endif
 };
 

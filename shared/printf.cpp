@@ -33,31 +33,31 @@
  */
 
 #include "types.h"
+#include "putc_a.h"
 
-extern "C" size_t putc(const char c);
-extern "C" size_t puts(const char * str);
+extern "C" size_t puts( const char * str );
 
 /*! prints number as unsigned decimal
  * @param number number to be printed
  * @return number of printed decimal digits
  */
-static size_t print_udecimal( uint32_t number)
+inline size_t print_udecimal( uint32_t number )
 {
   /* too many digits for the reverting algorithm */
   if ( number > ( (uint)(-1) / 10 ))
-    return print_udecimal( number / 10) + putc( number % 10 + '0');
+    return print_udecimal( number / 10) + putc_a( number % 10 + '0');
   uint32_t reverse;
   int size;
   size_t count = 0;
   if (number == 0)
-    return putc('0');
-  for(size = reverse = 0; number != 0;++size){
+    return putc_a('0');
+  for(size = reverse = 0; number != 0; ++size){
     reverse *= 10;
     reverse += number % 10;
     number /= 10;
   }
-  for (;size;reverse/=10,--size)
-    count += putc('0' + reverse % 10);
+  for (; size; reverse/=10, --size)
+    count += putc_a('0' + reverse % 10);
 
   return count;
 };
@@ -67,10 +67,10 @@ static size_t print_udecimal( uint32_t number)
  * @return number of printed decimal digits (+ sign)
  */
 
-static size_t print_decimal(const int32_t number)
+inline size_t print_decimal( const int32_t number )
 {
   if (number < 0){
-    return putc('-') + print_udecimal(-number);
+    return putc_a('-') + print_udecimal(-number);
   }
   return print_udecimal(number);
 
@@ -81,12 +81,12 @@ static size_t print_decimal(const int32_t number)
  * @param align set to @a true to ouput leading zeros
  * @return number of printed hexadigits
  */
-static size_t print_hexa(uint32_t number, bool align)
+inline size_t print_hexa( uint32_t number, bool align )
 {
   puts("0x");
   size_t count = 2;
   if(number == 0 && !align)
-    return putc('0') + count;
+    return putc_a('0') + count;
   size_t size;
   uint32_t reverse;
   for (size = reverse = 0; number != 0 ; ++size){
@@ -95,14 +95,28 @@ static size_t print_hexa(uint32_t number, bool align)
     number /= 16;
   }
   for (uint i = 8; align && i > size ; --i)
-      count += putc('0');
+      count += putc_a('0');
   int res;
-  for(;size;--size,reverse/=16)
+  for(; size; --size, reverse /= 16)
     if((res = reverse % 16) >= 10)
-      count += putc('a' + res%10);
+      count += putc_a('a' + res % 10);
     else
-      count += putc('0' + res);
+      count += putc_a('0' + res);
   return count;
+}
+/*----------------------------------------------------------------------------*/
+/*! prints string
+ * @param str string to be printed
+ * @return number of printed characters
+ */
+inline size_t print_string( const char* str )
+{
+	size_t count = 0;
+	char* pos = (char*)str;
+	while (*pos != '\0') {
+		count += putc_a(*(pos++));
+	}
+	return count;
 }
 /*----------------------------------------------------------------------------*/
 /*! printk prints formated string on the console.
@@ -118,17 +132,17 @@ static size_t print_hexa(uint32_t number, bool align)
  * @param args list of variables used in format
  * @return number of printed chars
  */
-size_t vprintf(const char * format, va_list args)
+size_t vprintf( const char * format, va_list args )
 {
   bool align = false;
   size_t count = 0;
   while (*format) {
     if (*format == '%') {
       switch (*(format + 1)) {
-        case 'c': count += putc(va_arg(args, int));
+        case 'c': count += putc_a(va_arg(args, int));
                   ++format;
                   break;
-        case 's': count += puts(va_arg(args, const char*));
+        case 's': count += print_string(va_arg(args, const char*));
                   ++format;
                   break;
         case 'i':
@@ -145,17 +159,17 @@ size_t vprintf(const char * format, va_list args)
                   ++format;
                   break;
         default:
-          count += putc('%');
+          count += putc_a('%');
       }
     }else
-      count += putc(*format);
+      count += putc_a(*format);
     ++format;
   }
   return count;
 }
 /*----------------------------------------------------------------------------*/
 extern "C"
-size_t printf(const char * format, ...)
+size_t printf( const char * format, ... )
 {
   if (!format) return 0;
 

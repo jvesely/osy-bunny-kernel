@@ -43,26 +43,119 @@
 /**
  * @class Memory Memory.h "mem/Memory.h"
  * @brief Function definition for memory related checks and operations.
+ * @note This could be implemented as namespace instead of a class full
+ *   of static member functions.
  */
 class Memory
 {
 public:
+	/**
+	 * Alignment check for address.
+	 *
+	 * @note Wrapper to the same function with size as parameter.
+	 * @param address The address to be checked.
+	 * @param pageType The page size (enum value) to check the address alignment.
+	 * @return Whether the address is aligned.
+	 */
 	static bool isAligned(const void* address, const Processor::PageSize pageType);
+
+	/**
+	 * Alignment check for size.
+	 *
+	 * @param size The size to be checked.
+	 * @param pageType The page size (enum value) to check the size alignment.
+	 * @return Whether the size is aligned.
+	 */
 	static bool isAligned(const size_t size, const Processor::PageSize pageType);
 
+	/**
+	 * Calculate address alignment.
+	 *
+	 * @note Wrapper to the same function with size as parameter.
+	 * @param address Address to examine.
+	 * @return The largest page size (enum value) the address is aligned to.
+	 */
 	static Processor::PageSize isAligned(const void* address);
+
+	/**
+	 * Calculate size alignment.
+	 *
+	 * @param size Size to examine.
+	 * @return The largest page size (enum value) the size is aligned to.
+	 */
 	static Processor::PageSize isAligned(const size_t size);
 
+	/**
+	 * Align the address to a bigger page size than it is aligned (align up).
+	 *
+	 * @note Uses the general alignUp() function.
+	 * @param address Reference to the address to be aligned (in/out parameter).
+	 * @param pageType The page size (enum value) to align the address to.
+	 * @return Whether the alignment was successfull. It can fail, if the new
+	 *   address is in a different memory segment.
+	 */
 	static bool alignUp(void*& address, const Processor::PageSize pageType);
+
+	/**
+	 * Return the largest possible frame size that is smaller than the given size.
+	 *
+	 * @param size The size to be checked.
+	 * @return The largest page size (enum value) smaller than the block.
+	 */
 	static Processor::PageSize getBiggestPage(const size_t size);
 
+	/**
+	 * Check if the given address is in the given range.
+	 *
+	 * @param address Any address.
+	 * @param from The lower bound of the range to be checked.
+	 * @param size The size of the range. The upper bound is calculated as from + size.
+	 * @return Whether the address is greater or equals than from and is less than from + size.
+	 */
 	static bool isInRange(const void* address, const void* from, const size_t size);
 
+	/**
+	 * Get the frame (page) size in bytes. Conversion from the PageSize enum to bytes.
+	 *
+	 * @param pageType The page size enum value.
+	 * @return The real size in bytes.
+	 */
 	static size_t frameSize(Processor::PageSize pageType);
 
+	/**
+	 * Check if the size fits to the segment.
+	 *
+	 * @param size Size to check the segment for.
+	 * @param segment Segment identification (defined as VF_AT_* in flags.h).
+	 * @return Whether the segment is big enough.
+	 */
 	static bool checkSizeInSegment(const size_t size, const unsigned int segment);
+
+	/**
+	 * Check if the given block (range) starts and ends in the same segment.
+	 *
+	 * @param address The starting address of the block.
+	 * @param size The size of the block.
+	 * @return Whether the block stays in one segment.
+	 */
 	static bool checkSegment(const void* address, const size_t size);
+
+	/**
+	 * Return the segment the given address belongs to.
+	 *
+	 * @param address The address to check.
+	 * @return Segment identifier (defined as VF_AT_* in flags.h) in which is the address.
+	 */
 	static unsigned int getSegment(const void* address);
+
+	/**
+	 * Returns the first usable address in the given segment.
+	 *
+	 * @note It is not always the starting address of the segment due to convetion
+	 *   never start VMA at address 0 if not requested so.
+	 * @param segment Segment identification (defined as VF_AT_* in flags.h).
+	 * @return The first usable address in the segment.
+	 */
 	static void* getAddressInSegment(const unsigned int segment);
 };
 
@@ -172,7 +265,7 @@ inline bool Memory::checkSizeInSegment(const size_t size, const unsigned int seg
 			return size < (~0 - ADDR_PREFIX_KSEG3);
 
 		default:
-			ASSERT(NULL == "Bad segment identifier!");
+			ASSERT(!"Bad segment identifier!");
 			return false;
 	}
 }
@@ -236,7 +329,7 @@ inline void* Memory::getAddressInSegment(const unsigned int segment)
 			return (void *)ADDR_PREFIX_KSEG3;
 
 		default:
-			ASSERT(NULL == "Bad segment identifier!");
+			ASSERT(!"Bad segment identifier!");
 			return NULL;
 	}
 }

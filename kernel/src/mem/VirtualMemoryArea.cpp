@@ -132,8 +132,8 @@ int VirtualMemoryArea::allocateAtKSegAddr(const void* address, const size_t size
 	size_t count = size / Memory::frameSize(frameType);
 
 	// allocate one piece of memory at address
-	if (MyFrameAllocator::instance().allocateAtAddress(
-		(void *)ADDR_OFFSET((size_t)address), count, Memory::frameSize(frameType)
+	if (FrameAllocator::instance().allocateAtAddress(
+		(void *)ADDR_OFFSET((size_t)address), count, frameType
 		) < count)
 	{
 		return ENOMEM;
@@ -161,8 +161,8 @@ int VirtualMemoryArea::allocateAtKSegAuto()
 	size_t count = m_size / Memory::frameSize(frameType);
 
 	// allocate one piece of memory (anywhere)
-	if (MyFrameAllocator::instance().allocateAtKseg0(
-		&address, count, Memory::frameSize(frameType)) < count) {
+	if (FrameAllocator::instance().allocateAtKseg0(
+		&address, count, frameType) < count) {
 		return ENOMEM;
 	}
 
@@ -172,7 +172,7 @@ int VirtualMemoryArea::allocateAtKSegAuto()
 	// save as subarea
 	VirtualMemorySubarea* s = new VirtualMemorySubarea(m_address, frameType, count);
 	PRINT_DEBUG("Subarea created at %p physical memory, build of %d frames of size %x.\n",
-		m_address, count, Memory::frameSize(frameType));
+		m_address, count, frameType);
 	// add it to the list
 	s->append(m_subAreas);
 
@@ -197,9 +197,6 @@ int VirtualMemoryArea::allocateAtKUSeg(const void* virtualAddress, const size_t 
 		frameType = addressAlignedFor;
 	}
 
-	// force 4K pages
-	//frameType = PAGE_MIN;
-
 	// new and old values the frameAlloc function changes
 	void* address = NULL;
 	size_t newCount = 0, oldCount = 0;
@@ -215,8 +212,8 @@ int VirtualMemoryArea::allocateAtKUSeg(const void* virtualAddress, const size_t 
 		}
 
 		// allocate
-		newCount = MyFrameAllocator::instance().allocateAtKuseg(
-			&address, oldCount, Memory::frameSize(frameType));
+		newCount = FrameAllocator::instance().allocateAtKuseg(
+			&address, oldCount, frameType);
 
 		// check for no free frames
 		if (newCount == 0) {

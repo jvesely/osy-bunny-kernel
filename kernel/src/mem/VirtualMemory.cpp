@@ -37,6 +37,9 @@
 #include "flags.h"
 #include "Memory.h"
 
+// Make dump() function quiet.
+//#define VMA_NDEBUG
+
 //#define VMA_DEBUG
 //#define VMA_TLB_DEBUG
 
@@ -217,11 +220,13 @@ int VirtualMemory::resize(const void* from, const size_t size)
 		}
 	}
 
+	// call resize on the specific VM Area
+	int result = const_cast<VirtualMemoryArea&>(entry->data()).resize(size);
+
 	// clear the TLB
 	freed();
 
-	// call resize on the specific VM Area
-	return const_cast<VirtualMemoryArea&>(entry->data()).resize(size);
+	return result;
 }
 
 /* --------------------------------------------------------------------- */
@@ -547,6 +552,7 @@ void VirtualMemory::getFreeAddress(void*& from, const size_t size, Processor::Pa
 
 void VirtualMemory::dump()
 {
+#ifndef VMA_NDEBUG
 	if (m_virtualMemoryMap.count() == 0) {
 		printf("[ VMA DEBUG ]: VM Map is empty.\n");
 		return;
@@ -562,6 +568,7 @@ void VirtualMemory::dump()
 		x = (VirtualMemoryMapEntry *)x->next();
 	} while (x != NULL);
 	printf("[ VMA DEBUG ]: ==================================\n");
+#endif
 }
 
 
