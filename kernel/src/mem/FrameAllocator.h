@@ -258,13 +258,14 @@ private:
 	 * of the allocated block will be saved.
 	 * @param count Count of subsequent frames requested by user to be allocated.
 	 * @param frame Type of the frames requested by user to be allocated.
+	 * @param type Determines the segment where the frames are to be allocated.
 	 *
 	 * @return 
 	 * @a count in case the allocation was successful. In this case
 	 * @a *address holds physical address of start of the allocated block 
 	 * of frames.\n
 	 * <i>Count of largest block of subsequent free frames of size 
-	 * @a frame</i> in case the allocation was not successful. @a @address 
+	 * @a frame</i> in case the allocation was not successful. @a *address 
 	 * will be the physical address of this block.
 	 */
 	uint allocateAtSegment( void** address, const uint count,
