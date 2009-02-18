@@ -83,7 +83,7 @@ inline size_t print_decimal( const int32_t number )
  */
 inline size_t print_hexa( uint32_t number, bool align )
 {
-  puts("0x");
+  putc_a('0'); putc_a('x');
   size_t count = 2;
   if(number == 0 && !align)
     return putc_a('0') + count;

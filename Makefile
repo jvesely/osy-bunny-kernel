@@ -2,8 +2,9 @@
 #Kernel & Loader global Makefile n-th version
 #
 
-all: kernel loader librt apps disk
 .PHONY: kernel loader librt apps disk
+all: kernel loader librt apps disk
+
 kernel:
 	@echo "Building kernel";
 	$(MAKE) -C kernel kernel "KERNEL_TEST=$(KERNEL_TEST)" "USER_TEST=$(USER_TEST)"
@@ -28,6 +29,7 @@ disk: apps
 ### cleaning stuff ###
 .PHONY: clean
 clean: clean-kernel clean-loader clean-librt clean-apps clean-disk
+
 clean-kernel:
 	@echo "Cleaning kernel";
 	$(MAKE) -C kernel clean

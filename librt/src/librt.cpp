@@ -39,11 +39,15 @@
 #include "cpp.h"
 #include "assert.h"
 #include "UserMemoryAllocator.h"
+#include "ProcessInfo.h"
+
+ProcessInfo * INFO;
 
 extern "C" int main();
-extern "C" void __start() __attribute__ ((section (".entry"), noreturn)) ;
-void __start()
+extern "C" void __start(ProcessInfo * info) __attribute__ ((section (".entry"), noreturn)) ;
+void __start( ProcessInfo * info )
 {
+	INFO = info;
 	main();
 	exit();
 }
@@ -142,7 +146,8 @@ int thread_create(
 /* -------------------------------------------------------------------------- */
 thread_t thread_self()
 {
-	return SysCall::thread_self();
+//	return SysCall::thread_self();
+	return INFO->RunningThread;
 }
 /* -------------------------------------------------------------------------- */
 int thread_join( thread_t thr, void **thread_retval )
@@ -199,6 +204,35 @@ void thread_exit( void* thread_retval )
 	SysCall::thread_exit( thread_retval );
 }
 /* -------------------------------------------------------------------------- */
+/* --------------------------   PROCESS   ----------------------------------- */
+/* -------------------------------------------------------------------------- */
+int process_create(
+          process_t *process_ptr, const void *img, const size_t size)
+{
+	return SysCall::process_create( process_ptr, img, size );
+}
+/*----------------------------------------------------------------------------*/
+process_t process_self()
+{
+	return INFO->PID;
+}
+/*----------------------------------------------------------------------------*/
+int process_join( process_t proc )
+{
+	return SysCall::process_join( proc, NULL);
+}
+/*----------------------------------------------------------------------------*/
+int process_join( process_t proc, const unsigned int usec )
+{
+	const Time time(0, usec);
+	return SysCall::process_join( proc, &time );
+}
+/*----------------------------------------------------------------------------*/
+int process_kill( process_t proc )
+{
+	return SysCall::process_kill( proc );
+}
+/*----------------------------------------------------------------------------*/
 void exit()
 {
 	SysCall::exit();

@@ -220,10 +220,10 @@ void thread_yield( void );
 void thread_suspend( void );
 
 /*!
- * @brief Start scheduling thread for execution again.
+ * @brief Starts scheduling thread for execution again.
  *
- * @param thr thread to be woken up.
- * @retval EINVAL if @thr is not a valid thread id.
+ * @param thr Thread to be woken up.
+ * @retval EINVAL if @a thr is not a valid id of a suspended thread.
  * @retval EOK otherwise.
  */
 int thread_wakeup( thread_t thr );
@@ -234,10 +234,61 @@ int thread_wakeup( thread_t thr );
  */
 void thread_exit( void *thread_retval ) __attribute__ ((noreturn)) ;
 
+/* -------------------------------------------------------------------------- */
+/* ---------------------------   PROCESS   ---------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+/*!
+ * @brief Creates new process from the given image.
+ *
+ * @param process_ptr Place where id of the new thread will be stored.
+ * @param img Pointer to the start of the process image.
+ * @param size Size of the process image.
+ * @return EOK if process was created successfully, ENOMEM if there was not
+ * 	eneough free memory to create the process.
+ */
+int process_create(
+          process_t *process_ptr, const void *img, const size_t size);
+/*!
+ * @brief Gets identifier of the currently running process.
+ * @return ID of the current process.
+ */
+process_t process_self();
+
+/*!
+ * @brief Suspends thread until the given process has existed.
+ * @param proc ID of the process to wait for.
+ * @return EOK if process was successfully joined, EINVAL if no process
+ * 	with such an ID exists.
+ */
+int process_join( process_t proc );
+
+/*!
+ * @brief Suspends thread until either the given process has exited,
+ * 	or the time has run out.
+ * @param proc ID of the process to wait for.
+ * @param usec Time in microseconds to wait until the thread is woken 
+ * 	even if the process is still alive.
+ * @retval EINVAL no process with @a proc id exists.
+ * @retval ETIMEDOUT Time is out and process is still alive
+ * @retval EOK Process was successfully joined
+ */
+int process_join( process_t proc, const unsigned int usec );
+
+/*!
+ * @brief Stops execution of the given process.
+ * @param proc ID of the process to kill.
+ * @return EINVAL if no thread with @a proc id exists. EOK if process 
+ * 	was killed sucessfully.
+ *
+ * All resources of the killed process are freed. All threads killed.
+ */
+int process_kill( process_t proc );
+
 /*!
  * @brief Stops executing all threads of the current process.
  *
- * All process resources are freed. If there is no other user process, the
+ * All process resources are freed. If there is no other user processes, the
  * kernel will end.
  */
 void exit( void ) __attribute__ ((noreturn)) ;

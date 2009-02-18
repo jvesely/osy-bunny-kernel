@@ -90,7 +90,7 @@ void UserThread::run()
 	disable_interrupts();
 
 	PRINT_DEBUG ("Started thread %u.\n", m_id);
-
+	m_process->setActiveThread( m_id );
 	switch_to_usermode( m_runData, m_runData2, m_runFunc, m_stackTop );
 
 	m_status = FINISHED;

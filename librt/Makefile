@@ -3,33 +3,23 @@
 #
 include ../Makefile.inc
 ### Dirs ###
-BIN_DIR = bin
-OBJ_DIR = obj
-SRC_DIR = src
-INC_DIR = ../shared
+BIN_DIR   = bin
+OBJ_DIR   = obj
+SRC_DIRS  = src ../shared
+INC_DIRS  += src
 
 ### Files ###
 LIBRT_BIN = librt.a
-#KERNEL_RAW = kernel.raw
-#KERNEL_MAP = kernel.map
-#LDS_FILE = kernel.lds
-OBJS += $(shell find src ../shared/ -name "*.cpp" -o -name "*.S" -o -name "*.c")
-
-
-# Define DEBUG_MUTEX for mutex5 test
-ifneq (, $(findstring mutex5,$(KERNEL_TEST)))
-	CPPFLAGS += -DDEBUG_MUTEX
-	CFLAGS += -DDEBUG_MUTEX
-endif
+SRC_FILES += $(shell find $(SRC_DIRS) -name "*.cpp" -o -name "*.S" -o -name "*.c")
 
 ### Dependencies ###
-DEPEND = find $(SRC_DIR) $(TEST_DIRS) -name "*.cpp" -o -name "*.c" | xargs $(CC) -I $(SRC_DIR) -I $(INC_DIR) -MM 2>/dev/null | sed "s%^\([^\ \t]\)%$(OBJ_DIR)/\1%"
+DEPEND = $(CC) $(addprefix -I ,$(INC_DIRS)) -MM  $(SRC_FILES)   2>/dev/null | sed "s%^\([^\ \t\n]*\.o\)%$(OBJ_DIR)/\1%"
 
 Makefile.depend: $(OBJS)
 	@$(DEPEND) > Makefile.depend
 	@#echo DEPENDING $(KERNEL_TEST) "|" $(TEST_DIRS)"|" $(VPATH)"|" $(OBJS)
 
-OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(OBJS)))))
+OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SRC_FILES)))))
 
 
 ### Rules ###

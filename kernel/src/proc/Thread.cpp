@@ -37,6 +37,7 @@
 #include "address.h"
 #include "timer/Timer.h"
 #include "proc/ThreadCollector.h"
+#include "proc/Process.h"
 
 //#define THREAD_DEBUG
 
@@ -144,6 +145,8 @@ void Thread::switchTo()
 
 	if (m_virtualMap) {
 		m_virtualMap->switchTo();
+		if (m_process)
+			m_process->setActiveThread( m_id );
 	} else {
 		IVirtualMemoryMap::switchOff();
 	}

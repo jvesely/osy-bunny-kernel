@@ -65,6 +65,10 @@ SyscallHandler::SyscallHandler()
 	m_handles[SYS_VMA_FREE]   = handleVMAFree;
 	m_handles[SYS_VMA_RESIZE] = handleVMAResize;
 
+	m_handles[SYS_PROC_CREATE] = handleProcessCreate;
+	m_handles[SYS_PROC_JOIN]   = handleProcessJoin;
+	m_handles[SYS_PROC_KILL]   = handleProcessKill;
+
 	m_handles[SYS_GET_TIME] = handleGetTime;
 }
 /*----------------------------------------------------------------------------*/
