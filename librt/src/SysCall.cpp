@@ -33,6 +33,7 @@
  */
 
 #include "SysCall.h"
+#include "syscallcodes.h"
 using namespace SysCall;
 #define QUOT(expr) #expr
 #define SYSCALL( call ) \

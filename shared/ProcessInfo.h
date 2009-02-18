@@ -25,21 +25,21 @@
 
 /*!
  * @file 
- * @brief Short description.
- *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * @brief Struct ProcessInfo declaration.
  */
 
 #pragma once
 
 #include "types.h"
 
+/*!
+ * @struct ProcessInfo ProcessInfo.h "ProcessInfo.h"
+ * @brief Class used for exporting some data into userspace.
+ */
 struct ProcessInfo
 {
-	process_t PID;
-	thread_t  RunningThread;
+	process_t PID;            /*!< ID of the current process. */
+	thread_t  RunningThread;  /*!< ID of the current thread.  */
 };
 
 

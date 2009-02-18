@@ -25,7 +25,7 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief TarHeader class declaration and implementation.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
  * It would stay that way. Not that this comment is by any means ingenious but 
@@ -39,14 +39,25 @@
 
 class Entry;
 
+/*!
+ * @class TarHeader TarHeader.h "tarfs/TarHeader.h"
+ * @brief Provides simple parsing of the TAR headers format.
+ */
 class TarHeader
 {
 public:
+	/*! @brief Types of data in TAR. */
 	enum FileType {
 		Unknown, File, HardLink, SymLink, Directory, Character, Block, FIFO
 	};
+	
+	/*! @brief Gets file name. */
 	inline char*    fileName() { return m_fileName; };
+
+	/*! @brief Gets size converted from TAR format. */
 	inline uint     fileSize();
+
+	/*! @brief Gets type of the file. */
 	inline FileType fileType();
 private:
 	char m_fileName[100];

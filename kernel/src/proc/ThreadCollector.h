@@ -25,7 +25,7 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief ThreadCollector class.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
  * It would stay that way. Not that this comment is by any means ingenious but 
@@ -40,25 +40,41 @@
 class Thread;
 typedef List<Thread*> ThreadList;
 
-
+/*!
+ * @class ThreadCollector ThreadCollector.h "proc/ThreadCollector.h"
+ * @brief ThreadCollector collect threads that should be delted but for some reason need to postopne this deletion.
+ */
 class ThreadCollector: public Singleton<ThreadCollector>
 {
 public:
+	/*!
+	 * @brief Adds thread to the bin.
+	 * @param thread Thread to add.
+	 */
 	inline void add( Thread* thread)
 		{ thread->append(&m_list); }
 
+	/*!
+	 * @brief Deletes all the stored threads.
+	 */
 	inline void clean();
 
 private:
-	ThreadList m_list;
+	ThreadList m_list;   /*!< List of inactive Threads. */
 
+	/*! @brief Nothing here. */
 	ThreadCollector() {};
+	/*! @brief No copying.   */
 	ThreadCollector( const ThreadCollector& );
+	/*! @brief No assigning. */
 	ThreadCollector& operator = ( const ThreadCollector& );
 
 	friend class Singleton<ThreadCollector>;
 };
 
+/*----------------------------------------------------------------------------*/
+/* DEFINITIONS ---------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
 inline void ThreadCollector::clean()
 {

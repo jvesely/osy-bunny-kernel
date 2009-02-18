@@ -273,7 +273,7 @@ int process_join( process_t proc );
  * @retval ETIMEDOUT Time is out and process is still alive
  * @retval EOK Process was successfully joined
  */
-int process_join( process_t proc, const unsigned int usec );
+int process_join_timeout( process_t proc, const unsigned int usec );
 
 /*!
  * @brief Stops execution of the given process.

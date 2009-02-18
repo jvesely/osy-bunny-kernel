@@ -101,8 +101,7 @@ file_t TarFS::openFile( const char file_name[], char mode )
 {
 	Entry* file = m_rootDir.subEntry( file_name );
 	PRINT_DEBUG ("Opening file %s(%p) mode: %i.\n", file_name, file, mode);
-	if (!file) return -1;
-	if (!file->open( mode )) return -2;
+	if (!file || !file->open( mode )) return EIO;
 
 	file_t fd = ++m_lastDescriptor & SIGNED_BITS_MASK;
 	while (m_entryMap.exists( fd )){
@@ -134,11 +133,6 @@ uint TarFS::seekFile( file_t file, FilePos pos, int offset )
 	if (entry)
 		return entry->seek( pos, offset );
 	return EIO;
-}
-/*----------------------------------------------------------------------------*/
-bool TarFS::existsFile( file_t file )
-{
-	return (bool) getFile( file );
 }
 /*----------------------------------------------------------------------------*/
 bool TarFS::eof( file_t file )

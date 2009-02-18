@@ -32,9 +32,8 @@
  * at least people can understand it.
  */
 
+#include "Time.h"
 #include "SysCall.h"
-#include "syscallcodes.h"
-#include "api.h"
 
 
 Time Time::getCurrentTime()

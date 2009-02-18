@@ -31,11 +31,10 @@
  *	synchronization.
  */
 
-#include "api.h"
+#include "librt.h"
 #include "UserMemoryAllocator.h"
 
 #include "SysCall.h"
-#include "syscallcodes.h"
 #include "synchronization/SpinlockLocker.h"
 
 

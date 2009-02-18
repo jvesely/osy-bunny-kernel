@@ -31,7 +31,8 @@
  */
 #pragma once
 
-#include "assert.h"
+#include "types.h"
+#include "api.h"
 
 //------------------------------------------------------------------------------
 /** @brief time respresentation

@@ -25,20 +25,44 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief DiskDevice class declaration.
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * DiskDevice class only provides interface memebr functions.
  */
 
 #pragma once
 #include "InterruptHandler.h"
 
+/*!
+ * @class DiskDevice DiskDevice.h "drivers/DiskDevice.h"
+ * @brief Abstract class that provides handling of the disk devices.
+ */
 class DiskDevice: public InterruptHandler
 {
 public:
+	/*!
+	 * @brief Reads requested data into the designated location.
+	 * @param buffer Buffer to store data in.
+	 * @param count Number of bytes to read (size of the buffer).
+	 * @param block Starting block number (block containing the first byte).
+	 * @param start_pos Offset of the first byte from the start of the block.
+	 * @return @a true if data were read successfully. @a false otherwise.
+	 */
 	virtual bool read( void* buffer, uint count, uint block, uint start_pos ) = 0;
+
+	/*!
+	 * @brief Writes data from the designated location to the disk.
+	 * @param buffer Buffer to read data from.
+	 * @param count Number of bytes to write (size of the buffer).
+	 * @param block Starting block number (block containing the first byte).
+	 * @param start_pos Offset of the first byte from the start of the block.
+	 * @return @a true if data were written successfully. @a false otherwise.
+	 */
 	virtual bool write( void* buffer, uint count, uint block, uint start_pos );
+
+	/*!
+	 * @brief Gets number of bytes the device can store.
+	 * @return Number of bytes the device can store.
+	 */
 	virtual size_t size();
 };

@@ -143,11 +143,11 @@ protected:
 	/*! Stored data */
 	T m_data;
 
-	BinaryNode<T>* m_parent;
-	BinaryNode<T>* m_left;
-	BinaryNode<T>* m_right;
-	BinaryNode<T>* m_previous;
-	BinaryNode<T>* m_next;
+	BinaryNode<T>* m_parent;    /*!< Parent Node.          */
+	BinaryNode<T>* m_left;      /*!< Left child's Node.    */
+	BinaryNode<T>* m_right;     /*!< Right child's Node.   */
+	BinaryNode<T>* m_previous;  /*!< Nearest smaller Node. */
+	BinaryNode<T>* m_next;      /*!< Nearest bigger Node.  */
 
 	/*! @brief Rotates with the left son, left son must exist. */
 	void rotateLeft();
