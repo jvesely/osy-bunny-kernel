@@ -32,6 +32,7 @@
  * at least people can understand it.
  */
 
+#include "api.h"
 #include "Time.h"
 #include "SysCall.h"
 

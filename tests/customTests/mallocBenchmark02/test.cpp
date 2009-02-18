@@ -33,6 +33,7 @@
  */
 
 #include "librt.h"
+#include "cpp.h"
 #include "../include/defs.h"
 #include "../librt/src/UserMemoryAllocator.h"
 #include "structures/SimpleList.h"
@@ -75,9 +76,9 @@ const unsigned int THREAD_COUNT = 10;
 unsigned int count;
 int counter;
 size_t allocated;
-//YieldingSpinLock allocatedCountTableLock;
+YieldingSpinLock allocatedCountTableLock;
 //Spinlock allocatedCountTableLock;
-Mutex allocatedCountTableLock;
+//Mutex allocatedCountTableLock;
 Spinlock counterLock;
 
 struct strSize
@@ -123,7 +124,7 @@ char * createRandomString(size_t & resSize)
 
 void addRandomItem(HashMap<int,strSize> * myMap)
 {
-	size_t resSize;
+	size_t resSize = 0;
 	char * s = createRandomString(resSize);
 	strSize str;
 	str.s = s;
@@ -164,33 +165,31 @@ void removeRandomItem(HashMap<int,strSize> * myMap)
 
 void * oneThreadWork (void * param)
 {
-	printf("getting hashmap at %x\n",param);
+	//printf("getting hashmap at %x\n",param);
 	HashMap<int,strSize> * myMap = (HashMap<int,strSize>*)param;
-	printf("locking\n");
-
-	allocatedCountTableLock.init();
-	//counterLock.init();
+	//printf("locking\n");
 
 	allocatedCountTableLock.lock();
-	printf("lock before cycle\n");
+	//printf("lock before cycle\n");
 	while(allocated < NEEDED_MEMORY)
 	{
-		printf("in cycle\n");
+		//printf("in cycle\n");
 		allocatedCountTableLock.unlock();
-		printf("allocating\n");
+		//printf("allocating\n");
 		for(unsigned int i =0;i<100;i++){
 			addRandomItem(myMap);
 		}
-		printf("freeing\n");
+		//printf("freeing\n");
 		for(unsigned int i = 0; i<FREE_PERCENTAGE; i++){
 			removeRandomItem(myMap);
 		}
-		printf("done\n");
+		//printf("done\n");
 		allocatedCountTableLock.lock();
 		printf("results: \nallocated: %d \nfree:      %d \ntotalUsed: %d \n",allocated,mallocatorGetFreeSize(),mallocatorGetTotalSize());
 	}
 	allocatedCountTableLock.unlock();
 
+	printf("thread ending \n");
 	return NULL;
 }
 
@@ -199,6 +198,10 @@ void * oneThreadWork (void * param)
 void
 main (void)
 {
+	//lock init
+	//allocatedCountTableLock.init();
+	new (&allocatedCountTableLock) YieldingSpinLock();
+
 	printf(desc);
 
 	mallocStrategyDefault();
@@ -217,8 +220,8 @@ main (void)
 	HashMap<int,strSize> myMap(tableSize);
 	allocated = tableSize * (sizeof(List<Pair<int, strSize> >));
 
-	printf("hashmap at %x \n",&myMap);
 	thread_t * threads = new thread_t[THREAD_COUNT];
+
 	for(unsigned int i =0; i<THREAD_COUNT; i++)
 	{
 		thread_create(threads+i, oneThreadWork, &myMap );
@@ -264,6 +267,7 @@ main (void)
 		chunkCount++;
 	}
 	printf("total count of memory chunks is %d \n",chunkCount);
+	printf("thread count: %d \nmaxLength: %d \nfreePercentage: %d \n",THREAD_COUNT,MAX_LENGTH,FREE_PERCENTAGE);
 
 }
 
