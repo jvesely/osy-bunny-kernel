@@ -222,7 +222,7 @@ int process_join( process_t proc )
 	return SysCall::process_join( proc, NULL);
 }
 /*----------------------------------------------------------------------------*/
-int process_join( process_t proc, const unsigned int usec )
+int process_join_timeout( process_t proc, const unsigned int usec )
 {
 	const Time time(0, usec);
 	return SysCall::process_join( proc, &time );
