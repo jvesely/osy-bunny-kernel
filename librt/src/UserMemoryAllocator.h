@@ -25,11 +25,9 @@
 
 /*!
  * @file
- * @brief Short description.
+ * @brief User memory allocator declaration
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but
- * at least people can understand it.
+ *	Heap allocator for user space.
  */
 
 #include "Singleton.h"
@@ -39,12 +37,11 @@
 /*! @class KernelMemoryAllocator KernelMemoryAllocator.h
  * "mem/KernelMemoryAllocator.h"
  *
- * @brief Memory allocator that gets aditional memory directly from
- * the FrameAllocator.
+ * @brief Memory allocator that gets memory from the VMAallocator.
  *
- * KernelMemoryAllocator inherits handling of the allocated and free blocks
- * from the BasicMemoryAllocator, but gets new memory blocks directly from
- * the FrameAllocator.
+ * UserMemoryAllocator inherits handling of the allocated and free blocks
+ * from the BasicMemoryAllocator, and implements getting memory from deeper
+ * memory management.
  */
 class UserMemoryAllocator:
 	public BasicMemoryAllocator, public Singleton<UserMemoryAllocator>

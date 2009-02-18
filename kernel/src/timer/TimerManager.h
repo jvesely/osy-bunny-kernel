@@ -48,9 +48,7 @@ typedef Heap<ClassTimer*,4> eventHeap;
 /** @brief class handling timed events
 *
 *	This class is not handling thread dependent timed events, such as timed mutexes.\n
-*	For planning events is used semaphore, one mutex is used for locking event structure.\n
-*	Current implementation is using sorted linked list, once should be implemented with
-*	heap.
+*	For planning events is used semaphore, one mutex is used for locking the event structure.\n
 *	TimerManager is thread, which waits for nearest event (timed semaphore) or until somebody
 *	sets new timed event. When an event occurs, it is processed in this thread.
 *	@note each member function, which modifies active events list locks and unlocks this list.
