@@ -328,10 +328,25 @@ unative_t handleVMAResize( unative_t params[] )
 	return vmm->resize(area_start, *size);
 }
 //------------------------------------------------------------------------------
-unative_t handleGetTime( unative_t params[])
+unative_t handleGetTime( unative_t params[] )
 {
 	Time* time_place = (Time*) CHECK_PTR_IN_USEG(params[0]);
 	*time_place = Time::getCurrentTime();
 
 	return EOK;
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleProcessCreate( unative_t params[] )
+{
+	return ENOMEM;
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleProcessJoin( unative_t params[] )
+{
+	return EINVAL;
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleProcessKill( unative_t params[] )
+{
+	return EINVAL;
 }

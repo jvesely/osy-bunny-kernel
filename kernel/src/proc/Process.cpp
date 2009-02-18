@@ -62,7 +62,11 @@ Process* Process::create( const char* image, size_t size )
 
 	void * (*start)(void*) = (void*(*)(void*))0x1000000;
 	const size_t request = roundUp( size + sizeof(ProcessInfo), Processor::pages[Processor::PAGE_MIN].size );
-	ProcessInfo * info   = (ProcessInfo*)((char*)&start + request - sizeof(ProcessInfo));
+
+	ProcessInfo * info   = (ProcessInfo*)((char*)start + request - sizeof(ProcessInfo));
+	
+	PRINT_DEBUG ("Requested size: %x,%x(%p), info at %p.\n", size, request, start, info);
+
 
 	UserThread* main = new UserThread(
 		start, info, NULL, (char*)ADDR_PREFIX_KSEG0 - Thread::DEFAULT_STACK_SIZE, TF_NEW_VMM );
@@ -111,11 +115,13 @@ Process* Process::create( const char* image, size_t size )
 		return NULL;
 	}
 
+	old_vmm->copyTo( &(me->m_id), vmm, (void*)info, sizeof( me->m_id ) );
+
 	me->m_mainThread = main;
 	me->m_mainThread->resume();
 	me->m_mainThread->m_process = me;
 	me->m_info = info;
-	me->m_info->PID = me->m_id;
+//	me->m_info->PID = me->m_id;
 	PRINT_DEBUG ("Created process, info at %p.\n", info);
 	return me;
 }

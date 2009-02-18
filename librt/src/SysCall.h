@@ -111,7 +111,6 @@ int vma_free(const void * from);
 */
 int vma_resize(const void *from, volatile size_t * size);
 
-
 int event_init( event_t* id );
 
 void event_wait( event_t id, volatile native_t* locked );
@@ -125,4 +124,9 @@ int event_destroy( event_t id );
 
 void getCurrentTime( Time * time );
 
+int process_create( process_t *process_ptr, const void *img, const size_t size );
+
+int process_join( process_t proc, const Time * time );
+
+int process_kill( process_t proc );
 }

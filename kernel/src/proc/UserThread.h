@@ -46,7 +46,7 @@
  */
 class UserThread: public KernelThread
 {
-	virtual void switchTo();
+//	virtual void switchTo();
 private:
 	void* m_userstack;
 	void* m_runData2;

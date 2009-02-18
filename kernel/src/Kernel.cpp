@@ -221,6 +221,7 @@ void Kernel::exception( Processor::Context* registers )
 		) {
 			printf( "Exception handling for: %s(%u) UNHANDLED or FAILED => KILLING offending thread (%u).\n",
 				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
+//			stop();
 			Thread::getCurrent()->kill();
 		}
 	
@@ -308,6 +309,7 @@ void Kernel::refillTLB()
 		printf( "Access to invalid address %p, KILLING offending thread(%u).\n",
 			Processor::reg_read_badvaddr(), Thread::getCurrent()->id() );
 		ASSERT (Thread::getCurrent());
+//		stop();
 		Thread::getCurrent()->kill();
 	}
 

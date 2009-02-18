@@ -163,6 +163,21 @@ void SysCall::getCurrentTime( Time * time )
 	SYSCALL( SYS_GET_TIME );
 }
 
+int SysCall::process_create( process_t *process_ptr, const void *img, const size_t size )
+{
+	return SYSCALL( SYS_PROC_CREATE );
+}
+
+int SysCall::process_join( process_t proc, const Time * time )
+{
+	return SYSCALL( SYS_PROC_JOIN );
+}
+
+int SysCall::process_kill( process_t proc )
+{
+	return SYSCALL( SYS_PROC_KILL );
+}
+
 
 #undef QUOT
 #undef SYSCALL
