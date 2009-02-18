@@ -25,19 +25,18 @@
 
 /*!
  * @file
- * @brief Short description.
+ * @brief Pair template
  *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but
- * at least people can understand it.
+ * Standart pair template.
  */
 
 
 #pragma once
 
 /** @brief pair of key and data, used in Map or HashMap
-*	requires copy ctor of both types, operator == and operator < of KeyType
-*	is only basic encapsulation of key and data into one entity
+*
+*	Requires copy ctor of both types, operator == and operator < for KeyType.
+*	It is only basic encapsulation of key and data into one entity.
 **/
 template <typename KeyType, typename DataType> class Pair
 {
@@ -47,17 +46,19 @@ public:
 		first ( key ), second ( value ) {};
 
 	/** @brief operator ==
-	*	compares only keys
+	*
+	*	Compares only keys
 	*/
 	inline bool operator == ( const Pair<KeyType, DataType> & item ) const
 		{ return (first == item.first); }
-		
+
 	/*! @brief Only first values are compared */
 	inline bool operator < ( const Pair<KeyType, DataType> & other ) const
 		{ return (first < other.first); }
 
 	/** @brief operator !=
-	*	compares only keys
+	*
+	*	Compares only keys
 	*/
 	inline bool operator != ( const Pair<KeyType, DataType> & item ) const
 		{ return !operator== ( item ); }
