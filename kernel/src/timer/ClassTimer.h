@@ -27,7 +27,7 @@
  * @file
  * @brief ClassTimer
  *
- *	class over struct timer. Stores most information about timed event settings.
+ *	Class replacement for struct timer. Stores most information about timed event settings.
  */
 
 #pragma once
@@ -41,10 +41,8 @@ struct timer;
 
 /** @brief class representing timer
 *
-*	wrapper over struct timer. Cannot be constructed, can be only initialised and
+*	ClassTimer is C++ replacement for struct timer. Cannot be constructed, can be only initialised and
 *	deinitialised.
-*	constains ListItem<ClassTimer> with pointer to this(if initialised)\n
-*	(should once be inherited from HeapInsertable class)
 */
 class ClassTimer : public HeapInsertable<ClassTimer,Time,4>
 {
@@ -129,20 +127,6 @@ public:
 		return m_state == TIMER_STARTED;
 	}
 
-	/** @brief event structure item (list or heap item)
-	*
-	*	Is ListItem<ClassTimer*>* right now. When there is heap in timer,
-	*	HeapItem should be used instead.
-	*	If timer is initialised, this item should not be connected to any other ListItem.\n
-	*	If timer is started, item should be connected to planed events list.\n
-	*	If timer is not initialised, value is not specified.\n
-	*	This class is to be child of class List/HeapInsertable, then this function will
-	*	have no sense.
-	*/
-	/*ListItem<ClassTimer*> * getEventStruct(){
-		return &m_eventStruct;
-	}*/
-
 	/** @brief calls event handler
 	*
 	*	This function is called when event occurs and calls handler set in init function.
@@ -155,7 +139,7 @@ public:
 
 	/** @brief get timer structure of this object
 	*
-	*	this should be equal to return value of this function.
+	*	This should be equal to return value of this function.
 	*
 	*/
 	inline timer * getTmrThis(){
@@ -217,7 +201,7 @@ protected:
 	/** @brief sets state to active and sets event absolute time
 	*
 	*	Should be called from TimerManager only.
-	*	One step starting.
+	*	Use for one step starting.
 	*/
 	inline void setToStarted(const Time & time){
 		m_state = TIMER_STARTED;
@@ -227,9 +211,9 @@ protected:
 	/** @brief forbidden operator =	*/
 	void operator = (const ClassTimer & other){}
 
-	/** @brief time of delay
+	/** @brief time which should pass before event should occur.
 	*
-	*	set in init method
+	*	Is set in init method.
 	*/
 	Time m_delay;
 
@@ -247,22 +231,12 @@ protected:
 
 	/** @brief data for event handler
 	*
-	*	data parameter for event handler function.
+	*	Data parameter for event handler function. Is set in init function.
 	*/
 	void * m_data;
 
 	/** @brief state representation	*/
 	int m_state;
-
-	/** @brief representation of ths object in internal structure of TimerManager
-	*
-	*	Contains pointer to this if initialised.
-	*	If timer is not initialised, contains undefined values and pointers.\n
-	*	If timer is initialised, contains pointer to this as data and is disconnected from
-	*		any data structure.\n
-	*	If timer is started, should be connected to structure of planned timer events.
-	*/
-	//ListItem<ClassTimer*> m_eventStruct;
 
 	/** @brief pointer to timer struct containing this*/
 	timer * m_tmrThis;
