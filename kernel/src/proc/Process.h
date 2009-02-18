@@ -56,7 +56,9 @@ class Process
 {
 public:
 
-	static Process* create( const char* image, size_t size );
+	static Process* create( const void* image, size_t size );
+	static Process* getCurrent();
+	
 	inline UserThread* mainThread() { return m_mainThread; };
 	UserThread* addThread( thread_t* thread_ptr, void* (*thread_start)(void*),
 	    void* data = NULL, void* arg = NULL, const unsigned int flags = 0 );
@@ -64,12 +66,11 @@ public:
 	bool removeThread( UserThread* );
 	void exit();
 	inline process_t id() { return m_id; }
-	void waitFor( const Time * time );
+	int join( const Time * time );
 	void setActiveThread( thread_t );
 
 	EventTable eventTable;
 
-	static Process* getCurrent();
 
 private:
 	UserThread* m_mainThread;

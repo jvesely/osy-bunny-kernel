@@ -35,6 +35,7 @@
 #include "address.h"
 #include "proc/Process.h"
 #include "proc/Thread.h"
+#include "proc/ProcessTable.h"
 
 #include "synchronization/Event.h"
 #include "tools.h"
@@ -93,6 +94,7 @@ static unative_t handleExit( unative_t params[] )
 	Process* current = Process::getCurrent();
 	ASSERT (current);
 	current->exit();
+	delete current;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -338,15 +340,35 @@ unative_t handleGetTime( unative_t params[] )
 /*----------------------------------------------------------------------------*/
 unative_t handleProcessCreate( unative_t params[] )
 {
-	return ENOMEM;
+	process_t* proc_ptr = (process_t*) CHECK_PTR_IN_USEG(params[0]);
+	const void* img     = (const void*)CHECK_PTR_IN_USEG(params[1]);
+	const size_t size   = params[2];
+
+	Process* new_proc = Process::create( img, size );
+	if (!new_proc)
+		return ENOMEM;
+	
+	*proc_ptr = new_proc->id();
+	return EOK;
 }
 /*----------------------------------------------------------------------------*/
 unative_t handleProcessJoin( unative_t params[] )
 {
-	return EINVAL;
+	const Time * time = (const Time*)CHECK_PTR_IN_USEG(params[0]);
+
+	Process* victim = PIDTable.translateId( params[0] );
+	if (!victim || victim == Process::getCurrent())
+		return EINVAL;
+
+	return victim->join( time );
 }
 /*----------------------------------------------------------------------------*/
 unative_t handleProcessKill( unative_t params[] )
 {
-	return EINVAL;
+	Process* victim = PIDTable.translateId( params[0] );
+	if (!victim || victim == Process::getCurrent())
+		return EINVAL;
+	victim->exit();
+	delete victim;
+	return EOK;
 }

@@ -54,7 +54,7 @@
 #endif
 
 
-Process* Process::create( const char* image, size_t size )
+Process* Process::create( const void* image, size_t size )
 {
 	InterruptDisabler inter;
 
@@ -169,13 +169,19 @@ void Process::clearThreads()
 /*----------------------------------------------------------------------------*/
 void Process::exit()
 {
-	//clearEvents();
+	clearEvents();
 	clearThreads();
 }
 /*----------------------------------------------------------------------------*/
 Process* Process::getCurrent()
 {
 	return Thread::getCurrent()->process();
+}
+/*----------------------------------------------------------------------------*/
+int Process::join( const Time* time )
+{
+	ASSERT (Thread::getCurrent()->process() != this);
+	return Thread::getCurrent()->join( m_mainThread, NULL, time, *time);
 }
 /*----------------------------------------------------------------------------*/
 UserThread* Process::addThread( thread_t* thread_ptr,
