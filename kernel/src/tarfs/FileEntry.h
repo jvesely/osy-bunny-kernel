@@ -51,8 +51,8 @@ public:
 	/*!
 	 * @brief Creates FileEntry using data from TarHeader, stored on the disk.
 	 * @param tarHeader Header of the file as it is stored on the disk.
-	 * @block Starting block of the file (including header).
-	 * @disk DiskDevice the file is stored on.
+	 * @param block Starting block of the file (including header).
+	 * @param disk DiskDevice the file is stored on.
 	 */
 	FileEntry( TarHeader& tarHeader, uint block, DiskDevice* disk );
 
@@ -89,18 +89,18 @@ public:
 	/*! @brief Closes file. */
 	void close();
 
-	/*! @brieif Correctly destructs FileEntry. */
+	/*! @brief Correctly destructs FileEntry. */
 	~FileEntry();
 		
 private:
-	uint m_uid;
-	uint m_gid;
-	uint m_size;
-	uint m_startPos;
-	uint m_modTime;
-	uint m_readCount;
-	uint m_pos;
+	uint m_uid;        /*!< Owner of the file.              UNUSED */
+	uint m_gid;        /*!< Owning group.                   UNUSED */
+	uint m_size;       /*!< Size of the data.                      */
+	uint m_startPos;   /*!< First data block.                      */
+	uint m_modTime;    /*!< Time of the last modifications. UNUSED */
+	uint m_readCount;  /*!< Number of openings or reading.         */
+	uint m_pos;        /*!< Current position in the file.          */
 		
-	FileEntry( const FileEntry& );
-	FileEntry& operator = ( const FileEntry& );
+	FileEntry( const FileEntry& );              /*!< No copies.      */
+	FileEntry& operator = ( const FileEntry& ); /*!< No assignments. */
 };

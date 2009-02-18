@@ -96,25 +96,21 @@ void MsimDisk::block()
 	
 	m_waitingThread = Thread::getCurrent();
 	ASSERT (m_waitingThread);
-	if (m_waitingThread) {
-		m_waitingThread->block();
+
+	m_waitingThread->block();
+	while (pending())
 		m_waitingThread->yield();
-	} else {
-		while (pending()) {};
-	}
 
 	//while (pending()) {};
 	//PRINT_DEBUG ("Operation ended: %x.\n", m_registers[STATUS]);
 	ASSERT (! (m_registers[STATUS] & ERROR_MASK));
 	m_registers[STATUS] = DONE_MASK;
-
+	m_waitingThread = NULL;
 }
 /*----------------------------------------------------------------------------*/
 bool MsimDisk::write( void* buffer, uint count, uint block, uint start_pos )
 {
 	InterruptDisabler inter;
-
-	if (pending()) return false;
 
 	/* not IMPLEMENTED */
   return false;

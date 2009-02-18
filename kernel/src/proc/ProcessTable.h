@@ -25,7 +25,7 @@
 
 /*!
  * @file 
- * @brief Short description.
+ * @brief ProcessTable class declaration.
  *
  * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
  * It would stay that way. Not that this comment is by any means ingenious but 
@@ -40,6 +40,10 @@
 
 class Process;
 
+/*!
+ * @class ProcessTable ProcessTable.h "proc/ProcessTable.h"
+ * @brief Porvides traslation from PID to Process*.
+ */
 class ProcessTable: public Singleton<ProcessTable>, public IdMap<process_t, Process*>
 {
 };
