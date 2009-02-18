@@ -93,7 +93,7 @@ void kpanic(void** context, const char* format, ...){
 /*
 	Context* registers = (Context*)*context;
 	printf("Register DUMP: %p\n", *context );
-	printf("   0 %p\tat %p\tv0 %p\tv1 %p\ta0 %p\n", registers->zero, 
+	printf("   0 %p\tat %p\tv0 %p\tv1 %p\ta0 %p\n", registers->zero,
 		registers->at, registers->v0, registers->v1, registers->a0 );
 	printf("  a1 %p\ta2 %p\ta3 %p\tt0 %p\tt1 %p\n", registers->a1, registers->a2,
 		registers->a3, registers->t0, registers->t1 );
@@ -158,7 +158,7 @@ int thread_join_timeout(thread_t thr, const uint usec)
 	InterruptDisabler inter;
 
 	Thread* thread = Thread::fromId( thr );
-	return 
+	return
 		Thread::getCurrent()->join( thread, NULL, true, Time::fromMicroSeconds( usec ) );
 }
 /*----------------------------------------------------------------------------*/
@@ -194,10 +194,10 @@ void thread_suspend()
 int thread_wakeup(thread_t thr)
 {
 	InterruptDisabler inter;
-	
+
 	Thread* thread = Thread::fromId( thr );
 	if (!thread) return EINVAL;
-	
+
 	thread->wakeup();
 	return EOK;
 }
@@ -205,10 +205,10 @@ int thread_wakeup(thread_t thr)
 int thread_kill(thread_t thr)
 {
 	InterruptDisabler inter;
-	
+
 	Thread* thread = Thread::fromId( thr );
 	if (!thread) return EINVAL;
-	
+
 	thread->kill();
 	return EOK;
 }
@@ -297,26 +297,26 @@ int timer_init( struct timer *tmr, const unsigned int usec,
 				void (*handler)(struct timer *, void *), void *data)
 {
 	if (!tmr) return EINVAL;
-	return drftmr(tmr).init(tmr, usec, handler, data);
+	return ((ClassTimer*)tmr)->init(tmr, usec, handler, data);
 }
 
 //------------------------------------------------------------------------------
 void timer_start(struct timer *tmr)
 {
-	TimerManager::instance().startEvent(tmr2Tmr(tmr));
+	TimerManager::instance().startEvent((ClassTimer*)tmr);
 }
 
 //------------------------------------------------------------------------------
 void timer_destroy(struct timer *tmr)
 {
-	TimerManager::instance().destroyTimer(tmr2Tmr(tmr));
+	TimerManager::instance().destroyTimer((ClassTimer*)tmr);
 }
 
 //------------------------------------------------------------------------------
 int timer_pending(struct timer *tmr)
 {
 	if(!tmr) return (int) false;
-	return (int) drftmr(tmr).pending();
+	return (int) ((ClassTimer*)tmr)->pending();
 }
 
 /*----------------------------------------------------------------------------*/
@@ -383,7 +383,7 @@ int frame_alloc(void **paddr, const size_t cnt, const unsigned int flags)
 
 	if (FrameAllocator::instance().frameAlloc(paddr, cnt, Processor::PAGE_MIN, flags) < cnt)
 		return ENOMEM;
-	
+
 	return EOK;
 }
 /*----------------------------------------------------------------------------*/

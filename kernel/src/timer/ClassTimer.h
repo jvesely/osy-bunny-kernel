@@ -271,31 +271,3 @@ protected:
 
 };
 
-//------------------------------------------------------------------------------
-/** @brief convertor from struct timer to ClassTimer
-*/
-inline ClassTimer * tmr2Tmr(timer * tmr)
-{
-	return (ClassTimer*)tmr;
-};
-
-/** @brief dereference of converted pointer to struct timer
-*/
-inline ClassTimer & drftmr(timer * tmr)
-{
-	return *(tmr2Tmr(tmr));
-};
-
-
-
-
-
-
-
-
-
-
-
-
-//------------------------------------------------------------------------------
-
