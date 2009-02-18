@@ -306,12 +306,17 @@ inline void revert_interrupt_state(ipl_t state)
 		reg_write_status(reg_read_status() | STATUS_IE_MASK);
 }
 /*----------------------------------------------------------------------------*/
+/*!
+ * @struct Exception Processor.h "drivers/Processor.h"
+ * @brief Structure holds some baic info about each exception.
+ */
 struct Exception
 {
-	uint code;
-	const char* name;
-	ExceptionHandler* handler;
+	uint code;                 /*!< Code of the exception. */
+	const char* name;          /*!< Name of the exception. */
+	ExceptionHandler* handler; /*!< Designated handler.    */
 };
+
 /*! @brief Exception codes */
 enum Exceptions {
 	CAUSE_EXCCODE_INT,  /*!< Interrupt */
@@ -332,6 +337,7 @@ enum Exceptions {
 
 const uint EXCEPTION_COUNT = 14;
 
+/*! @brief Exception handling vector. */
 static const Exception EXCEPTIONS[EXCEPTION_COUNT] =
 {
 	{ CAUSE_EXCCODE_INT,  (char*)"Interrupt exception"            , NULL },

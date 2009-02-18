@@ -30,7 +30,6 @@
 
 #include "Mutex.h"
 #include "atomic.h"
-#include "assert.h"
 #include "librt.h"
 #include "SysCall.h"
 
