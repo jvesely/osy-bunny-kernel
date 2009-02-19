@@ -99,7 +99,8 @@ void* first_thread(void* data)
 	
 	while (!exit) {
 
-	const int BUFFER_SIZE(50);
+		const int BUFFER_SIZE(50);
+		printf("# ");
 
 		char buffer[BUFFER_SIZE];
 		size_t read = gets(buffer, BUFFER_SIZE);
@@ -108,8 +109,10 @@ void* first_thread(void* data)
 			KERNEL.halt();
 		}
 		if (String(buffer) == String("halt")) {
+			printf("Shutting down");
 			exit = true; break;
 		}
+		printf("Running: %s.\n", buffer);
 		Process* proc = exec( buffer, fs );
 		if (proc) {
 			Thread::getCurrent()->join( proc->mainThread(), NULL );
