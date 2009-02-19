@@ -78,10 +78,9 @@ int Mutex::lock()
 	PRINT_DEBUG("Mutex::lock(%u) started...\n", m_event);
 	while (swap(m_locked, 1) != 0) {
 		++m_waiting;
-		PRINT_DEBUG("Calling syscall event_wait with event id %d and locked pointer: %p\n", 
+		PRINT_DEBUG("Syscall event_wait: event id %d and locked pointer: %p\n", 
 			m_event, &m_locked);
 		SysCall::event_wait(m_event, &m_locked);
-		--m_waiting;
 	}
 
 	// save the id of the thread which owns the mutex
@@ -98,15 +97,14 @@ int Mutex::lockTimeout( const Time timeout )
 	PRINT_DEBUG("Mutex::lockTimeout(%u) started...\n", m_event);
 	while (swap(m_locked, 1) != 0) {
 		++m_waiting;
-		PRINT_DEBUG("Calling syscall event_wait_timeout with event id %d, locked pointer: %p and timeout pointer %p\n", 
-			m_event, &m_locked, &timeout);
-		PRINT_DEBUG("Timeout: %u\n", timeout.toUsecs());
-		if (SysCall::event_wait_timeout(m_event, &timeout, &m_locked) == ETIMEDOUT) {
-			PRINT_DEBUG("Returned ETIMEDOUT from syscall, current timeout: %u\n", timeout.toUsecs());
-			--m_waiting;
+		PRINT_DEBUG("Syscall event_wait_timeout: event id %d, locked pointer: %p\
+and timeout pointer %p\n", m_event, &m_locked, &timeout);
+		if (SysCall::event_wait_timeout(m_event, &timeout, &m_locked) 
+			== ETIMEDOUT) {
+			PRINT_DEBUG("Returned ETIMEDOUT from , current timeout: %u\n", 
+				timeout.toUsecs());
 			return ETIMEDOUT;
 		}
-		--m_waiting;
 	}
 
 	// save the id of the thread which owns the mutex
@@ -124,8 +122,11 @@ int Mutex::unlock()
 		return EINVAL;
 	PRINT_DEBUG("Mutex::unlock(%u): Mutex successfully unlocked..\n", m_event);
 	// unblock waiting threads (if any)
-	if (m_waiting)
+	if (m_waiting) {
+		PRINT_DEBUG("Waiting threads, firing event..\n");
 		SysCall::event_fire(m_event);
+		m_waiting = 0;
+	}
 
 	return EOK;
 }
@@ -142,8 +143,10 @@ int Mutex::unlockCheck()
 		return EINVAL;
 
 	// unblock waiting threads (if any)
-	if (m_waiting)
+	if (m_waiting) {
 		SysCall::event_fire(m_event);
+		m_waiting = 0;
+	}
 
 	return EOK;
 }

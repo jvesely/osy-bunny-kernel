@@ -272,16 +272,6 @@ uint FrameAllocator::allocateAtKuseg(
 
 	ASSERT(m_initialized);
 
-	// if there was some address sent to this function
-	if (*address != NULL && (uintptr_t)*address < m_memorySize 
-		&& ((uintptr_t)(*address) % frameSize(frame) == 0)) {
-		// try to allocate at that address first
-		uint at_address = allocateAtAddress(*address, count, frame);
-		if (at_address == count)
-			return at_address;
-	}
-	// else try to find enough free frames normally
-
 	// if there is no KUSEG segment at all
 	if (m_bitmap[KUSEG] == NULL) {
 		// allocate the memory in the KSEG segment
@@ -359,8 +349,9 @@ uint FrameAllocator::allocateAtSegment( void** address, const uint count,
 	ASSERT(count > 0);
 	ASSERT(m_bitmap[type] != NULL);
 
-	// check the recently deallocated block
-	if ((count * frameSize(frame)) <= m_lastFreedSize[type]) {
+	// else check the recently deallocated block
+	if ( ((count * frameSize(frame)) <= m_lastFreedSize[type]) 
+	     && (m_lastFreed[type] % frameSize(frame) == 0) ) {
 		PRINT_DEBUG("Trying to use last freed block\n");
 		// determine the offset from the address
 		uint addr_offset = (uintptr_t)(m_lastFreed[type]) / frameSize(frame);
@@ -389,6 +380,8 @@ uint FrameAllocator::allocateAtSegment( void** address, const uint count,
 		m_lastFreed[type] = NULL;
 		m_lastFreedSize[type] = 0;
 	}
+
+	// else try to find enough free frames normally
 
 	uint search_counts[7];
 	search_counts[frame] = count;

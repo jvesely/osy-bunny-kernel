@@ -29,8 +29,7 @@
  * and some inline functions as well.
  *
  * Class FrameAllocator provides interface for physical memory 
- * allocation. Supports 7 frame sizes and allocation of more subsequent
- * frames (all of them of the same size).
+ * allocation and supports multiple frame sizes.
  */
 
 #pragma once
@@ -57,9 +56,14 @@ using namespace Processor;
  * @class FrameAllocator FrameAllocator.h "mem/FrameAllocator.h"
  * 
  * @brief Class FrameAllocator provides interface for physical memory 
- * allocation. 
- * 
- * Supports 7 frame sizes.
+ * allocation and supports multiple frame sizes.
+ *
+ * For storing information about used/free frames, FrameAllocator uses class
+ * Bitset, with optimized search functions. It also remembers last freed 
+ * block of frames and tries to use it when a new allocation request comes.
+ *
+ * This class is a singleton, and all calls to it are done using 
+ * FrameAllocator::instance()
  */
 class FrameAllocator: public Singleton<FrameAllocator>
 {
