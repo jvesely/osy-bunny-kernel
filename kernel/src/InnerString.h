@@ -71,13 +71,14 @@ private:
 	size_t m_size;  /*!< Size of the data. */
 };
 /*----------------------------------------------------------------------------*/
-inline InnerString::InnerString( const char* text )
+inline InnerString::InnerString( const char* text ):m_text( NULL ), m_size( 0 )
 {
-	size_t count;
 	if (!text) {
 		return;
 	}
 	ASSERT (text);
+	size_t count;
+//	printf("Constructing InnerString \"%s\".\n", text);
 	for ( count = 0; text[count]; ++count ) {};
 	m_size = count;
 	++count; /* count the last \0 */
@@ -87,5 +88,6 @@ inline InnerString::InnerString( const char* text )
 /*----------------------------------------------------------------------------*/
 inline InnerString::~InnerString()
 {
+//	printf("Destructing innerString %s.\n",m_text?m_text:"EMPTY");
 	free( m_text ); // NULL safe	
 }

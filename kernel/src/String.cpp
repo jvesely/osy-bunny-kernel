@@ -49,6 +49,7 @@
 String::String( const char* text ):
 	Pointer<InnerString>(new InnerString( text ))
 {
+	PRINT_DEBUG ("Contructed string %p:\"%s\" %u.\n", text, cstr()?cstr():"EMPTY", data()->refCount());
 	ASSERT (data());
 }
 /*----------------------------------------------------------------------------*/
@@ -56,12 +57,15 @@ String::String( const String& other ):
 	Pointer<InnerString>(const_cast<InnerString*>(other.data()) )
 {
 	ASSERT (data() == other.data());
+	PRINT_DEBUG ("CopyConstructed string \"%s\"(%u).\n", cstr()?cstr():"EMPTY", data()->refCount());
 };
 /*----------------------------------------------------------------------------*/
 String& String::operator = ( const String& other )
 {
-	static_cast<Pointer<InnerString>*>(this)->operator = (
-		const_cast<InnerString*>( other.data() ) );
+//	static_cast<Pointer<InnerString>*>(this)->operator = (
+//		const_cast<InnerString*>( other.data() ) );
+	this->Pointer<InnerString>::operator = ( const_cast<InnerString*>(other.data()) );
+	PRINT_DEBUG ("Assigned string \"%s\"(%u).\n", cstr()?cstr():"EMPTY", data()->refCount());
 	return *this;
 }
 /*----------------------------------------------------------------------------*/
@@ -75,7 +79,7 @@ bool String::operator == ( const String& other ) const
 	if (!me || !him) return false; /* one of them is empty */
 	
 	while (*me && *him) {
-		PRINT_DEBUG("comparing %c == %c.\n", *me, *him );
+//		PRINT_DEBUG("comparing %c == %c.\n", *me, *him );
 		if (*me != *him) break;
 		++me; ++him;
 	}
@@ -92,7 +96,7 @@ bool String::operator < ( const String& other ) const
 	const char* him = other.cstr();
 	
 	while (*me && *him) {
-		PRINT_DEBUG("comparing %c < %c.\n", *me, *him );
+//		PRINT_DEBUG("comparing %c < %c.\n", *me, *him );
 		if (*me != *him) break;
 		++me; ++him;
 	}

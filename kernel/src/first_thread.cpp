@@ -89,20 +89,22 @@ void* first_thread(void* data)
 	}
 	
 	bool exit = false;
-		printf ("Select process to run:\n");
-		String name = fs->rootDir()->firstEntry();
-		while (! (name==String())) {
-			printf ("%s ",name.cstr());
-			name = fs->rootDir()->nextEntry( name );
-		}
-		printf("\n or type halt to shut down.\n");
-	
+	const int BUFFER_SIZE(50);
+	char buffer[BUFFER_SIZE];
+		
 	while (!exit) {
+	{
+	printf ("Select program to run:\n");
+	String name = fs->rootDir()->firstEntry();
+	while (! name.empty()) {
+		printf ("%s ", name.cstr());
+		name = fs->rootDir()->nextEntry( name );
+	}
 
-		const int BUFFER_SIZE(50);
+	printf("\n or type halt to shut down.\n");
+	}
 		printf("# ");
 
-		char buffer[BUFFER_SIZE];
 		size_t read = gets(buffer, BUFFER_SIZE);
 		if (read == 0){
 			printf("Read error halting...\n");

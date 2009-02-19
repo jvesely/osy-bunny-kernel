@@ -35,7 +35,6 @@
 #include "api.h"
 #include "DirEntry.h"
 
-
 //#define DIRENTRY_DEBUG
 
 #ifndef DIRENTRY_DEBUG
@@ -57,20 +56,32 @@ bool DirEntry::addSubEntry( char* name, Entry* entry )
 /*----------------------------------------------------------------------------*/
 const String DirEntry::firstEntry()
 {
-	if (m_subEntries.count())
-		return m_subEntries.min().data().first;
-	return String();
+	PRINT_DEBUG("asked for the first entry.\n");
+	String ret;
+	if (m_subEntries.count()) {
+		 ret = m_subEntries.min().data().first;
+		 PRINT_DEBUG ("There should be an answer,\n");
+	}
+	ASSERT(m_subEntries.checkOK());
+	PRINT_DEBUG ("Asked for the first entry got: \"%s\".\n",ret.cstr()?ret.cstr():"EMPTY");
+	return ret;
 }
 /*----------------------------------------------------------------------------*/
-const String DirEntry::nextEntry( const String previous )
+const String DirEntry::nextEntry( const String& previous )
 {
 	SplayBinaryNode<NamePair> * entry =
 		m_subEntries.findItem( NamePair( previous, NULL ) );
-	if (!entry || !entry->next()) return String();
-	return entry->next()->data().first;
+	ASSERT (m_subEntries.checkOK());
+	String ret;
+	if (entry && entry->next()) {
+		ret = entry->next()->data().first;
+	}
+	PRINT_DEBUG ("Asked for entry following \"%s\" got \"%s\".\n",
+		previous.cstr(), ret.cstr()?ret.cstr():"EMPTY");
+	return ret;
 }
 /*----------------------------------------------------------------------------*/
-Entry* DirEntry::subEntry( const String name )
+Entry* DirEntry::subEntry( const String& name )
 {
 	SplayBinaryNode<NamePair> * entry =
 		m_subEntries.findItem( NamePair( name, NULL ) );

@@ -77,14 +77,14 @@ public:
 	 * @param previous Name of the preceding Entry.
 	 * @return Name of the following Entry.
 	 */
-	const String nextEntry( const String previous );
+	const String nextEntry( const String& previous );
 
 	/*!
 	 * @brief Translates Name into the Entry*.
 	 * @param name Name of the Entry.
 	 * @return Ptr to the corresponding entry, NULL on failure.
 	 */
-	Entry* subEntry( const String name );
+	Entry* subEntry( const String& name );
 
 	/*!
 	 * @brief Converts self to DirEntry pointer.

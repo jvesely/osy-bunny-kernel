@@ -42,10 +42,8 @@ template <class T>
 class Pointer
 {
 public:
-	Pointer():m_obj( NULL ) {}
-	
 	/*! @brief Creates Pointer gurading instance object. */
-	Pointer( T * object ):m_obj( object )
+	Pointer( T * object = NULL ):m_obj( object )
 		{ if (m_obj)  m_obj->incCount(); }
 	
 	Pointer( const Pointer<T>& other )
