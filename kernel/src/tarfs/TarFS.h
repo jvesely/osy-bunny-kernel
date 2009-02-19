@@ -102,6 +102,12 @@ public:
 	 */
 	bool eof( file_t file );
 
+	/*!
+	 * @brief Gets Entry of the root directory
+	 */
+	DirEntry* rootDir()
+		{ return &m_rootDir; };
+
 private:
 
 	/*!

@@ -69,13 +69,13 @@ void* first_thread(void* data)
 		Thread::getCurrent()->join( thread, NULL );
 		KERNEL.halt();
 	#endif
-	
+/*	
 	#ifdef USER_TEST
 		const char* file = "test.bin";
 	#else
 		const char* file = "test.bin";
 	#endif
-
+*/
 	puts( "Mounting root fs..." );
 	TarFS* fs = new TarFS();
 
@@ -88,11 +88,33 @@ void* first_thread(void* data)
 		KERNEL.halt();
 	}
 	
-	Process* proc = exec( file, fs );
-	if (!proc) {
-		KERNEL.halt();
+	bool exit = false;
+		printf ("Select process to run:\n");
+		String name = fs->rootDir()->firstEntry();
+		while (! (name==String())) {
+			printf ("%s ",name.cstr());
+			name = fs->rootDir()->nextEntry( name );
+		}
+		printf("\n or type halt to shut down.\n");
+	
+	while (!exit) {
+
+	const int BUFFER_SIZE(50);
+
+		char buffer[BUFFER_SIZE];
+		size_t read = gets(buffer, BUFFER_SIZE);
+		if (read == 0){
+			printf("Read error halting...\n");
+			KERNEL.halt();
+		}
+		if (String(buffer) == String("halt")) {
+			exit = true; break;
+		}
+		Process* proc = exec( buffer, fs );
+		if (proc) {
+			Thread::getCurrent()->join( proc->mainThread(), NULL );
+		}
 	}
-	Thread::getCurrent()->join( proc->mainThread(), NULL );
 
 	KERNEL.halt();	
 
