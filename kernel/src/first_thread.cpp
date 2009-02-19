@@ -36,7 +36,7 @@
 #include "tarfs/TarFS.h"
 #include "proc/Process.h"
 
-size_t gets_feedback(char* buffer, size_t buffer_size)
+size_t gets_feedback( char* buffer, size_t buffer_size )
 {
 	uint ptr = 0;
 	char c;
@@ -69,6 +69,7 @@ Process* exec( const char* file, VFS* fs )
 
 	char* image = (char*)malloc(file_size);
 	fs->readFile( first_proc, image, file_size );
+	fs->closeFile( first_proc );
 
 	Process* main_proc = Process::create( image, file_size );
 	free(image);
@@ -112,17 +113,14 @@ void* first_thread(void* data)
 	char buffer[BUFFER_SIZE];
 		
 	while (!exit) {
-	{
-	printf ("Select program to run:\n");
-	String name = fs->rootDir()->firstEntry();
-	while (! name.empty()) {
-		printf ("%s ", name.cstr());
-		name = fs->rootDir()->nextEntry( name );
-	}
+		printf ("Select program to run:\n");
+		String name = fs->rootDir()->firstEntry();
+		while (! name.empty()) {
+			printf ("%s ", name.cstr());
+			name = fs->rootDir()->nextEntry( name );
+		}
 
-	printf("\n or type halt to shut down.\n");
-	}
-		printf("# ");
+		printf("\n or type halt to shut down.\n# ");
 
 		size_t read = gets_feedback(buffer, BUFFER_SIZE);
 		putc('\n');
