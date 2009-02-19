@@ -36,6 +36,31 @@
 #include "tarfs/TarFS.h"
 #include "proc/Process.h"
 
+Process* exec( const char* file, VFS* fs )
+{
+	file_t first_proc = fs->openFile( file, OPEN_R );
+	
+	if (first_proc < 0) {
+		printf("Open file failed.\n");
+		return NULL;
+	}
+
+	const size_t file_size = fs->seekFile( first_proc, POS_END, 0 );
+	fs->seekFile( first_proc, POS_START, 0 );
+
+	char* image = (char*)malloc(file_size);
+	fs->readFile( first_proc, image, file_size );
+
+	Process* main_proc = Process::create( image, file_size );
+	free(image);
+
+	if (!main_proc) {
+		printf( "Failed to launch process: %s.\n", file );
+		return NULL;
+	}
+	return main_proc;
+}
+
 void* first_thread(void* data)
 {
 	#ifdef KERNEL_TEST
@@ -62,29 +87,13 @@ void* first_thread(void* data)
 		puts( "Disk mounting failed. Shutting down.\n" );
 		KERNEL.halt();
 	}
-
-	file_t first_proc = fs->openFile( file, OPEN_R );
 	
-	if (first_proc < 0) {
-		printf("Open file failed.\n");
+	Process* proc = exec( file, fs );
+	if (!proc) {
 		KERNEL.halt();
 	}
+	Thread::getCurrent()->join( proc->mainThread(), NULL );
 
-	const size_t file_size = fs->seekFile( first_proc, POS_END, 0 );
-	fs->seekFile( first_proc, POS_START, 0 );
-
-	char* image = (char*)malloc(file_size);
-	fs->readFile( first_proc, image, file_size );
-
-	Process* main_proc = Process::create( image, file_size );
-	free(image);
-
-	if (main_proc) {
-		printf( "Joining process: %s.\n", file );
-		Thread::getCurrent()->join( main_proc->mainThread(), NULL );
-	} else {
-		printf( "Failed to launch process: %s.\n", file );
-	}
 	KERNEL.halt();	
 
 	return NULL;
