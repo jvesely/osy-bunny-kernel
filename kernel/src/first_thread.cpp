@@ -36,6 +36,25 @@
 #include "tarfs/TarFS.h"
 #include "proc/Process.h"
 
+size_t gets_feedback(char* buffer, size_t buffer_size)
+{
+	uint ptr = 0;
+	char c;
+	while (( (c = getc()) != '\n') && ptr < (buffer_size) - 1 )
+	{
+		if (c == 127) {
+			if (ptr > 0) {
+				--ptr;
+				puts( "\b \b" );
+			}
+		} else {
+			buffer[ptr++] = c;
+			putc( c );
+		}
+	}
+	buffer[ptr] = '\0';
+	return ptr;
+}
 Process* exec( const char* file, VFS* fs )
 {
 	file_t first_proc = fs->openFile( file, OPEN_R );
@@ -105,7 +124,8 @@ void* first_thread(void* data)
 	}
 		printf("# ");
 
-		size_t read = gets(buffer, BUFFER_SIZE);
+		size_t read = gets_feedback(buffer, BUFFER_SIZE);
+		putc('\n');
 		if (read == 0){
 			printf("Read error halting...\n");
 			KERNEL.halt();
