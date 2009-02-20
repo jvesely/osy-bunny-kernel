@@ -37,6 +37,8 @@
 #include "cpp.h"
 #include "InterruptDisabler.h"
 
+//#define FRALLOC_DEBUG
+
 #ifndef FRALLOC_DEBUG
 #define PRINT_DEBUG(...)
 #else
@@ -722,9 +724,9 @@ local offset %d\n", count_kuseg, frameSize(fr_size), addr_offset_kuseg);
 		ASSERT(m_bitmap[KSEG]);
 		// how many full frames of this size are there, starting from this addr
 		uint used_kseg = fullFrames( 
-			offset(fr_size, KSEG) + addr_offset_kseg, count, fr_size, KSEG);
+			offset(fr_size, KSEG) + addr_offset_kseg, count_kseg, fr_size, KSEG);
 		PRINT_DEBUG("Found %u used frames from %u in KSEG.\n", 
-			used_kseg, count_kuseg);
+			used_kseg, count_kseg);
 		
 		if (used_kseg != count_kseg) {
 			PRINT_DEBUG("Not enough allocated frames found, exiting...\n");
@@ -745,7 +747,7 @@ local offset %d\n", count_kuseg, frameSize(fr_size), addr_offset_kuseg);
 		ASSERT(m_bitmap[KUSEG]);
 		// how many full frames of this size are there, starting from this addr
 		uint used_kuseg = fullFrames( 
-			offset(fr_size, KUSEG) + addr_offset_kuseg, count, fr_size, KUSEG);
+			offset(fr_size, KUSEG) + addr_offset_kuseg, count_kuseg, fr_size, KUSEG);
 		PRINT_DEBUG("Found %u used frames from %u in KUSEG.\n", 
 			used_kuseg, count_kuseg);
 

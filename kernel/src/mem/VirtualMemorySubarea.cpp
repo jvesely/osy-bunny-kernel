@@ -37,7 +37,7 @@
 #include "mem/Memory.h"
 #include "mem/FrameAllocator.h"
 
-#define VMA_DEBUG
+//#define VMA_DEBUG
 
 #ifndef VMA_DEBUG
 #define PRINT_DEBUG(...)
@@ -103,8 +103,10 @@ void VirtualMemorySubarea::free()
 	// free the physical memory
 	bool res = FrameAllocator::instance().frameFree(m_physicalAddress, m_frameCount, m_frameType);
 
+	ASSERT (res);
 	PRINT_DEBUG("Subarea from %p of size %x (%d x %x) was%s freed.\n",
 		m_physicalAddress, size(), m_frameCount, Memory::frameSize(m_frameType), res ? "" : " NOT");
+	res = true;
 }
 
 /* --------------------------------------------------------------------- */

@@ -38,7 +38,7 @@
 #include "Memory.h"
 
 // Make dump() function quiet.
-//#define VMA_NDEBUG
+#define VMA_NDEBUG
 
 //#define VMA_DEBUG
 //#define VMA_TLB_DEBUG
