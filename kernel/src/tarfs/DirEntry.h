@@ -121,7 +121,11 @@ public:
 	uint seek( FilePos pos, int offset );
 
 	bool open( char mode = 0 ) { return ++m_opencount,true; };
-	void close() {  if (m_opencount) --m_opencount; };
+	void close() 
+	{ 
+		if (m_opencount) --m_opencount; 
+		if (!m_opencount) m_nextEntry = m_subEntries.min();
+	};
 
 private:
 	EntryList m_subEntries;  /*!< List of stored Entries. */
