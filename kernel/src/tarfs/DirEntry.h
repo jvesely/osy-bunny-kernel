@@ -114,13 +114,25 @@ public:
 	/*!
 	 * @brief Fails the seek operation as directories do not
 	 * 	support this operation.
-	 * @param pos Ignored.
-	 * @param offset Ignored.
-	 * @return 0, always.
+	 * @param pos Reference point for offset. 
+	 * @param offset Real position as offset from pos.
+	 * @return New position.
+	 *
+	 * @note Reference point POS_CURRENT is ingored and treated as POS_START
 	 */
 	uint seek( FilePos pos, int offset );
 
+	/*!
+	 * @brief Marks directory as opened and increases open counter.
+	 * @param mode Ignored. Provided for Entry compatibility.
+	 * @return @a True always.
+	 */
 	bool open( char mode = 0 ) { return ++m_opencount,true; };
+
+	/*!
+	 * @brief Decrease open count. And resets postion indicator if no more 
+	 * opens are pending.
+	 */
 	void close() 
 	{ 
 		if (m_opencount) --m_opencount; 
@@ -129,6 +141,7 @@ public:
 
 private:
 	EntryList m_subEntries;  /*!< List of stored Entries. */
-	uint m_opencount;
-	BinaryNode<Pair<String, Entry*> >* m_nextEntry;
-};
+	uint m_opencount;        /*!< Count of open calls - close calls.*/
+
+	/*! Position wihtin directory. */
+	BinaryNode<Pair<String, Entry*> >* m_nextEntry; };
