@@ -219,7 +219,7 @@ process_t process_self()
 /*----------------------------------------------------------------------------*/
 int process_join( process_t proc )
 {
-	return SysCall::process_join( proc, NULL);
+	return SysCall::process_join( proc, NULL );
 }
 /*----------------------------------------------------------------------------*/
 int process_join_timeout( process_t proc, const unsigned int usec )

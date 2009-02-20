@@ -221,7 +221,7 @@ void Kernel::exception( Processor::Context* registers )
 		) {
 			printf( "Exception handling for: %s(%u) UNHANDLED or FAILED => KILLING offending thread (%u).\n",
 				Processor::EXCEPTIONS[reason].name, reason, Thread::getCurrent()->id());
-//			stop();
+			stop();
 			Thread::getCurrent()->kill();
 		}
 	

@@ -88,13 +88,13 @@ void* first_thread(void* data)
 		Thread::getCurrent()->join( thread, NULL );
 		KERNEL.halt();
 	#endif
-/*	
+	
 	#ifdef USER_TEST
 		const char* file = "test.bin";
 	#else
-		const char* file = "test.bin";
+		const char* file = "init.bin";
 	#endif
-*/
+
 	puts( "Mounting root fs..." );
 	TarFS* fs = new TarFS();
 
@@ -106,7 +106,15 @@ void* first_thread(void* data)
 		puts( "Disk mounting failed. Shutting down.\n" );
 		KERNEL.halt();
 	}
-	
+
+	Process* proc = exec( file, fs );
+	if (!proc) {
+		puts( "First process could not be created halting...\n" );
+	} else {
+		proc->join( NULL );
+	}
+	KERNEL.halt();
+		
 	bool exit = false;
 	const int BUFFER_SIZE(50);
 	char buffer[BUFFER_SIZE];

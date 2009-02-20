@@ -103,7 +103,7 @@ int main ()
 	while (true) {
 		printf( "Select one of the files to run or type \'q\' to exit:\n" );
 		DIR_ENTRY file;
-
+		fseek( curr_dir, POS_START, 0 );
 		while (direntry( curr_dir, &file) == EOK){
 			printf( " %s\n", file.name );
 		}

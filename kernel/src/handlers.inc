@@ -356,9 +356,9 @@ unative_t handleProcessCreate( unative_t params[] )
 /*----------------------------------------------------------------------------*/
 unative_t handleProcessJoin( unative_t params[] )
 {
-	const Time * time = (const Time*)CHECK_PTR_IN_USEG(params[0]);
-
+	const Time * time = (const Time*)CHECK_PTR_IN_USEG(params[1]);
 	Process* victim = PIDTable.translateId( params[0] );
+
 	if (!victim || victim == Process::getCurrent())
 		return EINVAL;
 

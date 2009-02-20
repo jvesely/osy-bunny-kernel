@@ -77,8 +77,9 @@ void Timer::plan(Thread* thread, const Time& time)
 		KERNEL.setTimeInterrupt( thread->key() );
 	}
 
-	PRINT_DEBUG ("Pending events: %u.\n %s\n", 
-		m_heap.size(), "------------------PLANNING END--------------\n");
+	PRINT_DEBUG ("Pending events: %u.\n", 
+		m_heap.size())
+	PRINT_DEBUG ("------------------PLANNING END--------------\n");
 }
 /*----------------------------------------------------------------------------*/
 void Timer::handleInterrupt()

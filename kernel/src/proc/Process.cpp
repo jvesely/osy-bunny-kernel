@@ -42,6 +42,7 @@
 #include "synchronization/Event.h"
 #include "ProcessInfo.h"
 #include "ProcessTable.h"
+#include "tarfs/Entry.h"
 
 //#define PROCESS_DEBUG
 
@@ -129,7 +130,7 @@ Process* Process::create( const void* image, size_t size )
 void Process::setActiveThread( thread_t thread )
 {
 	m_info->RunningThread = thread;
-	PRINT_DEBUG ("Setting active thread for process %u: %u.(%u,%u)\n", m_id, thread, m_info->PID, m_info->RunningThread);
+//	PRINT_DEBUG ("Setting active thread for process %u: %u.(%u,%u)\n", m_id, thread, m_info->PID, m_info->RunningThread);
 }
 /*----------------------------------------------------------------------------*/
 void Process::clearEvents()
@@ -153,6 +154,26 @@ void Process::clearEvents()
 	PRINT_DEBUG ("Events cleared.\n");
 }
 /*----------------------------------------------------------------------------*/
+void Process::clearFiles()
+{
+	PRINT_DEBUG ("Closing opened files : %u.\n", fileTable.map().size());
+	const uint list_count = fileTable.map().getArraySize();
+	for (uint i = 0; i < list_count; ++i)
+	{
+		List< Pair<file_t, Entry*> >* list =	fileTable.map().getList( i );
+		List< Pair<file_t, Entry*> >::Iterator it;
+		ASSERT (list);
+		for (it = list->begin(); it != list->end(); ++it) {
+			if (it->second) {
+				PRINT_DEBUG ("CLOSING file with fd %u.\n", it->first);
+				it->second->close();
+			}
+		}
+		list->clear();
+	}
+	PRINT_DEBUG ("Files closed.\n");
+}
+/*----------------------------------------------------------------------------*/
 void Process::clearThreads()
 {
 	PRINT_DEBUG ("Clearing process threads.\n");
@@ -170,6 +191,7 @@ void Process::clearThreads()
 void Process::exit()
 {
 	clearEvents();
+	clearFiles();
 	clearThreads();
 }
 /*----------------------------------------------------------------------------*/
@@ -180,6 +202,8 @@ Process* Process::getCurrent()
 /*----------------------------------------------------------------------------*/
 int Process::join( const Time* time )
 {
+	PRINT_DEBUG ("Thread %p from process %p is joining process %p.\n",
+		Thread::getCurrent(), Thread::getCurrent()->process(), this);
 	ASSERT (Thread::getCurrent()->process() != this);
 	return Thread::getCurrent()->join( m_mainThread, NULL, time, *time);
 }

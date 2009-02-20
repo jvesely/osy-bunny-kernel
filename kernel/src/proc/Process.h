@@ -169,6 +169,8 @@ private:
 	/*! @brief Ends threads by either killing or deactivating them. */
 	void clearThreads();
 
+	/*! @brief Closes any used files. */
+	void clearFiles();
 	/*! No copies.    */
 	Process( const Process& );
 	/*! No assigning. */
