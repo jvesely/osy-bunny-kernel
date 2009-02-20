@@ -25,7 +25,7 @@
 
 /*!
  * @file 
- * @brief Virtual memory subarea.
+ * @brief Virtual memory subarea representation:.
  *
  * Virtual memory subarea is a part of virtual memory area.
  */

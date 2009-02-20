@@ -99,9 +99,36 @@ public:
 	 */
 	virtual int free(const void* from) = 0;
 
+	/*! @brief Resize the given virtual memory area.
+	 * @param from The address of a VMA (first byte).
+	 * @param size The new size of the VMA (non zero value).
+	 * @return EOK, ENOMEM or EINVAL
+	 */
 	virtual int resize(const void* from, const size_t size) = 0;
+
+	/*! @brief Remap virtual memory area to a new virtual address.
+	 * @param from The address of the VMA (first byte)
+	 * @param to The new starting address of the VMA.
+	 * @return EOK or EINVAL.
+	 *
+	 * Remap virtual memory area to a new virtual address. The new virtual address
+	 * can be (as it is not defined in the assignment and the tests want this feature)
+	 * in other segment.
+	 */
 	virtual int remap(const void* from, const void* to) = 0;
+	
+	/*! @brief Merge two consequent virtual memory areas to one bigger block.
+	 * @param area1 The address of a VMA (first byte). The order doesn't matter.
+	 * @param area2 The address of a VMA (first byte). The order doesn't matter.
+	 * @return EOK or EINVAL.
+	 */
 	virtual int merge(const void* area1, const void* area2) = 0;
+	
+	/*! @brief Split one virtual memory area to two pieces.
+	 * @param from The address of the VMA (first byte).
+	 * @param split The address where to split, start the second piece.
+	 * @return EOK or EINVAL.
+	 */
 	virtual int split(const void* from, const void* split) = 0;
 
 	/*! @brief Translates Virtual address into physical.

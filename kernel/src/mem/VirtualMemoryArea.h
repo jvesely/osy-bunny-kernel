@@ -44,7 +44,7 @@ typedef List<VirtualMemorySubarea *>::Iterator VirtualMemorySubareaIterator;
 
 /**
  * @class VirtualMemoryArea VirtualMemoryArea.h "mem/VirtualMemoryArea.h"
- * @brief Virtual memory area.
+ * @brief Representation of one virtual memory area (containing subareas).
  *
  * Virtual memory area is a block of virtual memory mapped to one or more
  * virtual memory subareas. The VMA is stored in a tree in the VirtualMemory class.

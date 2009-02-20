@@ -25,11 +25,7 @@
 
 /*!
  * @file 
- * @brief Short description.
- *
- * Long description. I would paste some Loren Ipsum rubbish here, but I'm afraid
- * It would stay that way. Not that this comment is by any means ingenious but 
- * at least people can understand it. 
+ * @brief Member function definitions of the VirtualMemory class.
  */
 
 #include "VirtualMemory.h"
@@ -254,14 +250,13 @@ int VirtualMemory::remap(const void* from, const void* to)
 	// size of the selected VMA
 	const size_t size = entry->data().size();
 
-	//TODO !!! is it allowed to have to in a different segment???
-	//TODO !!! maybe at least check if to is not in KSEG0/1 (no TLB)
-	// check if from and to are in the same segment
-	//if (Memory::getSegment(from) != Memory::getSegment(to)) {
-	//	PRINT_DEBUG("Address %p (from) is in different segment than %p (to).\n",
-	//		from, to);
-	//	return EINVAL;
-	//}
+	// It is allowed to have 'from' and 'to' in a different segment so
+	// check if not remapping to a segment which is not mapped with TLB
+	if (!VF_SEG_NOTLB(Memory::getSegment(from)) && VF_SEG_NOTLB(Memory::getSegment(to))) {
+		PRINT_DEBUG("Address %p (from) is in TLB mapped segment and %p (to) is not.\n",
+			from, to);
+		return EINVAL;
+	}
 
 	// check if to+size fits to the segment
 	if (!Memory::checkSegment(to, size)) {
