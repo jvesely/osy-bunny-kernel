@@ -88,3 +88,43 @@ Entry* DirEntry::subEntry( const String& name )
 	PRINT_DEBUG ("Found subentry: %s at ptr %p.\n", name.cstr(), entry);
 	return entry ? entry->data().second : NULL;
 }
+/*----------------------------------------------------------------------------*/
+uint DirEntry::seek( FilePos pos, int offset )
+{
+	if (m_subEntries.count() == 0)
+		return 0;
+	switch (pos) {
+		case POS_CURRENT:
+		case POS_START:
+			m_nextEntry = &m_subEntries.min(); 
+			ASSERT(m_nextEntry);
+			if (offset < 0 || (uint)offset > m_subEntries.count())
+				return 0;
+			for (int i = 0; i < offset; ++i) {
+				ASSERT(m_nextEntry);
+				m_nextEntry = m_nextEntry->next();
+			}
+			return offset;
+		case POS_END:
+			m_nextEntry =  &m_subEntries.max();
+			ASSERT(m_nextEntry);
+			if (offset > 0 || (uint)-offset > m_subEntries.count())
+				return m_subEntries.count();
+			for (int i = 0; i < offset; ++i) {
+				ASSERT(m_nextEntry);
+				m_nextEntry = m_nextEntry->previous();
+			}
+			return m_subEntries.count() - offset;
+	}
+	m_nextEntry = &m_subEntries.min();
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+const Pair<String, Entry*> DirEntry::nextEntry()
+{
+	if (!m_nextEntry)
+		return Pair<String, Entry*>("", NULL);
+	
+	return m_nextEntry->data();
+	
+}

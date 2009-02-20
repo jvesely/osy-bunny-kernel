@@ -33,6 +33,8 @@
  */
 
 #include "address.h"
+#include "Kernel.h"
+#include "direntry.h"
 #include "proc/Process.h"
 #include "proc/Thread.h"
 #include "proc/ProcessTable.h"
@@ -370,5 +372,91 @@ unative_t handleProcessKill( unative_t params[] )
 		return EINVAL;
 	victim->exit();
 	delete victim;
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleFsOpen( unative_t params[] )
+{
+	file_t* fd_loc   = (file_t*)CHECK_PTR_IN_USEG(params[0]);
+	const char* name = (const char*)CHECK_PTR_IN_USEG(params[1]);
+	const char mode  = params[2];
+
+	ASSERT (KERNEL.rootFS());
+	ASSERT (KERNEL.rootFS()->rootDir());
+	Entry* fs_entry = KERNEL.rootFS()->rootDir()->subEntry( name );
+	if (!fs_entry || !fs_entry->open( mode ) )
+		return EIO;
+
+	ASSERT (Process::getCurrent());
+	file_t fd = Process::getCurrent()->fileTable.getFreeId( fs_entry );
+	if (fd == Process::getCurrent()->fileTable.BAD_ID) {
+		fs_entry->close();
+		return ENOMEM;
+	}
+	*fd_loc = fd;
+
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleFsClose( unative_t params[] )
+{
+	const file_t fd = params[0];
+	ASSERT (Process::getCurrent());
+	Entry* entry = Process::getCurrent()->fileTable.translateId( fd );
+	if (!entry)
+		return EINVAL;
+	entry->close();
+	Process::getCurrent()->fileTable.returnId( fd );
+	return EOK;
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleFsRead( unative_t params[] )
+{
+	ASSERT (Process::getCurrent());
+	void* buffer = (void*)CHECK_PTR_IN_USEG(params[1]);
+	const file_t fd   = params[0];
+	const size_t size = params[2];
+	Entry* entry = Process::getCurrent()->fileTable.translateId( fd );
+	if (!entry)
+		return EINVAL;
+	return entry->read( buffer, size );
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleFsSeek( unative_t params[] )
+{
+	ASSERT (Process::getCurrent());
+	if (params[1] > POS_END)
+		return EINVAL;
+
+	const file_t fd   = params[0];
+	const FilePos pos = (FilePos)params[1];
+	const int offset  = params[2];
+
+	Entry* entry = Process::getCurrent()->fileTable.translateId( fd );
+	if (!entry)
+		return EINVAL;
+	return entry->seek( pos, offset );
+}
+/*----------------------------------------------------------------------------*/
+unative_t handleFsDirEntry( unative_t params [] )
+{
+	ASSERT (Process::getCurrent());
+	const file_t fd = params[0];
+	DIR_ENTRY* dir  = (DIR_ENTRY*)CHECK_PTR_IN_USEG(params[1]);
+	Entry* entry = Process::getCurrent()->fileTable.translateId( fd );
+	printf( "Handling dirEntry.\n" );
+	if (!entry || !entry->dirEntry()) {
+		printf( "Asking file to list entry.\n" );
+		return EINVAL;
+	}
+	
+	const Pair<String, Entry*> info = entry->dirEntry()->nextEntry();
+	if (!info.second) {
+		printf( "next entry is empty.\n" );
+		return EIO;
+	}
+	printf("foudn entry: %s.\n", info.first.cstr());
+	memcpy(dir->name, info.first.cstr(), min<uint>(100, info.first.size() + 1) );
+	dir->is_dir = info.second->dirEntry();
 	return EOK;
 }

@@ -36,6 +36,7 @@
 #include "types.h"
 #include "api.h"
 #include "Time.h"
+#include "direntry.h"
 
 /*!
  * @namespace SysCall
@@ -138,5 +139,5 @@ int fread( file_t fd, void* buffer, size_t size );
 
 int fseek( file_t fd, FilePos, int offset );
 
-int direntry( DIR_ENTRY* entry );
+int direntry( file_t fd, DIR_ENTRY* entry );
 }

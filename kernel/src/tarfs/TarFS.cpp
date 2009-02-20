@@ -52,7 +52,7 @@
 
 #define TAR_BLOCK_SIZE (sizeof(TarHeader))
 #define SIGNED_BITS_MASK (0x7fffffff)
-
+#define DIR_SELF (char*)"."
 
 TarFS::TarFS( DiskDevice* disk )
 {
@@ -70,6 +70,7 @@ bool TarFS::mount( DiskDevice* disk )
 	uint block = 0;
 
 	PRINT_DEBUG ("Mounting device %p of size %u B.\n", disk, disk->size());
+	m_rootDir.addSubEntry( DIR_SELF, &m_rootDir );
 
 	while (disk->read( &header, TAR_BLOCK_SIZE, block, 0 )) {
 		/* if there is no name it might only be the end*/

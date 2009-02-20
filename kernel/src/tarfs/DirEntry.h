@@ -57,7 +57,9 @@ public:
 	/*!
 	 * @brief No device to store Direntry data on.
 	 */
-	DirEntry(DiskDevice* storage = NULL):Entry( storage ){};
+	DirEntry(DiskDevice* storage = NULL):Entry( storage ), m_opencount( 0 ),
+		m_nextEntry( NULL )
+		{};
 
 	/*!
 	 * @brief Adds name->Entry maping coresponding to the item in this dir.
@@ -78,6 +80,8 @@ public:
 	 * @return Name of the following Entry.
 	 */
 	const String nextEntry( const String& previous );
+
+	const Pair<String, Entry*> nextEntry();
 
 	/*!
 	 * @brief Translates Name into the Entry*.
@@ -114,7 +118,13 @@ public:
 	 * @param offset Ignored.
 	 * @return 0, always.
 	 */
-	uint seek( FilePos pos, int offset ) { return 0; };
+	uint seek( FilePos pos, int offset );
+
+	bool open( char mode = 0 ) { return ++m_opencount,true; };
+	void close() {  if (m_opencount) --m_opencount; };
+
 private:
 	EntryList m_subEntries;  /*!< List of stored Entries. */
+	uint m_opencount;
+	BinaryNode<Pair<String, Entry*> >* m_nextEntry;
 };

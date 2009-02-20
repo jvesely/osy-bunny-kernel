@@ -198,7 +198,7 @@ int SysCall::fseek( file_t fd, FilePos, int offset )
 	return SYSCALL( SYS_FS_SEEK );
 }
 /*----------------------------------------------------------------------------*/
-int SysCall::direntry( DIR_ENTRY* entry )
+int SysCall::direntry( file_t dir_d, DIR_ENTRY* entry )
 {
 	return SYSCALL( SYS_FS_ENTRY );
 }

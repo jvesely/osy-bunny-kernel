@@ -33,9 +33,8 @@
  */
 
 #include "FileEntry.h"
-#include "VFS.h"
 
-//#define ENTRY_DEBUG
+#define ENTRY_DEBUG
 
 #ifndef ENTRY_DEBUG
 #define PRINT_DEBUG(...)
@@ -71,6 +70,9 @@ ssize_t FileEntry::read( void* buffer, int size )
 {
 	if (size < 0 || (m_pos + size) > m_size) return EIO;
 	bool res = readFromDevice( buffer, size, m_startPos, m_pos);
+	PRINT_DEBUG("Reading from Entry to buffer %p(%u): %s\n", 
+		buffer, size, res ? "OK": "FAIL" );
+
 	return res ? size : EIO;
 }
 /*----------------------------------------------------------------------------*/

@@ -461,7 +461,7 @@ int opendir( file_t* fd, const char* path );
 
 int closedir( file_t fd );
 
-int direntry( DIR_ENTRY* entry );
+int direntry( file_t dir_fd, DIR_ENTRY* entry );
 
 #ifdef __cplusplus
 }

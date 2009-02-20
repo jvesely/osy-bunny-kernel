@@ -363,7 +363,7 @@ int closedir( file_t fd )
 	return SysCall::close( fd );
 }
 /*----------------------------------------------------------------------------*/
-int direntry( DIR_ENTRY* entry )
+int direntry( file_t dir_fd, DIR_ENTRY* entry )
 {
-	return SysCall::direntry( entry );
+	return SysCall::direntry( dir_fd, entry );
 }

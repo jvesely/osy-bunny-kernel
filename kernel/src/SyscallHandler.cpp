@@ -70,6 +70,12 @@ SyscallHandler::SyscallHandler()
 	m_handles[SYS_PROC_KILL]   = handleProcessKill;
 
 	m_handles[SYS_GET_TIME] = handleGetTime;
+
+	m_handles[SYS_FS_OPEN]  = handleFsOpen;
+	m_handles[SYS_FS_CLOSE] = handleFsClose;
+	m_handles[SYS_FS_READ]  = handleFsRead;
+	m_handles[SYS_FS_SEEK]  = handleFsSeek;
+	m_handles[SYS_FS_ENTRY] = handleFsDirEntry;
 }
 /*----------------------------------------------------------------------------*/
 bool SyscallHandler::handleException( Processor::Context* registers )
