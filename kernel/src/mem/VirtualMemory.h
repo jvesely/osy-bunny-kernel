@@ -68,7 +68,15 @@ public:
 	int merge(const void* area1, const void* area2);
 	int split(const void* from, const void* split);
 
-	// translate fnc
+	/**
+	 * Translate virtual to physical address.
+	 *
+	 * @param address As input parameter the virtual address to be translated and
+	 *   as output the physical address (only if the translation was successful).
+	 * @param frameSize Output parameter, the page size (enum value) for the
+	 *   physical block.
+	 * @return Whether the translation was successful.
+	 */
 	bool translate(void*& address, Processor::PageSize& frameSize);
 
 	/**
@@ -79,6 +87,9 @@ public:
 	 */
 	void dump();
 
+	/**
+	 * Clean up and free all memory which was left in the tree.
+	 */
 	virtual ~VirtualMemory();
 
 protected:

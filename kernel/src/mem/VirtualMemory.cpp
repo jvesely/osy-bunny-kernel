@@ -570,17 +570,18 @@ void VirtualMemory::dump()
 	printf("[ VMA DEBUG ]: ==================================\n");
 #endif
 }
-/*----------------------------------------------------------------------------*/
+
+/* --------------------------------------------------------------------- */
+
 VirtualMemory::~VirtualMemory()
 {
-	printf("Destroying memory map.\n");
+	VMA_DEBUG("Destroying memory map.\n");
 	dump();
-	for ( VirtualMemoryMapEntry *x = m_virtualMemoryMap.min(); 
-				x; 
-				x = (VirtualMemoryMapEntry *)x->next())
-	{
-		printf("Freeing memory area.\n");
-		const_cast<VirtualMemoryArea*>(&x->data())->free();
+	VirtualMemoryMapEntry *x;
+	while ((x = m_virtualMemoryMap.min()) != NULL) {
+		const_cast<VirtualMemoryArea *>(&x->data())->free();
+		delete x;
 	}
 	dump();
 }
+
