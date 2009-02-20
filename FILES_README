@@ -1,4 +1,4 @@
 BunnyKernel.pdf: BunnyKernel project documentation
-disk.tar: default disk file specified in msim.conf, mak disk recreates this file using .bin files from apps/bin
+disk.tar: default disk file specified in msim.conf, make disk recreates this file using .bin files from apps/bin
 Doxyfile: Doxygen configuration
 test_disk.tar: disk file containing all as3 tests, to use it in msim either change the appropriate line in msim.conf or rename this file to disk.tar
