@@ -313,8 +313,6 @@ struct mutex {
  * @retval EOK if successful.
  * @retval ENOMEM if the initialization failed due to lack of memory.
  * @retval EINVAL if @a mtx is not a valid mutex identifier.
- *
- * @todo maybe change the return values
  */
 int mutex_init( struct mutex* mtx );
 
