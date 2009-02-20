@@ -43,14 +43,17 @@ class  UserThread;
 class  Event;
 class  Process;
 class  Time;
+class  Entry;
 struct ProcessInfo;
 
 template class List<UserThread*>;
 template class IdMap<event_t, Event*>;
 template class IdMap<process_t, Process*>;
+template class IdMap<file_t, Entry*>;
 
 typedef List<UserThread*>          UserThreadList;
 typedef IdMap<event_t, Event*>     EventTable;
+typedef IdMap<file_t, Entry*>      FileTable;
 
 /*!
  * @class Process Process.h "proc/Process.h"
@@ -146,6 +149,8 @@ public:
 
 	/*! @brief Events used by this process. */
 	EventTable eventTable;
+
+	FileTable  fileTable;
 
 private:
 	

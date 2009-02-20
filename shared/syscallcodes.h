@@ -63,5 +63,12 @@
 #define SYS_PROC_JOIN      24
 #define SYS_PROC_KILL      25
 
-#define SYS_COUNT          26
+#define SYS_FS_OPEN        26
+#define SYS_FS_CLOSE       27
+#define SYS_FS_READ        28
+#define SYS_FS_WRITE       29
+#define SYS_FS_SEEK        30
+#define SYS_FS_ENTRY       31
+
+#define SYS_COUNT          32
 

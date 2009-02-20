@@ -297,7 +297,6 @@ int mutex_unlock_check( struct mutex* mtx )
 	ASSERT(sizeof(*mtx) == sizeof(Mutex));
 	return ((Mutex*)mtx)->unlockCheck();
 }
-
 /*----------------------------------------------------------------------------*/
 void spinlock_init(spinlock_t* s) {
 	ASSERT(sizeof(spinlock_t) >= sizeof(Spinlock));
@@ -321,7 +320,6 @@ int vma_alloc(void **from, size_t * size)
 {
 	return SysCall::vma_alloc( from, size, ((VF_AT_KUSEG << VF_AT_SHIFT) | (VF_VA_AUTO << VF_VA_SHIFT)) );
 }
-
 /* -------------------------------------------------------------------------- */
 int vma_free(void *from)
 {
@@ -332,6 +330,40 @@ int vma_resize(const void *from, size_t * size)
 {
 	return SysCall::vma_resize(from,size);
 }
-
-
-
+/* -------------------------------------------------------------------------- */
+/* ----------------------------   FILES   ----------------------------------- */
+/* -------------------------------------------------------------------------- */
+int fopen( file_t* fd, const char* file_name, const char mode )
+{
+	return SysCall::open( fd, file_name, mode );
+}
+/*----------------------------------------------------------------------------*/
+int fclose( file_t fd )
+{
+	return SysCall::close( fd );
+}
+/*----------------------------------------------------------------------------*/
+int fread( file_t fd, void* buffer, size_t size )
+{
+	return SysCall::fread( fd, buffer, size);
+}
+/*----------------------------------------------------------------------------*/
+int fseek( file_t fd, FilePos pos, int offset)
+{
+	return SysCall::fseek( fd, pos, offset );
+}
+/*----------------------------------------------------------------------------*/
+int opendir( file_t* fd_ptr, const char* path )
+{
+	return SysCall::open( fd_ptr, path );
+}
+/*----------------------------------------------------------------------------*/
+int closedir( file_t fd )
+{
+	return SysCall::close( fd );
+}
+/*----------------------------------------------------------------------------*/
+int direntry( DIR_ENTRY* entry )
+{
+	return SysCall::direntry( entry );
+}

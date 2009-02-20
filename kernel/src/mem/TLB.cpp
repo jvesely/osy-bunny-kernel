@@ -185,8 +185,6 @@ byte TLB::getAsid( IVirtualMemoryMap* map )
 void TLB::returnAsid( const byte asid )
 {
 	PRINT_DEBUG ("Returning ASID: %d.\n", asid);
-	if (!m_asidMap[asid])
-		return; // returning already returned asid
 	clearAsid( asid );
 	m_freeAsids.append( asid );
 	ASSERT (m_asidMap[asid]);

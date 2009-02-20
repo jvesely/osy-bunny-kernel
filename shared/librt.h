@@ -443,6 +443,25 @@ int vma_free(const void *from);
 */
 int vma_resize(const void *from, size_t * size);
 
+/* -------------------------------------------------------------------------- */
+/* -----------------------------   FILES   ---------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+#include "direntry.h"
+
+int fopen( file_t* fd, const char* file_name, const char mode );
+
+int fclose( file_t fd );
+
+int fread( file_t fd, void* buffer, size_t size );
+
+int fseek( file_t fd, FilePos pos, int offset );
+
+int opendir( file_t* fd, const char* path );
+
+int closedir( file_t fd );
+
+int direntry( DIR_ENTRY* entry );
 
 #ifdef __cplusplus
 }

@@ -38,7 +38,6 @@
 
 
 class DiskDevice;
-typedef int file_t;
 
 /*!
  * @class VFS VFS.h "VFS.h"

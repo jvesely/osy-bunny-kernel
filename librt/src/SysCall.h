@@ -50,8 +50,7 @@ size_t puts( const char* str );
 
 size_t gets( char* buffer, size_t size);
 
-void exit() __attribute__ ((noreturn));
-
+/*----------------------------------------------------------------------------*/
 int thread_create(
 	thread_t *thread_ptr, void *(*thread_start)(void*, void*), void *arg, void* arg2 );
 
@@ -73,7 +72,7 @@ void thread_suspend();
 int thread_wakeup( thread_t thr );
 
 void thread_exit( void* retval ) __attribute__ ((noreturn));
-
+/*----------------------------------------------------------------------------*/
 /** @brief allocate virtual memory area
 *
 *	Wrapper for kernel space vma_alloc, except that parameter size is pointer.
@@ -108,7 +107,7 @@ int vma_free(const void * from);
 *		increase vma size
 */
 int vma_resize(const void *from, volatile size_t * size);
-
+/*----------------------------------------------------------------------------*/
 int event_init( event_t* id );
 
 void event_wait( event_t id, volatile native_t* locked );
@@ -119,12 +118,25 @@ int event_wait_timeout(
 void event_fire( event_t id );
 
 int event_destroy( event_t id );
-
+/*----------------------------------------------------------------------------*/
 void getCurrentTime( Time * time );
-
+/*----------------------------------------------------------------------------*/
 int process_create( process_t *process_ptr, const void *img, const size_t size );
 
 int process_join( process_t proc, const Time * time );
 
 int process_kill( process_t proc );
+
+
+void exit() __attribute__ ((noreturn));
+/*----------------------------------------------------------------------------*/
+int open( file_t* fd, const char* file_name, const char mode = 0 );
+
+int close( file_t fd );
+
+int fread( file_t fd, void* buffer, size_t size );
+
+int fseek( file_t fd, FilePos, int offset );
+
+int direntry( DIR_ENTRY* entry );
 }

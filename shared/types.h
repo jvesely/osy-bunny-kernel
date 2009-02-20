@@ -62,6 +62,7 @@ typedef uint32_t ipl_t;
 typedef uint32_t mtx_id_t;
 typedef uint32_t event_t;
 typedef uint32_t process_t;
+typedef uint32_t file_t;
 
 typedef unsigned int uint;
 
