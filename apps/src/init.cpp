@@ -103,15 +103,17 @@ int main ()
 	while (true) {
 		printf( "Select one of the files to run or type \'q\' to exit:\n" );
 		DIR_ENTRY file;
+
 		while (direntry( curr_dir, &file) == EOK){
-			printf( " %s ", file.name );
+			printf( " %s\n", file.name );
 		}
 		puts("\n$ ");
 		gets_feedback( buffer, BUFF_SIZE );
 		printf( "\n" );
 		if (buffer[0] == 'q' && buffer[1] == '\0')
 			break;
-		exec(buffer);
+		process_t pid = exec(buffer);
+		process_join( pid );
 	}
 	printf( "Exiting Simple Shell have fun.\n" );
 	fclose (curr_dir );

@@ -51,6 +51,8 @@ bool DirEntry::addSubEntry( char* name, Entry* entry )
 	String str( name );
 	PRINT_DEBUG ("Adding SubEntry %s.\n", str.cstr() );
 	m_subEntries.insert( NamePair(str, entry) );
+	if  ( m_opencount == 0)
+		m_nextEntry = &m_subEntries.min();
 	return true;
 }
 /*----------------------------------------------------------------------------*/
@@ -125,6 +127,7 @@ const Pair<String, Entry*> DirEntry::nextEntry()
 	if (!m_nextEntry)
 		return Pair<String, Entry*>("", NULL);
 	
-	return m_nextEntry->data();
-	
+	Pair<String, Entry*> ret =  m_nextEntry->data();
+	m_nextEntry = m_nextEntry->next();
+	return ret;
 }

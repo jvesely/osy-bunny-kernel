@@ -444,19 +444,19 @@ unative_t handleFsDirEntry( unative_t params [] )
 	const file_t fd = params[0];
 	DIR_ENTRY* dir  = (DIR_ENTRY*)CHECK_PTR_IN_USEG(params[1]);
 	Entry* entry = Process::getCurrent()->fileTable.translateId( fd );
-	printf( "Handling dirEntry.\n" );
+//	printf( "Handling dirEntry.\n" );
 	if (!entry || !entry->dirEntry()) {
-		printf( "Asking file to list entry.\n" );
+//		printf( "Asking file to list entry.\n" );
 		return EINVAL;
 	}
 	
 	const Pair<String, Entry*> info = entry->dirEntry()->nextEntry();
 	if (!info.second) {
-		printf( "next entry is empty.\n" );
+//		printf( "next entry is empty.\n" );
 		return EIO;
 	}
-	printf("foudn entry: %s.\n", info.first.cstr());
 	memcpy(dir->name, info.first.cstr(), min<uint>(100, info.first.size() + 1) );
+//	printf("found entry: \"%s\" \"%s\"\n", info.first.cstr(), dir->name);
 	dir->is_dir = info.second->dirEntry();
 	return EOK;
 }
