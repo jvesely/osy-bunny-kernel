@@ -575,7 +575,7 @@ void VirtualMemory::dump()
 
 VirtualMemory::~VirtualMemory()
 {
-	VMA_DEBUG("Destroying memory map.\n");
+	PRINT_DEBUG("Destroying memory map.\n");
 	dump();
 	VirtualMemoryMapEntry *x;
 	while ((x = m_virtualMemoryMap.min()) != NULL) {
