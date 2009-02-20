@@ -61,15 +61,14 @@ public:
 	bool mount( DiskDevice* disk );
 
 	/*!
-	 * @brief Opens file.
+	 * @brief Gets file representation.
 	 * @param file_name Name of the file (full path).
-	 * @param mode Mode to use.
-	 * @return ID (>=0) if the file was opened sucessfully, <0 otherwise.
+	 * @return Ptr to Entry representing the file or directory, NULL on failure.
 	 */
 	Entry* getFile( const char file_name[] );
 
 	/*!
-	 * @brief Gets Entry of the root directory
+	 * @brief Gets representation of the root directory.
 	 */
 	DirEntry* rootDir()
 		{ return &m_rootDir; };
