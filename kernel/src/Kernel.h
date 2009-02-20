@@ -42,7 +42,7 @@
 #include "drivers/Processor.h"
 
 #include "structures/List.h"
-#include "VFS.h"
+#include "tarfs/TarFS.h"
 
 extern void* first_thread(void*);
 
@@ -138,7 +138,7 @@ public:
 	/*! @brief Gets the first disk. */
 	inline DiskDevice* disk() { return m_disks.getFront(); };
 
-	inline VFS* rootFS() { return m_rootFS; };
+	inline TarFS* rootFS() { return m_rootFS; };
 
 private:
 	Console m_console;                 /*!< Console device.        */
@@ -146,7 +146,7 @@ private:
 	size_t m_physicalMemorySize;       /*!< Detected memory size.  */	
 	uint m_timeToTicks;                /*!< Converting constant.   */
 	DiskList m_disks;									 /*!< Disks.                 */
-	VFS* m_rootFS;                     /*!< /.                     */
+	TarFS* m_rootFS;                   /*!< /.                     */
 	SyscallHandler m_syscalls;         /*!< Handles Syscalls.      */
 	void printBunnies( uint count );   /*!< @brief Prints BUNNIES. */
 

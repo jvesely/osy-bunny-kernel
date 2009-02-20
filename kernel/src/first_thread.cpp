@@ -55,21 +55,20 @@ size_t gets_feedback( char* buffer, size_t buffer_size )
 	buffer[ptr] = '\0';
 	return ptr;
 }
-Process* exec( const char* file, VFS* fs )
+Process* exec( const char* file, TarFS* fs )
 {
-	file_t first_proc = fs->openFile( file, OPEN_R );
+	Entry* proc_file = fs->rootDir()->subEntry( file );
 	
-	if (first_proc < 0) {
+	if (!proc_file) {
 		printf("Open file failed.\n");
 		return NULL;
 	}
 
-	const size_t file_size = fs->seekFile( first_proc, POS_END, 0 );
-	fs->seekFile( first_proc, POS_START, 0 );
+	const size_t file_size = proc_file->seek( POS_END, 0 );
+	proc_file->seek( POS_START, 0 );
 
 	char* image = (char*)malloc(file_size);
-	fs->readFile( first_proc, image, file_size );
-	fs->closeFile( first_proc );
+	proc_file->read( image, file_size );
 
 	Process* main_proc = Process::create( image, file_size );
 	free(image);

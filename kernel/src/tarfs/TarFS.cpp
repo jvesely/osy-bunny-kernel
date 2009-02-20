@@ -54,7 +54,7 @@
 #define SIGNED_BITS_MASK (0x7fffffff)
 
 
-TarFS::TarFS( DiskDevice* disk ): m_lastDescriptor( 0 )
+TarFS::TarFS( DiskDevice* disk )
 {
 	PRINT_DEBUG ("Creating tarfs on disk %p...\n", disk);
 	mount( disk );
@@ -97,52 +97,3 @@ bool TarFS::mount( DiskDevice* disk )
 	return true;
 }
 /*----------------------------------------------------------------------------*/
-file_t TarFS::openFile( const char file_name[], char mode )
-{
-	Entry* file = m_rootDir.subEntry( file_name );
-	PRINT_DEBUG ("Opening file %s(%p) mode: %i.\n", file_name, file, mode);
-	if (!file || !file->open( mode )) return EIO;
-
-	file_t fd = ++m_lastDescriptor & SIGNED_BITS_MASK;
-	while (m_entryMap.exists( fd )){
-		fd = ++m_lastDescriptor & SIGNED_BITS_MASK;
-	}
-
-	m_entryMap.insert( fd, file );
-	return fd;
-}
-/*----------------------------------------------------------------------------*/
-void TarFS::closeFile( file_t file )
-{
-	Entry* entry = getFile( file );
-	if (entry) entry->close();
-}
-/*----------------------------------------------------------------------------*/
-ssize_t TarFS::readFile( file_t src, void* buffer, size_t size )
-{
-	Entry* entry = getFile( src );
-	PRINT_DEBUG ("Reading file: %u.\n", src);
-	if (entry)
-		return entry->read( buffer, size );
-	return EIO;
-}
-/*----------------------------------------------------------------------------*/
-uint TarFS::seekFile( file_t file, FilePos pos, int offset )
-{
-	Entry* entry = getFile( file );
-	if (entry)
-		return entry->seek( pos, offset );
-	return EIO;
-}
-/*----------------------------------------------------------------------------*/
-bool TarFS::eof( file_t file )
-{
-	Entry* entry = m_entryMap.at( file );
-	if (entry) return true;
-		else     return false;
-}
-/*----------------------------------------------------------------------------*/
-Entry* TarFS::getFile( file_t fd )
-{
-	return m_entryMap.at( fd );
-}
