@@ -445,7 +445,7 @@ bool VirtualMemory::isFree(const void* from, const size_t size)
 	// check if the space after from is free too
 	// start from beginning
 	const VirtualMemoryMapEntry& checkedAddress(VirtualMemoryArea(from, size));
-	VirtualMemoryMapEntry *lower, *upper = &m_virtualMemoryMap.min();
+	VirtualMemoryMapEntry *lower, *upper = m_virtualMemoryMap.min();
 	do {
 		lower = upper;
 		upper = (VirtualMemoryMapEntry *)lower->next();
@@ -476,7 +476,7 @@ bool VirtualMemory::isFree(const void* from, const size_t size)
 void VirtualMemory::getFreeAddress(void*& from, const size_t size, Processor::PageSize frameType)
 {
 	// start from the beginning (min() - count check was done before this call)
-	VirtualMemoryMapEntry* segmentLow = &m_virtualMemoryMap.min();
+	VirtualMemoryMapEntry* segmentLow = m_virtualMemoryMap.min();
 
 	// loop to the right segment (so from already contains address in the right segment)
 	while (Memory::getSegment(from) != Memory::getSegment(segmentLow->data().address())) {
@@ -560,7 +560,7 @@ void VirtualMemory::dump()
 
 	printf("\n[ VMA DEBUG ]: ============= VMM DUMP ===========\n");
 
-	VirtualMemoryMapEntry *x = &m_virtualMemoryMap.min();
+	VirtualMemoryMapEntry *x = m_virtualMemoryMap.min();
 	do {
 		printf("[ VMA DEBUG ]: VM Area is at %p (%x).\n",
 			x->data().address(), x->data().size());
@@ -570,5 +570,17 @@ void VirtualMemory::dump()
 	printf("[ VMA DEBUG ]: ==================================\n");
 #endif
 }
-
-
+/*----------------------------------------------------------------------------*/
+VirtualMemory::~VirtualMemory()
+{
+	printf("Destroying memory map.\n");
+	dump();
+	for ( VirtualMemoryMapEntry *x = m_virtualMemoryMap.min(); 
+				x; 
+				x = (VirtualMemoryMapEntry *)x->next())
+	{
+		printf("Freeing memory area.\n");
+		const_cast<VirtualMemoryArea*>(&x->data())->free();
+	}
+	dump();
+}

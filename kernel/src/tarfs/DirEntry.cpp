@@ -52,7 +52,7 @@ bool DirEntry::addSubEntry( char* name, Entry* entry )
 	PRINT_DEBUG ("Adding SubEntry %s.\n", str.cstr() );
 	m_subEntries.insert( NamePair(str, entry) );
 	if  ( m_opencount == 0)
-		m_nextEntry = &m_subEntries.min();
+		m_nextEntry = m_subEntries.min();
 	return true;
 }
 /*----------------------------------------------------------------------------*/
@@ -61,7 +61,7 @@ const String DirEntry::firstEntry()
 	PRINT_DEBUG("asked for the first entry.\n");
 	String ret;
 	if (m_subEntries.count()) {
-		 ret = m_subEntries.min().data().first;
+		 ret = m_subEntries.min()->data().first;
 		 PRINT_DEBUG ("There should be an answer,\n");
 	}
 	ASSERT(m_subEntries.checkOK());
@@ -98,7 +98,7 @@ uint DirEntry::seek( FilePos pos, int offset )
 	switch (pos) {
 		case POS_CURRENT:
 		case POS_START:
-			m_nextEntry = &m_subEntries.min(); 
+			m_nextEntry = m_subEntries.min(); 
 			ASSERT(m_nextEntry);
 			if (offset < 0 || (uint)offset > m_subEntries.count())
 				return 0;
@@ -108,7 +108,7 @@ uint DirEntry::seek( FilePos pos, int offset )
 			}
 			return offset;
 		case POS_END:
-			m_nextEntry =  &m_subEntries.max();
+			m_nextEntry = m_subEntries.max();
 			ASSERT(m_nextEntry);
 			if (offset > 0 || (uint)-offset > m_subEntries.count())
 				return m_subEntries.count();
@@ -118,7 +118,7 @@ uint DirEntry::seek( FilePos pos, int offset )
 			}
 			return m_subEntries.count() - offset;
 	}
-	m_nextEntry = &m_subEntries.min();
+	m_nextEntry = m_subEntries.min();
 	return 0;
 }
 /*----------------------------------------------------------------------------*/

@@ -348,7 +348,7 @@ int fread( file_t fd, void* buffer, size_t size )
 	return SysCall::fread( fd, buffer, size);
 }
 /*----------------------------------------------------------------------------*/
-int fseek( file_t fd, FilePos pos, int offset)
+int fseek( file_t fd, int pos, int offset)
 {
 	return SysCall::fseek( fd, pos, offset );
 }

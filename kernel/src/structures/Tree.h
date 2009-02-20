@@ -152,7 +152,7 @@ public:
 	 * @return Reference to the minimal Node in the tree.
 	 * Tree must contain at least one Node, otherwise the result is undefined.
 	 */
-	MyNode& min();
+	MyNode* min();
 
   /*!
 	 * @brief Finds maximal Node in the tree.
@@ -160,7 +160,7 @@ public:
 	 * @return Reference to the maximal Node in the tree.
 	 * Tree must contain at least one Node, otherwise the result is undefined.
 	 */
-	MyNode& max();
+	MyNode* max();
 
 	/*!
 	 * @brief Deletes ALL Nodes currently in the tree.
@@ -310,15 +310,13 @@ void Tree<MyNode>::clear()
 }
 /*----------------------------------------------------------------------------*/
 template <class MyNode>
-MyNode& Tree<MyNode>::min()
+MyNode* Tree<MyNode>::min()
 {
-	ASSERT (m_root);
-	return *static_cast<MyNode*>(m_root->subtreeMinNode());
+	return m_root ? (MyNode*)m_root->subtreeMinNode() : NULL;
 }
 /*----------------------------------------------------------------------------*/
 template <class MyNode>
-MyNode& Tree<MyNode>::max()
+MyNode* Tree<MyNode>::max()
 {
-	ASSERT (m_root);
-	return *static_cast<MyNode*>(m_root->subtreeMaxNode());
+	return m_root ? (MyNode*)m_root->subtreeMaxNode() : NULL;
 }

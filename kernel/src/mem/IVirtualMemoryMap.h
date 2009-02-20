@@ -48,6 +48,7 @@
 class IVirtualMemoryMap: public Object
 {
 public:
+	inline IVirtualMemoryMap():m_asid( 0 ){};
 
 	static inline Pointer<IVirtualMemoryMap>& getCurrent()
 		{ static Pointer<IVirtualMemoryMap> current; return current; }

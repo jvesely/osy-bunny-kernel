@@ -455,7 +455,7 @@ int fclose( file_t fd );
 
 int fread( file_t fd, void* buffer, size_t size );
 
-int fseek( file_t fd, FilePos pos, int offset );
+int fseek( file_t fd, int pos, int offset );
 
 int opendir( file_t* fd, const char* path );
 

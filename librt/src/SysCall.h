@@ -137,7 +137,7 @@ int close( file_t fd );
 
 int fread( file_t fd, void* buffer, size_t size );
 
-int fseek( file_t fd, FilePos, int offset );
+int fseek( file_t fd, int pos, int offset );
 
 int direntry( file_t fd, DIR_ENTRY* entry );
 }

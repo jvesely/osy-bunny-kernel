@@ -37,7 +37,7 @@
 #include "mem/Memory.h"
 #include "mem/TLB.h"
 
-//#define VMA_DEBUG
+#define VMA_DEBUG
 //#define VMA_TLB_DEBUG
 //#define VMA_OPERATOR_DEBUG
 
@@ -261,6 +261,7 @@ int VirtualMemoryArea::allocateAtKUSeg(const void* virtualAddress, const size_t 
 
 void VirtualMemoryArea::free()
 {
+	PRINT_DEBUG("Freeing Area====");
 	if (m_subAreas != NULL) {
 		VirtualMemorySubarea* s = NULL;
 		while (m_subAreas->size() != 0) {
@@ -270,6 +271,9 @@ void VirtualMemoryArea::free()
 			delete s;
 		}
 		delete m_subAreas;
+		m_subAreas = NULL;
+		m_size     = 0;
+		m_address  = NULL;
 	}
 }
 

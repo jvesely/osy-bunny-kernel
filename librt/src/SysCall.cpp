@@ -193,7 +193,7 @@ int SysCall::fread( file_t fd, void* buffer, size_t size )
 	return SYSCALL( SYS_FS_READ );
 }
 /*----------------------------------------------------------------------------*/
-int SysCall::fseek( file_t fd, FilePos, int offset )
+int SysCall::fseek( file_t fd, int, int offset )
 {
 	return SYSCALL( SYS_FS_SEEK );
 }

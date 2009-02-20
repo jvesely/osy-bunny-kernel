@@ -52,8 +52,8 @@
 
 void IVirtualMemoryMap::freed()
 {
-	ASSERT (m_asid);
-	TLB::instance().clearAsid( m_asid );
+	if (m_asid)
+		TLB::instance().clearAsid( m_asid );
 }
 /*----------------------------------------------------------------------------*/
 void IVirtualMemoryMap::switchTo()

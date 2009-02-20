@@ -83,7 +83,7 @@ process_t exec( const char* file_name)
 	}
 	process_t child_pid;
 	if (process_create( &child_pid, image, size ) != EOK) {
-		printf( "Process creation failed" );
+		printf( "Process creation failed.\n" );
 		return 0;
 	}
 	return child_pid;
@@ -105,7 +105,8 @@ int main ()
 		DIR_ENTRY file;
 		fseek( curr_dir, POS_START, 0 );
 		while (direntry( curr_dir, &file) == EOK){
-			printf( " %s\n", file.name );
+			if (!file.is_dir)
+				printf( " %s\n", file.name );
 		}
 		puts("\n$ ");
 		gets_feedback( buffer, BUFF_SIZE );
@@ -115,7 +116,7 @@ int main ()
 		process_t pid = exec(buffer);
 		process_join( pid );
 	}
-	printf( "Exiting Simple Shell have fun.\n" );
+	printf( "Exiting Simple Shell...\n" );
 	fclose (curr_dir );
 	return 0;
 }

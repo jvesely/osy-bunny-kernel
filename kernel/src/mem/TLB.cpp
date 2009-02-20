@@ -167,7 +167,6 @@ byte TLB::getAsid( IVirtualMemoryMap* map )
 	if (m_freeAsids.count()) {
 		new_asid = m_freeAsids.getFirst();
 		ASSERT (m_asidMap[new_asid] == NULL);
-
 	} else {
 	/* 0 and 255 are reserved */
 		new_asid = (Processor::reg_read_count() % 254) +1;
@@ -185,10 +184,12 @@ byte TLB::getAsid( IVirtualMemoryMap* map )
 void TLB::returnAsid( const byte asid )
 {
 	PRINT_DEBUG ("Returning ASID: %d.\n", asid);
-	clearAsid( asid );
-	m_freeAsids.append( asid );
+	
 	ASSERT (m_asidMap[asid]);
 	ASSERT (m_asidMap[asid]->asid() == asid);
+
+	clearAsid( asid );
+	m_freeAsids.append( asid );
 	m_asidMap[asid] = NULL;
 }
 /*----------------------------------------------------------------------------*/

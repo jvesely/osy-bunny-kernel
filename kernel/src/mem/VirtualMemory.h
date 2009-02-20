@@ -60,8 +60,6 @@ typedef SplayBinaryNode<VirtualMemoryArea> VirtualMemoryMapEntry;
 class VirtualMemory: public IVirtualMemoryMap
 {
 public:
-	VirtualMemory() {}
-
 	int allocate(void** from, size_t size, unsigned int flags);
 	int free(const void* from);
 
@@ -80,6 +78,8 @@ public:
 	 * @note If VMA_NDEBUG is defined, dump is quiet.
 	 */
 	void dump();
+
+	virtual ~VirtualMemory();
 
 protected:
 	/**
